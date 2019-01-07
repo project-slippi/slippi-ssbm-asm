@@ -8,5 +8,5 @@
 
 #Load Transformation
   backup
-  branchl r12,0x80005600
+  branchl r12,FN_LoadPSTransformation
   restore

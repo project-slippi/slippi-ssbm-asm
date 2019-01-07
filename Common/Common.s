@@ -48,6 +48,7 @@ mtlr r0
 .set FN_EXITransferBuffer, 0x800055f0
 .set FN_GetFrameIndex, 0x800055fc
 .set FN_GetIsFollower, 0x800055f8
+.set FN_LoadPSTransformation, 0x80005600
 
 # Game functions
 .set HSD_Randi, 0x80380580

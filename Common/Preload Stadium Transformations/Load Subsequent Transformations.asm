@@ -5,7 +5,7 @@
 
 #Load Transformation
   mr  r3,PSData
-  branchl r12,0x80005600
+  branchl r12,FN_LoadPSTransformation
 
 #Exit
   li	r3, 85
