@@ -321,6 +321,12 @@
           "address": "8032ed94",
           "sourceFile": "Recording.asm",
           "annotation": "SlippiRecording [Fizzi, Achilles, UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Preload Stadium Transformations",
+          "isRecursive": true,
+          "annotation": "Preload Stadium Transformations [UnclePunch]"
         }
       ]
     }

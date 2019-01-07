@@ -1,5 +1,5 @@
 #To be inserted at 801d13d8
-.include "../Common/Common.s"
+.include "../Common.s"
 
 .set PSData,31
 
