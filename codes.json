@@ -62,6 +62,12 @@
           "address": "8032ed94",
           "sourceFile": "Recording.asm",
           "annotation": "SlippiRecording [Fizzi, Achilles, UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Preload Stadium Transformations",
+          "isRecursive": true,
+          "annotation": "Preload Stadium Transformations [UnclePunch]"
         }
       ]
     },
@@ -88,6 +94,12 @@
           "sourceFolder": "Common",
           "isRecursive": true,
           "annotation": "EXITransferBuffer [Fizzi, UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Preload Stadium Transformations",
+          "isRecursive": true,
+          "annotation": "Preload Stadium Transformations [UnclePunch]"
         }
       ]
     }
