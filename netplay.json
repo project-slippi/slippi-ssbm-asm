@@ -1,0 +1,328 @@
+{
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
+  "outputFiles": [
+    {
+      "file": "Output/Netplay/GALE01r2.ini",
+      "header": [
+        "# GALE01 - Super Smash Bros. Melee NTSC 1.02",
+        "",
+        "[Gecko]"
+      ]
+    }
+  ],
+  "codes": [
+    {
+      "name": "Faster Melee Netplay Settings",
+      "authors": [
+        "Achilles",
+        "Dan Salvato",
+        "Magus",
+        "UnclePunch",
+        "tauKhan",
+        "Ptomerty",
+        "Cilan",
+        "Zauron",
+        "Datel",
+        "donny2112",
+        "Jorgasms",
+        "strikebowler585",
+        "Myougi"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/UnlockAll.bin",
+          "annotation": "Unlock All Characters and Stages [Datel]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/StockMode.bin",
+          "annotation": "Stock Mode [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/4Stocks.bin",
+          "annotation": "4 Stocks [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/8Minutes.bin",
+          "annotation": "8 Minutes [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/NoItems.bin",
+          "annotation": "No Items [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/SinglesStages.bin",
+          "annotation": "Singles Stages [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/AutoToggleFod.bin",
+          "annotation": "Auto Toggle FoD [UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/BootToCss.bin",
+          "annotation": "Boot to CSS [Dan Salvato, Achilles]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/DisableSpecialMessages.bin",
+          "annotation": "Disable Special Messages [Most]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/DisableTrophyMessages.bin",
+          "annotation": "Disable Trophy Messages [Achilles]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/UnlockAllTrophies.bin",
+          "annotation": "Unlock All 293 Trophies [Datel]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/SkipResultsScreen.bin",
+          "annotation": "Skip Results Screen [Achilles]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/CStickSinglePlayer.bin",
+          "annotation": "C-Stick in Single Player [Zauron]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/DebugMenu.bin",
+          "annotation": "Debug Menu [Magus, donny2112]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/CssFromDebugMenu.bin",
+          "annotation": "Exiting Debug Menu Returns to CSS [Achilles]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/20xxNeutralSpawns.bin",
+          "annotation": "20XX Neutral Spawns [Achilles, Jorgasms]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/FasterStageLoad.bin",
+          "annotation": "Faster Stage Load [UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/FasterCssLoad.bin",
+          "annotation": "Faster CSS Load [UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/DisableFdTransitions.bin",
+          "annotation": "Disable FD Background Transitions [Achilles, Dan Salvato]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/KoStarIndicatesWinner.bin",
+          "annotation": "KO Star Indicates Previous Winner [UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/ResetToCssFromStageLoad.bin",
+          "annotation": "L+R+A Returns to CSS during Stage Load [Jorgasms]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/UnrestrictedCamera.bin",
+          "annotation": "Unrestricted Camera while Paused [strikebowler585]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/CStickPanWhilePaused.bin",
+          "annotation": "C-Stick Panning while Paused [Achilles]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/UcfHandler.bin",
+          "annotation": "UCF Handler w/ Random Stage Selection [Ptomerty, tauKhan, Cilan, UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/UcfDashback.bin",
+          "annotation": "UCF v0.73 Dashback w/ Toggle [UCF, Ptomerty, tauKhan, Cilan]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/UcfShieldDrop.bin",
+          "annotation": "UCF v0.73 Shield Drops w/ Toggle [UCF, Ptomerty, tauKhan, Cilan]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
+          "annotation": "Lagless FoD [Achilles, Myougi, Dan Salvato]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/RandomStageMusic.bin",
+          "annotation": "Random Stage Music [UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/RandomCssMusic.bin",
+          "annotation": "Random CSS Music v3 [UnclePunch]"
+        }
+      ]
+    },
+    {
+      "name": "Normal Lag Reduction",
+      "authors": [
+        "Hannes Mann"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Performance Lag Reduction",
+      "authors": [
+        "Hannes Mann",
+        "tauKhan"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/PerformanceLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Game Music ON",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Keep checked if you want music ON. Uncheck \"Game Music OFF\"."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/GameMusicOn.bin"
+        }
+      ]
+    },
+    {
+      "name": "Game Music OFF",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Keep checked if you want music OFF. Uncheck \"Game Music ON\"."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/GameMusicOff.bin"
+        }
+      ]
+    },
+    {
+      "name": "Widescreen 16:9",
+      "authors": [
+        "Dan Salvato",
+        "mirrorbender",
+        "TruckJitsu"
+      ],
+      "description": [
+        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -----------------",
+        "Requires all players to have enabled for netplay."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/Widescreen.bin"
+        }
+      ]
+    },
+    {
+      "name": "Enable OSReport Print on Crash (1.02)",
+      "authors": [
+        "UnclePunch"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/OsReportPrintOnCrash.bin"
+        }
+      ]
+    },
+    {
+      "name": "Slippi Recording",
+      "authors": [
+        "Fizzi",
+        "Achilles",
+        "UnclePunch"
+      ],
+      "description": [
+        "Used in conjunction with Slippi plugged into PortB to extract game data"
+      ],
+      "build": [
+        {
+          "type": "branchAndLink",
+          "address": "8016e74c",
+          "targetAddress": "8032ed94",
+          "annotation": "SendGameInfo [Fizzi]"
+        },
+        {
+          "type": "branchAndLink",
+          "address": "8006b0dc",
+          "targetAddress": "8032ed94",
+          "annotation": "SendGamePreFrame [Fizzi, Achilles]"
+        },
+        {
+          "type": "branchAndLink",
+          "address": "8006c5d4",
+          "targetAddress": "8032ed94",
+          "annotation": "SendGamePostFrame [Fizzi, Achilles]"
+        },
+        {
+          "type": "branchAndLink",
+          "address": "801a5b14",
+          "targetAddress": "8032ed94",
+          "annotation": "SendGameEnd [Fizzi]"
+        },
+        {
+          "type": "branchAndLink",
+          "address": "802fed3c",
+          "targetAddress": "8032ed94",
+          "annotation": "FlushFrameBuffer [Fizzi]"
+        },
+        {
+          "type": "replace",
+          "address": "801A4F84",
+          "value": "60000000",
+          "annotation": "Disable Screenshots 1/2"
+        },
+        {
+          "type": "replace",
+          "address": "801A5070",
+          "value": "60000000",
+          "annotation": "Disable Screenshots 2/2"
+        },
+        {
+          "type": "replaceCodeBlock",
+          "address": "8032ed94",
+          "sourceFile": "Recording.asm",
+          "annotation": "SlippiRecording [Fizzi, Achilles, UnclePunch]"
+        }
+      ]
+    }
+  ]
+}
