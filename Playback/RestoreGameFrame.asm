@@ -77,6 +77,7 @@
 
 CONTINUE_READ_DATA:
 
+#region debug section
 .if debugFlag==1
 CheckForDesync:
   lfs f1,XPos(PlayerBackup)
@@ -100,6 +101,7 @@ CheckForDesync:
 DesyncDetected:
   bl  DumpFrameData
 .endif
+#endregion
 
 RestoreData:
 # Restore data
@@ -148,7 +150,7 @@ RestoreData:
   lbz r3,AnalogRawInput(PlayerBackup)
   stb r3, 0x2(r20) #store raw x analog
 
-
+#region debug section
 .if debugFlag==1
 
   b Injection_Exit
@@ -241,6 +243,7 @@ blr
 
 .endif
 #######################################################################
+#endregion
 
 Injection_Exit:
   restore             #restore registers and lr

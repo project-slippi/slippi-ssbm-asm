@@ -87,6 +87,8 @@ FetchFrameInfo_RECEIVE_DATA:
   bne FetchFrameInfo_ENDGAME_CHECK
 # Wait a frame before trying again
   branchl r12,0x8034f314     #VIWaitForRetrace
+
+#region debug section
 .if debugFlag==1
 # OSReport
   branchl r12,FN_GetFrameIndex
@@ -95,6 +97,8 @@ FetchFrameInfo_RECEIVE_DATA:
   mflr r3
   branchl r12,0x803456a8
 .endif
+#endregion
+
   b FetchFrameInfo_REQUEST_DATA
 FetchFrameInfo_ENDGAME_CHECK:
 #Get status of this player's frame data
@@ -106,6 +110,7 @@ END_GAME:
   li  r4,7   #GameEnd ID (7 = LRA Start)
   branchl r12,0x8016cf4c
 
+#region debug section
 .if debugFlag==1
 b FetchFrameInfo_Exit
 #################################
@@ -115,6 +120,7 @@ blrl
 .align 2
 #################################
 .endif
+#endregion
 
 FetchFrameInfo_Exit:
 restore
