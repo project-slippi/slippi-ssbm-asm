@@ -52,6 +52,8 @@ mtlr r0
 
 # Game functions
 .set HSD_Randi, 0x80380580
+.set HSD_MemAlloc,0x8037f1e4
+.set HSD_Free,0x8037f1b0
 
 ################################################################################
 # Const Definitions
@@ -63,3 +65,11 @@ mtlr r0
 # For Slippi communication
 .set CONST_SlippiCmdGetFrame, 0x76
 .set CONST_SlippiCmdCheckForReplay, 0x88
+.set CONST_SlippiCmdCheckForStockSteal,0x89
+
+################################################################################
+# Offsets
+################################################################################
+.set frameDataBuffer,-0x49b4
+.set secondaryDmaBuffer,-0x49b0
+.set frameIndex,-0x49ac

@@ -65,7 +65,7 @@ backup
   mr PlayerBlockStatic,r3
 
 # get buffer pointer
-  lwz BufferPointer,-0x49b4(r13)
+  lwz BufferPointer,frameDataBuffer(r13)
 
 # check if the player is a follower
   li r20, 0 # initialize isFollower to false

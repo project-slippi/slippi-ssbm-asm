@@ -1,4 +1,8 @@
 #To be inserted at 800055f4
+################################################################################
+# Static Function. This function handles updating the frameDataBuffer with the
+# current frame's data.
+################################################################################
 .include "../Common/Common.s"
 
 # Frame data case ID's
@@ -46,21 +50,20 @@
 .set debugFlag,0
 
 ################################################################################
-#                   subroutine: FetchFrameInfo
+#                   subroutine: FetchGameFrame
 # description: per frame function that will handle fetching the current frame's
 # data and storing it to the buffer
 ################################################################################
 
-FetchFrameInfo:
+FetchGameFrame:
 
 backup
-lwz BufferPointer,-0x49b4(r13)
+lwz BufferPointer,frameDataBuffer(r13)
 
 # check if from LoadFirstSpawn
   cmpwi r3,0
   beq FromLoadFirstSpawn
-  branchl r12,FN_GetFrameIndex
-  mr  FrameNumber,r3
+  lwz  FrameNumber,frameIndex(r13)
   b FetchFrameInfo_REQUEST_DATA
 FromLoadFirstSpawn:
   li  FrameNumber,-123
@@ -91,8 +94,7 @@ FetchFrameInfo_RECEIVE_DATA:
 #region debug section
 .if debugFlag==1
 # OSReport
-  branchl r12,FN_GetFrameIndex
-  mr r4,r3
+  lwz r4,frameIndex(r13)
   bl  WaitAFrameText
   mflr r3
   branchl r12,0x803456a8

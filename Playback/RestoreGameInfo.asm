@@ -41,9 +41,6 @@
 # Register names
 .set BufferPointer,30
 
-# Function names
-.set FetchFrameInfo,0x800055f4
-
 ################################################################################
 #                   subroutine: gameInfoLoad
 # description: reads game info from slippi and loads those into memory
@@ -56,18 +53,12 @@
   li  r3,(PlayerDataLength*8)+FrameHeaderLength
   branchl r12,0x8037f1e4
   mr  BufferPointer,r3
-  stw BufferPointer,-0x49b4(r13)
+  stw BufferPointer,frameDataBuffer(r13)
 
-# create per frame function to fetch the game frame
-# Create GObj
-  li	r3,6		#GObj Type
-  li	r4,7		#On-Pause Behavior
-  li	r5,80
-  branchl	r12,0x803901f0
-# Schedule Function
-  load r4,FetchFrameInfo
-  li  r5,0    #Priority
-  branchl	r12,0x8038fd54
+# allocate memory for the secondaryDmaBuffer used in RestoreStockSteal
+  li  r3,64
+  branchl r12,0x8037f1e4
+  stw r3,secondaryDmaBuffer(r13)
 
 # get the game info data
 REQUEST_DATA:

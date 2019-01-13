@@ -1,8 +1,8 @@
 #To be inserted at 8016e2dc
 ################################################################################
 #                      Inject at address 8016e2dc
-# Function is PlayerThink_ControllerInputsToDataOffset. Injection location
-# suggested by Achilles
+# Function is PlayerBlock_LoadPlayers. This fetches the game frame for the
+# initial StartMelee spawn points.
 ################################################################################
 .include "../Common/Common.s"
 
@@ -47,7 +47,7 @@
 .set UCFToggles,0x13D
 
 # Function names
-.set FetchFrameInfo,0x800055f4
+.set FetchGameFrame,0x800055f4
 
 ################################################################################
 #                   subroutine: LoadFirstSpawn
@@ -57,7 +57,7 @@
 
 # Get GameFrame
   li  r3,0
-  branchl r12,FetchFrameInfo
+  branchl r12,FetchGameFrame
 
 Original:
   lbz	r0, 0x0007 (r31)

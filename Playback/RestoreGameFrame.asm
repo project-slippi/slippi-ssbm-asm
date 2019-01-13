@@ -62,7 +62,7 @@
   mr PlayerDataStatic,r3
 
 # get buffer pointer
-  lwz BufferPointer,-0x49b4(r13)
+  lwz BufferPointer,frameDataBuffer(r13)
 
   mr  r3,PlayerData
   branchl r12,FN_GetIsFollower
