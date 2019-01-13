@@ -1,5 +1,5 @@
-# Project Slippi
-## Parent Project
+# Slippi SSBM ASM
+## Project Slippi
 This repository is part of the Project Slippi ecosystem. For more information about all of the Project Slippi projects, visit https://github.com/project-slippi/project-slippi.
 
 ## Intro
