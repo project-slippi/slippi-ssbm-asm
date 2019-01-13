@@ -20,6 +20,7 @@
 .set FrameNumber,25
 
 # gameframe offsets
+.set GameFrameLength,(FrameHeaderLength+PlayerDataLength*8)
 # header
 .set FrameHeaderLength,0x1
 .set Status,0x0
@@ -81,13 +82,13 @@ FetchFrameInfo_REQUEST_DATA:
 FetchFrameInfo_RECEIVE_DATA:
 # Transfer buffer over DMA
   mr  r3,BufferPointer
-  li  r4,(PlayerDataLength*8)+FrameHeaderLength      #Buffer Length
+  li  r4,GameFrameLength     #Buffer Length
   li  r5,CONST_ExiRead
   branchl r12,FN_EXITransferBuffer
 # Check if successful
   lbz r3,Status(BufferPointer)
   cmpwi r3, 0
-  bne FetchFrameInfo_ENDGAME_CHECK
+  bne FetchFrameInfo_Exit
 # Wait a frame before trying again
   branchl r12,0x8034f314     #VIWaitForRetrace
 
@@ -102,15 +103,6 @@ FetchFrameInfo_RECEIVE_DATA:
 #endregion
 
   b FetchFrameInfo_REQUEST_DATA
-FetchFrameInfo_ENDGAME_CHECK:
-#Get status of this player's frame data
-  lbz r3,Status(BufferPointer)
-  cmpwi r3, RESULT_CONTINUE
-  beq FetchFrameInfo_Exit
-END_GAME:
-  li  r3,-1  #Unk
-  li  r4,7   #GameEnd ID (7 = LRA Start)
-  branchl r12,0x8016cf4c
 
 #region debug section
 .if debugFlag==1

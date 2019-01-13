@@ -1,13 +1,13 @@
-#To be inserted at 8016d004
+#To be inserted at 8016d294
 ################################################################################
-#                      Inject at address 8016d004
+#                      Inject at address 8016d294
 # Function is SceneThink_VSMode and we're incrementing the frame index
 # before anything "game-engine related" happens
 ################################################################################
 .include "../Common/Common.s"
 
 # Original Codeline
-  stw	r28, 0x0028 (sp)
+  stb	r3, 0x0008 (r31)
 
 # Check if its the first frame (initialize timer)
   lis r3,0x8048

@@ -1,6 +1,6 @@
-#To be inserted at 8016d008
+#To be inserted at 8016d298
 ################################################################################
-#                      Inject at address 8016d008
+#                      Inject at address 8016d298
 # Function is SceneThink_VSMode and we're calling FetchGameFrame to update
 # the frameDataBuffer.
 ################################################################################
@@ -9,10 +9,15 @@
 #Functions
 .set FetchGameFrame,0x800055f4
 
+#Check if game ended
+  lbz	r0, 0x0008 (r31)
+  cmpwi r3,0x0
+  beq Exit
+
 # Get GameFrame
   li  r3,1        #Not initial spawn
   branchl r12,FetchGameFrame
 
 Exit:
 # Original Codeline
-  lwz	r0, -0x6C98 (r13)
+  lbz	r0, 0x0008 (r31)
