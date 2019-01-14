@@ -13,8 +13,8 @@
 #end message yet so the game will have to hang temporarily before GAME can be
 #shown
   lbz	r0, 0x0008 (r31)
-  cmpwi r3,0x0
-  beq Exit
+  cmpwi r0,0x0
+  bne Exit # r0 is 2 on successful game end
 
 # Get GameFrame
   li  r3,1        #Not initial spawn
