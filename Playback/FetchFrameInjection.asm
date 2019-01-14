@@ -5,18 +5,20 @@
 # the frameDataBuffer.
 ################################################################################
 .include "../Common/Common.s"
+.include "./Playback.s"
 
-#Functions
-.set FetchGameFrame,0x800055f4
-
-#Check if game ended
+#Check if game ended. This isn't really strictly required except that without
+#it we try to fetch a frame that doesn't exist at the end of the game.
+#That causes problems when mirroring because we haven't gotten a game
+#end message yet so the game will have to hang temporarily before GAME can be
+#shown
   lbz	r0, 0x0008 (r31)
   cmpwi r3,0x0
   beq Exit
 
 # Get GameFrame
   li  r3,1        #Not initial spawn
-  branchl r12,FetchGameFrame
+  branchl r12,FN_FetchGameFrame
 
 Exit:
 # Original Codeline

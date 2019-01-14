@@ -1,11 +1,6 @@
 #To be inserted at 8006b0dc
 .include "../Common/Common.s"
 
-# Frame data case ID's
-.set RESULT_WAIT, 0
-.set RESULT_CONTINUE, 1
-.set RESULT_TERMINATE, 2
-
 # Register names
 .set PlayerData,31
 .set PlayerGObj,30

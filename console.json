@@ -192,7 +192,7 @@
         {
           "type": "replaceCodeBlock",
           "address": "8032ed94",
-          "sourceFile": "Recording.asm",
+          "sourceFile": "Recording/Recording.asm",
           "annotation": "SlippiRecording [Fizzi, Achilles, UnclePunch]"
         },
         {

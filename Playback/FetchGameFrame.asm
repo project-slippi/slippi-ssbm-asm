@@ -4,11 +4,7 @@
 # current frame's data.
 ################################################################################
 .include "../Common/Common.s"
-
-# Frame data case ID's
-.set RESULT_WAIT, 0
-.set RESULT_CONTINUE, 1
-.set RESULT_TERMINATE, 2
+.include "./Playback.s"
 
 # Register names
 .set PlayerData,31
@@ -87,8 +83,8 @@ FetchFrameInfo_RECEIVE_DATA:
   branchl r12,FN_EXITransferBuffer
 # Check if successful
   lbz r3,Status(BufferPointer)
-  cmpwi r3, 0
-  bne FetchFrameInfo_Exit
+  cmpwi r3, CONST_FrameFetchResult_Wait
+  bne FetchFrameInfo_Exit # If we are not told to wait, exit
 # Wait a frame before trying again
   branchl r12,0x8034f314     #VIWaitForRetrace
 

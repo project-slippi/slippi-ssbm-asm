@@ -5,6 +5,7 @@
 # an LRA-Start
 ################################################################################
 .include "../Common/Common.s"
+.include "./Playback.s"
 
 # gameframe offsets
 .set GameFrameLength,(FrameHeaderLength+PlayerDataLength*8)
@@ -34,18 +35,10 @@
 .set MatchStruct,0x5
 .set UCFToggles,0x13D
 
-# Frame data case ID's
-.set RESULT_WAIT, 0
-.set RESULT_CONTINUE, 1
-.set RESULT_TERMINATE, 2
-
-#Functions
-.set FetchGameFrame,0x800055f4
-
 #Check status of frame received
   lwz r3,frameDataBuffer(r13)
   lbz r3,Status(r3)
-  cmpwi r3, RESULT_CONTINUE
+  cmpwi r3, CONST_FrameFetchResult_Continue
   beq Exit
 END_GAME:
   li  r3,-1  #Unk

@@ -6,11 +6,6 @@
 ################################################################################
 .include "../Common/Common.s"
 
-# Frame data case ID's
-.set RESULT_WAIT, 0
-.set RESULT_CONTINUE, 1
-.set RESULT_TERMINATE, 2
-
 # gameframe offsets
 # header
 .set FrameHeaderLength,0x1

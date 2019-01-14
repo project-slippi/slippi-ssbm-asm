@@ -5,11 +5,6 @@
 ################################################################################
 .include "../Common/Common.s"
 
-# Frame data case ID's
-.set RESULT_WAIT, 0
-.set RESULT_CONTINUE, 1
-.set RESULT_TERMINATE, 2
-
 # register names
 .set PlayerBlockStatic,31
 .set PlayerData,27
