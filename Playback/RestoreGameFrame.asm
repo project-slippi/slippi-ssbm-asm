@@ -59,8 +59,10 @@
 # get buffer pointer
   lwz BufferPointer,frameDataBuffer(r13)
 
+#Check if this player is a follower
   mr  r3,PlayerData
   branchl r12,FN_GetIsFollower
+  mr  r20,r3
 
 # Get players offset in buffer ()
   addi r4,BufferPointer,FrameHeaderLength  #get to player data start
