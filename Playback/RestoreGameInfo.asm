@@ -8,8 +8,9 @@
 
 # gameframe offsets
 # header
-.set FrameHeaderLength,0x1
+.set FrameHeaderLength, Status.Length
 .set Status,0x0
+  .set Status.Length,0x1
 # per player
 .set PlayerDataLength,0x2D
 .set RNGSeed,0x00
@@ -27,11 +28,17 @@
 #.set Percentage,0x2C
 
 # gameinfo offsets
-.set GameInfoLength,0x15D
+.set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length
 .set SuccessBool,0x0
+  .set SuccessBool.Length,0x1
 .set InfoRNGSeed,0x1
+  .set InfoRNGSeed.Length,0x4
 .set MatchStruct,0x5
+  .set MatchStruct.Length,0x138
 .set UCFToggles,0x13D
+  .set UCFToggles.Length,0x20
+.set NametagData,0x15D
+  .set NametagData.Length,0x40
 
 # Register names
 .set BufferPointer,30
@@ -100,6 +107,71 @@ READ_DATA:
   li  r5,0x20
   branchl r12,0x800031f4
 
+#------------- RESTORE NAMETAGS ------------
+# Loop through players 1-4 and restore their nametag data
+# r31 contains the match struct fed into StartMelee. We'll
+# be using this to restore each player's nametag slot
+
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+.set Nametag,0xA              #offset of the nametag ID in the player's data
+# Constants
+.set CharactersToCopy, 8 *2
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_NametagID,23
+
+# Init loop
+  li  REG_LoopCount,0                               #init loop count
+  addi REG_PlayerDataStart,r31,PlayerDataStart     #player data start in match struct
+RESTORE_GAME_INFO_NAMETAG_LOOP:
+# Get players data
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+# Check if player is in game && human
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0x0
+  bne RESTORE_GAME_INFO_NAMETAG_NO_TAG
+# Check if player has a nametag
+  lbz r3,Nametag(REG_CurrentPlayerData)
+  cmpwi r3,0x78
+  beq RESTORE_GAME_INFO_NAMETAG_NO_TAG
+RESTORE_GAME_INFO_NAMETAG_HAS_TAG:
+# Save nametag ID
+  mr REG_NametagID,r3
+# Set nametag as active
+  branchl r12,0x80237a04
+# Get nametag text pointer
+  mr  r3,REG_NametagID
+  branchl r12,0x8015cc9c
+  addi r3,r3,0x198
+# Get players nametag
+  addi r4,BufferPointer,NametagData       #Start of nametag data
+  mulli r5,REG_LoopCount,CharactersToCopy #This players nametag data
+  add r4,r4,r5
+# Check if nametag data is empty (old replays have no data here)
+  lbz r5,0x(r4)
+  cmpwi r5,0x0
+  bne RESTORE_GAME_INFO_NAMETAG_COPY
+# Nametag was not backed up, give player a null nametag ID
+  li  r3,0x78
+  stb r3,Nametag(REG_CurrentPlayerData)
+  b RESTORE_GAME_INFO_NAMETAG_INC_LOOP
+RESTORE_GAME_INFO_NAMETAG_COPY:
+# Copy backed up nametag to it
+  li  r5,CharactersToCopy
+  branchl r12,0x800031f4
+  b RESTORE_GAME_INFO_NAMETAG_INC_LOOP
+RESTORE_GAME_INFO_NAMETAG_NO_TAG:
+RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
+# Increment Loop
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt RESTORE_GAME_INFO_NAMETAG_LOOP
 
 Injection_Exit:
 restore

@@ -62,6 +62,12 @@ backup
 # get buffer pointer
   lwz BufferPointer,frameDataBuffer(r13)
 
+# check if slippi said to end the game
+  lbz r3,Status(BufferPointer)
+  cmpwi r3,0x2
+  beq Injection_Exit
+
+GetPositions:
 # check if the player is a follower
   li r20, 0 # initialize isFollower to false
   lbz	r3, 0x221F (PlayerData)

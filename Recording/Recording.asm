@@ -28,12 +28,13 @@
 # r26 - address of write buffer
 # r27-r31 - reserved for external function inputs (player block address, etc)
 ################################################################################
+.include "../Common/Common.s"
 
 .set MEM_SLOT, 1 # 0 is SlotA, 1 is SlotB
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCIPTIONS_PAYLOAD_LENGTH, 13 # byte count
-.set GAME_INFO_PAYLOAD_LENGTH, 352 # byte count
+.set GAME_INFO_PAYLOAD_LENGTH, 416 # byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 59 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 37 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 1 # byte count
@@ -43,6 +44,11 @@
 .set BUF_HIGH, 0x8033
 .set BUF_ADDRESS_LOW, -0x1274
 .set BUF_WRITE_LOC_LOW, -0x1270
+
+# build version number. Each byte is one digit
+# any change in command data should result in a minor version change
+# current version: 1.3.0.0
+.set CURRENT_VERSION,0x01030000
 
 # Create stack frame and back up every register. For now this is just ultra
 # safe partially to save space and also because the locations we are branching
@@ -163,14 +169,7 @@ li r3, 0x36
 bl PushByte
 
 # build version number. Each byte is one digit
-# any change in command data should result in a minor version change
-# current version: 1.2.0.0
-# Version is of the form major.minor.build.revision. A change to major
-# indicates breaking changes/loss of backwards compatibility. A change
-# to minor indicates a pretty major change like added fields or new
-# events. Build/Revision can be incremented for smaller changes
-lis r3, 0x0102
-addi r3, r3, 0x0000
+load r3,CURRENT_VERSION
 bl PushWord
 
 #------------- GAME INFO BLOCK -------------
@@ -202,6 +201,63 @@ addi r14, r14, 0x4
 andi. r3, r14, 0xFFFF # Grab the bottom of the loop address
 cmpwi r3, 0x20 # Stop looping after 8 iterations
 blt+ START_UCF_LOOP
+
+#------------- SEND NAMETAGS ------------
+# Loop through players 1-4 and send their nametag data
+# r31 contains the match struct fed into StartMelee. We'll
+# be using this to find each player's nametag slot
+
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+.set Nametag,0xA              #offset of the nametag ID in the player's data
+# Constants
+.set CharactersToCopy, 8 *2
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+
+# Init loop
+  li  REG_LoopCount,0                               #init loop count
+  addi REG_PlayerDataStart,r31,PlayerDataStart     #player data start in match struct
+SEND_GAME_INFO_NAMETAG_LOOP:
+# Get players data
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+# Check if player is in game && human
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0x0
+  bne SEND_GAME_INFO_NAMETAG_NO_TAG
+# Check if player has a nametag
+  lbz r3,Nametag(REG_CurrentPlayerData)
+  cmpwi r3,0x78
+  beq SEND_GAME_INFO_NAMETAG_NO_TAG
+#Get nametag string
+  branchl r12,0x8023754c
+# Copy first 8 characters to nametag to buffer
+  mr  r4,r3
+  mr  r3,r25
+  li  r5,CharactersToCopy
+  branchl r12,0x800031f4
+# Increment buffer offset
+  addi r25,r25,CharactersToCopy
+  b SEND_GAME_INFO_NAMETAG_INC_LOOP
+
+SEND_GAME_INFO_NAMETAG_NO_TAG:
+# Fill with zeroes
+  mr r3,r25
+  li r4,CharactersToCopy
+  branchl r12,0x8000c160
+# Increment buffer offset
+  addi r25,r25,CharactersToCopy
+
+SEND_GAME_INFO_NAMETAG_INC_LOOP:
+# Increment Loop
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt SEND_GAME_INFO_NAMETAG_LOOP
 
 bl ExiTransferBuffer
 
