@@ -4,39 +4,13 @@
 # Injection point provided by Achilles, runs every time somebody spawns
 ################################################################################
 .include "../Common/Common.s"
+.include "Playback.s"
 
 # register names
 .set PlayerBlockStatic,31
 .set PlayerData,27
 .set BufferPointer,30
 .set PlayerBackup,29
-
-# gameframe offsets
-# header
-.set FrameHeaderLength,0x1
-.set Status,0x0
-# per player
-.set PlayerDataLength,0x2D
-.set RNGSeed,0x00
-.set AnalogX,0x04
-.set AnalogY,0x08
-.set CStickX,0x0C
-.set CStickY,0x10
-.set Trigger,0x14
-.set Buttons,0x18
-.set XPos,0x1C
-.set YPos,0x20
-.set FacingDirection,0x24
-.set ActionStateID,0x28
-.set AnalogRawInput,0x2C
-#.set Percentage,0x2C
-
-# gameinfo offsets
-.set GameInfoLength,0x15D
-.set SuccessBool,0x0
-.set InfoRNGSeed,0x1
-.set MatchStruct,0x5
-.set UCFToggles,0x13D
 
 ################################################################################
 #                   subroutine: receiveGameSpawn

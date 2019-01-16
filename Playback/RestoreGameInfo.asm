@@ -5,40 +5,7 @@
 # it gets read to initialize the match
 ################################################################################
 .include "../Common/Common.s"
-
-# gameframe offsets
-# header
-.set FrameHeaderLength, Status.Length
-.set Status,0x0
-  .set Status.Length,0x1
-# per player
-.set PlayerDataLength,0x2D
-.set RNGSeed,0x00
-.set AnalogX,0x04
-.set AnalogY,0x08
-.set CStickX,0x0C
-.set CStickY,0x10
-.set Trigger,0x14
-.set Buttons,0x18
-.set XPos,0x1C
-.set YPos,0x20
-.set FacingDirection,0x24
-.set ActionStateID,0x28
-.set AnalogRawInput,0x2C
-#.set Percentage,0x2C
-
-# gameinfo offsets
-.set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length
-.set SuccessBool,0x0
-  .set SuccessBool.Length,0x1
-.set InfoRNGSeed,0x1
-  .set InfoRNGSeed.Length,0x4
-.set MatchStruct,0x5
-  .set MatchStruct.Length,0x138
-.set UCFToggles,0x13D
-  .set UCFToggles.Length,0x20
-.set NametagData,0x15D
-  .set NametagData.Length,0x40
+.include "Playback.s"
 
 # Register names
 .set BufferPointer,30
@@ -113,25 +80,25 @@ READ_DATA:
 # be using this to restore each player's nametag slot
 
 # Offsets
-.set PlayerDataStart,96       #player data starts in match struct
-.set PlayerDataLength,36      #length of each player's data
+.set PlayerInfoStart,96       #player data starts in match struct
+.set PlayerInfoLength,36      #length of each player's data
 .set PlayerStatus,0x1         #offset of players in-game status
 .set Nametag,0xA              #offset of the nametag ID in the player's data
 # Constants
 .set CharactersToCopy, 8 *2
 # Registers
 .set REG_LoopCount,20
-.set REG_PlayerDataStart,21
+.set REG_PlayerInfoStart,21
 .set REG_CurrentPlayerData,22
 .set REG_NametagID,23
 
 # Init loop
   li  REG_LoopCount,0                               #init loop count
-  addi REG_PlayerDataStart,r31,PlayerDataStart     #player data start in match struct
+  addi REG_PlayerInfoStart,r31,PlayerInfoStart     #player data start in match struct
 RESTORE_GAME_INFO_NAMETAG_LOOP:
 # Get players data
-  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
-  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerInfoLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerInfoStart
 # Check if player is in game && human
   lbz r3,PlayerStatus(REG_CurrentPlayerData)
   cmpwi r3,0x0

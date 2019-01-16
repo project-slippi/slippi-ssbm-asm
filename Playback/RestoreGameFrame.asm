@@ -1,5 +1,6 @@
 #To be inserted at 8006b0dc
 .include "../Common/Common.s"
+.include "Playback.s"
 
 # Register names
 .set PlayerData,31
@@ -8,33 +9,6 @@
 .set PlayerDataStatic,28
 .set BufferPointer,27
 .set PlayerBackup,26
-
-# gameframe offsets
-# header
-.set FrameHeaderLength,0x1
-.set Status,0x0
-# per player
-.set PlayerDataLength,0x2D
-.set RNGSeed,0x00
-.set AnalogX,0x04
-.set AnalogY,0x08
-.set CStickX,0x0C
-.set CStickY,0x10
-.set Trigger,0x14
-.set Buttons,0x18
-.set XPos,0x1C
-.set YPos,0x20
-.set FacingDirection,0x24
-.set ActionStateID,0x28
-.set AnalogRawInput,0x2C
-#.set Percentage,0x2C
-
-# gameinfo offsets
-.set GameInfoLength,0x15D
-.set SuccessBool,0x0
-.set InfoRNGSeed,0x1
-.set MatchStruct,0x5
-.set UCFToggles,0x13D
 
 # debug flag
 .set debugFlag,0
@@ -49,7 +23,7 @@
 
 #------------- INITIALIZE -------------
 # here we want to initalize some variables we plan on using throughout
-  lbz PlayerSlot, 0xC(PlayerData) #loads this player slot
+  lbz PlayerSlot,0xC(PlayerData) #loads this player slot
 
 # Get address for static player block
   mr r3,PlayerSlot
@@ -147,6 +121,35 @@ RestoreData:
   lbz r3,AnalogRawInput(PlayerBackup)
   stb r3, 0x2(r20) #store raw x analog
 
+# Get percentage
+  lwz r3,Percentage(PlayerBackup)
+  cmpwi r3,-1      #If this value is -1, the slp does not contain the data
+  beq SkipPercentageRestore
+#Check if percent is different
+  stw r3,0x40(sp)  #float loads needs to be 4 byte aligned
+  lfs f1,0x40(sp)
+  lfs f2,0x1830(PlayerData)
+  fsubs f1,f1,f2
+  lfs	f2, -0x6B00 (rtoc)    #0f
+  fcmpo cr0,f1,f2
+  beq SkipPercentageRestore
+#region debug section
+  .if debugFlag==1
+    bl  PercentText
+    mflr r3
+    lfs f1,0x1830(PlayerData)
+    lfs f2,0x40(sp)
+    branchl r12,0x803456a8
+  .endif
+#endregion
+# Apply Percentage
+  mr  r3,PlayerData
+  lfs f1,0x40(sp)
+  lfs f2,0x1830(PlayerData)
+  fsubs f1,f1,f2
+  branchl r12,0x8006cc7c
+SkipPercentageRestore:
+
 #region debug section
 .if debugFlag==1
 
@@ -232,6 +235,11 @@ blr
   blrl
   .string "Action State: 0x%X // 0x%X"
   .align 2
+
+  PercentText:
+  blrl
+  .string "Percent Desync Detected:
+  Original = %1.2f // Restored = %1.2f"
 
   DividerText:
   blrl

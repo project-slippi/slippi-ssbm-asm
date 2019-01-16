@@ -35,7 +35,7 @@
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCIPTIONS_PAYLOAD_LENGTH, 13 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 416 # byte count
-.set GAME_PRE_FRAME_PAYLOAD_LENGTH, 59 # byte count
+.set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 37 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 1 # byte count
 .set FULL_FRAME_DATA_BUF_LENGTH, 784 # 8 * (PRE_FRAME_LEN + 1) + 8 * (POST_FRAME_LEN + 1)
@@ -47,8 +47,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 1.3.0.0
-.set CURRENT_VERSION,0x01030000
+# current version: 1.4.0.0
+.set CURRENT_VERSION,0x01040000
 
 # Create stack frame and back up every register. For now this is just ultra
 # safe partially to save space and also because the locations we are branching
@@ -299,25 +299,25 @@ lis r3, 0x804D
 lwz r3, 0x5F90(r3) #load random seed
 bl PushWord
 
-lwz r3, 0x70(r30) #load action state ID
+lwz r3, 0x10(r31) #load action state ID
 bl PushHalf
-lwz r3, 0x110(r30) #load x coord
+lwz r3, 0xB0(r31) #load x coord
 bl PushWord
-lwz r3, 0x114(r30) #load y coord
+lwz r3, 0xB4(r31) #load y coord
 bl PushWord
-lwz r3, 0x8C(r30) #load facing direction
+lwz r3, 0x2C(r31) #load facing direction
 bl PushWord
-lwz r3, 0x680(r30) #load Joystick X axis
+lwz r3, 0x620(r31) #load Joystick X axis
 bl PushWord
-lwz r3, 0x684(r30) #load Joystick Y axis
+lwz r3, 0x624(r31) #load Joystick Y axis
 bl PushWord
-lwz r3, 0x698(r30) #load c-stick X axis
+lwz r3, 0x638(r31) #load c-stick X axis
 bl PushWord
-lwz r3, 0x69c(r30) #load c-stick Y axis
+lwz r3, 0x66C(r31) #load c-stick Y axis
 bl PushWord
-lwz r3, 0x6b0(r30) #load analog trigger input
+lwz r3, 0x650(r31) #load analog trigger input
 bl PushWord
-lwz r3, 0x6bc(r30) #load buttons pressed this frame
+lwz r3, 0x65C(r31) #load buttons pressed this frame
 bl PushWord
 
 #get raw controller inputs
@@ -355,6 +355,10 @@ add r3, r3, r4 # move to the correct player position
 
 lbz r3, 0x2(r3) #load raw x analog
 bl PushByte
+
+# Send player's percent
+  lwz r3,0x1830(r31)
+  bl  PushWord
 
 # frame data gets transferred at a different injection point
 b CLEANUP
