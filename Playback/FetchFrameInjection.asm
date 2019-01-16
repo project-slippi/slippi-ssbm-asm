@@ -5,7 +5,7 @@
 # the frameDataBuffer.
 ################################################################################
 .include "../Common/Common.s"
-.include "./Playback.s"
+.include "Playback.s"
 
 #Check if game ended. This isn't really strictly required except that without
 #it we try to fetch a frame that doesn't exist at the end of the game.

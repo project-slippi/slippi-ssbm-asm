@@ -313,7 +313,7 @@ lwz r3, 0x624(r31) #load Joystick Y axis
 bl PushWord
 lwz r3, 0x638(r31) #load c-stick X axis
 bl PushWord
-lwz r3, 0x66C(r31) #load c-stick Y axis
+lwz r3, 0x63C(r31) #load c-stick Y axis
 bl PushWord
 lwz r3, 0x650(r31) #load analog trigger input
 bl PushWord

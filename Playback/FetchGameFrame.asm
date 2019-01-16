@@ -4,7 +4,7 @@
 # current frame's data.
 ################################################################################
 .include "../Common/Common.s"
-.include "/Playback.s"
+.include "Playback.s"
 
 # Register names
 .set PlayerData,31

@@ -5,7 +5,7 @@
 # initial StartMelee spawn points.
 ################################################################################
 .include "../Common/Common.s"
-.include "./Playback.s"
+.include "Playback.s"
 
 ################################################################################
 #                   subroutine: LoadFirstSpawn

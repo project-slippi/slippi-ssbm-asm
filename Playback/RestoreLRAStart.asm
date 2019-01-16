@@ -5,7 +5,7 @@
 # an LRA-Start
 ################################################################################
 .include "../Common/Common.s"
-.include "./Playback.s"
+.include "Playback.s"
 
 # gameframe offsets
 .set GameFrameLength,(FrameHeaderLength+PlayerDataLength*8)
