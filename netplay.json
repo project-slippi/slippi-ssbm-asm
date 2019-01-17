@@ -238,7 +238,8 @@
       "authors": [
         "Dan Salvato",
         "mirrorbender",
-        "TruckJitsu"
+        "Achilles1515",
+        "UnclePunch"
       ],
       "description": [
         "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -----------------",
@@ -246,8 +247,10 @@
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/Widescreen.bin"
+          "type": "injectFolder",
+          "sourceFolder": "External/Widescreen",
+          "isRecursive": true,
+          "annotation": "Widescreen 16:9"
         }
       ]
     },
