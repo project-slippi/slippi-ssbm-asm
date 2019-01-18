@@ -105,6 +105,23 @@
       ]
     },
     {
+      "name": "Disable Screen Shake",
+      "authors": [
+        "Achilles1515"
+      ],
+      "description": [
+        "Disables all screen shaking"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Disable Screen Shake",
+          "isRecursive": false,
+          "annotation": "Disable Screen Shake"
+        }
+      ]
+    },
+    {
       "name": "Enable OSReport Print on Crash (1.02)",
       "authors": [
         "UnclePunch"
