@@ -198,7 +198,7 @@ FloatValues:
   .float 1		#text scale
   .float 0.6   #Canvas Scaling
 #Watermark
-  .float 360  #watermark X
+  .float 340  #watermark X
   .float 350  #Watermark Y
 
   Text:
