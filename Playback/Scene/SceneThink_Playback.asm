@@ -3,6 +3,7 @@
 
 .set REG_Floats, 30
 .set REG_BufferPointer, 29
+.set REG_Text,28
 
 #############################
 # Create Per Frame Function #
@@ -53,29 +54,63 @@ blrl
   branchl	r12,0x803a6754
   stw	r3, -0x52D0 (r13)
 
-  #Set Text Size and Spacing
-  lfs	f0, -0x7D58 (rtoc)
-  stfs	f0, 0x0024 (r3)
-  lfs	f0, -0x7D54 (rtoc)
-  stfs	f0, 0x0028 (r3)
+#BACKUP STRUCT POINTER
+	mr REG_Text,r3
 
-  li	r0, 1
-  stb	r0, 0x004A (r3)
-  stb	r0, 0x0049 (r3)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_Text)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_Text)
 
+#Store Base Z Offset
+	lfs f1,ZPos(REG_Floats) #Z offset
+	stfs f1,0x8(REG_Text)
 
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_Floats)
+  stfs f1,0x24(REG_Text)
+  stfs f1,0x28(REG_Text)
 
   ######################
   ## Print Lines Loop ##
   ######################
 
-  PlaybackThink_InitText:
-  lwz	r3, -0x52D0 (r13)
-  lfs	f1, -0x7D50 (rtoc)
-  lfs	f2, 0x0(REG_Floats)
-  bl	Text
-  mflr	r4
-  branchl	r12,0x803a6b98
+#Initialize Subtext
+	lfs 	f1,XPos(REG_Floats) 		#X offset of text
+	lfs 	f2,YPos(REG_Floats)	  	#Y offset of text
+	mr 	  r3,REG_Text		              #struct pointer
+	bl	  Text
+	mflr  r4
+	branchl r12,0x803a6b98
+#Change scale
+	mr	r4,r3
+	mr	r3,REG_Text
+	lfs	f1,TextScale(REG_Floats)
+	lfs	f2,TextScale(REG_Floats)
+	branchl r12,0x803a7548
+
+#Initialize Watermark
+	lfs 	f1,WatermarkX(REG_Floats) 		#X offset of text
+	lfs 	f2,WatermarkY(REG_Floats)	  	#Y offset of text
+	mr 	  r3,REG_Text		              #struct pointer
+	bl	  Watermark
+	mflr  r4
+	branchl r12,0x803a6b98
+#Change scale
+	mr	r4,r3
+	mr	r3,REG_Text
+	lfs	f1,TextScale(REG_Floats)
+	lfs	f2,TextScale(REG_Floats)
+	branchl r12,0x803a7548
+#Change color
+  load  r3,0x2ECC40FF
+  stw r3,0x40(sp)
+  mr  r3,REG_Text
+  li  r4,1
+  addi r5,sp,0x40
+  branchl r12,0x803a74f0
 
   ###########################
   ## Allocate Buffer Space ##
@@ -146,13 +181,34 @@ blrl
 
 ######################################################
 
-  FloatValues:
+FloatValues:
   blrl
-  .float -80		#Y Initial
+#Offsets
+  .set XPos,0x0
+  .set YPos,0x4
+  .set ZPos,0x8
+  .set TextScale,0xC
+  .set CanvasScaling,0x10
+  .set WatermarkX,0x14
+  .set WatermarkY,0x18
+#Values
+  .float 0    #text X pos
+  .float 0   #text Y pos
+  .float 0     #Z offset
+  .float 1		#text scale
+  .float 0.6   #Canvas Scaling
+#Watermark
+  .float 360  #watermark X
+  .float 350  #Watermark Y
 
   Text:
   blrl
   .string "Waiting for game..."
+  .align 2
+
+  Watermark:
+  blrl
+  .string "project-slippi.com"
   .align 2
 
   PlaybackThink_Exit:
