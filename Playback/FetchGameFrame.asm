@@ -58,11 +58,12 @@ FetchFrameInfo_RECEIVE_DATA:
   cmpwi r3, CONST_FrameFetchResult_Wait
   bne FetchFrameInfo_Exit # If we are not told to wait, exit
 # Wait a frame before trying again
-# We used to wait a frame here in order to give Dolphin time to receive more
-# more frame data, we now no longer do that because it was causing the game
-# engine to run in hyperdrive and caused some serious FPS stuttering when
-# mirroring was close to real-time
-  #branchl r12,0x8034f314     #VIWaitForRetrace
+  branchl r12,0x8034f314 #VIWaitForRetrace
+
+# Here we need to flush the pad queue, this is required to prevent the game
+# engine from trying to catch up for lost time which would cause a very
+# jittery playback experience. Credit to tauKhan for this
+  branchl r12,0x80376d04 #HSD_PadFlushQueue
 
 #region debug section
 .if debugFlag==1
