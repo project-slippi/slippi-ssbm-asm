@@ -97,8 +97,10 @@ RestoreData:
   stw r3,0xB4(PlayerData) #y position
   lwz r3,FacingDirection(PlayerBackup)
   stw r3,0x2C(PlayerData) #facing direction
+.if debugFlag==0
   lwz r3,ActionStateID(PlayerBackup)
   stw r3,0x10(PlayerData) #animation state ID
+.endif
 
 # UCF uses raw controller inputs for dashback, restore x analog byte here
   lis r3, 0x8046  # start location of circular buffer
@@ -209,45 +211,52 @@ backup
 #Divider
   bl  DividerText
   mflr r3
+  crclr 6
   branchl r12,0x803456a8
 #Frame
   bl  FrameText
   mflr  r3
   addi  r4,PlayerSlot,1
-  lis r5,0x8048
-  lwz r5,-0x62A8(r5) # load scene controller frame count
-  lis r6,0x8047
-  lwz r6,-0x493C(r6) #load match frame count
-  cmpwi r6, 0
-  bne DontAdjustFrame #this makes it so that if the timer hasn't started yet, we have a unique frame count still
-  sub r6,r6,r5
-  li r5,-0x7B
-  sub r5,r5,r6
-  DontAdjustFrame:
+  lwz r5,frameIndex(r13)
+  crclr 6
   branchl r12,0x803456a8
 #XPos
   bl  XPosText
   mflr  r3
   lfs f1,0xB0(PlayerData)
   lfs f2,XPos(PlayerBackup)
+  crset 6
   branchl r12,0x803456a8
 #YPos
   bl  YPosText
   mflr  r3
   lfs f1,0xB4(PlayerData)
   lfs f2,YPos(PlayerBackup)
+  crset 6
   branchl r12,0x803456a8
 #Facing Direction
   bl  FacingText
   mflr  r3
   lfs f1,0x2C(PlayerData)
   lfs f2,FacingDirection(PlayerBackup)
+  crset 6
   branchl r12,0x803456a8
 #AS
+  mr r3,PlayerData
+  lwz r4,0x10(PlayerData)
+  addi r5,sp,0x40
+  bl  GetASName
+  mr r3,PlayerData
+  lwz r4,ActionStateID(PlayerBackup)
+  addi r5,sp,0x80
+  bl  GetASName
   bl  ASText
   mflr  r3
-  lwz r4,0x10(PlayerData)
-  lwz r5,ActionStateID(PlayerBackup)
+  lwz   r4,0x10(PlayerData)
+  addi  r5,sp,0x40
+  lwz   r6,ActionStateID(PlayerBackup)
+  addi  r7,sp,0x80
+  crclr 6
   branchl r12,0x803456a8
 
 restore
@@ -255,39 +264,91 @@ blr
 
 ######################################################################
 
+GetASName:
+  backup
+  mr  r31,r5
+#Get animation ID from AS ID
+  cmpwi r4,0x155
+  blt GetASName_CommonMove
+GetASName_SpecialMove:
+  subi r4,r4,0x155
+  lwz r5,0x20(r3)           #get special move struct
+  b GetASName_GetAnimationID
+GetASName_CommonMove:
+  lwz r5,0x1C(r3)           #get common move struct
+GetASName_GetAnimationID:
+  rlwinm	r4, r4, 5, 0, 26  #get offset from AS ID
+  lwzx r4,r4,r5             #get animation ID
+#Get Animation Data Pointer
+  branchl    r12,0x80085fd4
+#Get Move Name String
+  lwz    r3,0x0(r3)
+#Get to move name (string after ACTION_)
+  subi    r3,r3,0x1
+GetASName_MoveSearchLoop:
+  lbzu    r6,0x1(r3)
+  cmpwi   r6,0x4E         #Check for N
+  bne     GetASName_MoveSearchLoop
+  lbzu    r6,0x1(r3)
+  cmpwi   r6,0x5F         #Check for _
+  bne     GetASName_MoveSearchLoop
+#Copy Move Name To Cut Off "fiagtree" Text
+  subi    r4,r31,0x1
+GetASName_StringCopyLoop:
+  lbzu    r6,0x1(r3)
+  cmpwi    r6,0x5F        #Check for Underscore
+  beq    GetASName_ExitCopyLoop
+  stbu    r6,0x1(r4)
+  b    GetASName_StringCopyLoop
+GetASName_ExitCopyLoop:
+  li    r3,0x0
+  stbu    r3,0x1(r4)
+  restore
+  blr
+
+######################################################################
+
   FrameText:
   blrl
-  .string "P%d Frame: %d // Original // Restored"
+  .string "P%d Frame: %d // Original // Restored
+"
   .align 2
 
   XPosText:
   blrl
-  .string "X Position: %f // %f"
+  .string "X Position: %f // %f
+"
   .align 2
 
   YPosText:
   blrl
-  .string "Y Position: %f // %f"
+  .string "Y Position: %f // %f
+"
   .align 2
 
   FacingText:
   blrl
-  .string "Facing Direction: %1.0f // %1.0f"
+  .string "Facing Direction: %1.0f // %1.0f
+"
   .align 2
 
   ASText:
   blrl
-  .string "Action State: 0x%X // 0x%X"
+  .string "Action State: 0x%X %s // 0x%X %s
+"
   .align 2
 
   PercentText:
   blrl
   .string "Percent Desync Detected:
-  Original = %1.2f // Restored = %1.2f"
+  Original = %1.2f // Restored = %1.2f
+"
+  .align 2
 
   DividerText:
   blrl
-  .string "------Desync Detected--------"
+  .string "------Desync Detected--------
+"
   .align 2
 
 .endif

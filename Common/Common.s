@@ -30,14 +30,14 @@ lfs \regf,-0x4(sp)
 .macro backup
 mflr r0
 stw r0, 0x4(r1)
-stwu r1,-0x50(r1)	# make space for 12 registers
+stwu r1,-0xB0(r1)	# make space for 12 registers
 stmw r20,0x8(r1)
 .endm
 
  .macro restore
 lmw r20,0x8(r1)
-lwz r0, 0x54(r1)
-addi r1,r1,0x50	# release the space
+lwz r0, 0xB4(r1)
+addi r1,r1,0xB0	# release the space
 mtlr r0
 .endm
 
