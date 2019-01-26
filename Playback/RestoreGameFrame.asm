@@ -150,6 +150,50 @@ RestoreData:
   branchl r12,0x8006cc7c
 SkipPercentageRestore:
 
+# Correct spawn points on the first frame
+  lwz r3,frameIndex(r13)
+  cmpwi r3,-123
+  bne SkipSpawnCorrection
+# Force Direction Change
+  mr  r3,PlayerData
+  li  r4,0
+  lfs	f1, -0x778C (rtoc)
+  branchl r12,0x8007592c
+# Update Position (Copy Physics XYZ into all ECB XYZ)
+  lwz	r3, 0x00B0 (PlayerData)
+  stw	r3, 0x06F4 (PlayerData)
+  stw	r3, 0x070C (PlayerData)
+  lwz	r3, 0x00B4 (PlayerData)
+  stw	r3, 0x06F8 (PlayerData)
+  stw	r3, 0x0710 (PlayerData)
+  lwz	r3, 0x00B8 (PlayerData)
+  stw	r3, 0x06FC (PlayerData)
+  stw	r3, 0x0714 (PlayerData)
+# Update Initial Y Position (AS_Entry variable)
+  lfs f1,0xB4(PlayerData)
+  stfs f1,0x2344(PlayerData)
+# Update Collision Frame ID
+  lwz	r3, -0x51F4 (r13)
+  stw r3, 0x728(PlayerData)
+# Update Static Player Block Coords
+  lbz r3,0xC(PlayerData)
+  lbz	r4, 0x221F (PlayerData)
+  rlwinm	r4, r4, 29, 31, 31
+  addi  r5,PlayerData,176
+  branchl r12,0x80032828
+#Update Camera Box Position
+  mr  r3,PlayerGObj
+  branchl r12,0x800761c8
+#Update Camera Box Direction Tween
+  lwz r3,0x890(PlayerData)
+  lfs f1,0x40(r3)     #Leftmost Bound
+  stfs f1,0x2C(r3)    #Current Left Box Bound
+  lfs f1,0x44(r3)     #Rightmost Bound
+  stfs f1,0x30(r3)    #Current Right Box Bound
+#Update Camera Position
+  branchl r12,0x8002f3ac
+SkipSpawnCorrection:
+
 #region debug section
 .if debugFlag==1
 
