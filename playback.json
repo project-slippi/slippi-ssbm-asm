@@ -43,9 +43,9 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF + Arduino Toggle UI",
+          "sourceFolder": "External/UCF + Arduino Toggle UI/UCF",
           "isRecursive": true,
-          "annotation": "UCF + Arduino Toggle UI"
+          "annotation": "UCF Handlers"
         }
       ]
     },
