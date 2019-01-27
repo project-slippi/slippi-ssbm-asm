@@ -118,6 +118,20 @@
       ]
     },
     {
+      "name": "Enable Develop Mode",
+      "description": [
+        "Turns develop (debug) mode on. Allows access to frame advance, hit/hurtbox display, and alternate camera angles"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Enable Develop Mode",
+          "isRecursive": true,
+          "annotation": "Enable Develop Mode"
+        }
+      ]
+    },
+    {
       "name": "Enable OSReport Print on Crash (1.02)",
       "authors": [
         "UnclePunch"
