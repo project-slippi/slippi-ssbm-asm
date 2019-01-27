@@ -147,19 +147,10 @@
           "annotation": "C-Stick Panning while Paused [Achilles]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/UcfHandler.bin",
-          "annotation": "UCF Handler w/ Random Stage Selection [Ptomerty, tauKhan, Cilan, UnclePunch]"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/UcfDashback.bin",
-          "annotation": "UCF v0.73 Dashback w/ Toggle [UCF, Ptomerty, tauKhan, Cilan]"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/UcfShieldDrop.bin",
-          "annotation": "UCF v0.73 Shield Drops w/ Toggle [UCF, Ptomerty, tauKhan, Cilan]"
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF + Arduino Toggle UI",
+          "isRecursive": true,
+          "annotation": "UCF + Arduino Toggle UI"
         },
         {
           "type": "binary",

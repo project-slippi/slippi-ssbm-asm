@@ -69,10 +69,16 @@ READ_DATA:
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
-  load r3,0x804D1FB0
-  addi r4,BufferPointer,UCFToggles
-  li  r5,0x20
-  branchl r12,0x800031f4
+  subi r20,rtoc,UCFBools             #Get UCF toggles in game memory
+  addi r21,BufferPointer,UCFToggles  #Get UCF toggles in buffer
+  li  r22,0                          #Init loop
+UCF_LOOP:
+  mulli r3,r22,0x8          #each player's ucf toggle is 8 bytes long (thanks FM)
+  lwzx  r3,r3,r21           #get ucf toggle value
+  stbx  r3,r22,r20          #store to game memory
+  addi  r22,r22,1
+  cmpwi r22,4
+  blt UCF_LOOP
 
 #------------- RESTORE NAMETAGS ------------
 # Loop through players 1-4 and restore their nametag data

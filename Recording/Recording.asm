@@ -192,15 +192,16 @@ lwz r3, 0x5F90(r3) #load random seed
 bl PushWord
 
 # write UCF toggle bytes
-lis r14, 0x804D
-START_UCF_LOOP:
-lwz r3, 0x1FB0(r14) #load UCF toggle
-bl PushWord
-
-addi r14, r14, 0x4
-andi. r3, r14, 0xFFFF # Grab the bottom of the loop address
-cmpwi r3, 0x20 # Stop looping after 8 iterations
-blt+ START_UCF_LOOP
+  subi r15,rtoc,UCFBools    #Get UCF toggles
+  li  r14,0                 #Init loop
+UCF_LOOP:
+  lbzx r3,r14,r15           #Get toggle value
+  bl PushWord
+  lbzx r3,r14,r15           #send toggle value again for compatibility with old .slp files
+  bl PushWord
+  addi  r14,r14,1
+  cmpwi r14,4
+  blt UCF_LOOP
 
 #------------- SEND NAMETAGS ------------
 # Loop through players 1-4 and send their nametag data

@@ -67,6 +67,9 @@ mtlr r0
 .set CONST_SlippiCmdCheckForStockSteal,0x89
 .set CONST_SlippiCmdGetBufferedFrameCount,0x90
 
+.set UCFBools,0xDD8
+.set UCFTextPointers,0x4fa0
+
 ################################################################################
 # Offsets
 ################################################################################
