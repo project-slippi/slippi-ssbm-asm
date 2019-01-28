@@ -35,7 +35,7 @@
 toggleRight:
 #Get Current Toggle Value
   lbz	r4, 0x0004 (r31) #get player number
-  subi r5,rtoc,UCFBools #get UCF toggle bool base address
+  subi r5,rtoc,ControllerFixOptions #get UCF toggle bool base address
   lbzx r3,r5,r4	   #get players UCF toggle bool
   addi r3,r3,1
   cmpwi r3,2
@@ -46,7 +46,7 @@ toggleRight:
 toggleLeft:
 #Get Current Toggle Value
   lbz	r4, 0x0004 (r31) #get player number
-  subi r5,rtoc,UCFBools #get UCF toggle bool base address
+  subi r5,rtoc,ControllerFixOptions #get UCF toggle bool base address
   lbzx r3,r5,r4	   #get players UCF toggle bool
   subi r3,r3,1
   cmpwi r3,0
@@ -71,7 +71,7 @@ updateText:
   lwzx r3,r3,r4 #get players pointer
 
 #Get Toggle Status
-  subi r4,rtoc,UCFBools #get UCF toggle bool base address
+  subi r4,rtoc,ControllerFixOptions #get UCF toggle bool base address
   lbzx r4,r4,r5	        #get players UCF toggle bool
 
 #Get Text Associated With Toggle Status

@@ -192,7 +192,7 @@ lwz r3, 0x5F90(r3) #load random seed
 bl PushWord
 
 # write UCF toggle bytes
-  subi r15,rtoc,UCFBools    #Get UCF toggles
+  subi r15,rtoc,ControllerFixOptions    #Get UCF toggles
   li  r14,0                 #Init loop
 UCF_LOOP:
   lbzx r3,r14,r15           #Get toggle value

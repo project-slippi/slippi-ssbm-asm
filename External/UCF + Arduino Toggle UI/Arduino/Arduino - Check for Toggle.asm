@@ -6,7 +6,7 @@
 
 #Check If Enabled
   lbz	r11, 0x618 (r31)        #get player number
-  subi r12,rtoc,UCFBools      #get UCF toggle bool base address
+  subi r12,rtoc,ControllerFixOptions      #get UCF toggle bool base address
   lbzx r11,r12,r11	          #get players UCF toggle bool
   cmpwi r11,2
   bne Exit
