@@ -67,8 +67,11 @@ mtlr r0
 .set CONST_SlippiCmdCheckForStockSteal,0x89
 .set CONST_SlippiCmdGetBufferedFrameCount,0x90
 
-.set UCFBools,0xDD8
+.set ControllerFixOptions,0xDD8 # Each byte at offset is a player's setting
 .set UCFTextPointers,0x4fa0
+
+.set DashbackOptions,0xDD4 # Offset for dashback-specific settings (playback)
+.set ShieldDropOptions,0xDD0 # Offset for shielddrop-specific settings (playback)
 
 ################################################################################
 # Offsets
