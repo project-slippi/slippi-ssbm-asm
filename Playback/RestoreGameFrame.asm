@@ -10,9 +10,6 @@
 .set BufferPointer,27
 .set PlayerBackup,26
 
-# debug flag
-.set debugFlag,0
-
 ################################################################################
 #                   subroutine: readInputs
 # description: reads inputs from Slippi for a given frame and overwrites
@@ -49,7 +46,7 @@
 CONTINUE_READ_DATA:
 
 #region debug section
-.if debugFlag==1
+.if STG_DesyncDebug==1
 CheckForDesync:
   lfs f1,XPos(PlayerBackup)
   lfs f2,0xB0(PlayerData)
@@ -97,7 +94,7 @@ RestoreData:
   stw r3,0xB4(PlayerData) #y position
   lwz r3,FacingDirection(PlayerBackup)
   stw r3,0x2C(PlayerData) #facing direction
-.if debugFlag==0
+.if STG_DesyncDebug==0
   lwz r3,ActionStateID(PlayerBackup)
   stw r3,0x10(PlayerData) #animation state ID
 .endif
@@ -136,7 +133,7 @@ RestoreData:
   fcmpo cr0,f1,f2
   beq SkipPercentageRestore
 #region debug section
-  .if debugFlag==1
+  .if STG_DesyncDebug==1
     bl  PercentText
     mflr r3
     lfs f1,0x1830(PlayerData)
@@ -197,7 +194,7 @@ SkipPercentageRestore:
 SkipSpawnCorrection:
 
 #region debug section
-.if debugFlag==1
+.if STG_DesyncDebug==1
 
   b Injection_Exit
 

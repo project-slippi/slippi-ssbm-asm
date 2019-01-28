@@ -66,30 +66,8 @@ FetchFrameInfo_RECEIVE_DATA:
 # engine from trying to catch up for lost time which would cause a very
 # jittery playback experience. Credit to tauKhan for this
   branchl r12,0x80376d04 #HSD_PadFlushQueue
-  
-#region debug section
-.if debugFlag==1
-# OSReport
-  lwz r4,frameIndex(r13)
-  bl  WaitAFrameText
-  mflr r3
-  branchl r12,0x803456a8
-.endif
-#endregion
 
   b FetchFrameInfo_REQUEST_DATA
-
-#region debug section
-.if debugFlag==1
-b FetchFrameInfo_Exit
-#################################
-WaitAFrameText:
-blrl
-.string "Waiting on frame %d"
-.align 2
-#################################
-.endif
-#endregion
 
 FetchFrameInfo_Exit:
   restore
