@@ -113,11 +113,6 @@
         },
         {
           "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/FasterStageLoad.bin",
-          "annotation": "Faster Stage Load [UnclePunch]"
-        },
-        {
-          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/FasterCssLoad.bin",
           "annotation": "Faster CSS Load [UnclePunch]"
         },
@@ -151,6 +146,12 @@
           "sourceFolder": "External/UCF + Arduino Toggle UI",
           "isRecursive": true,
           "annotation": "UCF + Arduino Toggle UI"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/DPad Down at CSS for Random Stage",
+          "isRecursive": true,
+          "annotation": "DPad Down at CSS for Random Stage"
         },
         {
           "type": "binary",
