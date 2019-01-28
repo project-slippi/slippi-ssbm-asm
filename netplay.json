@@ -113,6 +113,11 @@
         },
         {
           "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/PauseDuringStart.bin",
+          "annotation": "Pause During Game Start [UnclePunch]"
+        },
+        {
+          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/FasterStageLoad.bin",
           "annotation": "Faster Stage Load [UnclePunch]"
         },
