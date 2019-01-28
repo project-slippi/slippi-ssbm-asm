@@ -50,6 +50,18 @@
       ]
     },
     {
+      "name": "Normal Lag Reduction",
+      "authors": [
+        "Hannes Mann"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
       "name": "Game Music ON",
       "authors": [
         "UnclePunch"

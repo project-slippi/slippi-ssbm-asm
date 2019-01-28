@@ -146,6 +146,10 @@ blrl
     li  r3,0x0
     branchl r12,0x803761c0      #HSD_VICopyXFBASync
 
+    # Explicit wait frame. Without this, if Normal Lag Reduction was on,
+    # this scene would go into hyper-drive
+    branchl r12,0x8034f314     #VIWaitForRetrace
+
   ##########################
   ## Update ... Animation ##
   ##########################
