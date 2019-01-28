@@ -119,6 +119,9 @@
     },
     {
       "name": "Enable Develop Mode",
+      "authors": [
+        "UnclePunch"
+      ],
       "description": [
         "Turns develop (debug) mode on. Allows access to frame advance, hit/hurtbox display, and alternate camera angles"
       ],
