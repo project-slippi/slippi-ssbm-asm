@@ -70,6 +70,9 @@ mtlr r0
 .set UCFBools,0xDD8
 .set UCFTextPointers,0x4fa0
 
+.set DashbackBools,0xDDC # TODO: set this to correct offset
+.set ShieldDropBools,0xDE0 # TODO: set this to correct offset
+
 ################################################################################
 # Offsets
 ################################################################################

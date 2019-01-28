@@ -7,6 +7,14 @@
   subi r5,rtoc,UCFBools   #get UCF toggle bool base address
   lbzx r4,r4,r5	          #get players UCF toggle bool
   cmpwi r4,0x1
+  beq loc_0x0 # if equal, skip to start of handler
+# Check for dashback bool (set by slp playback)
+  # Do I have to reload r4 like this? Is using r6 safe in this injection?
+  lwz r4, 44(r3)
+  lbz r4,0x618(r4)        #get player port
+  subi r5,rtoc,DashbackBools
+  lbzx r4,r4,r5
+  cmpwi r4,0x1
   bne loc_0x108
 
 loc_0x0:

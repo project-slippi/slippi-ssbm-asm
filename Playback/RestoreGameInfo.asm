@@ -69,13 +69,17 @@ READ_DATA:
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
-  subi r20,rtoc,UCFBools             #Get UCF toggles in game memory
+  subi r19,rtoc,DashbackBools #Prepare game memory dashback toggle address
+  subi r20,rtoc,ShieldDropBools #Prepare game memory shield drop toggle address
   addi r21,BufferPointer,UCFToggles  #Get UCF toggles in buffer
   li  r22,0                          #Init loop
 UCF_LOOP:
-  mulli r3,r22,0x8          #each player's ucf toggle is 8 bytes long (thanks FM)
-  lwzx  r3,r3,r21           #get ucf toggle value
-  stbx  r3,r22,r20          #store to game memory
+  mulli r4,r22,0x8          #each player's ucf toggle is 8 bytes long (thanks FM)
+  lwzx  r3,r4,r21           #get ucf toggle value
+  stbx  r3,r22,r19          #store to dashback
+  addi  r4,r4,0x4
+  lwzx  r3,r4,r21
+  stbx  r3,r22,r20
   addi  r22,r22,1
   cmpwi r22,4
   blt UCF_LOOP
