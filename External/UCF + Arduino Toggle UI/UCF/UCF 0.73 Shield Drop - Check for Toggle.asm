@@ -12,7 +12,7 @@
   # Do I have to reload r4 like this? Is using r6 safe in this injection?
   lwz r4, 44(r3)
   lbz r4,0x618(r4)          #get player port
-  subi r5,rtoc,ShieldDropBools     #get UCF toggle bool base address
+  subi r5,rtoc,ShieldDropOptions     #get UCF toggle bool base address
   lbzx r4,r4,r5	            #get players ShieldDrop toggle bool
   cmpwi r4,0x1
   bne loc_0xE4

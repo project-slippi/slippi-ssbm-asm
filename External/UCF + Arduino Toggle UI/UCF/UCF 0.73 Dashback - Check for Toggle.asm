@@ -12,7 +12,7 @@
   # Do I have to reload r4 like this? Is using r6 safe in this injection?
   lwz r4, 44(r3)
   lbz r4,0x618(r4)        #get player port
-  subi r5,rtoc,DashbackBools
+  subi r5,rtoc,DashbackOptions
   lbzx r4,r4,r5
   cmpwi r4,0x1
   bne loc_0x108

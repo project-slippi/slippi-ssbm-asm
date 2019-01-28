@@ -69,8 +69,8 @@ READ_DATA:
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
-  subi r19,rtoc,DashbackBools #Prepare game memory dashback toggle address
-  subi r20,rtoc,ShieldDropBools #Prepare game memory shield drop toggle address
+  subi r19,rtoc,DashbackOptions #Prepare game memory dashback toggle address
+  subi r20,rtoc,ShieldDropOptions #Prepare game memory shield drop toggle address
   addi r21,BufferPointer,UCFToggles  #Get UCF toggles in buffer
   li  r22,0                          #Init loop
 UCF_LOOP:
