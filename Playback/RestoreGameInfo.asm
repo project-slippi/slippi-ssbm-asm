@@ -75,7 +75,7 @@ READ_DATA:
   li  r22,0                          #Init loop
 UCF_LOOP:
   mulli r4,r22,0x8          #each player's ucf toggle is 8 bytes long (thanks FM)
-  lwzx  r3,r4,r21           #get ucf toggle value
+  lwzx  r3,r4,r21           #get dashback toggle from
   stbx  r3,r22,r19          #store to dashback
   addi  r4,r4,0x4
   lwzx  r3,r4,r21
