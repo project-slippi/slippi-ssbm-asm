@@ -82,11 +82,6 @@
         },
         {
           "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/FasterStageLoad.bin",
-          "annotation": "Faster Stage Load [UnclePunch]"
-        },
-        {
-          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/FasterCssLoad.bin",
           "annotation": "Faster CSS Load [UnclePunch]"
         },
