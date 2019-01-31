@@ -276,6 +276,8 @@ GetASName_CommonMove:
 GetASName_GetAnimationID:
   rlwinm	r4, r4, 5, 0, 26  #get offset from AS ID
   lwzx r4,r4,r5             #get animation ID
+  cmpwi r4,-1               #return "N/A" if animation not found
+  beq GetASName_NoAnimation
 #Get Animation Data Pointer
   branchl    r12,0x80085fd4
 #Get Move Name String
@@ -300,8 +302,23 @@ GetASName_StringCopyLoop:
 GetASName_ExitCopyLoop:
   li    r3,0x0
   stbu    r3,0x1(r4)
+  b GetASName_Exit
+
+GetASName_NoAnimation:
+#Return N/A if animation isn't found
+  mr  r3,r31
+  bl  GetASName_NA
+  mflr r4
+  branchl r12,0x80325a50
+
+GetASName_Exit:
   restore
   blr
+
+GetASName_NA:
+blrl
+.string "N/A"
+.align 2
 
 ######################################################################
 

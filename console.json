@@ -125,9 +125,10 @@
           "annotation": "UCF Code [Dan Salvato, tauKhan, UnclePunch]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/UCF/ForceOnToggleFlags.bin",
-          "annotation": "Forces on Toggles for correct playback [Fizzi]"
+          "type": "injectFolder",
+          "sourceFolder": "External/Enable UCF Toggles",
+          "isRecursive": true,
+          "annotation": "Enable UCF Toggles [Fizzi]"
         }
       ]
     },
