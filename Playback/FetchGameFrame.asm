@@ -65,6 +65,7 @@ FetchFrameInfo_RECEIVE_DATA:
 # Here we need to flush the pad queue, this is required to prevent the game
 # engine from trying to catch up for lost time which would cause a very
 # jittery playback experience. Credit to tauKhan for this
+  li r3,1 # Tell PadFlushQueue to flush
   branchl r12,0x80376d04 #HSD_PadFlushQueue
 
   b FetchFrameInfo_REQUEST_DATA
