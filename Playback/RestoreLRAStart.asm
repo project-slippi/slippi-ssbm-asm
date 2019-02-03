@@ -7,11 +7,13 @@
 .include "../Common/Common.s"
 .include "Playback.s"
 
-#Check status of frame received
+# Check status of frame received. If a terminate result is received, that means
+# we need to end the game immediately
   lwz r3,frameDataBuffer(r13)
   lbz r3,Status(r3)
-  cmpwi r3, CONST_FrameFetchResult_Continue
-  beq Exit
+  cmpwi r3, CONST_FrameFetchResult_Terminate
+  bne Exit # If we are not terminating, skip
+
 END_GAME:
   li  r3,-1  #Unk
   li  r4,7   #GameEnd ID (7 = LRA Start)
