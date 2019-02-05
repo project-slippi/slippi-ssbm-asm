@@ -1,6 +1,7 @@
 # Inject at 801a501c
 # Injection is right before game engine loops
 .include "../Common/Common.s"
+.include "./Playback.s"
 
 # Info provided by tauKhan, relevant for fast forwarding
 # 801a4db0: transfer input queue count to r27
