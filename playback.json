@@ -159,6 +159,25 @@
       ]
     },
     {
+      "name": "PAL Patch (NTSC 1.02)",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Includes all character balances, Samus Cannot Bomb Jump Out of Zair, ",
+        "Remove Extender, Samus and DK Keep Charge When Hit During Up B, ",
+        "Detection Bubbles Do Not Skip Hurtbox Collision Check, PAL Stock ",
+        "Icons and PAL CSS Indicator"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/PAL.bin",
+          "annotation": "Boot to CSS [Dan Salvato, Achilles]"
+        }
+      ]
+    },
+    {
       "name": "Slippi Playback",
       "authors": [
         "Fizzi",
