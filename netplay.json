@@ -226,6 +226,23 @@
       ]
     },
     {
+      "name": "PAL Patch",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Includes all character balances, Samus Cannot Bomb Jump Out of Zair, Remove Extender, DK Keeps Charge When Hit During Up B, Detection Bubbles Do Not Skip Hurtbox Collision Check, Freeze Glitch Fix, PAL Stock Icons and PAL CSS Indicator"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/PAL",
+          "isRecursive": true,
+          "annotation": "PAL Patch"
+        }
+      ]
+    },
+    {
       "name": "Widescreen 16:9",
       "authors": [
         "Dan Salvato",

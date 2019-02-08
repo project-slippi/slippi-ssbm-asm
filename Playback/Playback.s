@@ -40,7 +40,7 @@
   .set Percentage,0x2D
 
 # gameinfo offsets
-  .set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length
+  .set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length + PALBool.Length
   .set SuccessBool,0x0
     .set SuccessBool.Length,0x1
   .set InfoRNGSeed,0x1
@@ -51,3 +51,5 @@
     .set UCFToggles.Length,0x20
   .set NametagData,0x15D
     .set NametagData.Length,0x40
+  .set PALBool,0x19D
+    .set PALBool.Length,0x1

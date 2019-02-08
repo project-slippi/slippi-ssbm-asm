@@ -79,6 +79,8 @@ mtlr r0
 .set DashbackOptions,0xDD4 # Offset for dashback-specific settings (playback)
 .set ShieldDropOptions,0xDD0 # Offset for shielddrop-specific settings (playback)
 
+.set PALToggle,-0xDCC   #offset for whether or not the replay is played with PAL modifications
+
 ################################################################################
 # Offsets
 ################################################################################

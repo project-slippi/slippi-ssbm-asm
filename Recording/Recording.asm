@@ -34,7 +34,7 @@
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCIPTIONS_PAYLOAD_LENGTH, 13 # byte count
-.set GAME_INFO_PAYLOAD_LENGTH, 416 # byte count
+.set GAME_INFO_PAYLOAD_LENGTH, 417 # byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 37 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 1 # byte count
@@ -47,8 +47,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 1.4.1.0
-.set CURRENT_VERSION,0x01040100
+# current version: 1.5.0.0
+.set CURRENT_VERSION,0x01050000
 
 # Create stack frame and back up every register. For now this is just ultra
 # safe partially to save space and also because the locations we are branching
@@ -259,6 +259,10 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   addi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,4
   blt SEND_GAME_INFO_NAMETAG_LOOP
+
+#Send PALToggle byte
+  lbz r3,PALToggle(rtoc)
+  bl  PushByte
 
 bl ExiTransferBuffer
 

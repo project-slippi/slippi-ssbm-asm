@@ -150,6 +150,10 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   cmpwi REG_LoopCount,4
   blt RESTORE_GAME_INFO_NAMETAG_LOOP
 
+#Restore PALToggle byte
+  lbz r3,PALBool(BufferPointer)
+  stb r3,PALToggle(rtoc)
+
 Injection_Exit:
 restore
 lis r3, 0x8017 #execute replaced code line
