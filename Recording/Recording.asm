@@ -175,6 +175,8 @@ bl PushWord
 #------------- GAME INFO BLOCK -------------
 # this iterates through the static game info block that is used to pull data
 # from to initialize the game. it writes out the whole thing (0x138 long)
+.set GameInfoLength,0x138
+
 li r14, 0
 START_GAME_INFO_LOOP:
 add r3, r31, r14
@@ -182,8 +184,50 @@ lwz r3, 0x0(r3)
 bl PushWord
 
 addi r14, r14, 0x4
-cmpwi r14, 0x138
+cmpwi r14, GameInfoLength
 blt+ START_GAME_INFO_LOOP
+
+#------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
+
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+
+.set PlayerCharacter,0x0
+
+#r25 = current offset in buffer
+#Get game info in buffer
+  subi  r3,r25,GameInfoLength
+#Get to player data
+  addi  REG_PlayerDataStart,r3,PlayerDataStart
+#Init Loop Count
+  li  REG_LoopCount,0
+SEND_GAME_INFO_EDIT_SHEIK_LOOP:
+#Get start of this players data
+  mulli r22,REG_LoopCount,PlayerDataLength
+  add r22,r22,REG_PlayerDataStart
+#Check if this player is active
+  lbz r3,PlayerStatus(r22)
+  cmpwi r3,0x0
+  bne SEND_GAME_INFO_EDIT_SHEIK_LOOP_INC
+#Check if this player is zelda
+  lbz r3,PlayerCharacter(r22)
+  cmpwi r3,0x12
+  bne SEND_GAME_INFO_EDIT_SHEIK_LOOP_INC
+#Check if this player is holding A
+  load r3,0x804c20bc
+  mulli	r4, REG_LoopCount, 68
+  add r3,r3,r4
+  lwz r3,0x0(r3)
+  rlwinm.	r0, r3, 0, 23, 23
+  beq SEND_GAME_INFO_EDIT_SHEIK_LOOP_INC
+#Change player to Sheik
+  li  r3,0x13
+  stb r3,PlayerCharacter(r22)
+
+SEND_GAME_INFO_EDIT_SHEIK_LOOP_INC:
+  addi  REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt SEND_GAME_INFO_EDIT_SHEIK_LOOP
 
 #------------- OTHER INFO -------------
 # write out random seed
