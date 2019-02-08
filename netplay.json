@@ -87,9 +87,9 @@
           "annotation": "Unlock All 293 Trophies [Datel]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/SkipResultsScreen.bin",
-          "annotation": "Skip Results Screen [Achilles]"
+          "type": "injectFolder",
+          "sourceFolder": "External/Salty Runback",
+          "annotation": "Hold A+B For Salty Runback 2.0 [Dan Salvato, UnclePunch]"
         },
         {
           "type": "binary",
