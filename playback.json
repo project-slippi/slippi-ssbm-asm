@@ -179,7 +179,18 @@
         {
           "type": "injectFolder",
           "sourceFolder": "Common",
+          "isRecursive": false
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Preload Stadium Transformations",
           "isRecursive": true
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/PAL/Handlers",
+          "isRecursive": true,
+          "annotation": "PAL Handlers"
         }
       ]
     }

@@ -1,5 +1,5 @@
 #To be inserted at 802f9a28
-.include "../../Common/Common.s"
+.include "../../Common.s"
 
 #Check if PAL
   lbz r0,PALToggle(rtoc)

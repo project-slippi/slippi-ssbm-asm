@@ -1,5 +1,5 @@
 #To be inserted at 8016e750
-.include "../../Common/Common.s"
+.include "../../Common.s"
 
 .set REG_Overwrites,5
 

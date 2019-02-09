@@ -1,20 +1,20 @@
 #To be inserted at 80266978
-loc_0x0:
-  mflr r14
-  bl loc_0x34
-  mflr r4
-  mtlr r14
-  lis r14, 0x35
-  ori r14, r14, 0x6A60
-  sub r3, r3, r14
-  li r5, 0x238
-  lis r14, 0x8000
-  ori r14, r14, 0x31F4
-  mtctr r14
-  bctrl
-  b loc_0x274
+.include "../../Common.s"
 
-loc_0x34:
+#Get Texture Data
+  mflr r12
+  bl TextureData
+  mflr r4
+  mtlr r12
+
+#Copy Texture Data
+  load r12, 0x356A60        #offset for CSS texture in MnSlChr
+  sub r3, r3, r12
+  li r5, 0x238
+  branchl r12,0x800031F4    #memcpy
+  b Exit
+
+TextureData:
   blrl
   .long 0x00000000
   .long 0x00006fff
@@ -160,5 +160,5 @@ loc_0x34:
   .long 0x09fd8888
   .long 0x3EFB8888
 
-loc_0x274:
+Exit:
   addi r3, r31, 0x718

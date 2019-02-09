@@ -167,6 +167,12 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/RandomCssMusic.bin",
           "annotation": "Random CSS Music v3 [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/PAL/Handlers",
+          "isRecursive": true,
+          "annotation": "PAL Handlers"
         }
       ]
     },
@@ -226,7 +232,7 @@
       ]
     },
     {
-      "name": "PAL Patch",
+      "name": "PAL Toggle",
       "authors": [
         "UnclePunch"
       ],
@@ -236,9 +242,9 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "External/PAL",
+          "sourceFolder": "Common/PAL/Toggle",
           "isRecursive": true,
-          "annotation": "PAL Patch"
+          "annotation": "PAL Handlers"
         }
       ]
     },
