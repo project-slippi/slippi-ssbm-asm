@@ -9,12 +9,22 @@
 # 801a501c: Engine loop check against the initial queue count, loop end
 # 801a5024: screen render start
 
+# scene controller checks. must be in VS mode (major) and in-game (minor)
+lis r4, 0x8048 # load address to offset from for scene controller
+lbz r3, -0x62D0(r4)
+cmpwi r3, 0xe # the major scene for playback match
+bne- PreviousCodeLine # if not in VS Mode, ignore everything
+lbz r3, -0x62CD(r4)
+cmpwi r3, 0x1 # the minor scene for in-game is 0x1
+bne- PreviousCodeLine
+
 lwz r3,frameDataBuffer(r13)
 lbz r3,Status(r3)
 cmpwi r3, CONST_FrameFetchResult_FastForward
 beq FastForward # If we are not terminating, skip
 
 # execute normal code line
+PreviousCodeLine:
 cmpw r26, r27
 b Exit
 
