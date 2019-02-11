@@ -1,0 +1,29 @@
+{
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
+  "outputFiles": [
+    {
+      "file": "Output/Console/Neutral_Spawns/code.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "20xx Neutral Spawns",
+      "authors": [
+        "Achilles",
+        "Jorgasms"
+      ],
+      "description": [
+        "Spawn players in neutral positions"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/20xxNeutralSpawns.bin",
+          "annotation": "20XX Neutral Spawns [Achilles, Jorgasms]"
+        }
+      ]
+    }
+  ]
+}

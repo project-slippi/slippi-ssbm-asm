@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
+  "outputFiles": [
+    {
+      "file": "Output/Console/QOL/code.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "QOL",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Quality of life changes"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Salty Runback",
+          "annotation": "Hold A+B For Salty Runback 2.0 [Dan Salvato, UnclePunch]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/KoStarIndicatesWinner.bin",
+          "annotation": "KO Star Indicates Previous Winner [UnclePunch]"
+        }
+      ]
+    }
+  ]
+}

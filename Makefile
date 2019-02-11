@@ -19,5 +19,5 @@ $(NETPLAY): netplay.json
 $(PLAYBACK): playback.json
 	@gecko build -c $<
 	@echo ""
-clean: 
+clean:
 	rm -f $(ALL_TARGETS)

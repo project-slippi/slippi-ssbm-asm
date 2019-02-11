@@ -167,12 +167,6 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/RandomCssMusic.bin",
           "annotation": "Random CSS Music v3 [UnclePunch]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/PAL/Handlers",
-          "isRecursive": true,
-          "annotation": "PAL Handlers"
         }
       ]
     },
@@ -242,9 +236,9 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/PAL/Toggle",
+          "sourceFolder": "Common/PAL",
           "isRecursive": true,
-          "annotation": "PAL Handlers"
+          "annotation": "PAL Mods"
         }
       ]
     },

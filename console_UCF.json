@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
+  "outputFiles": [
+    {
+      "file": "Output/Console/Controller_Fix/UCF.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "UCF",
+      "authors": [
+        "Dan Salvato",
+        "tauKhan",
+        "UnclePunch"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/UCF/Ucf0.73Beta.bin",
+          "annotation": "UCF Code [Dan Salvato, tauKhan, UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Enable UCF Toggles",
+          "isRecursive": true,
+          "annotation": "Enable UCF Toggles [Fizzi]"
+        }
+      ]
+    }
+  ]
+}

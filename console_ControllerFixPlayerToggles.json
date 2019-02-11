@@ -1,0 +1,26 @@
+{
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
+  "outputFiles": [
+    {
+      "file": "Output/Console/Controller_Fix/Player_Toggles.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "UCF + Arduino Toggle UI",
+      "authors": [
+        "UnclePunch"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF + Arduino Toggle UI",
+          "isRecursive": true,
+          "annotation": "UCF + Arduino Toggle UI"
+        }
+      ]
+    }
+  ]
+}
