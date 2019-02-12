@@ -4,7 +4,7 @@
   },
   "outputFiles": [
     {
-      "file": "Output/Console/PAL/code.bin"
+      "file": "Output/Console/PAL/g_pal.bin"
     }
   ],
   "codes": [
