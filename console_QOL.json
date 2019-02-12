@@ -4,7 +4,7 @@
   },
   "outputFiles": [
     {
-      "file": "Output/Console/QOL/g_qol.bin"
+      "file": "Output/Console/g_qol.bin"
     }
   ],
   "codes": [

@@ -4,7 +4,7 @@
   },
   "outputFiles": [
     {
-      "file": "Output/Console/Neutral_Spawns/g_spawns.bin"
+      "file": "Output/Console/g_spawns.bin"
     }
   ],
   "codes": [
