@@ -23,6 +23,11 @@
           "annotation": "Hold A+B For Salty Runback 2.0 [Dan Salvato, UnclePunch]"
         },
         {
+          "type": "injectFolder",
+          "sourceFolder": "External/CSS Tweaks",
+          "annotation": "CSS Tweaks [Achilles1515]"
+        },
+        {
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/KoStarIndicatesWinner.bin",
           "annotation": "KO Star Indicates Previous Winner [UnclePunch]"

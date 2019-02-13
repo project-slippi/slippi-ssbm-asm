@@ -167,6 +167,11 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/RandomCssMusic.bin",
           "annotation": "Random CSS Music v3 [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/CSS Tweaks",
+          "annotation": "CSS Tweaks [Achilles1515]"
         }
       ]
     },
