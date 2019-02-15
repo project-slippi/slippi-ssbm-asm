@@ -172,6 +172,11 @@
           "type": "injectFolder",
           "sourceFolder": "External/CSS Tweaks",
           "annotation": "CSS Tweaks [Achilles1515]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Nametag When Invisible",
+          "annotation": "Hide Nametag When Invisible [Achilles1515]"
         }
       ]
     },

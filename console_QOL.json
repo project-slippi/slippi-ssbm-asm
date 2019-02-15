@@ -28,6 +28,11 @@
           "annotation": "CSS Tweaks [Achilles1515]"
         },
         {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Nametag When Invisible",
+          "annotation": "Hide Nametag When Invisible [Achilles1515]"
+        },
+        {
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/KoStarIndicatesWinner.bin",
           "annotation": "KO Star Indicates Previous Winner [UnclePunch]"
