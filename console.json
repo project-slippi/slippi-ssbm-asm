@@ -196,6 +196,12 @@
           "sourceFolder": "Common/Preload Stadium Transformations",
           "isRecursive": true,
           "annotation": "Preload Stadium Transformations [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Initialize Stage Data",
+          "isRecursive": true,
+          "annotation": "Initialize Stage Data [UnclePunch]"
         }
       ]
     }

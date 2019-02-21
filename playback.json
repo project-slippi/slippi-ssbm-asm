@@ -191,6 +191,12 @@
           "sourceFolder": "Common/PAL/Handlers",
           "isRecursive": true,
           "annotation": "PAL Handlers"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Initialize Stage Data",
+          "isRecursive": true,
+          "annotation": "Initialize Stage Data [UnclePunch]"
         }
       ]
     }
