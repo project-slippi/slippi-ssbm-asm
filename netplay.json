@@ -355,6 +355,12 @@
           "sourceFolder": "Common/Initialize Stage Data",
           "isRecursive": true,
           "annotation": "Initialize Stage Data [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Initialize Player Data",
+          "isRecursive": true,
+          "annotation": "Initialize Player Data [UnclePunch]"
         }
       ]
     }
