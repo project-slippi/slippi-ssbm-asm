@@ -385,8 +385,7 @@ blrl
 
   PercentText:
   blrl
-  .string "Percent Desync Detected:
-  Original = %1.2f // Restored = %1.2f
+  .string "Percent: %1.2f //  %1.2f
 "
   .align 2
 
