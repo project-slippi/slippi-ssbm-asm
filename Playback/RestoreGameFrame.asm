@@ -69,6 +69,19 @@ CheckForDesync:
   lwz r5,0x10(PlayerData)
   cmpw r4,r5
   bne DesyncDetected
+# Get percentage
+  lwz r3,Percentage(PlayerBackup)
+  cmpwi r3,-1      #If this value is -1, the slp does not contain the data
+  beq SkipPercentageDesyncCheck
+#Check if percent is different
+  stw r3,0x40(sp)  #float loads needs to be 4 byte aligned
+  lfs f1,0x40(sp)
+  lfs f2,0x1830(PlayerData)
+  fsubs f1,f1,f2
+  lfs	f2, -0x6B00 (rtoc)    #0f
+  fcmpo cr0,f1,f2
+  bne DesyncDetected
+SkipPercentageDesyncCheck:
   b RestoreData
 
 DesyncDetected:
@@ -137,15 +150,6 @@ RestoreData:
   lfs	f2, -0x6B00 (rtoc)    #0f
   fcmpo cr0,f1,f2
   beq SkipPercentageRestore
-#region debug section
-  .if STG_DesyncDebug==1
-    bl  PercentText
-    mflr r3
-    lfs f1,0x1830(PlayerData)
-    lfs f2,0x40(sp)
-    branchl r12,0x803456a8
-  .endif
-#endregion
 # Apply Percentage
   mr  r3,PlayerData
   lfs f1,0x40(sp)
@@ -267,6 +271,14 @@ backup
   lwz   r6,ActionStateID(PlayerBackup)
   addi  r7,sp,0x80
   crclr 6
+  branchl r12,0x803456a8
+#Percent
+  bl  PercentText
+  mflr r3
+  lfs f1,0x1830(PlayerData)
+  lwz r4,Percentage(PlayerBackup)
+  stw r4,0x40(sp)  #float loads needs to be 4 byte aligned
+  lfs f2,0x40(sp)
   branchl r12,0x803456a8
 
 restore
