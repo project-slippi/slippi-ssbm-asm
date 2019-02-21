@@ -1,10 +1,13 @@
-#To be inserted at 80005600
+#To be inserted at 801d45ec
 .include "../Common.s"
+.include "Transformation.s"
 
 .set PSData,31
 
-backup
-mr  PSData,r3
+#Check if Transformation is decided/loaded
+  lbz r3,isLoaded(PSData)
+  cmpwi r3,0
+  bne Original
 
 DecideTransformation:
 #Decide initial transformation
@@ -18,7 +21,7 @@ DecideTransformation:
   cmpw r3,r4
   beq DecideTransformation
 #Store to 0xEC of PSData (stage GObjs are always 500-something bytes long, it has tons of extra space thankfully)
-  stw r4,0xEC(PSData)
+  stw r4,TransformationID(PSData)
 
 LoadTransformation:
 #Get other ID for transformation ID
@@ -41,6 +44,7 @@ LoadTransformation:
   bne-  Exit
   li	r4, 3
   b	GetFileString
+
 GetFileString:
 #Get transformation file string
   load r3,0x803e1248  #Static PS Struct
@@ -54,6 +58,9 @@ GetFileString:
   li  r7,0
   branchl r12,0x80016580
 
-Exit:
-restore
-blr
+#Set as loaded
+  li  r3,1
+  stb r3,isLoaded(PSData)
+
+Original:
+  lwz	r3, 0x00D8 (r31)

@@ -1,2 +1,4 @@
 #To be inserted at 801d460c
-lwz r4,0xEC(r31)    #Get transformation ID
+.include "Transformation.s"
+
+lwz r4,TransformationID(r31)    #Get transformation ID
