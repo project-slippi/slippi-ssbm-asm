@@ -47,7 +47,7 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 1.6.0.0
+# current version: 1.7.0.0
 .set CURRENT_VERSION,0x01070000
 
 # Create stack frame and back up every register. For now this is just ultra
