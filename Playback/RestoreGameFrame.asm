@@ -279,6 +279,7 @@ backup
   lwz r4,Percentage(PlayerBackup)
   stw r4,0x40(sp)  #float loads needs to be 4 byte aligned
   lfs f2,0x40(sp)
+  crset 6
   branchl r12,0x803456a8
 
 restore
