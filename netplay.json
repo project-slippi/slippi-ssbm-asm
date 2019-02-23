@@ -170,8 +170,8 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/CSS Tweaks",
-          "annotation": "CSS Tweaks [Achilles1515]"
+          "sourceFolder": "External/CSS Player Hands Default to HMN Button",
+          "annotation": "CSS Player Hands Default to HMN Button [Achilles1515]"
         },
         {
           "type": "injectFolder",
