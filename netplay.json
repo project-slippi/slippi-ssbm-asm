@@ -63,11 +63,6 @@
         },
         {
           "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/AutoToggleFod.bin",
-          "annotation": "Auto Toggle FoD [UnclePunch]"
-        },
-        {
-          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/BootToCss.bin",
           "annotation": "Boot to CSS [Dan Salvato, Achilles]"
         },
@@ -177,6 +172,11 @@
           "type": "injectFolder",
           "sourceFolder": "External/Hide Nametag When Invisible",
           "annotation": "Hide Nametag When Invisible [Achilles1515]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Disable FoD During Doubles",
+          "annotation": "Disable FoD During Doubles [UnclePunch]"
         }
       ]
     },
