@@ -1,25 +1,41 @@
 #To be inserted at 8016e750
-.include "../../Common.s"
-
-.set REG_Overwrites,5
+.include "Common.s"
+.include "Preload Stadium Transformations/Transformation.s"
 
 #Check if PAL
   lbz r3,PALToggle(rtoc)
-  cmpwi r3,0x1
-  beq GetPALChanges
-
-GetNTSCChanges:
-  bl  NTSCChanges
-  mflr REG_Overwrites
-  b ApplyChanges
-
+  cmpwi r3,0x0
+  beq GetNTSCChanges
 GetPALChanges:
   bl  PALChanges
-  mflr REG_Overwrites
-  b ApplyChanges
+  mflr r3
+  bl ApplyChanges
+  b CheckPSPreload
+GetNTSCChanges:
+  bl  NTSCChanges
+  mflr r3
+  bl ApplyChanges
+  b CheckPSPreload
+
+CheckPSPreload:
+#Check if PS is Preloaded
+  lbz r3,PSPreloadToggle(rtoc)
+  cmpwi r3,0x0
+  beq GetPSVanilla
+GetPSPreload:
+  bl  PSPreloadChanges
+  mflr r3
+  bl ApplyChanges
+  b Injection_Exit
+GetPSVanilla:
+  bl  PSVanillaChanges
+  mflr r3
+  bl ApplyChanges
+  b Injection_Exit
 
 #################################################################
 
+#**********************#
 PALChanges:
 blrl
 #Samus Bomb Jump
@@ -45,7 +61,6 @@ nop
 nop
 #End
 .long 0xFFFFFFFF
-
 NTSCChanges:
 blrl
 #Samus Bomb Jump
@@ -71,12 +86,34 @@ stw	r0, 0x21DC (r5)
 stw	r0, 0x1A5C (r31)
 #End
 .long 0xFFFFFFFF
+#**********************#
+PSPreloadChanges:
+blrl
+.long 0x801d4610
+b 0x4C
+.long 0x801d4724
+b 0x3C
+.long 0x801d460c
+lwz r4,TransformationID(r31)
+.long 0xFFFFFFFF
+PSVanillaChanges:
+blrl
+.long 0x801d4610
+addi	r4, r3, 32668
+.long 0x801d4724
+lbz	r0, 0x00C4 (r27)
+.long 0x801d460c
+lis	r3, 0x803B
+.long 0xFFFFFFFF
+#**********************#
 
 #################################################################
 
 ApplyChanges:
+.set REG_Overwrites,5
+
 #Init Loop
-  subi  REG_Overwrites,REG_Overwrites,4
+  subi  REG_Overwrites,r3,4
 #Loop
 ApplyChanges_Loop:
 #Get next address
@@ -88,8 +125,12 @@ ApplyChanges_Loop:
   lwzu r4,0x4(REG_Overwrites)
   stw r4,0x0(r3)
   b ApplyChanges_Loop
-
 ApplyChanges_Exit:
+  blr
+
+##########################################
+
+Injection_Exit:
 #Now flush the instruction cache
   lis r3,0x8000
   load r4,0x3b722c    #might be overkill but flush the entire dol file

@@ -154,6 +154,10 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,PALBool(BufferPointer)
   stb r3,PALToggle(rtoc)
 
+#Restore PSPreloadToggle byte
+  lbz r3,PSPreloadBool(BufferPointer)
+  stb r3,PSPreloadToggle(rtoc)
+
 Injection_Exit:
 restore
 lis r3, 0x8017 #execute replaced code line
