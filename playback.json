@@ -183,6 +183,12 @@
         },
         {
           "type": "injectFolder",
+          "sourceFolder": "Common/StaticPatches",
+          "isRecursive": true,
+          "annotation": "Patch static data based on toggles [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
           "sourceFolder": "Common/Preload Stadium Transformations/Handlers",
           "isRecursive": true,
           "annotation": "PS Preload Handlers"

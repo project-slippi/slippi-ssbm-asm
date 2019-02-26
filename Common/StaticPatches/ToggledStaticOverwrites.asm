@@ -1,6 +1,14 @@
 #To be inserted at 8016e750
-.include "Common.s"
-.include "Preload Stadium Transformations/Transformation.s"
+.include "../Common.s"
+.include "../Preload Stadium Transformations/Transformation.s"
+
+# TODO: I don't really like this implementation too much. I think possibly
+# TODO: we should figure out a way to use this same injection to call different
+# TODO: patchers that may or may not have been included. One possible idea is
+# TODO: to have this injection check a static block of memory for branch
+# TODO: instructions. If the value is 0, do nothing, if the value has a branch
+# TODO: instruction, call it with branchl. Then the static patches would inject
+# TODO: into that static memory block and return with blr
 
 #Check if PAL
   lbz r3,PALToggle(rtoc)
