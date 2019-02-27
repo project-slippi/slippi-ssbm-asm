@@ -38,10 +38,11 @@
           "annotation": "Disable FoD During Doubles [UnclePunch]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/KoStarIndicatesWinner.bin",
-          "annotation": "KO Star Indicates Previous Winner [UnclePunch]"
+          "type": "injectFolder",
+          "sourceFolder": "Common/Winners Names are Gold on CSS",
+          "annotation": "Winners Names are Gold on CSS [UnclePunch]"
         }
+
       ]
     }
   ]

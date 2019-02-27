@@ -118,11 +118,6 @@
         },
         {
           "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/KoStarIndicatesWinner.bin",
-          "annotation": "KO Star Indicates Previous Winner [UnclePunch]"
-        },
-        {
-          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/ResetToCssFromStageLoad.bin",
           "annotation": "L+R+A Returns to CSS during Stage Load [Jorgasms]"
         },
@@ -177,6 +172,11 @@
           "type": "injectFolder",
           "sourceFolder": "External/Disable FoD During Doubles",
           "annotation": "Disable FoD During Doubles [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Winners Names are Gold on CSS",
+          "annotation": "Winners Names are Gold on CSS [UnclePunch]"
         }
       ]
     },
