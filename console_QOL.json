@@ -41,8 +41,12 @@
           "type": "injectFolder",
           "sourceFolder": "Common/Winners Names are Gold on CSS",
           "annotation": "Winners Names are Gold on CSS [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CSS KO Stars",
+          "annotation": "Asign KO Stars Upon Exiting Dairantou [UnclePunch]"
         }
-
       ]
     }
   ]
