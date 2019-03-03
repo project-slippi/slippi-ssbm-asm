@@ -84,6 +84,12 @@
           "type": "binary",
           "sourceFile": "Binary/OsReportPrintOnCrash.bin",
           "annotation": "OS Report Print on Crash [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Skip Memcard Prompt",
+          "isRecursive": true,
+          "annotation": "Skip Memcard Prompt [UnclePunch]"
         }
       ]
     },
@@ -167,12 +173,6 @@
         {
           "type": "injectFolder",
           "sourceFolder": "Common/StaticPatches",
-          "isRecursive": true,
-          "annotation": "Patch static data based on toggles [UnclePunch]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Skip Memcard Prompt",
           "isRecursive": true,
           "annotation": "Patch static data based on toggles [UnclePunch]"
         }
