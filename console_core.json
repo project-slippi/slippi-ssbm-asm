@@ -169,6 +169,12 @@
           "sourceFolder": "Common/StaticPatches",
           "isRecursive": true,
           "annotation": "Patch static data based on toggles [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Skip Memcard Prompt",
+          "isRecursive": true,
+          "annotation": "Patch static data based on toggles [UnclePunch]"
         }
       ]
     }
