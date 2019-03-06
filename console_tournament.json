@@ -4,24 +4,29 @@
   },
   "outputFiles": [
     {
-      "file": "Output/Console/g_spawns.bin"
+      "file": "Output/Console/g_tournament.bin"
     }
   ],
   "codes": [
     {
-      "name": "20xx Neutral Spawns",
+      "name": "Tournament codes",
       "authors": [
         "Achilles",
         "Jorgasms"
       ],
       "description": [
-        "Spawn players in neutral positions"
+        "Tournament codes to improve fair competition"
       ],
       "build": [
         {
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/20xxNeutralSpawns.bin",
           "annotation": "20XX Neutral Spawns [Achilles, Jorgasms]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Nametag When Invisible",
+          "annotation": "Hide Nametag When Invisible [Achilles1515]"
         }
       ]
     }

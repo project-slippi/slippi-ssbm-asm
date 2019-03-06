@@ -3,11 +3,11 @@ PLAYBACK_INI 		:= Output/Playback/GALE01r2.ini
 
 C_DIR			:= Output/Console
 CONSOLE_CORE 		:= $(C_DIR)/g_core.bin
-CONSOLE_UCF		:= $(C_DIR)/Controller_Fix/g_ucf.bin
-CONSOLE_TOGGLES		:= $(C_DIR)/Controller_Fix/g_toggles.bin
-CONSOLE_SPAWNS		:= $(C_DIR)/Neutral_Spawns/g_spawns.bin
-CONSOLE_PAL		:= $(C_DIR)/PAL/g_pal.bin
-CONSOLE_QOL		:= $(C_DIR)/QOL/g_qol.bin
+CONSOLE_UCF		:= $(C_DIR)/g_ucf.bin
+CONSOLE_TOGGLES		:= $(C_DIR)/g_toggles.bin
+CONSOLE_SPAWNS		:= $(C_DIR)/g_tournament.bin
+CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
+CONSOLE_QOL		:= $(C_DIR)/g_qol.bin
 
 CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_UCF) $(CONSOLE_TOGGLES) \
 				$(CONSOLE_SPAWNS) $(CONSOLE_PAL) $(CONSOLE_QOL)
@@ -31,7 +31,7 @@ $(CONSOLE_TOGGLES): console_ControllerFixPlayerToggles.json
 	gecko build -c $<
 	@echo ""
 
-$(CONSOLE_SPAWNS): console_NeutralSpawns.json
+$(CONSOLE_SPAWNS): console_tournament.json
 	gecko build -c $<
 	@echo ""
 
