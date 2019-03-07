@@ -1,0 +1,92 @@
+#To be inserted at 8006c5d8
+.include "../Common/Common.s"
+.include "Recording.s"
+
+################################################################################
+# Routine: SendGamePostFrame
+# ------------------------------------------------------------------------------
+# Description: Gets information relevant to calculating stats and writes
+# it to Slippi device
+################################################################################
+
+.set REG_PlayerData,30
+.set REG_Buffer,29
+.set REG_BufferOffset,28
+.set REG_PlayerSlot,27
+
+backup
+
+# Check if VS Mode
+  branchl r12,FN_IsVSMode
+  cmpwi r3,0x0
+  beq Injection_Exit
+
+# check if this character is in sleep
+  lbz r3,0x221F(REG_PlayerData)
+  rlwinm. r3,r3,0,27,27
+  bne Injection_Exit
+
+#------------- INITIALIZE -------------
+# here we want to initalize some variables we plan on using throughout
+  lbz REG_PlayerSlot,0xC(REG_PlayerData)      #loads this player slot
+# get current offset in buffer
+  lwz REG_Buffer,frameDataBuffer(r13)
+  lwz REG_BufferOffset,bufferOffset(r13)
+  add REG_Buffer,REG_Buffer,REG_BufferOffset
+
+# send OnPostFrameUpdate event code
+  li r3, 0x38
+  stb r3,0x0(REG_Buffer)
+
+# send frame count
+  lwz r3,frameIndex(r13)
+  stw r3,0x1(REG_Buffer)
+
+# send playerslot
+  stb REG_PlayerSlot,0x5(REG_Buffer)
+
+# send isFollowerBool
+  mr  r3,REG_PlayerData
+  branchl r12,FN_GetIsFollower
+  stb r3,0x6(REG_Buffer)
+
+# send player data
+  lwz r3,0x04(REG_PlayerData) #load internal char ID
+  stb r3,0x07(REG_Buffer)
+  lwz r3,0x10(REG_PlayerData) #load action state ID
+  sth r3,0x08(REG_Buffer)
+  lwz r3,0xB0(REG_PlayerData) #load x coord
+  stw r3,0x0A(REG_Buffer)
+  lwz r3,0xB4(REG_PlayerData) #load y coord
+  stw r3,0x0E(REG_Buffer)
+  lwz r3,0x2C(REG_PlayerData) #load facing direction
+  stw r3,0x12(REG_Buffer)
+  lwz r3,0x1830(REG_PlayerData) #load current damage
+  stw r3,0x16(REG_Buffer)
+  lwz r3,0x1998(REG_PlayerData) #load shield health
+  stw r3,0x1A(REG_Buffer)
+  lwz r3,0x208C(REG_PlayerData) #load last attack ID hit by
+  stb r3,0x1E(REG_Buffer)
+  lhz r3,0x2090(REG_PlayerData) #load combo count
+  stb r3,0x1F(REG_Buffer)
+  lwz r3,0x18C4(REG_PlayerData) #load player slot who last hit this player
+  stb r3,0x20(REG_Buffer)
+
+# send stocks remaining
+  mr  r3,REG_PlayerSlot
+  branchl r12,0x80033bd8
+  stb r3,0x21(REG_Buffer)
+
+# send AS frame
+  lwz r3,0x894(REG_PlayerData)
+  stw r3,0x22(REG_Buffer)
+
+#------------- Increment Buffer Offset ------------
+  lwz REG_BufferOffset,bufferOffset(r13)
+  addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
+  stw REG_BufferOffset,bufferOffset(r13)
+
+Injection_Exit:
+  restore
+  lwz	r0, 0x003C (sp)
+  lwz	r31, 0x0034 (sp)
