@@ -15,8 +15,9 @@
   load	r3,0x803dda00		#Get Some Scene Struct
   lwz	r4, -0x77C0 (r13) #Get SSS Struct
   addi	r4, r4, 1424
+  li  r5,1
   branchl	r12,0x801a5f64		#Update KO Stars
 
-exit:
+Exit:
   lwz	r0, 0x001C (sp)
   lwz	r31, 0x0014 (sp)
