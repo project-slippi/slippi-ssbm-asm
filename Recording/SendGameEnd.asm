@@ -23,9 +23,9 @@ backup
   beq Injection_Exit
 
 # check if game end ID != 0
- load REG_SceneThinkStruct,0x8016d30c
- lbz REG_GameEndID,0x0(REG_SceneThinkStruct)
- cmpwi r3,0
+ load REG_SceneThinkStruct,0x8046b6a0
+ lbz REG_GameEndID,0x8(REG_SceneThinkStruct)
+ cmpwi REG_GameEndID,0
  beq Injection_Exit
 
 # get buffer
@@ -35,11 +35,15 @@ backup
   li r3, 0x39
   stb r3,0x0(REG_Buffer)
 
-# check byte that will tell us whether the game was won by stock loss or by ragequit (2 = stock loss, 7 = no contest)
-  lbz r3,0x8(REG_SceneThinkStruct)
-  stb r3,0x1(REG_Buffer)
+# store byte that will tell us whether the game was won by stock loss or by ragequit (2 = stock loss, 7 = no contest)
+  stb REG_GameEndID,0x1(REG_Buffer)
+
+# check if sudden death
+
+
+LRAStartCheck:
 # check if LRA start
-  cmpwi r3,0x7
+  cmpwi REG_GameEndID,0x7
   bne NoLRAStart
 # find Who LRA Started
   lbz r3,0x1(REG_SceneThinkStruct)
