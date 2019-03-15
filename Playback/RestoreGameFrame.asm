@@ -24,7 +24,7 @@
 
 # Get address for static player block
   mr r3,PlayerSlot
-  branchl r12,0x80031724
+  branchl r12, PlayerBlock_LoadStaticBlock
   mr PlayerDataStatic,r3
 
 # get buffer pointer
@@ -118,11 +118,10 @@ RestoreData:
 .endif
 
 # UCF uses raw controller inputs for dashback, restore x analog byte here
-  lis r3, 0x8046  # start location of circular buffer
-  ori r3, r3, 0xb108
+  load r3, 0x8046b108 # start location of circular buffer
+
 # Get offset in raw controller input buffer
-  lis r4, 0x804c
-  ori r4, r4, 0x1f78
+  load r4, 0x804c1f78
   lbz r4, 0x0001(r4) # this is the current index in the circular buffer
   subi r4, r4, 1
   cmpwi r4, 0
@@ -155,7 +154,7 @@ RestoreData:
   lfs f1,0x40(sp)
   lfs f2,0x1830(PlayerData)
   fsubs f1,f1,f2
-  branchl r12,0x8006cc7c
+  branchl r12, Damage_UpdatePercent
 SkipPercentageRestore:
 
 # Correct spawn points on the first frame
@@ -166,7 +165,7 @@ SkipPercentageRestore:
   mr  r3,PlayerData
   li  r4,0
   lfs	f1, -0x778C (rtoc)
-  branchl r12,0x8007592c
+  branchl r12, Obj_ChangeRotation_Yaw
 # Update Position (Copy Physics XYZ into all ECB XYZ)
   lwz	r3, 0x00B0 (PlayerData)
   stw	r3, 0x06F4 (PlayerData)
@@ -188,10 +187,10 @@ SkipPercentageRestore:
   lbz	r4, 0x221F (PlayerData)
   rlwinm	r4, r4, 29, 31, 31
   addi  r5,PlayerData,176
-  branchl r12,0x80032828
+  branchl r12, PlayerBlock_UpdateCoords
 #Update Camera Box Position
   mr  r3,PlayerGObj
-  branchl r12,0x800761c8
+  branchl r12, Camera_UpdatePlayerCameraBox
 #Update Camera Box Direction Tween
   lwz r3,0x890(PlayerData)
   lfs f1,0x40(r3)     #Leftmost Bound
@@ -199,7 +198,7 @@ SkipPercentageRestore:
   lfs f1,0x44(r3)     #Rightmost Bound
   stfs f1,0x30(r3)    #Current Right Box Bound
 #Update Camera Position
-  branchl r12,0x8002f3ac
+  branchl r12, Camera_CorrectPosition
 SkipSpawnCorrection:
 
 #region debug section
@@ -218,14 +217,14 @@ backup
   bl  DividerText
   mflr r3
   crclr 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #Frame
   bl  FrameText
   mflr  r3
   addi  r4,PlayerSlot,1
   lwz r5,frameIndex(r13)
   crclr 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #RNG Seed
   bl  RNGText
   mflr  r3
@@ -233,28 +232,28 @@ backup
   lwz r4,0x5F90(r4)
   lwz r5,RNGSeed(PlayerBackup)
   crclr 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #XPos
   bl  XPosText
   mflr  r3
   lfs f1,0xB0(PlayerData)
   lfs f2,XPos(PlayerBackup)
   crset 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #YPos
   bl  YPosText
   mflr  r3
   lfs f1,0xB4(PlayerData)
   lfs f2,YPos(PlayerBackup)
   crset 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #Facing Direction
   bl  FacingText
   mflr  r3
   lfs f1,0x2C(PlayerData)
   lfs f2,FacingDirection(PlayerBackup)
   crset 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #AS
   mr r3,PlayerData
   lwz r4,0x10(PlayerData)
@@ -271,7 +270,7 @@ backup
   lwz   r6,ActionStateID(PlayerBackup)
   addi  r7,sp,0x80
   crclr 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 #Percent
   bl  PercentText
   mflr r3
@@ -280,7 +279,7 @@ backup
   stw r4,0x40(sp)  #float loads needs to be 4 byte aligned
   lfs f2,0x40(sp)
   crset 6
-  branchl r12,0x803456a8
+  branchl r12, OSReport
 
 restore
 blr
@@ -305,7 +304,7 @@ GetASName_GetAnimationID:
   cmpwi r4,-1               #return "N/A" if animation not found
   beq GetASName_NoAnimation
 #Get Animation Data Pointer
-  branchl    r12,0x80085fd4
+  branchl    r12, fetchAnimationHeader
 #Get Move Name String
   lwz    r3,0x0(r3)
 #Get to move name (string after ACTION_)
@@ -335,7 +334,7 @@ GetASName_NoAnimation:
   mr  r3,r31
   bl  GetASName_NA
   mflr r4
-  branchl r12,0x80325a50
+  branchl r12, strcpy
 
 GetASName_Exit:
   restore

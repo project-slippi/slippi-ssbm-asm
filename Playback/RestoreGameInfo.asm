@@ -20,13 +20,13 @@
 
 # allocate memory for the gameframe buffer used here and in ReceiveGameFrame
   li  r3,(PlayerDataLength*8)+FrameHeaderLength
-  branchl r12,0x8037f1e4
+  branchl r12, HSD_MemAlloc
   mr  BufferPointer,r3
   stw BufferPointer,frameDataBuffer(r13)
 
 # allocate memory for the secondaryDmaBuffer used in RestoreStockSteal
   li  r3,64
-  branchl r12,0x8037f1e4
+  branchl r12, HSD_MemAlloc
   stw r3,secondaryDmaBuffer(r13)
 
 # get the game info data
@@ -50,7 +50,7 @@ RECEIVE_DATA:
   cmpwi r3, 1
   beq READ_DATA
 # Wait a frame before trying again
-  branchl r12,0x8034f314 #VIWaitForRetrace
+  branchl r12, VIWaitForRetrace
   b REQUEST_DATA
 
 READ_DATA:
@@ -65,7 +65,7 @@ READ_DATA:
   mr  r3,r31                        #Match setup struct
   addi r4,BufferPointer,MatchStruct #Match info from slippi
   li  r5,0x138                      #Match struct length
-  branchl r12,0x800031f4
+  branchl r12, memcpy
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
@@ -121,10 +121,10 @@ RESTORE_GAME_INFO_NAMETAG_HAS_TAG:
 # Save nametag ID
   mr REG_NametagID,r3
 # Set nametag as active
-  branchl r12,0x80237a04
+  branchl r12, Nametag_SetNameAsInUse
 # Get nametag text pointer
   mr  r3,REG_NametagID
-  branchl r12,0x8015cc9c
+  branchl r12, Nametag_GetNametagBlock
   addi r3,r3,0x198
 # Get players nametag
   addi r4,BufferPointer,NametagData       #Start of nametag data
@@ -141,7 +141,7 @@ RESTORE_GAME_INFO_NAMETAG_HAS_TAG:
 RESTORE_GAME_INFO_NAMETAG_COPY:
 # Copy backed up nametag to it
   li  r5,CharactersToCopy
-  branchl r12,0x800031f4
+  branchl r12, memcpy
   b RESTORE_GAME_INFO_NAMETAG_INC_LOOP
 RESTORE_GAME_INFO_NAMETAG_NO_TAG:
 RESTORE_GAME_INFO_NAMETAG_INC_LOOP:

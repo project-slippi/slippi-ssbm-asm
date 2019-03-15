@@ -28,7 +28,7 @@ mr  REG_PlayerData,r3
   beq	RETURN_IS_FOLLOWER
 #Check If Follower
   lbz r3,0xC(REG_PlayerData)
-  branchl r12,0x80032330     #Get External Character ID
+  branchl r12, PlayerBlock_LoadExternalCharID
   load	r4,0x803bcde0			   #pdLoadCommonData table
   mulli	r0, r3, 3			       #struct length
   add	r3,r4,r0			         #get characters entry
