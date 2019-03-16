@@ -297,52 +297,15 @@
       ],
       "build": [
         {
-          "type": "branchAndLink",
-          "address": "8016e74c",
-          "targetAddress": "8032ed94",
-          "annotation": "SendGameInfo [Fizzi]"
+          "type": "injectFolder",
+          "sourceFolder": "Recording",
+          "isRecursive": true,
+          "annotation": "Slippi Recording [Fizzi, Achilles, UnclePunch]"
         },
         {
-          "type": "branchAndLink",
-          "address": "8006b0dc",
-          "targetAddress": "8032ed94",
-          "annotation": "SendGamePreFrame [Fizzi, Achilles]"
-        },
-        {
-          "type": "branchAndLink",
-          "address": "8006c5d4",
-          "targetAddress": "8032ed94",
-          "annotation": "SendGamePostFrame [Fizzi, Achilles]"
-        },
-        {
-          "type": "branchAndLink",
-          "address": "801a5b14",
-          "targetAddress": "8032ed94",
-          "annotation": "SendGameEnd [Fizzi]"
-        },
-        {
-          "type": "branchAndLink",
-          "address": "802fed3c",
-          "targetAddress": "8032ed94",
-          "annotation": "FlushFrameBuffer [Fizzi]"
-        },
-        {
-          "type": "replace",
-          "address": "801A4F84",
-          "value": "60000000",
-          "annotation": "Disable Screenshots 1/2"
-        },
-        {
-          "type": "replace",
-          "address": "801A5070",
-          "value": "60000000",
-          "annotation": "Disable Screenshots 2/2"
-        },
-        {
-          "type": "replaceCodeBlock",
-          "address": "8032ed94",
-          "sourceFile": "Recording/Recording.asm",
-          "annotation": "SlippiRecording [Fizzi, Achilles, UnclePunch]"
+          "type": "injectFolder",
+          "sourceFolder": "Common",
+          "isRecursive": false
         },
         {
           "type": "injectFolder",
