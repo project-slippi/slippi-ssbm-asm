@@ -17,7 +17,7 @@
 END_GAME:
   li  r3,-1  #Unk
   li  r4,7   #GameEnd ID (7 = LRA Start)
-  branchl r12,0x8016cf4c
+  branchl r12, NoContestOrRetry_
   branch r12,0x8016d30c     #Exit SceneThink_VSMode
   #branch r12,0x8016d2dc    #creates GAME! end graphic
 

@@ -61,12 +61,12 @@ FetchFrameInfo_RECEIVE_DATA:
   cmpwi r3, CONST_FrameFetchResult_Wait
   bne FetchFrameInfo_Exit # If we are not told to wait, exit
 # Wait a frame before trying again
-  branchl r12,0x8034f314     #VIWaitForRetrace
+  branchl r12, VIWaitForRetrace
 # Here we need to flush the pad queue, this is required to prevent the game
 # engine from trying to catch up for lost time which would cause a very
 # jittery playback experience. Credit to tauKhan for this
   li r3,1 # Tell PadFlushQueue to flush
-  branchl r12,0x80376d04 #HSD_PadFlushQueue
+  branchl r12, HSD_PadFlushQueue
 
   b FetchFrameInfo_REQUEST_DATA
 

@@ -20,13 +20,13 @@
   li  r3, 13
   li  r4,14
   li  r5,0
-  branchl r12,0x803901f0
+  branchl r12, Gobj_Create2
 
 #Schedule Function
   bl  PlaybackThink
   mflr  r4      #Function to Run
   li  r5,0      #Priority
-  branchl r12,0x8038fd54
+  branchl r12, Gobj_SchedulePerFrameProcess
 
 b Exit
 
@@ -52,7 +52,7 @@ blrl
 #Create Text Struct
   li  r3,0
   li  r4,-1
-  branchl r12,0x803a6754
+  branchl r12, Text_CreateTextStruct
 
 #BACKUP STRUCT POINTER
   mr REG_Text,r3
@@ -85,13 +85,13 @@ blrl
   mflr  r4
   bl    Dots
   mflr  r5
-  branchl r12,0x803a6b98
+  branchl r12, Text_InitializeSubtext
 #Change scale
   mr  r4,r3
   mr  r3,REG_Text
   lfs f1,TextScale(REG_Floats)
   lfs f2,TextScale(REG_Floats)
-  branchl r12,0x803a7548
+  branchl r12, Text_UpdateSubtextSize
 
 #Initialize Watermark
   lfs   f1,WatermarkX(REG_Floats)     #X offset of text
@@ -99,27 +99,27 @@ blrl
   mr    r3,REG_Text                 #struct pointer
   bl    Watermark
   mflr  r4
-  branchl r12,0x803a6b98
+  branchl r12, Text_InitializeSubtext
 #Change scale
   mr  r4,r3
   mr  r3,REG_Text
   lfs f1,TextScale(REG_Floats)
   lfs f2,TextScale(REG_Floats)
-  branchl r12,0x803a7548
+  branchl r12, Text_UpdateSubtextSize
 #Change color
   load  r3,0x2ECC40FF
   stw r3,0x40(sp)
   mr  r3,REG_Text
   li  r4,1
   addi r5,sp,0x40
-  branchl r12,0x803a74f0
+  branchl r12, Text_ChangeTextColor
 
   ###########################
   ## Allocate Buffer Space ##
   ###########################
 
   li  r3,0x20
-  branchl r12,0x8037f1e4
+  branchl r12, HSD_MemAlloc
   mr  REG_BufferPointer,r3
 
   ######################
@@ -133,22 +133,22 @@ blrl
   ########################
 
   PlaybackThink_Loop:
-    branchl r12,0x8033c898      #GXInvalidateCache
-    branchl r12,0x8033f270      #GXInvalidateTexAll
+    branchl r12, GXInvalidateVtxCache
+    branchl r12, GXInvalidateTexAll
 
     li  r3,0x0
-    branchl r12,0x80375538      #HSD_StartRender
+    branchl r12, HSD_StartRender
 
     li  r3,0x0
     mr  r4,REG_Text
-    branchl r12,0x803a84bc      #renderTextOnscreen
+    branchl r12, Text_DrawEachFrame
 
     li  r3,0x0
-    branchl r12,0x803761c0      #HSD_VICopyXFBASync
+    branchl r12, HSD_VICopyXFBASync
 
     # Explicit wait frame. Without this, if Normal Lag Reduction was on,
     # this scene would go into hyper-drive
-    branchl r12,0x8034f314     #VIWaitForRetrace
+    branchl r12, VIWaitForRetrace
 
   ##########################
   ## Update ... Animation ##
@@ -175,7 +175,7 @@ blrl
     bl  Text
     mflr r5
     crclr 6
-    branchl r12,0x803a70a0
+    branchl r12, Text_UpdateSubtextContents
 
   ####################
   ## Check For EXI ##
@@ -217,7 +217,7 @@ blrl
     branchl r12,0x80024030
 
   #Change Scene Minor
-    branchl r12,0x801a4b60
+    branchl r12, MenuController_ChangeScreenMinor
 
   b PlaybackThink_Exit
 

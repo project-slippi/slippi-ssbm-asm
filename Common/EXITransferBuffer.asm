@@ -47,15 +47,15 @@ InitializeEXI:
 # Prepare to call EXIAttach (803464c0)
   li r3, STG_EXIIndex # slot
   li r4, 0 # maybe a callback? leave 0
-  branchl r12,0x803464c0
+  branchl r12, EXIAttach
 # Prepare to call EXILock (80346d80) r3: 0
   li r3, STG_EXIIndex # slot
-  branchl r12,0x80346d80
+  branchl r12, EXILock
 # Prepare to call EXISelect (80346688) r3: 0, r4: 0, r5: 4
   li r3, STG_EXIIndex # slot
   li r4, 0 # device
   li r5, 5 # freq
-  branchl r12,0x80346688
+  branchl r12, EXISelect
 
 # Step 2 - Write
 # Prepare to call EXIDma (80345e60)
@@ -64,23 +64,23 @@ InitializeEXI:
   mr r5, REG_BufferLength     #length
   mr r6, REG_TransferBehavior # write mode input. 1 is write
   li r7, 0                # r7 is a callback address. Dunno what to use so just set to 0
-  branchl r12,0x80345e60
+  branchl r12, EXIDma
 # Prepare to call EXISync (80345f4c)
   li r3, STG_EXIIndex # slot
-  branchl r12,0x80345f4c
+  branchl r12, EXISync
 
 # Step 3 - Close slot
 # Prepare to call EXIDeselect (803467b4)
   li r3, STG_EXIIndex # Load input param for slot
-  branchl r12,0x803467b4
+  branchl r12, EXIDeselect
 
 # Prepare to call EXIUnlock (80346e74)
   li r3, STG_EXIIndex # Load input param for slot
-  branchl r12,0x80346e74
+  branchl r12, EXIUnlock
 
 # Prepare to call EXIDetach (803465cc) r3: 0
   li r3, STG_EXIIndex # Load input param for slot
-  branchl r12,0x803465cc
+  branchl r12, EXIDetach
 
 FLUSH_READ_LOOP:
   cmpwi REG_TransferBehavior,CONST_ExiRead     # Check if writing or reading
