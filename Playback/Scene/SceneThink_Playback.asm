@@ -242,7 +242,7 @@ FloatValues:
   .float 1      #text scale
   .float 0.6    #Canvas Scaling
 #Watermark
-  .float 160    #watermark X
+  .float 366    #watermark X
   .float 350    #Watermark Y
 #Dot
   .float 170
@@ -265,7 +265,7 @@ FloatValues:
 
   Watermark:
   blrl
-  .string "project-slippi.com"
+  .string "slippi.gg"
   .align 2
 
   PlaybackThink_Exit:
