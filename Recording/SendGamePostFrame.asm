@@ -81,6 +81,22 @@ backup
   lwz r3,0x894(REG_PlayerData)
   stw r3,0x22(REG_Buffer)
 
+# send bitflags
+  lbz r3,0x2218(REG_PlayerData)   #0x10 = isReflectActive
+  stb r3,0x26(REG_Buffer)
+  lbz r3,0x221A(REG_PlayerData)   #0x04 = HasIntangOrInvinc // 0x08 = isFastFalling // 0x20 = isHitlag
+  stb r3,0x27(REG_Buffer)
+  lbz  r3,0x221B(REG_PlayerData)  #0x80 = isShieldActive
+  stb r3,0x28(REG_Buffer)
+  lbz r3,0x221C(REG_PlayerData)   #0x2 = isHitstun // 0x4 = owners detection hitbox touching shield bubble // 0x20 = Powershield Active Bool
+  stb r3,0x29(REG_Buffer)
+  lbz r3,0x221F(REG_PlayerData)   #0x80 = isOffscreen // 0x40 = isDead // 0x20 =  // 0x10 = inSleep // 0x8 = isFollower
+  stb r3,0x30(REG_Buffer)
+
+# send misc AS variable (is histun frames left when offset 0x221C has hitstun bool enabled)
+  lwz r3,0x2340(REG_PlayerData)
+  stw r3,0x31(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
