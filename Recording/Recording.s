@@ -28,6 +28,7 @@
 # Custom Playerblock Offsets
 ################################################################################
 .set PlayerBlockSize,0x2600
+.set starCooldown,0x25FC
 .set DPadDownTimer,0x25FE
 .set LCancelStatus,0x25FF
 
@@ -37,4 +38,4 @@
 .set frameDataBuffer,-0x49b4
 .set secondaryDataBuffer,-0x49a8
 .set bufferOffset,-0x49b0
-.set frameIndex,-0x49ac
+#.set starCooldown,-0x49a4

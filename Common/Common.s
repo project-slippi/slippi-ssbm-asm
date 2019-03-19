@@ -130,3 +130,8 @@ mtlr r0
 
 .set PALToggle,-0xDCC   #offset for whether or not the replay is played with PAL modifications
 .set PSPreloadToggle,-0xDC8   #offset for whether or not the replay is played with PS Preload Behavior
+
+################################################################################
+# r13 Offsets
+################################################################################
+.set frameIndex,-0x49ac

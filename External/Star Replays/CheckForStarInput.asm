@@ -5,7 +5,18 @@
 .set REG_PlayerData,31
 .set REG_Buffer,4
 .set FramesBetweenPresses,20
+.set starCooldownFrames, 15 *60
 
+#Check if player's starring ability is on cooldown
+  lhz r3,starCooldown(REG_PlayerData)
+  cmpwi r3,0
+  ble CheckToStar
+#Decrement player's starring ability cooldown
+  subi r3,r3,1
+  sth r3,starCooldown(REG_PlayerData)
+  b Exit
+
+CheckToStar:
 #Check if pressing DPad down
   lwz r3,0x668(REG_PlayerData)
   rlwinm. r3,r3,0,29,29
@@ -37,6 +48,9 @@
 #Play SFX
   li  r3,1
   branchl r12,0x80024030
-  
+#Set player cooldown
+  li  r3,starCooldownFrames
+  sth r3,starCooldown(REG_PlayerData)
+
 Exit:
   lbz	r0, 0x2219 (REG_PlayerData)
