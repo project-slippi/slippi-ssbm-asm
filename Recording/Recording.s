@@ -10,11 +10,17 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 1.7.1.0
-.set CURRENT_VERSION,0x01070100
+# current version: 2.0.0.0
+.set CURRENT_VERSION,0x02000000
 
 ################################################################################
 # Static Function Locations
 ################################################################################
 # Local functions (added by us)
 .set FN_IsVSMode,0x80005604
+
+################################################################################
+# Custom Playerblock Offsets
+################################################################################
+.set PlayerBlockSize,0x2600
+.set LCancelStatus,0x25FF

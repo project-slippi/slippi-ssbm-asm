@@ -111,6 +111,10 @@ backup
   sub r3,r4,r3
   stb r3,0x32(REG_Buffer)
 
+# send status of lcancel. 0 = none, 1 = successful lcancel, 2 = unsuccessful lcancel
+  lbz r3,LCancelStatus(REG_PlayerData)
+  stb r3,0x33(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
