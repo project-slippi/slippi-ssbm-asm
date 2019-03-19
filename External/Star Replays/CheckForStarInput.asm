@@ -1,6 +1,6 @@
 #To be inserted at 8006b798
 .include "../../Common/Common.s"
-.include "../Recording.s"
+.include "../../Recording/Recording.s"
 
 .set REG_PlayerData,31
 .set REG_Buffer,4
@@ -27,6 +27,9 @@
 #Send event ID
   li  r3,STAR_REPLAY
   stb r3,0x0(REG_Buffer)
+#Send frame number
+  lwz r3,frameIndex(r13)
+  stw r3,0x1(REG_Buffer)
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,STAR_REPLAY_PAYLOAD_LENGTH+1

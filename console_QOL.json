@@ -41,6 +41,11 @@
           "type": "injectFolder",
           "sourceFolder": "Common/CSS KO Stars",
           "annotation": "Asign KO Stars Upon Exiting Dairantou [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Star Replays",
+          "annotation": "Star Replays [UnclePunch]"
         }
       ]
     }
