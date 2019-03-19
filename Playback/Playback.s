@@ -15,9 +15,8 @@
 .set CONST_FrameFetchResult_FastForward, 3
 
 ################################################################################
-# Buffer Offsets
+# Game Frame Buffer Offsets
 ################################################################################
-# gameframe offsets
 .set GameFrameLength,(FrameHeaderLength+PlayerDataLength*8)
 # header
   .set FrameHeaderLength, Status.Length
@@ -39,7 +38,9 @@
   .set AnalogRawInput,0x2C
   .set Percentage,0x2D
 
-# gameinfo offsets
+################################################################################
+# Game Info Buffer Offsets
+################################################################################
   .set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length + PALBool.Length + PSPreloadBool.Length
   .set SuccessBool,0x0
     .set SuccessBool.Length,0x1
@@ -55,3 +56,10 @@
     .set PALBool.Length,0x1
   .set PSPreloadBool,0x19E
     .set PSPreloadBool.Length,0x1
+
+################################################################################
+# Custom r13 Offsets
+################################################################################
+.set frameDataBuffer,-0x49b4
+.set secondaryDmaBuffer,-0x49b0
+.set frameIndex,-0x49ac

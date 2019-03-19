@@ -31,6 +31,14 @@ backup
 #Init current offset
   li  r3,0
   stw r3,bufferOffset(r13)
+#Create secondary buffer
+  li  r3,SECONDARY_DATA_BUF_LENGTH
+  branchl r12,0x8037f1e4
+  stw r3,secondaryDataBuffer(r13)
+
+#Init isStarred bool
+  li  r3,0
+  stb r3,isStarred(r13)
 
 #------------- WRITE OUT COMMAND SIZES -------------
 # start file sending and indicate the sizes of the output commands
