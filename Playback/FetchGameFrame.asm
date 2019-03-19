@@ -62,11 +62,14 @@ FetchFrameInfo_RECEIVE_DATA:
   bne FetchFrameInfo_Exit # If we are not told to wait, exit
 # Wait a frame before trying again
   branchl r12, VIWaitForRetrace
-# Here we need to flush the pad queue, this is required to prevent the game
+# Here we need to clear the pad queue, this is required to prevent the game
 # engine from trying to catch up for lost time which would cause a very
 # jittery playback experience. Credit to tauKhan for this
-  li r3,1 # Tell PadFlushQueue to flush
-  branchl r12, HSD_PadFlushQueue
+# Originally we were calling the HSD_PadFlushQueue but tauKhan said this
+# could potentially cause UCF desyncs if a wait happened at a bad time
+  lis r3, 0x804C
+  li r0, 0
+  stb r0, 0x1f7B(r3)
 
   b FetchFrameInfo_REQUEST_DATA
 
