@@ -7,7 +7,7 @@
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 0x33 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
 .set FULL_FRAME_DATA_BUF_LENGTH, 8 * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + 8 * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1)
-.set STAR_REPLAY_PAYLOAD_LENGTH, 4 # byte count
+.set STAR_REPLAY_PAYLOAD_LENGTH, 5 # byte count
 .set SECONDARY_DATA_BUF_LENGTH, 32
 
 # Payload IDs
@@ -38,4 +38,3 @@
 .set secondaryDataBuffer,-0x49a8
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
-.set isStarred,-0x49a4
