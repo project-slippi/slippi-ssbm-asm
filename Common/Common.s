@@ -90,6 +90,7 @@ mtlr r0
 .set GXInvalidateVtxCache,0x8033c898
 .set GXInvalidateTexAll,0x8033f270
 .set VIWaitForRetrace,0x8034f314
+.set VISetBlack,0x80350100
 
 .set OSReport,0x803456a8
 .set memcpy,0x800031f4
@@ -108,6 +109,8 @@ mtlr r0
 .set Damage_UpdatePercent,0x8006cc7c
 .set Obj_ChangeRotation_Yaw,0x8007592c
 .set MenuController_ChangeScreenMinor,0x801a4b60
+.set CheckIfGameEnginePaused,0x801a45e8
+.set Audio_AdjustMusicSFXVolume,0x80025064
 
 ################################################################################
 # Const Definitions
