@@ -100,7 +100,7 @@ CONTINUE_RAW_X:
   mulli r4, r4, 0x30
   add r3, r3, r4 # move to the correct start index for this index
 
-  mulli r4, r14, 0xc
+  mulli r4, REG_PlayerSlot, 0xc
   add r3, r3, r4 # move to the correct player position
 
   lbz r3, 0x2(r3) #load raw x analog
