@@ -1,4 +1,4 @@
-#To be inserted at 8006b0e0
+#To be inserted at 8006b0dc
 .include "../Common/Common.s"
 .include "Recording.s"
 
@@ -117,4 +117,4 @@ CONTINUE_RAW_X:
 
 Injection_Exit:
   restore
-  lwz	r3, 0x065C (r31)
+  lbz r0, 0x2219(r31) #execute replaced code line
