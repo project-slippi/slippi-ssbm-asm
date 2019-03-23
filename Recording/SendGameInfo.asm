@@ -38,58 +38,69 @@ backup
 
 #------------- WRITE OUT COMMAND SIZES -------------
 # start file sending and indicate the sizes of the output commands
+  .set CommandSizesStart,0x0
+  .set CommandSizesLength,0x11
+
   li r3, 0x35
-  stb r3,0x0(REG_Buffer)
+  stb r3,CommandSizesStart+0x0(REG_Buffer)
 
 # write out the payload size of the 0x35 command (includes this byte)
 # we can write this in only a byte because I doubt it will ever be larger
 # than 255. We write out the sizes of the other commands as half words for
 # consistent parsing
-  li r3, MESSAGE_DESCIPTIONS_PAYLOAD_LENGTH
-  stb r3,0x1(REG_Buffer)
+  li r3, MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH
+  stb r3,CommandSizesStart+0x1(REG_Buffer)
 
 # game info command
   li r3, 0x36
-  stb r3,0x2(REG_Buffer)
+  stb r3,CommandSizesStart+0x2(REG_Buffer)
   li r3, GAME_INFO_PAYLOAD_LENGTH
-  sth r3,0x3(REG_Buffer)
+  sth r3,CommandSizesStart+0x3(REG_Buffer)
 
 # pre-frame update command
   li r3, 0x37
-  stb r3,0x5(REG_Buffer)
+  stb r3,CommandSizesStart+0x5(REG_Buffer)
   li r3, GAME_PRE_FRAME_PAYLOAD_LENGTH
-  sth r3,0x6(REG_Buffer)
+  sth r3,CommandSizesStart+0x6(REG_Buffer)
 
 # post-frame update command
   li r3, 0x38
-  stb r3,0x8(REG_Buffer)
+  stb r3,CommandSizesStart+0x8(REG_Buffer)
   li r3, GAME_POST_FRAME_PAYLOAD_LENGTH
-  sth r3,0x9(REG_Buffer)
+  sth r3,CommandSizesStart+0x9(REG_Buffer)
 
 # game end command
   li r3, 0x39
-  stb r3,0xB(REG_Buffer)
+  stb r3,CommandSizesStart+0xB(REG_Buffer)
   li r3, GAME_END_PAYLOAD_LENGTH
-  sth r3,0xC(REG_Buffer)
+  sth r3,CommandSizesStart+0xC(REG_Buffer)
+
+# star replay command
+  li r3, STAR_REPLAY
+  stb r3,CommandSizesStart+0xE(REG_Buffer)
+  li r3, STAR_REPLAY_PAYLOAD_LENGTH
+  sth r3,CommandSizesStart+0xF(REG_Buffer)
 
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
+.set GameInfoCommandStart, (CommandSizesStart + CommandSizesLength)
+.set GameInfoCommandLenth,0x5
   li r3, 0x36
-  stb r3,0xE(REG_Buffer)
+  stb r3,GameInfoCommandStart+0x0(REG_Buffer)
 
 # build version number. Each byte is one digit
   load r3,CURRENT_VERSION
-  stw r3,0xF(REG_Buffer)
+  stw r3,GameInfoCommandStart+0x1(REG_Buffer)
 
 #------------- GAME INFO BLOCK -------------
 # this iterates through the static game info block that is used to pull data
 # from to initialize the game. it writes out the whole thing (0x138 long)
-.set GameInfoLength,0x138
-.set GameInfoStart,0x13
+.set GameInfoBlockStart, (GameInfoCommandStart + GameInfoCommandLenth)
+.set GameInfoBlockLength,0x138
 
-  addi r3,REG_Buffer,GameInfoStart
+  addi r3,REG_Buffer,GameInfoBlockStart
   mr  r4,r31
-  li  r5,GameInfoLength
+  li  r5,GameInfoBlockLength
   branchl r12,0x800031f4
 
 #------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
@@ -105,7 +116,7 @@ backup
 .set Nametag,0xA              #offset of the nametag ID in the player's data
 
 #Get game info in buffer
-  addi  r3,REG_Buffer,GameInfoStart
+  addi  r3,REG_Buffer,GameInfoBlockStart
 #Get to player data
   addi  REG_PlayerDataStart,r3,PlayerDataStart
 #Init Loop Count
@@ -139,14 +150,17 @@ SEND_GAME_INFO_EDIT_SHEIK_LOOP_INC:
   blt SEND_GAME_INFO_EDIT_SHEIK_LOOP
 
 #------------- OTHER INFO -------------
+.set RNGSeedStart, (GameInfoBlockStart+ GameInfoBlockLength)
+.set RNGSeedLength,0x4
+
 # write out random seed
   lis r3, 0x804D
   lwz r3, 0x5F90(r3) #load random seed
-  stw r3, 0x14B(REG_Buffer)
+  stw r3, RNGSeedStart+0x0(REG_Buffer)
 
 #------------- SEND UCF Toggles ------------
-
-.set UCFToggleStart,0x14F
+.set UCFToggleStart, (RNGSeedStart+ RNGSeedLength)
+.set UCFToggleLength,0x20
 
 # write UCF toggle bytes
   subi r20,rtoc,ControllerFixOptions    #Get UCF toggles
@@ -166,8 +180,8 @@ UCF_LOOP:
 # Loop through players 1-4 and send their nametag data
 # r31 contains the match struct fed into StartMelee. We'll
 # be using this to find each player's nametag slot
-
-.set NametagDataStart,0x16F
+.set NametagDataStart, (UCFToggleStart+ UCFToggleLength)
+.set NametagDataLength,0x40
 
 # Offsets
 .set PlayerDataStart,96       #player data starts in match struct
@@ -222,13 +236,15 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   blt SEND_GAME_INFO_NAMETAG_LOOP
 
 #------------- SEND PAL Toggle ------------
+.set PALToggleStart, (NametagDataStart+ NametagDataLength)
+.set PALToggleLength,0x1
 
   lbz r3,PALToggle(rtoc)
-  stb r3,0x1AF(REG_Buffer)
+  stb r3,PALToggleStart+0x0(REG_Buffer)
 
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
-  li  r4,MESSAGE_DESCIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
+  li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
   li  r5,CONST_ExiWrite
   branchl r12,FN_EXITransferBuffer
 

@@ -34,12 +34,12 @@ CheckToStar:
 #Send event ID
   li  r3,STAR_REPLAY
   stb r3,0x0(REG_Buffer)
-#Send player ID
-  lbz r3,0xC(REG_PlayerData)
-  stb r3,0x1(REG_Buffer)
 #Send frame number
   lwz r3,frameIndex(r13)
-  stw r3,0x2(REG_Buffer)
+  stw r3,0x1(REG_Buffer)
+#Send player ID
+  lbz r3,0xC(REG_PlayerData)
+  stb r3,0x5(REG_Buffer)
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,STAR_REPLAY_PAYLOAD_LENGTH+1
