@@ -1,4 +1,4 @@
-#To be inserted at 8006b0e0
+#To be inserted at 8006b0dc
 .include "../Common/Common.s"
 .include "Recording.s"
 
@@ -100,7 +100,7 @@ CONTINUE_RAW_X:
   mulli r4, r4, 0x30
   add r3, r3, r4 # move to the correct start index for this index
 
-  mulli r4, r14, 0xc
+  mulli r4, REG_PlayerSlot, 0xc
   add r3, r3, r4 # move to the correct player position
 
   lbz r3, 0x2(r3) #load raw x analog
@@ -117,4 +117,4 @@ CONTINUE_RAW_X:
 
 Injection_Exit:
   restore
-  lwz	r3, 0x065C (r31)
+  lbz r0, 0x2219(r31) #execute replaced code line

@@ -48,11 +48,13 @@ CONTINUE_READ_DATA:
 #region debug section
 .if STG_DesyncDebug==1
 CheckForDesync:
+/*
   lis r3,0x804D
   lwz r3,0x5F90(r3)
   lwz r4,RNGSeed(PlayerBackup)
   cmpw r3,r4
   bne DesyncDetected
+  */
   lfs f1,XPos(PlayerBackup)
   lfs f2,0xB0(PlayerData)
   fcmpo cr0,f1,f2
@@ -225,6 +227,7 @@ backup
   lwz r5,frameIndex(r13)
   crclr 6
   branchl r12, OSReport
+/*
 #RNG Seed
   bl  RNGText
   mflr  r3
@@ -233,6 +236,7 @@ backup
   lwz r5,RNGSeed(PlayerBackup)
   crclr 6
   branchl r12, OSReport
+*/
 #XPos
   bl  XPosText
   mflr  r3

@@ -10,26 +10,44 @@
 # 801a5024: screen render start
 
 # scene controller checks. must be in VS mode (major) and in-game (minor)
-lis r4, 0x8048 # load address to offset from for scene controller
-lbz r3, -0x62D0(r4)
-cmpwi r3, 0xe # the major scene for playback match
-bne- PreviousCodeLine # if not in VS Mode, ignore everything
-lbz r3, -0x62CD(r4)
-cmpwi r3, 0x1 # the minor scene for in-game is 0x1
-bne- PreviousCodeLine
+  lis r4, 0x8048 # load address to offset from for scene controller
+  lbz r3, -0x62D0(r4)
+  cmpwi r3, 0xe # the major scene for playback match
+  bne- PreviousCodeLine # if not in VS Mode, ignore everything
+  lbz r3, -0x62CD(r4)
+  cmpwi r3, 0x1 # the minor scene for in-game is 0x1
+  bne- PreviousCodeLine
 
-lwz r3,frameDataBuffer(r13)
-lbz r3,Status(r3)
-cmpwi r3, CONST_FrameFetchResult_FastForward
-beq FastForward # If we are not terminating, skip
+# ensure game is not paused
+  li  r3,1
+  branchl r12,CheckIfGameEnginePaused
+  cmpwi r3,0x2
+  beq PreviousCodeLine
+
+# check status for fast forward
+  lwz r3,frameDataBuffer(r13)
+  lbz r3,Status(r3)
+  cmpwi r3, CONST_FrameFetchResult_FastForward
+  beq FastForward # If we are not terminating, skip
 
 # execute normal code line
 PreviousCodeLine:
-cmpw r26, r27
-b Exit
+# unmute  music and SFX
+  li  r3,1
+  li  r4,2
+  branchl r12,Audio_AdjustMusicSFXVolume
+  cmpw r26, r27
+  b Exit
 
 FastForward:
+# black screen
+  #li  r3,1
+  #branchl r12,VISetBlack
+# mute music and SFX
+  li  r3,0
+  li  r4,0
+  branchl r12,Audio_AdjustMusicSFXVolume
 # do a stupid cmp operation so that the blt at 801a5020 will branch
-cmpwi r3, 0xFF
+  cmpwi r3, 0xFF
 
 Exit:
