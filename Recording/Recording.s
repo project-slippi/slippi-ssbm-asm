@@ -2,7 +2,7 @@
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 13 # byte count
-.set GAME_INFO_PAYLOAD_LENGTH, 417 # byte count
+.set GAME_INFO_PAYLOAD_LENGTH, 418 # byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 0x33 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count

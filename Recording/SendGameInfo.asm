@@ -232,6 +232,13 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,PALToggle(rtoc)
   stb r3,PALToggleStart+0x0(REG_Buffer)
 
+#------------- SEND Frozen Stadium Toggle ------------
+.set FSToggleStart, (PALToggleStart+ PALToggleLength)
+.set FSToggleLength,0x1
+
+  lbz r3,FSToggle(rtoc)
+  stb r3,FSToggleStart+0x0(REG_Buffer)
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1

@@ -29,16 +29,32 @@ CheckPSPreload:
 #Check if PS is Preloaded
   lbz r3,PSPreloadToggle(rtoc)
   cmpwi r3,0x0
-  beq GetPSVanilla
+  beq GetPSPreloadDisable
 GetPSPreload:
   bl  PSPreloadChanges
   mflr r3
   bl ApplyChanges
-  b Injection_Exit
-GetPSVanilla:
-  bl  PSVanillaChanges
+  b CheckFrozenPS
+GetPSPreloadDisable:
+  bl  PSPreloadDisableChanges
   mflr r3
   bl ApplyChanges
+
+CheckFrozenPS:
+#Check if PS is frozen
+  lbz r3,FSToggle(rtoc)
+  cmpwi r3,0x0
+  beq GetFrozenPSDisable
+GetFrozenPS:
+  bl  FrozenPSChanges
+  mflr r3
+  bl ApplyChanges
+  b Injection_Exit
+GetFrozenPSDisable:
+  bl  FrozenPSDisable
+  mflr r3
+  bl ApplyChanges
+
   b Injection_Exit
 
 #################################################################
@@ -104,7 +120,7 @@ b 0x3C
 .long 0x801d460c
 lwz r4,TransformationID(r31)
 .long 0xFFFFFFFF
-PSVanillaChanges:
+PSPreloadDisableChanges:
 blrl
 .long 0x801d4610
 addi	r4, r3, 32668
@@ -112,6 +128,17 @@ addi	r4, r3, 32668
 lbz	r0, 0x00C4 (r27)
 .long 0x801d460c
 lis	r3, 0x803B
+.long 0xFFFFFFFF
+#**********************#
+FrozenPSChanges:
+blrl
+.long 0x801d45fc
+b 0x9dc
+.long 0xFFFFFFFF
+FrozenPSDisable:
+blrl
+.long 0x801d45fc
+bge- 0x9dc
 .long 0xFFFFFFFF
 #**********************#
 

@@ -158,6 +158,10 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,PSPreloadBool(BufferPointer)
   stb r3,PSPreloadToggle(rtoc)
 
+#Restore FrozenPS byte
+  lbz r3,FrozenPSBool(BufferPointer)
+  stb r3,FSToggle(rtoc)
+  
 Injection_Exit:
 restore
 lis r3, 0x8017 #execute replaced code line

@@ -31,4 +31,8 @@ echo Building console_QOL.json...
 gecko build -c console_QOL.json
 echo.
 
+echo Building console_frozen.json...
+gecko build -c console_frozen.json
+echo.
+
 pause
