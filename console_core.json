@@ -83,7 +83,7 @@
         {
           "type": "binary",
           "sourceFile": "Binary/OsReportPrintOnCrash.bin",
-          "annotation": "OS Report Print on Crash [UnclePunch]"
+          "annotation": "Print OSReport on Crash [UnclePunch]"
         },
         {
           "type": "injectFolder",
@@ -96,6 +96,12 @@
           "sourceFolder": "External/LRAStart From SSS Goes to CSS",
           "isRecursive": true,
           "annotation": "LRAStart From SSS Goes to CSS [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Rumble Off",
+          "isRecursive": true,
+          "annotation": "Rumble Off [UnclePunch]"
         }
       ]
     },

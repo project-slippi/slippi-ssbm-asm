@@ -11,7 +11,7 @@
     {
       "name": "QOL",
       "authors": [
-        "UnclePunch"
+        "UnclePunch, Achilles1515, Dan Salvato"
       ],
       "description": [
         "Quality of life changes"
@@ -41,6 +41,11 @@
           "type": "injectFolder",
           "sourceFolder": "Common/CSS KO Stars",
           "annotation": "Asign KO Stars Upon Exiting Dairantou [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Toggle Rumble From CSS",
+          "annotation": "Toggle Rumble From CSS [Dan Salvato]"
         }
       ]
     }
