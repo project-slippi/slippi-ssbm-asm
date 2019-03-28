@@ -93,7 +93,7 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/LRAStart From SSS Goes to CSS",
+          "sourceFolder": "External/LRAStart From SSS Goes to CSS",
           "isRecursive": true,
           "annotation": "LRAStart From SSS Goes to CSS [UnclePunch]"
         }
