@@ -286,24 +286,6 @@
       ]
     },
     {
-      "name": "Frozen Stadium",
-      "authors": [
-        "UnclePunch",
-        "Fizzi"
-      ],
-      "description": [
-        "Disables Pokemon Stadium transformations"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/Frozen PS",
-          "isRecursive": true,
-          "annotation": "Disables Pokemon Stadium transformations"
-        }
-      ]
-    },
-    {
       "name": "Slippi Recording",
       "authors": [
         "Fizzi",
