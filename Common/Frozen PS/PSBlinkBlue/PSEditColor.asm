@@ -1,4 +1,4 @@
-# Insert at 8025a070
+# Insert at 8025a530
 .include "../../Common.s"
 
 .set OFST_COLOR_BASE, 0x6f208 - 0x20
@@ -16,6 +16,10 @@
 .set CONST_RED_B_PRIMARY, 0x0
 .set CONST_RED_B_SECONDARY, 0x33 # Ends up being blue 101 (lightens the red)
 
+lbz r3, -0x49F2(r13)
+cmpw r3, r30
+beq Exit
+
 # Prepare base address
 lwz	r3, -0x4A0C (r13)     #access pointer to dat file in memory
 lwz r3,0x20(r3)           #access pointer to 0x20 of dat file in memory
@@ -23,8 +27,7 @@ load r4,OFST_COLOR_BASE   #get to color data in dat file
 add r6,r3,r4
 
 # Check to see if we are hovering over PS. This happens when r30 = 0x12
-lbz	r3, -0x49F2 (r13)
-cmpwi r3, 0x12
+cmpwi r30, 0x12
 beq- IsHoveringPS
 
 # Here we are not hovering PS, make blink red
@@ -41,7 +44,7 @@ li r3, CONST_RED_B_SECONDARY
 stb r3, OFST_BFILL_SECONDARY(r6)
 stb r3, OFST_BBORDER_SECONDARY(r6)
 
-b Exit
+b ResetAnimation
 
 IsHoveringPS:
 # Here we are hovering PS, make blink blue
@@ -55,11 +58,12 @@ stb r3, OFST_BFILL_SECONDARY(r6)
 stb r3, OFST_BBORDER_PRIMARY(r6)
 stb r3, OFST_BBORDER_SECONDARY(r6)
 
-Exit:
+ResetAnimation:
 #Reset animation
 lwz r3, -0x472C (r13)
 lwz r3,0x2C(r3)
 li  r4,9
 stw r4,0x0(r3)
 
-lwz	r0, 0x0044 (sp)
+Exit:
+stb r30, -0x49F2(r13)
