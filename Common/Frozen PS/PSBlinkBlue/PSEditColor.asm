@@ -16,6 +16,7 @@
 .set CONST_RED_B_PRIMARY, 0x0
 .set CONST_RED_B_SECONDARY, 0x33 # Ends up being blue 101 (lightens the red)
 
+# Only run this injection if selected stage has changed
 lbz r3, -0x49F2(r13)
 cmpw r3, r30
 beq Exit
@@ -59,7 +60,7 @@ stb r3, OFST_BBORDER_PRIMARY(r6)
 stb r3, OFST_BBORDER_SECONDARY(r6)
 
 ResetAnimation:
-#Reset animation
+#Reset animation. This is to force the color to change immediately
 lwz r3, -0x472C (r13)
 lwz r3,0x2C(r3)
 li  r4,9
