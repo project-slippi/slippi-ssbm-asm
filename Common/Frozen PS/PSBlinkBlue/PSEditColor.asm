@@ -1,7 +1,6 @@
 # Insert at 8025a070
 .include "../../Common.s"
 
-.set ADDR_COLOR_BASE, 0x80c4bca8
 .set OFST_COLOR_BASE, 0x6f208 - 0x20
 .set OFST_RFILL_PRIMARY, 0x1
 .set OFST_BFILL_PRIMARY, 0x15
