@@ -130,6 +130,23 @@
       ]
     },
     {
+      "name": "Hide HUD",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Hides the timer and player percent HUD elements"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Timer and Player HUD",
+          "isRecursive": true,
+          "annotation": "Hide HUD"
+        }
+      ]
+    },
+    {
       "name": "Enable Develop Mode",
       "authors": [
         "UnclePunch"
