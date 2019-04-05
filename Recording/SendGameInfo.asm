@@ -25,7 +25,7 @@ backup
 
 #Create write buffer
   li  r3,FULL_FRAME_DATA_BUF_LENGTH
-  branchl r12,0x8037f1e4
+  branchl r12,HSD_MemAlloc
   mr  REG_Buffer,r3
   stw REG_Buffer,frameDataBuffer(r13)
 #Init current offset
@@ -91,7 +91,7 @@ backup
   addi r3,REG_Buffer,GameInfoBlockStart
   mr  r4,r31
   li  r5,GameInfoBlockLength
-  branchl r12,0x800031f4
+  branchl r12,memcpy
 
 #------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
 
@@ -205,19 +205,19 @@ SEND_GAME_INFO_NAMETAG_LOOP:
   cmpwi r3,0x78
   beq SEND_GAME_INFO_NAMETAG_NO_TAG
 #Get nametag string
-  branchl r12,0x8023754c
+  branchl r12,Nametag_LoadSlotText
 # Copy first 8 characters to nametag to buffer
   mr  r4,r3
   mr  r3,r24
   li  r5,CharactersToCopy
-  branchl r12,0x800031f4
+  branchl r12,memcpy
   b SEND_GAME_INFO_NAMETAG_INC_LOOP
 
 SEND_GAME_INFO_NAMETAG_NO_TAG:
 # Fill with zeroes
   mr r3,r24
   li r4,CharactersToCopy
-  branchl r12,0x8000c160
+  branchl r12,Zero_AreaLength
 
 SEND_GAME_INFO_NAMETAG_INC_LOOP:
 # Increment Loop

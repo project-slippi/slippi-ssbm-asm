@@ -207,14 +207,14 @@ blrl
 
   #Remove Text
     mr  r3,REG_Text
-    branchl r12,0x803a5cc4
+    branchl r12, Text_RemoveText
 
   #Resume
-    branchl r12,0x80024f6c
+    branchl r12, DiscError_ResumeGame
 
   #Play SFX
     li  r3,0x1
-    branchl r12,0x80024030
+    branchl r12, SFX_Menu_CommonSound
 
   #Change Scene Minor
     branchl r12, MenuController_ChangeScreenMinor

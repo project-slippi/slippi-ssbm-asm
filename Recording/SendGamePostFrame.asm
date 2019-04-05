@@ -74,7 +74,7 @@ backup
 
 # send stocks remaining
   mr  r3,REG_PlayerSlot
-  branchl r12,0x80033bd8
+  branchl r12,PlayerBlock_LoadRemainingStocks
   stb r3,0x21(REG_Buffer)
 
 # send AS frame

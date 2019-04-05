@@ -100,6 +100,7 @@ mtlr r0
 .set PlayerBlock_LoadStaticBlock,0x80031724
 .set PlayerBlock_UpdateCoords,0x80032828
 .set PlayerBlock_LoadExternalCharID,0x80032330
+.set PlayerBlock_LoadRemainingStocks,0x80033bd8
 
 .set Camera_UpdatePlayerCameraBox,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
@@ -111,6 +112,8 @@ mtlr r0
 .set MenuController_ChangeScreenMinor,0x801a4b60
 .set CheckIfGameEnginePaused,0x801a45e8
 .set Audio_AdjustMusicSFXVolume,0x80025064
+.set SFX_Menu_CommonSound,0x80024030
+.set DiscError_ResumeGame,0x80024f6c
 
 ################################################################################
 # Const Definitions
