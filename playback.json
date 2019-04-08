@@ -176,6 +176,23 @@
       ]
     },
     {
+      "name": "Magenta Idle Screen",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Displays magenta during the idle screen to allow for chroma keying"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Enable Magenta Idle Screen",
+          "isRecursive": true,
+          "annotation": "Magenta Idle Screen"
+        }
+      ]
+    },
+    {
       "name": "Slippi Playback",
       "authors": [
         "Fizzi",

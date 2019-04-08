@@ -74,6 +74,9 @@ mtlr r0
 .set Text_UpdateSubtextContents,0x803a70a0
 .set Text_RemoveText,0x803a5cc4
 
+.set DevelopText_CreateDataTable,0x80302834
+.set DevelopText_DrawText,0x80302d4c
+
 .set EXIAttach,0x803464c0
 .set EXILock,0x80346d80
 .set EXISelect,0x80346688
@@ -134,9 +137,10 @@ mtlr r0
 .set DashbackOptions,0xDD4 # Offset for dashback-specific settings (playback)
 .set ShieldDropOptions,0xDD0 # Offset for shielddrop-specific settings (playback)
 
-.set PALToggle,-0xDCC   #offset for whether or not the replay is played with PAL modifications
-.set PSPreloadToggle,-0xDC8   #offset for whether or not the replay is played with PS Preload Behavior
-.set FSToggle,-0xDC4    #offset for whether or not the replay is played with the Frozen PS toggle
+.set PALToggle,-0xDCC           #offset for whether or not the replay is played with PAL modifications
+.set PSPreloadToggle,-0xDC8     #offset for whether or not the replay is played with PS Preload Behavior
+.set FSToggle,-0xDC4            #offset for whether or not the replay is played with the Frozen PS toggle
+.set ChromaKeyPlayback,-0xDC0   #offset for whether or not to display a magenta sqaure during playback scene
 
 ################################################################################
 # Offsets
