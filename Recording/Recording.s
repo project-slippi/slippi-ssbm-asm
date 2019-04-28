@@ -10,8 +10,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 2.0.1
-.set CURRENT_VERSION,0x02000100
+# current version: 2.1.0
+.set CURRENT_VERSION,0x02010000
 
 ################################################################################
 # Static Function Locations
