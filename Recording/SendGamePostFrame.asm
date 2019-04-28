@@ -115,6 +115,14 @@ backup
   lbz r3,LCancelStatus(REG_PlayerData)
   stb r3,0x33(REG_Buffer)
 
+# send hurtbox collision status (0 = vulnerable, 1 = invulnerable, 2 = intangible)
+  lwz r3,0x1988(REG_PlayerData)     #Move-induced collision state has priority over game-induced
+  cmpwi r3,0
+  bne HurtboxCollision_Send
+  lwz r3,0x198C(REG_PlayerData)
+  HurtboxCollision_Send:
+  stb r3,0x34(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
