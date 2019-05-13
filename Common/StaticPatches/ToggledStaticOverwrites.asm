@@ -74,12 +74,6 @@ b 0x88
 #Samus Extender 2
 .long 0x802b808c
 b 0x84
-#DK Up B
-.long 0x8010fc48
-nop
-#DK Up B
-.long 0x8010fb68
-nop
 #Freeze Glitch
 .long 0x801239a8
 nop
