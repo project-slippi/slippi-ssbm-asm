@@ -1,5 +1,3 @@
-.set MEM_SLOT, 1 # 0 is SlotA, 1 is SlotB
-
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 13 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 418 # byte count
