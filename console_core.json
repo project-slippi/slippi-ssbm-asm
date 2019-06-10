@@ -102,6 +102,12 @@
           "sourceFolder": "External/Rumble Off",
           "isRecursive": true,
           "annotation": "Rumble Off [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Closing CSS Door Preserves Nametag",
+          "isRecursive": true,
+          "annotation": "Closing CSS Door Preserves Nametag [UnclePunch]"
         }
       ]
     },
