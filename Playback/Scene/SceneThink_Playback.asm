@@ -20,13 +20,13 @@
   li  r3, 13
   li  r4,14
   li  r5,0
-  branchl r12, Gobj_Create2
+  branchl r12, GObj_Create
 
 #Schedule Function
   bl  PlaybackThink
   mflr  r4      #Function to Run
   li  r5,0      #Priority
-  branchl r12, Gobj_SchedulePerFrameProcess
+  branchl r12, GObj_AddProc
 
 b Exit
 

@@ -63,8 +63,11 @@ mtlr r0
 .set HSD_StartRender,0x80375538
 .set HSD_VICopyXFBASync,0x803761c0
 
-.set Gobj_Create2,0x803901f0
-.set Gobj_SchedulePerFrameProcess,0x8038fd54
+.set GObj_Create,0x803901f0
+.set GObj_Initialize,0x80390b68
+.set GObj_Destroy,0x80390228
+.set GObj_AddProc,0x8038fd54
+.set GObj_RemoveProc,0x8038fed4
 
 .set Text_CreateTextStruct,0x803a6754
 .set Text_InitializeSubtext,0x803a6b98
