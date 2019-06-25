@@ -56,12 +56,6 @@ backup
   lwz r3, 0x5F90(r3) #load random seed
   stw r3,0x5(REG_Buffer)
 
-#------------- Transfer Buffer ------------
-  mr  r3,REG_Buffer
-  li  r4,GAME_INITIAL_RNG_PAYLOAD_LENGTH+1
-  li  r5,CONST_ExiWrite
-  branchl r12,FN_EXITransferBuffer
-
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_INITIAL_RNG_PAYLOAD_LENGTH+1)
