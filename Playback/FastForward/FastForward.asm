@@ -26,7 +26,7 @@
 
 # check status for fast forward
   lwz r3,frameDataBuffer(r13)
-  lbz r3,Status(r3)
+  lbz r3,(BufferStatus_Start)+(BufferStatus_Status)(r3)
   cmpwi r3, CONST_FrameFetchResult_FastForward
   beq FastForward # If we are not terminating, skip
 

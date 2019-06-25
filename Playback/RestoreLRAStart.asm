@@ -10,7 +10,7 @@
 # Check status of frame received. If a terminate result is received, that means
 # we need to end the game immediately
   lwz r3,frameDataBuffer(r13)
-  lbz r3,Status(r3)
+  lbz r3,(BufferStatus_Start)+(BufferStatus_Status)(r3)
   cmpwi r3, CONST_FrameFetchResult_Terminate
   bne Exit # If we are not terminating, skip
 
