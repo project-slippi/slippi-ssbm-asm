@@ -1,5 +1,7 @@
 NETPLAY_INI 		:= Output/Netplay/GALE01r2.ini
+NETPLAY_INI_JP		:= Output/Netplay/GALJ01r2.ini
 PLAYBACK_INI 		:= Output/Playback/GALE01r2.ini
+PLAYBACK_INI_JP 	:= Output/Playback/GALJ01r2.ini
 
 C_DIR			:= Output/Console
 CONSOLE_CORE 		:= $(C_DIR)/g_core.bin
@@ -48,9 +50,11 @@ $(CONSOLE_QOL): console_QOL.json
 
 $(NETPLAY_INI): netplay.json
 	@gecko build -c $<
+	@cp $(NETPLAY_INI) $(NETPLAY_INI_JP)
 	@echo ""
 $(PLAYBACK_INI): playback.json
 	@gecko build -c $<
+	@cp $(PLAYBACK_INI) $(PLAYBACK_INI_JP)
 	@echo ""
 
 # -----------------------------------------------------------------------------
