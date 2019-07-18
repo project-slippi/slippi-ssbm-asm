@@ -36,7 +36,7 @@
   mr  r20,r3
 
 # Get players offset in buffer ()
-  addi r4,BufferPointer,FrameHeaderLength  #get to player data start
+  addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
   lbz r5,0xC(PlayerData)                  #get player number
   mulli r5,r5,PlayerDataLength*2          #get players offset
   add r4,r4,r5

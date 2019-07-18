@@ -5,39 +5,44 @@
 ## Runs During CSS -> SSS Transition ##
 #######################################
 
+.set REG_RandomStageField,5
+.set REG_RulesPointer,6
+
+#Ensure only all other legal stages are enabled
+#Get Random Stage Select Bitflags
+  lwz	REG_RulesPointer, -0x77C0 (r13)
+  addi	REG_RulesPointer, REG_RulesPointer, 7344
+  lwz	REG_RandomStageField,0x18(REG_RulesPointer)
+#Check if only all legal stages are on
+  load r3,0xE70000B0
+  xor. r3,r3,REG_RandomStageField
+  beq CheckForTeams
+#Check if the only other stage off is FoD
+  cmpwi r3,0x20
+  beq CheckForTeams
+  b Exit
+
+CheckForTeams:
 #Get Teams On/Off Bool
   lwz	r3, -0x49F0 (r13)
   lbz	r3,0x18(r3)
-
 #Check If Teams is On or Off
   cmpwi	r3,0x1
   beq	Doubles
 
 Singles:
-  li  r3,1
-  b Toggle
-Doubles:
-  li  r3,0
-  b Toggle
-
-Toggle:
-#Get Random Stage Select Bitflags
-  lwz	r5, -0x77C0 (r13)
-  addi	r5, r5, 7344
-  lwz	r0,0x18(r5)
 #Flip FoD Bit On in Random Stage Bitflag (FoD is bit #26)
-  rlwimi	r0,r3,5,26,26
-  stw	r0,0x18(r5)
+  li	r3,0x1
+  rlwimi	REG_RandomStageField,r3,5,26,26
+  stw	REG_RandomStageField,0x18(REG_RulesPointer)
+  b	Exit
 
-/*
-#Get Timer Value In Memory
-lwz	r3, -0x77C0 (r13)
-addi	r3, r3, 6224
-#Store 8
-li	r4,8		#8 Mins
-stb	r4,0x8(r3)		#Store To Memory
-*/
-
+Doubles:
+#Flip FoD Bit Off in Random Stage Bitflag (FoD is bit #26)
+  li	r3,0x0
+  rlwimi	REG_RandomStageField,r3,5,26,26
+  stw	REG_RandomStageField,0x18(REG_RulesPointer)
+  b	Exit
 
 Exit:
 li	r3, 1

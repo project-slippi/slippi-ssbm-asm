@@ -1,6 +1,7 @@
 #To be inserted at 8016e74c
 .include "../Common/Common.s"
 .include "Recording.s"
+.include "SendInitialRNG.s"
 
 ################################################################################
 # Routine: SendGameInfo
@@ -35,7 +36,7 @@ backup
 #------------- WRITE OUT COMMAND SIZES -------------
 # start file sending and indicate the sizes of the output commands
   .set CommandSizesStart,0x0
-  .set CommandSizesLength,0xE
+  .set CommandSizesLength,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1
 
   li r3, 0x35
   stb r3,CommandSizesStart+0x0(REG_Buffer)
@@ -70,6 +71,12 @@ backup
   stb r3,CommandSizesStart+0xB(REG_Buffer)
   li r3, GAME_END_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0xC(REG_Buffer)
+
+# initial rng command
+  li  r3,0x3A
+  stb r3,CommandSizesStart+0xE(REG_Buffer)
+  li r3, GAME_INITIAL_RNG_PAYLOAD_LENGTH
+  sth r3,CommandSizesStart+0xF(REG_Buffer)
 
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
@@ -138,6 +145,47 @@ SEND_GAME_INFO_EDIT_SHEIK_LOOP_INC:
   addi  REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,4
   blt SEND_GAME_INFO_EDIT_SHEIK_LOOP
+
+#------------- ENSURE COSTUMES ARE WITHIN BOUNDS -------------
+
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerCharacter,0x0
+.set PlayerCostume,0x3         #offset of players costume ID
+
+#Get game info in buffer
+  addi  r3,REG_Buffer,GameInfoBlockStart
+#Get to player data
+  addi  REG_PlayerDataStart,r3,PlayerDataStart
+#Init Loop Count
+  li  REG_LoopCount,0
+ADJUST_COSTUME_NUMBER_LOOP:
+#Get start of this players data
+  mulli r22,REG_LoopCount,PlayerDataLength
+  add r22,r22,REG_PlayerDataStart
+#Check if this player is active
+  lbz r3,PlayerStatus(r22)
+  cmpwi r3,0x0
+  bne ADJUST_COSTUME_NUMBER_LOOP_INC
+#Get external character ID
+  lbz r3,PlayerCharacter(r22)
+  branchl r12,0x80169238          #get max number of costumes
+#Get players costume ID
+  lbz r4,PlayerCostume(r22)
+  cmpw r4,r3
+  ble ADJUST_COSTUME_NUMBER_LOOP_INC
+#Change to first costume
+  li  r3,0
+  stb r3,PlayerCostume(r22)
+
+ADJUST_COSTUME_NUMBER_LOOP_INC:
+  addi  REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt ADJUST_COSTUME_NUMBER_LOOP
 
 #------------- OTHER INFO -------------
 .set RNGSeedStart, (GameInfoBlockStart+ GameInfoBlockLength)
@@ -244,6 +292,9 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
   li  r5,CONST_ExiWrite
   branchl r12,FN_EXITransferBuffer
+
+# run macro to create the SendInitialRNG process
+  Macro_SendInitialRNG
 
 Injection_Exit:
   restore

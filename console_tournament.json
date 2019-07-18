@@ -27,6 +27,12 @@
           "type": "injectFolder",
           "sourceFolder": "External/Hide Nametag When Invisible",
           "annotation": "Hide Nametag When Invisible [Achilles1515]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Closing CSS Door Preserves Nametag",
+          "isRecursive": true,
+          "annotation": "Closing CSS Door Preserves Nametag [UnclePunch]"
         }
       ]
     }
