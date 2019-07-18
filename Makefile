@@ -1,6 +1,10 @@
+# -----------------------------------------------------------------------------
+
+# netplay.json and playback.json also build versions of GALJ01r2.ini for NTSC-J
 NETPLAY_INI 		:= Output/Netplay/GALE01r2.ini
 PLAYBACK_INI 		:= Output/Playback/GALE01r2.ini
 
+# GCT output for Nintendont
 C_DIR			:= Output/Console
 CONSOLE_CORE 		:= $(C_DIR)/g_core.bin
 CONSOLE_UCF		:= $(C_DIR)/g_ucf.bin
@@ -8,7 +12,6 @@ CONSOLE_TOGGLES		:= $(C_DIR)/g_toggles.bin
 CONSOLE_SPAWNS		:= $(C_DIR)/g_tournament.bin
 CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
 CONSOLE_QOL		:= $(C_DIR)/g_qol.bin
-
 CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_UCF) $(CONSOLE_TOGGLES) \
 				$(CONSOLE_SPAWNS) $(CONSOLE_PAL) $(CONSOLE_QOL)
 
@@ -44,7 +47,7 @@ $(CONSOLE_QOL): console_QOL.json
 	@echo ""
 
 # -----------------------------------------------------------------------------
-# Targets for Dolphin's netplay/playback .ini files
+# Targets for Dolphin's {netplay,playback} .ini configuration files
 
 $(NETPLAY_INI): netplay.json
 	@gecko build -c $<
