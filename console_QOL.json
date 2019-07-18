@@ -46,6 +46,18 @@
           "type": "injectFolder",
           "sourceFolder": "External/Toggle Rumble From CSS",
           "annotation": "Toggle Rumble From CSS [Dan Salvato]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Closing CSS Door Preserves Nametag",
+          "isRecursive": true,
+          "annotation": "Closing CSS Door Preserves Nametag"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Unplugging Closes CSS Door",
+          "isRecursive": true,
+          "annotation": "Unplugging Closes CSS Door [UnclePunch]"
         }
       ]
     }
