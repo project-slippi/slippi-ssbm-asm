@@ -6,6 +6,7 @@
 ################################################################################
 .include "../Common/Common.s"
 .include "Playback.s"
+.include "RestoreInitialRNG.s"
 
 # Register names
 .set BufferPointer,30
@@ -19,7 +20,7 @@
   backup
 
 # allocate memory for the gameframe buffer used here and in ReceiveGameFrame
-  li  r3,(PlayerDataLength*8)+FrameHeaderLength
+  li  r3,Buffer_Length
   branchl r12, HSD_MemAlloc
   mr  BufferPointer,r3
   stw BufferPointer,frameDataBuffer(r13)
@@ -161,7 +162,10 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
 #Restore FrozenPS byte
   lbz r3,FrozenPSBool(BufferPointer)
   stb r3,FSToggle(rtoc)
-  
+
+# run macro to create the RestoreInitialRNG process
+  Macro_RestoreInitialRNG
+
 Injection_Exit:
 restore
 lis r3, 0x8017 #execute replaced code line

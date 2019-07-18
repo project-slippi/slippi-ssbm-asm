@@ -53,11 +53,11 @@ FetchFrameInfo_REQUEST_DATA:
 FetchFrameInfo_RECEIVE_DATA:
 # Transfer buffer over DMA
   mr  r3,BufferPointer
-  li  r4,GameFrameLength     #Buffer Length
+  li  r4,Buffer_Length     #Buffer Length
   li  r5,CONST_ExiRead
   branchl r12,FN_EXITransferBuffer
 # Check if successful
-  lbz r3,Status(BufferPointer)
+  lbz r3, (BufferStatus_Start)+(BufferStatus_Status) (BufferPointer)
   cmpwi r3, CONST_FrameFetchResult_Wait
   bne FetchFrameInfo_Exit # If we are not told to wait, exit
 # Wait a frame before trying again
