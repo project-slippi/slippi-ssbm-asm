@@ -17,13 +17,25 @@
 ################################################################################
 # Buffer Offsets
 ################################################################################
-# gameframe offsets
-.set GameFrameLength,(FrameHeaderLength+PlayerDataLength*8)
-# header
-  .set FrameHeaderLength, Status.Length
-  .set Status,0x0
-    .set Status.Length,0x1
-# per player
+.set Buffer_Length,(BufferStatus_Length)+(InitialRNG_Length)+(GameFrame_Length)
+
+# buffer status
+.set BufferStatus_Start,0x0
+.set BufferStatus_Length,0x1
+# buffer status offsets
+  .set BufferStatus_Status,0x0
+
+# initial RNG
+.set InitialRNG_Start, BufferStatus_Start + BufferStatus_Length
+.set InitialRNG_Length,0x5
+# initial RNG offsets
+  .set InitialRNG_Status,0x0
+  .set InitialRNG_Seed,0x1
+
+# gameframe
+.set GameFrame_Start, InitialRNG_Start + InitialRNG_Length
+.set GameFrame_Length,(PlayerDataLength*8)
+# per player offsets
   .set PlayerDataLength,0x31
   .set RNGSeed,0x00
   .set AnalogX,0x04

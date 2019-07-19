@@ -52,7 +52,7 @@ loc_0x6C:
   ori r4, r4, 0xB108
   mulli r5, r5, 0x30
   add r4, r4, r5
-  lbz r5, 12(r31)
+  lbz r5, 0x618(r31)   # load controller port
   mulli r5, r5, 0xC
   add r4, r4, r5
   lbz r5, 2(r4)

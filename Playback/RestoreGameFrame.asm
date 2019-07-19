@@ -36,7 +36,7 @@
   mr  r20,r3
 
 # Get players offset in buffer ()
-  addi r4,BufferPointer,FrameHeaderLength  #get to player data start
+  addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
   lbz r5,0xC(PlayerData)                  #get player number
   mulli r5,r5,PlayerDataLength*2          #get players offset
   add r4,r4,r5
@@ -132,8 +132,9 @@ RestoreData:
   CONTINUE_RAW_X:
   mulli r4, r4, 0x30
   add r3, r3, r4 # move to the correct start index for this index
-# Get this players controller offset
-  mulli r4, PlayerSlot, 0xc
+# Get this players controller port
+  lwz r4,0x618(PlayerData)
+  mulli r4, r4, 0xc
   add r20, r3, r4 # move to the correct player position
 # Get backed up input value
   lbz r3,AnalogRawInput(PlayerBackup)
