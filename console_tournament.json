@@ -33,6 +33,12 @@
           "sourceFolder": "External/Closing CSS Door Preserves Nametag",
           "isRecursive": true,
           "annotation": "Closing CSS Door Preserves Nametag [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Unplugging Closes CSS Door",
+          "isRecursive": true,
+          "annotation": "Unplugging Closes CSS Door [UnclePunch]"
         }
       ]
     }
