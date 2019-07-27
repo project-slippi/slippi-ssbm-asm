@@ -70,9 +70,16 @@
           "annotation": "Singles Stages [Magus]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/BootToCss.bin",
-          "annotation": "Boot to CSS [Dan Salvato, Achilles]"
+          "type": "injectFolder",
+          "sourceFolder": "External/Boot to CSS",
+          "isRecursive": true,
+          "annotation": "Boot to CSS"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Skip Memcard Prompt",
+          "isRecursive": true,
+          "annotation": "Skip Memcard Prompt [UnclePunch]"
         },
         {
           "type": "binary",

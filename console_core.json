@@ -21,9 +21,10 @@
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/BootToCssMcm.bin",
-          "annotation": "Boot to CSS [Dan Salvato, Achilles]"
+          "type": "injectFolder",
+          "sourceFolder": "External/Boot to CSS",
+          "isRecursive": true,
+          "annotation": "Boot to CSS"
         },
         {
           "type": "binary",
