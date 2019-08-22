@@ -6,7 +6,7 @@ CreateInitialRNGProc:
 #Create GObj
   li	r3,4	    	#GObj Type (4 is the player type, this should ensure it runs before any player animations)
   li	r4,7	  	  #On-Pause Function (dont run on pause)
-  li	r5,80       #i forget
+  li	r5,0        #object priority
   branchl	r12,GObj_Create
 
 #Create Proc
