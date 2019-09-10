@@ -13,7 +13,7 @@ b END
 
 Floats:
 blrl
-.float 92
-.float 63
+.float 4
+.float 3
 
 END:
