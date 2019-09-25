@@ -45,7 +45,7 @@ mtlr r0
 # Settings
 ################################################################################
 .set STG_EXIIndex, 1 # 0 is SlotA, 1 is SlotB. Indicates which slot to use
-.set STG_DesyncDebug, 1 # Debug flag for OSReporting desyncs
+.set STG_DesyncDebug, 0 # Debug flag for OSReporting desyncs
 
 ################################################################################
 # Static Function Locations
