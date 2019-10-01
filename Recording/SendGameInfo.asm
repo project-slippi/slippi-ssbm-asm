@@ -2,6 +2,7 @@
 .include "../Common/Common.s"
 .include "Recording.s"
 .include "SendInitialRNG.s"
+.include "SendItemInfo.s"
 
 ################################################################################
 # Routine: SendGameInfo
@@ -77,6 +78,12 @@ backup
   stb r3,CommandSizesStart+0xE(REG_Buffer)
   li r3, GAME_INITIAL_RNG_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0xF(REG_Buffer)
+
+# item data command
+  li  r3,CMD_ITEM
+  stb r3,CommandSizesStart+0x11(REG_Buffer)
+  li r3, GAME_ITEM_INFO_PAYLOAD_LENGTH
+  sth r3,CommandSizesStart+0x12(REG_Buffer)
 
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
@@ -295,6 +302,9 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 
 # run macro to create the SendInitialRNG process
   Macro_SendInitialRNG
+
+# run macro to create SendProjectileInfo process
+  Macro_SendItemInfo
 
 Injection_Exit:
   restore
