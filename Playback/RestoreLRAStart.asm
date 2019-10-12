@@ -5,7 +5,7 @@
 # an LRA-Start
 ################################################################################
 .include "../Common/Common.s"
-.include "Playback.s"
+.include "./Playback.s"
 
 # Check status of frame received. If a terminate result is received, that means
 # we need to end the game immediately

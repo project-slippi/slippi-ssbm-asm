@@ -1,4 +1,4 @@
-.include "Playback.s"
+.include "./Playback.s"
 
 .macro Macro_RestoreInitialRNG
 
