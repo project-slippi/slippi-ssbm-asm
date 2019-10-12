@@ -1,6 +1,6 @@
 #To be inserted at 8006c5d8
 .include "../Common/Common.s"
-.include "Recording.s"
+.include "./Recording.s"
 
 ################################################################################
 # Routine: SendGamePostFrame

@@ -5,8 +5,8 @@
 # it gets read to initialize the match
 ################################################################################
 .include "../Common/Common.s"
-.include "Playback.s"
-.include "RestoreInitialRNG.s"
+.include "./Playback.s"
+.include "./RestoreInitialRNG.s"
 
 # Register names
 .set BufferPointer,30

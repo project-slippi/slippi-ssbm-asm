@@ -1,6 +1,6 @@
 #To be inserted at 8006b0dc
 .include "../Common/Common.s"
-.include "Playback.s"
+.include "./Playback.s"
 
 # Register names
 .set PlayerData,31

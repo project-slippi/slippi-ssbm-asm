@@ -1,6 +1,6 @@
 #To be inserted at 802fef88
 .include "../Common/Common.s"
-.include "Recording.s"
+.include "./Recording.s"
 
 ################################################################################
 # Routine: FlushFrameBuffer

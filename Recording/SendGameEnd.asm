@@ -1,6 +1,6 @@
 #To be inserted at 8016d30c
 .include "../Common/Common.s"
-.include "Recording.s"
+.include "./Recording.s"
 
 ################################################################################
 # Routine: SendGameEnd

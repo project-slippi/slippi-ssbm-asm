@@ -1,4 +1,4 @@
-.include "Recording.s"
+.include "./Recording.s"
 
 .macro Macro_SendInitialRNG
 
