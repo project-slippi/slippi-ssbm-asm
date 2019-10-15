@@ -1,8 +1,8 @@
 #To be inserted at 8016e74c
-.include "../Common/Common.s"
-.include "./Recording.s"
-.include "./SendInitialRNG.s"
-.include "./SendItemInfo.s"
+.include "Common/Common.s"
+.include "Recording/Recording.s"
+.include "Recording/SendInitialRNG.s"
+.include "Recording/SendItemInfo.s"
 
 ################################################################################
 # Routine: SendGameInfo

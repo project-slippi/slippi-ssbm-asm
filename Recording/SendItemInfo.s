@@ -1,6 +1,5 @@
 # constants
 .set  CMD_ITEM,0x3B
-.set  MAX_ITEMS,15
 
 # struct offsets
 .set  OFST_CMD,0x0

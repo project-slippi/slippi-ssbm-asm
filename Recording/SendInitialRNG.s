@@ -1,4 +1,5 @@
-.include "./Recording.s"
+# Required Includes (A file that includes this header must also include these)
+# Recording/Recording.s
 
 .macro Macro_SendInitialRNG
 
