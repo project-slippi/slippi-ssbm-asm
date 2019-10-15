@@ -44,7 +44,9 @@ mtlr r0
 ################################################################################
 # Settings
 ################################################################################
-.set STG_EXIIndex, 1 # 0 is SlotA, 1 is SlotB. Indicates which slot to use
+# STG_EXIIndex is now set during build with arg -defsym STG_EXIIndex=1
+#.set STG_EXIIndex, 1 # 0 is SlotA, 1 is SlotB. Indicates which slot to use
+
 .set STG_DesyncDebug, 0 # Debug flag for OSReporting desyncs
 
 ################################################################################
