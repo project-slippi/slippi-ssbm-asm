@@ -1,11 +1,11 @@
 .set MAX_ITEMS, 15
 
 # Payload lengths, if any additional data is added, these must be incremented
-.set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 0x13 # byte count
+.set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 19 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 418 # byte count
-.set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 0x8 #byte count
+.set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
-.set GAME_POST_FRAME_PAYLOAD_LENGTH, 0x34 # byte count
+.set GAME_POST_FRAME_PAYLOAD_LENGTH, 52 # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 31 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
 .set FULL_FRAME_DATA_BUF_LENGTH, 8 * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + 8 * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1) + ((GAME_ITEM_INFO_PAYLOAD_LENGTH + 1) * MAX_ITEMS)
