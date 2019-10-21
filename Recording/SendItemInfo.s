@@ -113,6 +113,9 @@ SendItemInfo_AddToBuffer:
   addi REG_BufferOffset,REG_BufferOffset, ITEM_STRUCT_SIZE
   stw REG_BufferOffset,bufferOffset(r13)
 
+  # Also increment REG_Buffer address for next item write
+  addi REG_Buffer,REG_Buffer,ITEM_STRUCT_SIZE
+
 SendItemInfo_GetNextItem:
 # get next item
   lwz REG_ItemGObj,0x8(REG_ItemGObj)
