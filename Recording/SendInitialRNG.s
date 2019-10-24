@@ -45,7 +45,7 @@ backup
   add REG_Buffer,REG_Buffer,REG_BufferOffset
 
 # initial RNG command byte
-  li r3, 0x3A
+  li r3, CMD_INITIAL_RNG
   stb r3,0x0(REG_Buffer)
 
 # send frame count

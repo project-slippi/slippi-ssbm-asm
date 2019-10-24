@@ -8,8 +8,15 @@
 # Description: Flush the buffer once per frame to actually send the frame data
 ################################################################################
 
+# struct offsets
+.set  OFST_CMD,0x0
+.set  OFST_FRAME,OFST_CMD+0x1
+.set  BOOKEND_STRUCT_SIZE,OFST_FRAME+0x4
+
+# registers
 .set REG_Buffer,30
 .set REG_BufferOffset,29
+.set REG_WritePos,28
 
 backup
 
@@ -21,6 +28,16 @@ backup
 # get buffer
   lwz REG_Buffer,frameDataBuffer(r13)
   lwz REG_BufferOffset,bufferOffset(r13)
+  #add REG_WritePos,REG_Buffer,REG_BufferOffset
+
+# add frame bookend to transfer buffer
+# send data
+# initial RNG command byte
+  #li r3,CMD_ITEM
+  #stb r3,OFST_CMD(REG_Buffer)
+# send frame count
+  #lwz r3,frameIndex(r13)
+  #stw r3,OFST_FRAME(REG_Buffer)
 
 # check if buffer length is 0
   cmpwi REG_BufferOffset,0

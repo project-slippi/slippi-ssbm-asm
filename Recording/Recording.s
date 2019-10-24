@@ -1,12 +1,24 @@
 .set MAX_ITEMS, 15
 
+# Command Bytes
+.set CMD_DESCRIPTIONS, 0x35 # byte count
+.set CMD_GAME_INFO, 0x36 # byte count
+.set CMD_INITIAL_RNG, 0x3A #byte count
+.set CMD_PRE_FRAME, 0x37 # byte count
+.set CMD_POST_FRAME, 0x38 # byte count
+.set CMD_ITEM, 0x3B
+.set CMD_FRAME_BOOKEND, 0x3C
+.set CMD_GAME_END, 0x39 # byte count
+.set COMMAND_COUNT, 7
+
 # Payload lengths, if any additional data is added, these must be incremented
-.set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 19 # byte count
+.set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 418 # byte count
 .set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 52 # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 35 # byte count
+.set GAME_FRAME_BOOKEND, 4 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
 
 # Calculate out the maximum buffer length that will be needed. This buffer

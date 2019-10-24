@@ -1,6 +1,3 @@
-# constants
-.set  CMD_ITEM,0x3B
-
 # struct offsets
 .set  OFST_CMD,0x0
 .set  OFST_FRAME,OFST_CMD+0x1

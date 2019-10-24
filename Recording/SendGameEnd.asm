@@ -32,7 +32,7 @@ backup
   lwz REG_Buffer,frameDataBuffer(r13)
 
 # request game information from slippi
-  li r3, 0x39
+  li r3, CMD_GAME_END
   stb r3,0x0(REG_Buffer)
 
 # store byte that will tell us whether the game was won by stock loss or by ragequit (2 = stock loss, 7 = no contest)
