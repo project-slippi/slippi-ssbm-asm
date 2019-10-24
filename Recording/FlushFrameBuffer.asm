@@ -28,20 +28,24 @@ backup
 # get buffer
   lwz REG_Buffer,frameDataBuffer(r13)
   lwz REG_BufferOffset,bufferOffset(r13)
-  #add REG_WritePos,REG_Buffer,REG_BufferOffset
-
-# add frame bookend to transfer buffer
-# send data
-# initial RNG command byte
-  #li r3,CMD_ITEM
-  #stb r3,OFST_CMD(REG_Buffer)
-# send frame count
-  #lwz r3,frameIndex(r13)
-  #stw r3,OFST_FRAME(REG_Buffer)
+  add REG_WritePos,REG_Buffer,REG_BufferOffset
 
 # check if buffer length is 0
   cmpwi REG_BufferOffset,0
   beq Injection_Exit
+
+# add frame bookend to transfer buffer
+# send data
+# initial RNG command byte
+  li r3,CMD_FRAME_BOOKEND
+  stb r3,OFST_CMD(REG_WritePos)
+# send frame count
+  lwz r3,frameIndex(r13)
+  stw r3,OFST_FRAME(REG_WritePos)
+
+# increment buffer offset, we dont need to write it to memory because it's
+# about to get cleared anyway
+  addi REG_BufferOffset,REG_BufferOffset,BOOKEND_STRUCT_SIZE
 
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer

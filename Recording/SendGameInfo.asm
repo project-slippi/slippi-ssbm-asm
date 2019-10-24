@@ -85,6 +85,12 @@ backup
   li r3, GAME_ITEM_INFO_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0x12(REG_Buffer)
 
+# item data command
+  li  r3,CMD_FRAME_BOOKEND
+  stb r3,CommandSizesStart+0x14(REG_Buffer)
+  li r3, GAME_FRAME_BOOKEND_PAYLOAD_LENGTH
+  sth r3,CommandSizesStart+0x15(REG_Buffer)
+
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
 .set GameInfoCommandStart, (CommandSizesStart + CommandSizesLength)
