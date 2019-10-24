@@ -17,7 +17,7 @@
 .set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 52 # byte count
-.set GAME_ITEM_INFO_PAYLOAD_LENGTH, 35 # byte count
+.set GAME_ITEM_INFO_PAYLOAD_LENGTH, 37 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 4 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
 
