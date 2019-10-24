@@ -5,7 +5,7 @@
 # the frameDataBuffer.
 ################################################################################
 .include "../Common/Common.s"
-.include "Playback.s"
+.include "./Playback.s"
 
 # Register names
 .set PlayerData,31

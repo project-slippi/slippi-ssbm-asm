@@ -1,6 +1,6 @@
 #To be inserted at 8006b0dc
 .include "../Common/Common.s"
-.include "Recording.s"
+.include "./Recording.s"
 
 ################################################################################
 # Routine: SendGamePreFrame
@@ -31,7 +31,7 @@ backup
   add REG_Buffer,REG_Buffer,REG_BufferOffset
 
 # send OnPreFrameUpdate event code
-  li r3, 0x37
+  li r3, CMD_PRE_FRAME
   stb r3,0x0(REG_Buffer)
 
 # send frame count

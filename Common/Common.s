@@ -106,6 +106,7 @@ mtlr r0
 .set PlayerBlock_UpdateCoords,0x80032828
 .set PlayerBlock_LoadExternalCharID,0x80032330
 .set PlayerBlock_LoadRemainingStocks,0x80033bd8
+.set PlayerBlock_LoadSlotType,0x8003241c
 
 .set Camera_UpdatePlayerCameraBox,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
