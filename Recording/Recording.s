@@ -13,7 +13,7 @@
 # is also used for transferring message descriptions and game info but that
 # length should be less than the frame buf length
 .set SUPPORTED_PORTS, 4
-.set MAX_CHARACTERS, SUPPORTED_PORTS * 2 // ICs
+.set MAX_CHARACTERS, SUPPORTED_PORTS * 2 # ICs
 .set TOTAL_INITIAL_RNG_LEN, GAME_INITIAL_RNG_PAYLOAD_LENGTH + 1
 .set TOTAL_CHAR_FRAME_LEN, MAX_CHARACTERS * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1)
 .set TOTAL_ITEM_LEN, MAX_ITEMS * (GAME_ITEM_INFO_PAYLOAD_LENGTH + 1)
