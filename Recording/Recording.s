@@ -6,14 +6,14 @@
 .set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 52 # byte count
-.set GAME_ITEM_INFO_PAYLOAD_LENGTH, 31 # byte count
+.set GAME_ITEM_INFO_PAYLOAD_LENGTH, 35 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
 
 # Calculate out the maximum buffer length that will be needed. This buffer
 # is also used for transferring message descriptions and game info but that
 # length should be less than the frame buf length
 .set SUPPORTED_PORTS, 4
-.set MAX_CHARACTERS, SUPPORTED_PORTS * 2
+.set MAX_CHARACTERS, SUPPORTED_PORTS * 2 // ICs
 .set TOTAL_INITIAL_RNG_LEN, GAME_INITIAL_RNG_PAYLOAD_LENGTH + 1
 .set TOTAL_CHAR_FRAME_LEN, MAX_CHARACTERS * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1)
 .set TOTAL_ITEM_LEN, MAX_ITEMS * (GAME_ITEM_INFO_PAYLOAD_LENGTH + 1)

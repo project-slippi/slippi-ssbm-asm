@@ -13,7 +13,8 @@
 .set  OFST_YPOS,OFST_XPOS+0x4
 .set  OFST_DMGTAKEN,OFST_YPOS+0x4
 .set  OFST_EXPIRETIME,OFST_DMGTAKEN+0x2
-.set  ITEM_STRUCT_SIZE,OFST_EXPIRETIME+0x2
+.set  OFST_SPAWNID,OFST_EXPIRETIME+0x2
+.set  ITEM_STRUCT_SIZE,OFST_SPAWNID+0x4
 
 .macro Macro_SendItemInfo
 
@@ -108,6 +109,9 @@ SendItemInfo_AddToBuffer:
 # store item expiration
   lwz r3,0xD44(REG_ItemData)
   sth r3,OFST_EXPIRETIME(REG_Buffer)
+# store item spawn ID
+  lwz r3,0x1C(REG_ItemData)
+  stw r3,OFST_SPAWNID(REG_Buffer)
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset, ITEM_STRUCT_SIZE
