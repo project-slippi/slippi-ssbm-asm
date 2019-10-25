@@ -1,15 +1,15 @@
 .set MAX_ITEMS, 15
 
 # Command Bytes
-.set CMD_DESCRIPTIONS, 0x35 # byte count
-.set CMD_GAME_INFO, 0x36 # byte count
-.set CMD_INITIAL_RNG, 0x3A #byte count
-.set CMD_PRE_FRAME, 0x37 # byte count
-.set CMD_POST_FRAME, 0x38 # byte count
+.set CMD_DESCRIPTIONS, 0x35
+.set CMD_GAME_INFO, 0x36
+.set CMD_INITIAL_RNG, 0x3A
+.set CMD_PRE_FRAME, 0x37
+.set CMD_POST_FRAME, 0x38
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
-.set CMD_GAME_END, 0x39 # byte count
-.set COMMAND_COUNT, 8
+.set CMD_GAME_END, 0x39
+.set COMMAND_COUNT, 8 # number of possible commands
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
