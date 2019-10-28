@@ -8,6 +8,6 @@
 
 Floats:
 blrl
-.float 7.5
+.float 6.89
 
 END:
