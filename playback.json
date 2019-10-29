@@ -54,6 +54,12 @@
           "sourceFolder": "External/UCF + Arduino Toggle UI/UCF",
           "isRecursive": true,
           "annotation": "UCF Handlers"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Extended Nametag Box",
+          "isRecursive": true,
+          "annotation": "Extended Nametag Box"
         }
       ]
     },
