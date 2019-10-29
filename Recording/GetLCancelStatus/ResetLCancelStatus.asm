@@ -1,6 +1,8 @@
-#To be inserted at 8006c324
-.include "../../Common/Common.s"
-.include "../Recording.s"
+################################################################################
+# Address: 8006c324
+################################################################################
+.include "Common/Common.s"
+.include "Recording/Recording.s"
 
 #Reset Status
   li  r3,0

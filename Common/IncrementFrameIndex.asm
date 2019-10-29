@@ -1,10 +1,13 @@
-#To be inserted at 8016d294
+################################################################################
+# Address: 8016d294
+################################################################################
+
 ################################################################################
 #                      Inject at address 8016d294
 # Function is SceneThink_VSMode and we're incrementing the frame index
 # before anything "game-engine related" happens
 ################################################################################
-.include "./Common.s"
+.include "Common/Common.s"
 
 # Original Codeline
   stb	r3, 0x0008 (r31)

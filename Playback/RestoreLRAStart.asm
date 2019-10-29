@@ -1,11 +1,14 @@
-#To be inserted at 8016d304
+################################################################################
+# Address: 8016d304
+################################################################################
+
 ################################################################################
 #                      Inject at address 8016d304
 # Function is SceneThink_VSMode and we're ending the game when slippi detects
 # an LRA-Start
 ################################################################################
-.include "../Common/Common.s"
-.include "./Playback.s"
+.include "Common/Common.s"
+.include "Playback/Playback.s"
 
 # Check status of frame received. If a terminate result is received, that means
 # we need to end the game immediately

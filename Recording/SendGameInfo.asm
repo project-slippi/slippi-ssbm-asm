@@ -1,4 +1,6 @@
-#To be inserted at 8016e74c
+################################################################################
+# Address: 8016e74c
+################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
 .include "Recording/SendInitialRNG.s"

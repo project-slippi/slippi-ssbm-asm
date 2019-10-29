@@ -1,4 +1,7 @@
-#To be inserted at 800055f0
+################################################################################
+# Address: FN_EXITransferBuffer # 0x800055f0 from Common.s
+################################################################################
+
 ################################################################################
 # Function: ExiTransferBuffer
 # Inject @ 800055f0
@@ -9,7 +12,7 @@
 #     r4 = buffer length
 #     r5 = read (0x0) or write (0x1)
 ################################################################################
-.include "./Common.s"
+.include "Common/Common.s"
 
 # Register names
 .set REG_TransferBehavior, 31

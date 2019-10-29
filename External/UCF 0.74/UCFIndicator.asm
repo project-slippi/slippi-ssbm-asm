@@ -1,5 +1,5 @@
 #To be inserted @ 802662D0
-.include "../../Common/Common.s"
+.include "Common/Common.s"
 
 .set text,31
 .set textProperties,30

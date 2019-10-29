@@ -1,5 +1,7 @@
-#To be inserted at 801af6f4
-.include "../../Common/Common.s"
+################################################################################
+# Address: 801af6f4
+################################################################################
+.include "Common/Common.s"
 
 .set MEMCARD_NONE,0xF
 .set MEMCARD_NONE2,0xD

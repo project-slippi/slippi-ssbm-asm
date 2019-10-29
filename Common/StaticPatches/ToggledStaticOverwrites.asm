@@ -1,5 +1,7 @@
-#To be inserted at 8016e750
-.include "../Common.s"
+################################################################################
+# Address: 8016e750
+################################################################################
+.include "Common/Common.s"
 .include "../Preload Stadium Transformations/Transformation.s"
 
 # TODO: I don't really like this implementation too much. I think possibly

@@ -1,6 +1,8 @@
-#To be inserted at 802fef88
-.include "../Common/Common.s"
-.include "./Recording.s"
+################################################################################
+# Address: 802fef88
+################################################################################
+.include "Common/Common.s"
+.include "Recording/Recording.s"
 
 ################################################################################
 # Routine: FlushFrameBuffer

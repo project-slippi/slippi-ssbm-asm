@@ -1,4 +1,7 @@
-#To be inserted at 80005604
+################################################################################
+# Address: FN_IsVSMode # 0x80005604 from Recording.s
+################################################################################
+.include "Recording/Recording.s"
 
 #Check scenes
   lis r4, 0x8048          # load address to offset from for scene controller

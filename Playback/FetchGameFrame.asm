@@ -1,11 +1,14 @@
-#To be inserted at 8016d298
+################################################################################
+# Address: 8016d298
+################################################################################
+
 ################################################################################
 #                      Inject at address 8016d298
 # Function is SceneThink_VSMode and we're calling FetchGameFrame to update
 # the frameDataBuffer.
 ################################################################################
-.include "../Common/Common.s"
-.include "./Playback.s"
+.include "Common/Common.s"
+.include "Playback/Playback.s"
 
 # Register names
 .set PlayerData,31
