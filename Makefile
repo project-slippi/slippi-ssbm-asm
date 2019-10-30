@@ -13,8 +13,10 @@ CONSOLE_TOGGLES		:= $(C_DIR)/g_toggles.bin
 CONSOLE_SPAWNS		:= $(C_DIR)/g_tournament.bin
 CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
 CONSOLE_QOL		:= $(C_DIR)/g_qol.bin
+CONSOLE_FROZEN   := $(C_DIR)/g_frozen.bin
 CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) \
-				$(CONSOLE_TOGGLES) $(CONSOLE_SPAWNS) $(CONSOLE_PAL) $(CONSOLE_QOL)
+				$(CONSOLE_TOGGLES) $(CONSOLE_SPAWNS) $(CONSOLE_PAL) $(CONSOLE_QOL) \
+				$(CONSOLE_FROZEN)
 
 ALL_TARGETS 		:= $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
 .PHONY: $(ALL_TARGETS) clean
@@ -31,11 +33,11 @@ $(CONSOLE_CORE_PORTA): console_core.json
 	gecko build -defsym "STG_EXIIndex=0" -o "$(CONSOLE_CORE_PORTA)" -c $<
 	@echo ""
 
-$(CONSOLE_UCF): console_UCF.json
+$(CONSOLE_TOGGLES): console_ControllerFixPlayerToggles.json
 	gecko build -c $<
 	@echo ""
 
-$(CONSOLE_TOGGLES): console_ControllerFixPlayerToggles.json
+$(CONSOLE_UCF): console_UCF.json
 	gecko build -c $<
 	@echo ""
 
@@ -48,6 +50,10 @@ $(CONSOLE_PAL): console_PAL.json
 	@echo ""
 
 $(CONSOLE_QOL): console_QOL.json
+	gecko build -c $<
+	@echo ""
+
+$(CONSOLE_FROZEN): console_frozen.json
 	gecko build -c $<
 	@echo ""
 
