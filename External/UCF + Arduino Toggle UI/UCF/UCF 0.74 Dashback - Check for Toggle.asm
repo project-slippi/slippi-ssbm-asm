@@ -21,7 +21,7 @@
   subi r3,rtoc,DashbackOptions
   lbzx r3,r3,r4
   cmpwi r3,0x1
-  bne Injection_Exit
+  bne Exit_Without_Restore
 
 Init:
 #Init
@@ -139,3 +139,5 @@ blrl
 
 Injection_Exit:
 	restore
+
+Exit_Without_Restore:
