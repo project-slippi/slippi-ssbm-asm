@@ -1,7 +1,4 @@
 {
-  "settings": {
-    "areIncludesRelativeFromFile": true
-  },
   "outputFiles": [
     {
       "file": "Output/Console/g_ucf_stealth.bin"
