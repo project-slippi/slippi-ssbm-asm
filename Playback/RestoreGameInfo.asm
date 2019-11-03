@@ -1,12 +1,15 @@
-#To be inserted at 8016e74c
+################################################################################
+# Address: 8016e74c
+################################################################################
+
 ################################################################################
 #                      Inject at address 8016e74c
 # Function is StartMelee and we are loading game information right before
 # it gets read to initialize the match
 ################################################################################
-.include "../Common/Common.s"
-.include "Playback.s"
-.include "RestoreInitialRNG.s"
+.include "Common/Common.s"
+.include "Playback/Playback.s"
+.include "Playback/RestoreInitialRNG.s"
 
 # Register names
 .set BufferPointer,30

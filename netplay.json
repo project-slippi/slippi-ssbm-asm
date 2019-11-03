@@ -117,9 +117,10 @@
           "annotation": "Exiting Debug Menu Returns to CSS [Achilles]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/20xxNeutralSpawns.bin",
-          "annotation": "20XX Neutral Spawns [Achilles, Jorgasms]"
+          "type": "inject",
+          "address": "8016e510",
+          "sourceFile": "External/NeutralSpawn.asm",
+          "annotation": "Neutral Spawns [UnclePunch]"
         },
         {
           "type": "binary",

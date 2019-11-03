@@ -1,10 +1,13 @@
-#To be inserted at 8016b9c0
+################################################################################
+# Address: 8016b9c0
+################################################################################
+
 ################################################################################
 #                      Inject at address 8016b9c0
 # Function is StockStealCheck and we're replacing the start button check with
 # a request to slippi. Runs when a player is in-game + has no stocks
 ################################################################################
-.include "../Common/Common.s"
+.include "Common/Common.s"
 
 # Setup buffer
   lwz r5,secondaryDmaBuffer(r13)    #Get secondary DMA buffer alloc

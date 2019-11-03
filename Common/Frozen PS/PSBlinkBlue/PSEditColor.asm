@@ -1,5 +1,5 @@
 # Insert at 8025a530
-.include "../../Common.s"
+.include "Common/Common.s"
 
 .set OFST_COLOR_BASE, 0x6f208 - 0x20
 .set OFST_RFILL_PRIMARY, 0x1

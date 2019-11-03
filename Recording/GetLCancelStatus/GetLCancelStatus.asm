@@ -1,6 +1,8 @@
-#To be inserted at 8008d698
-.include "../../Common/Common.s"
-.include "../Recording.s"
+################################################################################
+# Address: 8008d698
+################################################################################
+.include "Common/Common.s"
+.include "Recording/Recording.s"
 
 #Check if L-Cancelled
   cmpw	r5, r0

@@ -1,5 +1,5 @@
 # Insert at 8025b718
-.include "../../Common.s"
+.include "Common/Common.s"
 
 stw	r3, -0x472C (r13)
 

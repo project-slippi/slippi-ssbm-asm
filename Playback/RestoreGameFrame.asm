@@ -1,6 +1,9 @@
-#To be inserted at 8006b0dc
-.include "../Common/Common.s"
-.include "Playback.s"
+################################################################################
+# Address: 8006b0dc
+################################################################################
+
+.include "Common/Common.s"
+.include "Playback/Playback.s"
 
 # Register names
 .set PlayerData,31

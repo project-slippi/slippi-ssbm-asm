@@ -17,9 +17,10 @@
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/UCF/Ucf0.73Beta.bin",
-          "annotation": "UCF Code [Dan Salvato, tauKhan, UnclePunch]"
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF 0.74",
+          "isRecursive": true,
+          "annotation": "UCF v0.74"
         },
         {
           "type": "injectFolder",

@@ -1,5 +1,7 @@
-#To be inserted at 8025e070
-.include "../../../Common/Common.s"
+################################################################################
+# Address: 8025e070
+################################################################################
+.include "Common/Common.s"
 
 subi r3,r13,UCFTextPointers #get pointers
 mulli r4,r31,0x4 #get offset

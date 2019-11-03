@@ -1,6 +1,8 @@
-#To be inserted at 8006c5d8
-.include "../Common/Common.s"
-.include "Recording.s"
+################################################################################
+# Address: 8006c5d8
+################################################################################
+.include "Common/Common.s"
+.include "Recording/Recording.s"
 
 ################################################################################
 # Routine: SendGamePostFrame
@@ -35,7 +37,7 @@ backup
   add REG_Buffer,REG_Buffer,REG_BufferOffset
 
 # send OnPostFrameUpdate event code
-  li r3, 0x38
+  li r3, CMD_POST_FRAME
   stb r3,0x0(REG_Buffer)
 
 # send frame count

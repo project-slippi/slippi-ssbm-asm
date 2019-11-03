@@ -1,7 +1,10 @@
-#To be inserted at 8016e74c
-.include "../Common/Common.s"
-.include "Recording.s"
-.include "SendInitialRNG.s"
+################################################################################
+# Address: 8016e74c
+################################################################################
+.include "Common/Common.s"
+.include "Recording/Recording.s"
+.include "Recording/SendInitialRNG.s"
+.include "Recording/SendItemInfo.s"
 
 ################################################################################
 # Routine: SendGameInfo
@@ -38,7 +41,7 @@ backup
   .set CommandSizesStart,0x0
   .set CommandSizesLength,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1
 
-  li r3, 0x35
+  li r3, CMD_DESCRIPTIONS
   stb r3,CommandSizesStart+0x0(REG_Buffer)
 
 # write out the payload size of the 0x35 command (includes this byte)
@@ -49,40 +52,52 @@ backup
   stb r3,CommandSizesStart+0x1(REG_Buffer)
 
 # game info command
-  li r3, 0x36
+  li r3, CMD_GAME_INFO
   stb r3,CommandSizesStart+0x2(REG_Buffer)
   li r3, GAME_INFO_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0x3(REG_Buffer)
 
 # pre-frame update command
-  li r3, 0x37
+  li r3, CMD_PRE_FRAME
   stb r3,CommandSizesStart+0x5(REG_Buffer)
   li r3, GAME_PRE_FRAME_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0x6(REG_Buffer)
 
 # post-frame update command
-  li r3, 0x38
+  li r3, CMD_POST_FRAME
   stb r3,CommandSizesStart+0x8(REG_Buffer)
   li r3, GAME_POST_FRAME_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0x9(REG_Buffer)
 
 # game end command
-  li r3, 0x39
+  li r3, CMD_GAME_END
   stb r3,CommandSizesStart+0xB(REG_Buffer)
   li r3, GAME_END_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0xC(REG_Buffer)
 
 # initial rng command
-  li  r3,0x3A
+  li  r3,CMD_INITIAL_RNG
   stb r3,CommandSizesStart+0xE(REG_Buffer)
   li r3, GAME_INITIAL_RNG_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0xF(REG_Buffer)
+
+# item data command
+  li  r3,CMD_ITEM
+  stb r3,CommandSizesStart+0x11(REG_Buffer)
+  li r3, GAME_ITEM_INFO_PAYLOAD_LENGTH
+  sth r3,CommandSizesStart+0x12(REG_Buffer)
+
+# item data command
+  li  r3,CMD_FRAME_BOOKEND
+  stb r3,CommandSizesStart+0x14(REG_Buffer)
+  li r3, GAME_FRAME_BOOKEND_PAYLOAD_LENGTH
+  sth r3,CommandSizesStart+0x15(REG_Buffer)
 
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
 .set GameInfoCommandStart, (CommandSizesStart + CommandSizesLength)
 .set GameInfoCommandLenth,0x5
-  li r3, 0x36
+  li r3, CMD_GAME_INFO
   stb r3,GameInfoCommandStart+0x0(REG_Buffer)
 
 # build version number. Each byte is one digit
@@ -295,6 +310,9 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 
 # run macro to create the SendInitialRNG process
   Macro_SendInitialRNG
+
+# run macro to create SendProjectileInfo process
+  Macro_SendItemInfo
 
 Injection_Exit:
   restore

@@ -44,7 +44,9 @@ mtlr r0
 ################################################################################
 # Settings
 ################################################################################
-.set STG_EXIIndex, 1 # 0 is SlotA, 1 is SlotB. Indicates which slot to use
+# STG_EXIIndex is now set during build with arg -defsym STG_EXIIndex=1
+#.set STG_EXIIndex, 1 # 0 is SlotA, 1 is SlotB. Indicates which slot to use
+
 .set STG_DesyncDebug, 0 # Debug flag for OSReporting desyncs
 
 ################################################################################
@@ -53,7 +55,6 @@ mtlr r0
 # Local functions (added by us)
 .set FN_EXITransferBuffer,0x800055f0
 .set FN_GetIsFollower,0x800055f8
-.set FN_LoadPSTransformation,0x80005600
 
 # Game functions (applies to NTSC v1.02)
 .set HSD_Randi,0x80380580
@@ -104,6 +105,7 @@ mtlr r0
 .set PlayerBlock_UpdateCoords,0x80032828
 .set PlayerBlock_LoadExternalCharID,0x80032330
 .set PlayerBlock_LoadRemainingStocks,0x80033bd8
+.set PlayerBlock_LoadSlotType,0x8003241c
 
 .set Camera_UpdatePlayerCameraBox,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
