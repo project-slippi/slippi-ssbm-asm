@@ -9,14 +9,15 @@ C_DIR			:= Output/Console
 CONSOLE_CORE 		:= $(C_DIR)/g_core.bin
 CONSOLE_CORE_PORTA   := $(C_DIR)/g_core_porta.bin
 CONSOLE_UCF		:= $(C_DIR)/g_ucf.bin
+CONSOLE_UCF_STEALTH		:= $(C_DIR)/g_ucf_stealth.bin
 CONSOLE_TOGGLES		:= $(C_DIR)/g_toggles.bin
 CONSOLE_SPAWNS		:= $(C_DIR)/g_tournament.bin
 CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
 CONSOLE_QOL		:= $(C_DIR)/g_qol.bin
 CONSOLE_FROZEN   := $(C_DIR)/g_frozen.bin
 CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) \
-				$(CONSOLE_TOGGLES) $(CONSOLE_SPAWNS) $(CONSOLE_PAL) $(CONSOLE_QOL) \
-				$(CONSOLE_FROZEN)
+				$(CONSOLE_UCF_STEALTH) $(CONSOLE_TOGGLES) $(CONSOLE_SPAWNS) \
+				$(CONSOLE_PAL) $(CONSOLE_QOL) $(CONSOLE_FROZEN)
 
 ALL_TARGETS 		:= $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
 .PHONY: $(ALL_TARGETS) clean
@@ -38,6 +39,10 @@ $(CONSOLE_TOGGLES): console_ControllerFixPlayerToggles.json
 	@echo ""
 
 $(CONSOLE_UCF): console_UCF.json
+	gecko build -c $<
+	@echo ""
+
+$(CONSOLE_UCF_STEALTH): console_UCF_stealth.json
 	gecko build -c $<
 	@echo ""
 

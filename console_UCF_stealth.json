@@ -4,7 +4,7 @@
   },
   "outputFiles": [
     {
-      "file": "Output/Console/g_ucf.bin"
+      "file": "Output/Console/g_ucf_stealth.bin"
     }
   ],
   "codes": [
@@ -22,12 +22,6 @@
           "sourceFolder": "External/UCF + Arduino Toggle UI/UCF",
           "isRecursive": true,
           "annotation": "UCF v0.74"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/UCF CSS Indicator",
-          "isRecursive": true,
-          "annotation": "UCF CSS Indicator"
         },
         {
           "type": "injectFolder",

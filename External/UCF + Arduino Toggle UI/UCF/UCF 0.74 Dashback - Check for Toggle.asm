@@ -1,5 +1,7 @@
-#To be inserted at 800C9A44
-.include "../../../Common/Common.s"
+################################################################################
+# Address: 800C9A44
+################################################################################
+.include "Common/Common.s"
 
 .set REG_PlayerData,31
 .set REG_Floats,30
@@ -8,7 +10,7 @@
 
 #Original codeline
 	stfs f0,0x2C(REG_PlayerData)    # Entry point, store new facing direction
-  
+
 # Check for toggle bool
   lbz r4,0x618(REG_PlayerData)        #get player port
   subi r3,rtoc,ControllerFixOptions   #get UCF toggle bool base address
