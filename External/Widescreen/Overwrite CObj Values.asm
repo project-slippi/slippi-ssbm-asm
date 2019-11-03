@@ -15,7 +15,7 @@ b END
 
 Floats:
 blrl
-.float 92
-.float 63
+.float 320
+.float 219
 
 END:
