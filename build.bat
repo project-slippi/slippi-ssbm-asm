@@ -23,6 +23,10 @@ echo Building console_UCF.json...
 gecko build -c console_UCF.json
 echo.
 
+echo Building console_UCF_stealth.json...
+gecko build -c console_UCF_stealth.json
+echo.
+
 echo Building console_tournament.json...
 gecko build -c console_tournament.json
 echo.

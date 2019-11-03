@@ -11,6 +11,19 @@
 #Original codeline
 	stfs f0,0x2C(REG_PlayerData)    # Entry point, store new facing direction
 
+# Check for toggle bool
+  lbz r4,0x618(REG_PlayerData)        #get player port
+  subi r3,rtoc,ControllerFixOptions   #get UCF toggle bool base address
+  lbzx r3,r3,r4	          #get players UCF toggle bool
+  cmpwi r3,0x1
+  beq Init # if equal, skip to start of handler
+# Check for dashback bool (set by slp playback)
+  subi r3,rtoc,DashbackOptions
+  lbzx r3,r3,r4
+  cmpwi r3,0x1
+  bne Injection_Exit
+
+Init:
 #Init
 	backup
 	bl	Floats

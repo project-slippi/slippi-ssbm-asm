@@ -15,6 +15,19 @@ backup
   bl  Floats
   mflr  REG_Floats
 
+# Check for toggle bool
+  lbz r4,0x618(r31)          #get player port
+  subi r3,rtoc,ControllerFixOptions     #get UCF toggle bool base address
+  lbzx r3,r3,r4	            #get players UCF toggle bool
+  cmpwi r3,0x1
+  beq Start # if equal, skip to start of handler
+# Check for dashback bool (set by slp playback)
+  subi r3,rtoc,ShieldDropOptions     #get UCF toggle bool base address
+  lbzx r3,r3,r4	            #get players ShieldDrop toggle bool
+  cmpwi r3,0x1
+  bne EnterSpotdodge
+
+Start:
 #Check if cstick is
   lfs f1, 0x63C (REG_PlayerData)
   lwz	r3, -0x514C (r13)
