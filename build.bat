@@ -23,6 +23,8 @@ set list=%list%;console_mods_tournament.json
 set list=%list%;console_mods_friendlies.json
 set list=%list%;console_PAL.json
 set list=%list%;console_frozen.json
+set list=%list%;console_lag_pd.json
+set list=%list%;console_lag_pdvb.json
 
 for %%a in (%list%) do (
   echo Building %%a...

@@ -1,0 +1,25 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_lag_pd.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Polling Drift Fix",
+      "authors": [
+        "Dan Salvato"
+      ],
+      "description": [
+        "Removes polling drift phenomenon causing variable input lag"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD.bin",
+          "annotation": "Polling Drift Fix [Dan Salvato]"
+        }
+      ]
+    }
+  ]
+}
