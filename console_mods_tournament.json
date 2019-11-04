@@ -1,18 +1,18 @@
 {
   "outputFiles": [
     {
-      "file": "Output/Console/g_tournament.bin"
+      "file": "Output/Console/g_mods_tournament.bin"
     }
   ],
   "codes": [
     {
-      "name": "Tournament codes",
+      "name": "Full tournament codes",
       "authors": [
         "Achilles",
-        "Jorgasms"
+        "UnclePunch"
       ],
       "description": [
-        "Tournament codes to improve fair competition"
+        "Tournament mods to improve fair competition"
       ],
       "build": [
         {
@@ -37,6 +37,26 @@
           "sourceFolder": "External/Unplugging Closes CSS Door",
           "isRecursive": true,
           "annotation": "Unplugging Closes CSS Door [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/CSS Player Hands Default to HMN Button",
+          "annotation": "CSS Player Hands Default to HMN Button [Achilles1515]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Disable FoD During Doubles",
+          "annotation": "Disable FoD During Doubles [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Toggle Rumble From CSS",
+          "annotation": "Toggle Rumble From CSS [Dan Salvato]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Stage Striking",
+          "annotation": "Stage Striking on SSS [Dan Salvato]"
         }
       ]
     }

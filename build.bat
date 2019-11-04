@@ -15,32 +15,19 @@ echo Building console_core.json for Port A...
 gecko build -c console_core.json -defsym "STG_EXIIndex=0" -o "Output/Console/g_core_porta.bin"
 echo.
 
-echo Building console_ControllerFixPlayerToggles.json...
-gecko build -c console_ControllerFixPlayerToggles.json
-echo.
+set list=console_UCF.json
+set list=%list%;console_UCF_stealth.json
+set list=%list%;console_ControllerFixPlayerToggles.json
+set list=%list%;console_mods_stealth.json
+set list=%list%;console_mods_tournament.json
+set list=%list%;console_mods_friendlies.json
+set list=%list%;console_PAL.json
+set list=%list%;console_frozen.json
 
-echo Building console_UCF.json...
-gecko build -c console_UCF.json
-echo.
-
-echo Building console_UCF_stealth.json...
-gecko build -c console_UCF_stealth.json
-echo.
-
-echo Building console_tournament.json...
-gecko build -c console_tournament.json
-echo.
-
-echo Building console_PAL.json...
-gecko build -c console_PAL.json
-echo.
-
-echo Building console_QOL.json...
-gecko build -c console_QOL.json
-echo.
-
-echo Building console_frozen.json...
-gecko build -c console_frozen.json
-echo.
+for %%a in (%list%) do (
+  echo Building %%a...
+  gecko build -c %%a
+  echo.
+)
 
 pause

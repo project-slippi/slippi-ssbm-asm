@@ -11,13 +11,15 @@ CONSOLE_CORE_PORTA   := $(C_DIR)/g_core_porta.bin
 CONSOLE_UCF		:= $(C_DIR)/g_ucf.bin
 CONSOLE_UCF_STEALTH		:= $(C_DIR)/g_ucf_stealth.bin
 CONSOLE_TOGGLES		:= $(C_DIR)/g_toggles.bin
-CONSOLE_SPAWNS		:= $(C_DIR)/g_tournament.bin
+CONSOLE_MODS_STEALTH		:= $(C_DIR)/g_mods_stealth.bin
+CONSOLE_MODS_TOURNAMENT		:= $(C_DIR)/g_mods_tournament.bin
+CONSOLE_MODS_FRIENDLIES		:= $(C_DIR)/g_mods_friendlies.bin
 CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
-CONSOLE_QOL		:= $(C_DIR)/g_qol.bin
 CONSOLE_FROZEN   := $(C_DIR)/g_frozen.bin
 CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) \
-				$(CONSOLE_UCF_STEALTH) $(CONSOLE_TOGGLES) $(CONSOLE_SPAWNS) \
-				$(CONSOLE_PAL) $(CONSOLE_QOL) $(CONSOLE_FROZEN)
+				$(CONSOLE_UCF_STEALTH) $(CONSOLE_TOGGLES) $(CONSOLE_MODS_STEALTH) \
+				$(CONSOLE_MODS_TOURNAMENT) $(CONSOLE_MODS_FRIENDLIES) \
+				$(CONSOLE_PAL) $(CONSOLE_FROZEN)
 
 ALL_TARGETS 		:= $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
 .PHONY: $(ALL_TARGETS) clean
@@ -46,15 +48,19 @@ $(CONSOLE_UCF_STEALTH): console_UCF_stealth.json
 	gecko build -c $<
 	@echo ""
 
-$(CONSOLE_SPAWNS): console_tournament.json
+$(CONSOLE_MODS_STEALTH): console_mods_stealth.json
+	gecko build -c $<
+	@echo ""
+
+$(CONSOLE_MODS_TOURNAMENT): console_mods_tournament.json
+	gecko build -c $<
+	@echo ""
+
+$(CONSOLE_MODS_FRIENDLIES): console_mods_friendlies.json
 	gecko build -c $<
 	@echo ""
 
 $(CONSOLE_PAL): console_PAL.json
-	gecko build -c $<
-	@echo ""
-
-$(CONSOLE_QOL): console_QOL.json
 	gecko build -c $<
 	@echo ""
 

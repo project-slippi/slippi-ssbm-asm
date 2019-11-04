@@ -1,0 +1,44 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_mods_stealth.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Stealth tournament codes",
+      "authors": [
+        "Achilles",
+        "UnclePunch"
+      ],
+      "description": [
+        "Tournament mods to improve fair competition"
+      ],
+      "build": [
+        {
+          "type": "inject",
+          "address": "8016e510",
+          "sourceFile": "External/NeutralSpawn.asm",
+          "annotation": "Neutral Spawns [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Nametag When Invisible",
+          "annotation": "Hide Nametag When Invisible [Achilles1515]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Closing CSS Door Preserves Nametag",
+          "isRecursive": true,
+          "annotation": "Closing CSS Door Preserves Nametag [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Unplugging Closes CSS Door",
+          "isRecursive": true,
+          "annotation": "Unplugging Closes CSS Door [UnclePunch]"
+        }
+      ]
+    }
+  ]
+}
