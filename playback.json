@@ -1,7 +1,4 @@
 {
-  "settings": {
-    "areIncludesRelativeFromFile": true
-  },
   "outputFiles": [
     {
       "file": "Output/Playback/GALE01r2.ini",
