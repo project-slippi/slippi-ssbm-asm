@@ -17,9 +17,10 @@ Loop:
   beq- LoopInc
   rlwinm. r0, r4, 0, 22, 22 #check B
   bne- Runback
+  /*
   rlwinm. r0, r4, 0, 21, 21 #check X
   bne RandomStage
-
+  */
 LoopInc:
   addi  REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,4
@@ -30,6 +31,7 @@ Runback:
   li r27,0x2 #reload match scene
   b exit
 
+/*
 RandomStage:
   branchl r12,0x802599EC #get random stage ID
 
@@ -49,6 +51,7 @@ RandomStage:
 
   li r27,0x2                  #reload match scene
   b exit
+*/
 
 LoadCSS:
   li r27,0x0  #load CSS
