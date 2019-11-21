@@ -142,6 +142,7 @@ mtlr r0
 .set PALToggle,-0xDCC   #offset for whether or not the replay is played with PAL modifications
 .set PSPreloadToggle,-0xDC8   #offset for whether or not the replay is played with PS Preload Behavior
 .set FSToggle,-0xDC4    #offset for whether or not the replay is played with the Frozen PS toggle
+.set HideWaitingForGame,-0xDC0   #offset for whether or not to display the waiting for game text
 
 ################################################################################
 # Offsets

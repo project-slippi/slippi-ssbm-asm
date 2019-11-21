@@ -158,6 +158,25 @@
       ]
     },
     {
+      "name": "Hide Waiting For Game",
+      "authors": [
+        "Nikki",
+        "UnclePunch"
+      ],
+      "description": [
+        "Hides the waiting for game text and slippi.gg text and disables the SFX played before a replay starts",
+        "With this enabled, there will be no indication between matches that Melee is still running"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Playback/Hide Waiting For Game",
+          "isRecursive": true,
+          "annotation": "Hide Waiting For Game"
+        }
+      ]
+    },
+    {
       "name": "Enable Develop Mode",
       "authors": [
         "UnclePunch"
