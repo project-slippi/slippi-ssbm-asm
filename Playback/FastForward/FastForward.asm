@@ -1,4 +1,7 @@
-# Inject at 801a501c
+################################################################################
+# Address: 801a501c
+################################################################################
+
 # Injection is right before game engine loops
 .include "Common/Common.s"
 .include "Playback/Playback.s"

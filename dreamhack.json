@@ -1,12 +1,28 @@
 {
   "outputFiles": [
     {
-      "file": "Output/Console/g_ucf_stealth.bin"
+      "file": "Output/Events/dreamhack.gct"
     }
   ],
   "codes": [
     {
-      "name": "UCF Slippi",
+      "name": "Polling Drift Fix",
+      "authors": [
+        "Dan Salvato"
+      ],
+      "description": [
+        "Removes polling drift phenomenon causing variable input lag"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD.bin",
+          "annotation": "Polling Drift Fix [Dan Salvato]"
+        }
+      ]
+    },
+    {
+      "name": "UCF",
       "authors": [
         "Dan Salvato",
         "tauKhan",
