@@ -164,7 +164,7 @@
         "UnclePunch"
       ],
       "description": [
-        "Hides the waiting for game text and slippi.gg text"
+        "Hides the waiting for game text and slippi.gg text and disables the SFX played before a replay starts"
       ],
       "build": [
         {

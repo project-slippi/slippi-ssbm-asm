@@ -145,9 +145,9 @@ blrl
     mr  r4,REG_Text
     lwz r3,HideWaitingForGame(rtoc)
     cmpwi r3, 0
-    bne skip
+    bne skipDraw
     branchl r12, Text_DrawEachFrame
-  skip:
+  skipDraw:
     li  r3,0x0
     branchl r12, HSD_VICopyXFBASync
 
@@ -218,9 +218,12 @@ blrl
     branchl r12, DiscError_ResumeGame
 
   #Play SFX
+    lwz r3,HideWaitingForGame(rtoc)
+    cmpwi r3, 0
+    bne skipSFX
     li  r3,0x1
     branchl r12, SFX_Menu_CommonSound
-
+  skipSFX:
   #Change Scene Minor
     branchl r12, MenuController_ChangeScreenMinor
 
