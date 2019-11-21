@@ -164,7 +164,8 @@
         "UnclePunch"
       ],
       "description": [
-        "Hides the waiting for game text and slippi.gg text and disables the SFX played before a replay starts"
+        "Hides the waiting for game text and slippi.gg text and disables the SFX played before a replay starts",
+        "With this enabled, there will be no indication between matches that Melee is still running"
       ],
       "build": [
         {
