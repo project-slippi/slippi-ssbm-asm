@@ -169,7 +169,7 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "External/Hide Waiting For Game",
+          "sourceFolder": "Playback/Hide Waiting For Game",
           "isRecursive": true,
           "annotation": "Hide Waiting For Game"
         }
