@@ -143,8 +143,11 @@ blrl
 
     li  r3,0x0
     mr  r4,REG_Text
+    lwz r3,HideWaitingForGame(rtoc)
+    cmpwi r3, 0
+    bne skip
     branchl r12, Text_DrawEachFrame
-
+  skip:
     li  r3,0x0
     branchl r12, HSD_VICopyXFBASync
 

@@ -158,6 +158,24 @@
       ]
     },
     {
+      "name": "Hide Waiting For Game",
+      "authors": [
+        "Nikki",
+        "UnclePunch"
+      ],
+      "description": [
+        "Hides the waiting for game text and slippi.gg text"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Waiting For Game",
+          "isRecursive": true,
+          "annotation": "Hide Waiting For Game"
+        }
+      ]
+    },
+    {
       "name": "Enable Develop Mode",
       "authors": [
         "UnclePunch"
