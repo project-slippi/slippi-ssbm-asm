@@ -8,7 +8,8 @@
     {
       "name": "Polling Drift + Visual Buffer Fixes",
       "authors": [
-        "tauKhan"
+        "tauKhan",
+        "UnclePunch"
       ],
       "description": [
         "Removes polling drift phenomenon causing variable input lag",
@@ -19,6 +20,11 @@
           "type": "binary",
           "sourceFile": "Binary/LagReduction/PD+VB.bin",
           "annotation": "Polling Drift Fix [tauKhan]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Lag Reduction/Force HD",
+          "annotation": "Force Progressive Scane and Deflicker off [UnclePunch]"
         }
       ]
     }
