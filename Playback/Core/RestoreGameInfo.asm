@@ -9,7 +9,7 @@
 ################################################################################
 .include "Common/Common.s"
 .include "Playback/Playback.s"
-.include "Playback/RestoreInitialRNG.s"
+.include "Playback/Core/RestoreInitialRNG.s"
 
 # Register names
 .set BufferPointer,30

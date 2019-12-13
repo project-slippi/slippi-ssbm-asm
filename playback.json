@@ -220,7 +220,7 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "Playback",
+          "sourceFolder": "Playback/Core",
           "isRecursive": true
         },
         {
