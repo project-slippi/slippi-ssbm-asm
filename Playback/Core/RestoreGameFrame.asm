@@ -48,9 +48,8 @@
 
 CONTINUE_READ_DATA:
 
-#region debug section
-.if STG_DesyncDebug==1
 CheckForDesync:
+  li r25, 0
 /*
   lis r3,0x804D
   lwz r3,0x5F90(r3)
@@ -90,9 +89,11 @@ SkipPercentageDesyncCheck:
   b RestoreData
 
 DesyncDetected:
+  li r25, 1
+
+.if STG_DesyncDebug==1
   bl  DumpFrameData
 .endif
-#endregion
 
 RestoreData:
 # Restore data
@@ -163,40 +164,45 @@ RestoreData:
   branchl r12, Damage_UpdatePercent
 SkipPercentageRestore:
 
-# Correct spawn points on the first frame
-  lwz r3,frameIndex(r13)
-  cmpwi r3,-123
-  bne SkipSpawnCorrection
+# don't do any correction if we arent desynced
+  cmpwi r25, 0
+  beq SkipCorrection
+
 # Force Direction Change
   mr  r3,PlayerData
   li  r4,0
-  lfs	f1, -0x778C (rtoc)
+  lfs    f1, -0x778C (rtoc)
   branchl r12, Obj_ChangeRotation_Yaw
 # Update Position (Copy Physics XYZ into all ECB XYZ)
-  lwz	r3, 0x00B0 (PlayerData)
-  stw	r3, 0x06F4 (PlayerData)
-  stw	r3, 0x070C (PlayerData)
-  lwz	r3, 0x00B4 (PlayerData)
-  stw	r3, 0x06F8 (PlayerData)
-  stw	r3, 0x0710 (PlayerData)
-  lwz	r3, 0x00B8 (PlayerData)
-  stw	r3, 0x06FC (PlayerData)
-  stw	r3, 0x0714 (PlayerData)
+  lwz    r3, 0x00B0 (PlayerData)
+  stw    r3, 0x06F4 (PlayerData)
+  stw    r3, 0x070C (PlayerData)
+  lwz    r3, 0x00B4 (PlayerData)
+  stw    r3, 0x06F8 (PlayerData)
+  stw    r3, 0x0710 (PlayerData)
+  lwz    r3, 0x00B8 (PlayerData)
+  stw    r3, 0x06FC (PlayerData)
+  stw    r3, 0x0714 (PlayerData)
 # Update Initial Y Position (AS_Entry variable)
   lfs f1,0xB4(PlayerData)
   stfs f1,0x2344(PlayerData)
 # Update Collision Frame ID
-  lwz	r3, -0x51F4 (r13)
+  lwz    r3, -0x51F4 (r13)
   stw r3, 0x728(PlayerData)
 # Update Static Player Block Coords
   lbz r3,0xC(PlayerData)
-  lbz	r4, 0x221F (PlayerData)
-  rlwinm	r4, r4, 29, 31, 31
+  lbz    r4, 0x221F (PlayerData)
+  rlwinm    r4, r4, 29, 31, 31
   addi  r5,PlayerData,176
   branchl r12, PlayerBlock_UpdateCoords
 #Update Camera Box Position
   mr  r3,PlayerGObj
   branchl r12, Camera_UpdatePlayerCameraBox
+
+# Correct spawn points on the first frame
+  lwz r3,frameIndex(r13)
+  cmpwi r3,-123
+  bne SkipCorrection
 #Update Camera Box Direction Tween
   lwz r3,0x890(PlayerData)
   lfs f1,0x40(r3)     #Leftmost Bound
@@ -205,7 +211,7 @@ SkipPercentageRestore:
   stfs f1,0x30(r3)    #Current Right Box Bound
 #Update Camera Position
   branchl r12, Camera_CorrectPosition
-SkipSpawnCorrection:
+SkipCorrection:
 
 #region debug section
 .if STG_DesyncDebug==1
