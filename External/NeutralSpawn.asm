@@ -241,10 +241,12 @@ SetSpawn_UpdateFacingDirection_Store:
   mr  r3,REG_PlayerSlot
   branchl r12,0x80033094
 
+/*
 SetSpawn_AdjustEntryFrames:
   mr  r3,REG_PlayerSlot
   mulli r4,REG_SpawnID,5
   branchl r12,0x80035fdc
+*/
 
 SetSpawn_Exit:
   restore
