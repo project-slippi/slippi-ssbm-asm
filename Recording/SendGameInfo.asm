@@ -39,32 +39,9 @@ backup
   stw r3,bufferOffset(r13)
 
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
-  load r4, GeckoCodeSectionStart
-
-  # The following are the "end" messages for gecko codes
-  # The valid terminators for gecko are 0xF0000000 0x00000000 or
-  # 0xFF000000 0x00000000
-  lis r5, 0xFF00
-  lis r6, 0xF000
-
-GECKO_SECTION_LOOP_START:
-  lwz r3, 0(r4)
-  cmpw r3, r5
-  beq GECKO_SECTION_CHECK_SECOND_WORD
-
-GECKO_SECTION_CONTINUE_LOOP:
-  addi r4, r4, 8
-  b GECKO_SECTION_LOOP_START
-
-GECKO_SECTION_CHECK_SECOND_WORD:
-  lwz r3, 4(r4)
-  cmpwi r3, 0
-  bne GECKO_SECTION_CONTINUE_LOOP
-
-  # We have made it out of the loop, that means that the terminator has been
-  # found. Time to calculate the gecko code size
-  load r3, GeckoCodeSectionStart
-  sub REG_GeckoListSize, r4, r3
+  li r3, 0 # No callback
+  branchl r12, FN_ProcessGecko
+  mr REG_GeckoListSize, r3
 
 #------------- WRITE OUT COMMAND SIZES -------------
 # start file sending and indicate the sizes of the output commands
