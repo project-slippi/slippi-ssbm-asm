@@ -133,6 +133,8 @@ mtlr r0
 .set CONST_SlippiCmdCheckForStockSteal,0x89
 .set CONST_SlippiCmdGetBufferedFrameCount,0x90
 
+.set GeckoCodeSectionStart,0x801910E8
+
 .set ControllerFixOptions,0xDD8 # Each byte at offset is a player's setting
 .set UCFTextPointers,0x4fa0
 
