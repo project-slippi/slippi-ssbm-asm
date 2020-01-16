@@ -8,10 +8,11 @@
 # a request to slippi. Runs when a player is in-game + has no stocks
 ################################################################################
 .include "Common/Common.s"
+.include "Playback/Playback.s"
 
 # Setup buffer
   lwz r5,secondaryDmaBuffer(r13)    #Get secondary DMA buffer alloc
-  li  r4,CONST_SlippiCmdCheckForStockSteal
+  li  r4,CMD_IS_STOCK_STEAL
   stb r4,0x0(r5)        #Store stock steal cmd ID
   lwz r4,frameIndex(r13)   #Get custom match timer
   stw r4,0x1(r5)

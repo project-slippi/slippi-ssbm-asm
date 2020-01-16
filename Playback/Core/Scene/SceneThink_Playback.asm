@@ -2,6 +2,7 @@
 # Address: 801a6348
 ################################################################################
 .include "Common/Common.s"
+.include "Playback/Playback.s"
 
 .set REG_Floats, 30
 .set REG_BufferPointer, 29
@@ -188,7 +189,7 @@ blrl
 
   PlaybackThink_CheckEXI:
   RequestReplay:
-    li r3,CONST_SlippiCmdCheckForReplay
+    li r3,CMD_IS_REPLAY_READY
     stb r3,0x0(REG_BufferPointer)
     mr r3,REG_BufferPointer
     li  r4,0x1                #Length

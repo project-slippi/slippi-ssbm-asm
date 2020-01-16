@@ -127,12 +127,6 @@ mtlr r0
 .set CONST_ExiRead, 0 # arg value to make an EXI read
 .set CONST_ExiWrite, 1 # arg value to make an EXI write
 
-# For Slippi communication
-.set CONST_SlippiCmdGetFrame, 0x76
-.set CONST_SlippiCmdCheckForReplay, 0x88
-.set CONST_SlippiCmdCheckForStockSteal,0x89
-.set CONST_SlippiCmdGetBufferedFrameCount,0x90
-
 .set GeckoCodeSectionStart,0x801910E8
 
 .set ControllerFixOptions,0xDD8 # Each byte at offset is a player's setting

@@ -15,6 +15,16 @@
 .set CONST_FrameFetchResult_FastForward, 3
 
 ################################################################################
+# Command Bytes
+################################################################################
+.set CMD_GET_GAME_INFO, 0x75
+.set CMD_GET_FRAME, 0x76
+.set CMD_IS_REPLAY_READY, 0x88
+.set CMD_IS_STOCK_STEAL,0x89
+.set CMD_GET_GECKO_CODES,0x8A
+.set CMD_GET_BUFFERED_FRAME_COUNT,0x90 # deprecated
+
+################################################################################
 # Buffer Offsets
 ################################################################################
 .set Buffer_Length,(BufferStatus_Length)+(InitialRNG_Length)+(GameFrame_Length)
@@ -54,7 +64,7 @@
 ################################################################################
 # Game Info Buffer Offsets
 ################################################################################
-  .set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length + PALBool.Length + PSPreloadBool.Length + FrozenPSBool.Length
+  .set GameInfoLength, SuccessBool.Length + InfoRNGSeed.Length + MatchStruct.Length + UCFToggles.Length + NametagData.Length + PALBool.Length + PSPreloadBool.Length + FrozenPSBool.Length + GeckoListSize.Length
   .set SuccessBool,0x0
     .set SuccessBool.Length,0x1
   .set InfoRNGSeed,0x1
@@ -73,3 +83,5 @@
     .set PSPreloadBool.Length,0x1
   .set FrozenPSBool,0x19F
     .set FrozenPSBool.Length,0x1
+  .set GeckoListSize,0x1A0
+    .set GeckoListSize.Length,0x4

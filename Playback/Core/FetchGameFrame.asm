@@ -44,7 +44,7 @@ lwz BufferPointer,frameDataBuffer(r13)
 
 FetchFrameInfo_REQUEST_DATA:
 # request game information from slippi
-  li r3, CONST_SlippiCmdGetFrame        # store gameframe request ID
+  li r3, CMD_GET_FRAME        # store gameframe request ID
   stb r3,0x0(BufferPointer)
   lwz r3,frameIndex(r13)           #get frame to request
   stw r3,0x1(BufferPointer)

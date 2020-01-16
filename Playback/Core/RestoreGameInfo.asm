@@ -13,6 +13,7 @@
 
 # Register names
 .set BufferPointer,30
+.set REG_GeckoBuffer,29
 
 ################################################################################
 #                   subroutine: gameInfoLoad
@@ -36,7 +37,7 @@
 # get the game info data
 REQUEST_DATA:
 # request game information from slippi
-  li r3,0x75        # store game info request ID
+  li r3,CMD_GET_GAME_INFO        # store game info request ID
   stb r3,0x0(BufferPointer)
 # Transfer buffer over DMA
   mr r3,BufferPointer   #Buffer Pointer
@@ -163,8 +164,33 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   stb r3,PSPreloadToggle(rtoc)
 
 #Restore FrozenPS byte
+# TODO: This probably is no longer necessary with dynamic gecko codes
   lbz r3,FrozenPSBool(BufferPointer)
   stb r3,FSToggle(rtoc)
+
+#--------------- Apply Dynamic Gecko Codes ---------------------
+# Step 1: Grab size of gecko code list and create a buffer to store them
+  lwz r3, GeckoListSize(BufferPointer)
+  branchl r12, HSD_MemAlloc
+  mr REG_GeckoBuffer, r3
+
+  li r3, CMD_GET_GECKO_CODES
+  stb r3, 0(REG_GeckoBuffer)
+
+  # Request codes
+  mr r3, REG_GeckoBuffer
+  li r4, 1
+  li r5, CONST_ExiWrite
+  branchl r12, FN_EXITransferBuffer
+
+  # Get codes
+  mr r3, REG_GeckoBuffer
+  lwz r4, GeckoListSize(BufferPointer)
+  li r5, CONST_ExiRead
+  branchl r12, FN_EXITransferBuffer
+
+  # TODO: Call gecko code iterator with callback function that applies
+  # TODO: all the injections and stores the replaced instruction
 
 # run macro to create the RestoreInitialRNG process
   Macro_RestoreInitialRNG
