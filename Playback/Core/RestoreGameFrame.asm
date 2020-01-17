@@ -31,7 +31,8 @@
   mr PlayerDataStatic,r3
 
 # get buffer pointer
-  lwz BufferPointer,frameDataBuffer(r13)
+  lwz r3,primaryDataBuffer(r13)
+  lwz BufferPointer,PDB_EXI_BUF_ADDR(r3)
 
 #Check if this player is a follower
   mr  r3,PlayerData

@@ -5,7 +5,7 @@
 ################################################################################
 #                      Inject at address 8016d298
 # Function is SceneThink_VSMode and we're calling FetchGameFrame to update
-# the frameDataBuffer.
+# the EXI buffer.
 ################################################################################
 .include "Common/Common.s"
 .include "Playback/Playback.s"
@@ -40,7 +40,8 @@
 FetchGameFrame:
 
 backup
-lwz BufferPointer,frameDataBuffer(r13)
+lwz r3,primaryDataBuffer(r13)
+lwz BufferPointer,PDB_EXI_BUF_ADDR(r3)
 
 FetchFrameInfo_REQUEST_DATA:
 # request game information from slippi

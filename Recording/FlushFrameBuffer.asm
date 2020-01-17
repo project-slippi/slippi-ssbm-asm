@@ -28,7 +28,7 @@ backup
   beq Injection_Exit
 
 # get buffer
-  lwz REG_Buffer,frameDataBuffer(r13)
+  lwz REG_Buffer,primaryDataBuffer(r13)
   lwz REG_BufferOffset,bufferOffset(r13)
   add REG_WritePos,REG_Buffer,REG_BufferOffset
 

@@ -28,7 +28,8 @@
   beq PreviousCodeLine
 
 # check status for fast forward
-  lwz r3,frameDataBuffer(r13)
+  lwz r3,primaryDataBuffer(r13) # directory address
+  lwz r3,PDB_EXI_BUF_ADDR(r3) # EXI buf address
   lbz r3,(BufferStatus_Start)+(BufferStatus_Status)(r3)
   cmpwi r3, CONST_FrameFetchResult_FastForward
   beq FastForward # If we are not terminating, skip

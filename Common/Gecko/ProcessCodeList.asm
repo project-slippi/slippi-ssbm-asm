@@ -4,7 +4,8 @@
 
 ################################################################################
 # Inputs:
-# r3 - optional callback executed for each gecko code
+# r3 - location of the start of the gecko code list
+# r4 - optional callback executed for each gecko code
 ################################################################################
 # Outputs:
 # r3 - total size of code section
@@ -22,11 +23,11 @@
 
 backup
 
-# Move optional callback into reg
-mr REG_Callback, r3
-li REG_CodeCount, 0
+mr REG_Cursor, r3
 
-load REG_Cursor, GeckoCodeSectionStart
+# Move optional callback into reg
+mr REG_Callback, r4
+li REG_CodeCount, 0
 
 LOOP_START:
 lwz r3, 0(REG_Cursor)

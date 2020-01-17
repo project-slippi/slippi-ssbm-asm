@@ -144,7 +144,6 @@ mtlr r0
 ################################################################################
 # Offsets
 ################################################################################
-.set frameDataBuffer,-0x49b4
-.set secondaryDmaBuffer,-0x49b0
+.set primaryDataBuffer,-0x49b4
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac

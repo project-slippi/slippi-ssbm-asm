@@ -14,6 +14,7 @@
 # Register names
 .set BufferPointer,30
 .set REG_GeckoBuffer,29
+.set REG_DirectoryBuffer,28
 
 ################################################################################
 #                   subroutine: gameInfoLoad
@@ -23,16 +24,22 @@
 # create stack frame and store link register
   backup
 
+# allocate memory for directory buffer
+  li r3, PDB_SIZE
+  branchl r12, HSD_MemAlloc
+  mr REG_DirectoryBuffer, r3
+  stw REG_DirectoryBuffer, primaryDataBuffer(r13) # Store directory buffer location
+
 # allocate memory for the gameframe buffer used here and in ReceiveGameFrame
   li  r3,Buffer_Length
   branchl r12, HSD_MemAlloc
   mr  BufferPointer,r3
-  stw BufferPointer,frameDataBuffer(r13)
+  stw BufferPointer,PDB_EXI_BUF_ADDR(REG_DirectoryBuffer)
 
-# allocate memory for the secondaryDmaBuffer used in RestoreStockSteal
+# allocate memory for the Secondary Buffer used in RestoreStockSteal
   li  r3,64
   branchl r12, HSD_MemAlloc
-  stw r3,secondaryDmaBuffer(r13)
+  stw r3,PDB_SECONDARY_EXI_BUF_ADDR(REG_DirectoryBuffer)
 
 # get the game info data
 REQUEST_DATA:
@@ -170,10 +177,13 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
 
 #--------------- Apply Dynamic Gecko Codes ---------------------
 # Step 1: Grab size of gecko code list and create a buffer to store them
+  # TODO: Make sure that returned size includes the termination sequence (8 bytes)
   lwz r3, GeckoListSize(BufferPointer)
   branchl r12, HSD_MemAlloc
   mr REG_GeckoBuffer, r3
+  stw REG_GeckoBuffer, PDB_DYNAMIC_GECKO_ADDR(REG_DirectoryBuffer)
 
+# Step 2: Ask dolphin for the code list
   li r3, CMD_GET_GECKO_CODES
   stb r3, 0(REG_GeckoBuffer)
 
@@ -183,14 +193,85 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   li r5, CONST_ExiWrite
   branchl r12, FN_EXITransferBuffer
 
-  # Get codes
+# Step 3: Copy code list into our buffer
   mr r3, REG_GeckoBuffer
   lwz r4, GeckoListSize(BufferPointer)
   li r5, CONST_ExiRead
   branchl r12, FN_EXITransferBuffer
 
-  # TODO: Call gecko code iterator with callback function that applies
-  # TODO: all the injections and stores the replaced instruction
+# Step 4: Run through code list once to figure out how much space we need
+# to allocate for restoration data
+  # initialize the backup size to zero
+  li r4, 0
+  stw r4, PDB_RESTORE_BUF_SIZE(REG_DirectoryBuffer)
+
+  mr r3, REG_GeckoBuffer # Gecko code list start
+  bl Callback_CalculateSize
+  mflr r4 # Callback function to calculate size
+  branchl r12, FN_ProcessGecko
+
+# Step 5: Use size returned to allocate a buffer to store the recovery data
+  lwz r3, PDB_RESTORE_BUF_SIZE(REG_DirectoryBuffer)
+  branchl r12, HSD_MemAlloc
+  stw r3, PDB_RESTORE_BUF_ADDR(REG_DirectoryBuffer)
+
+# Step 6: Iterate through codes again, this time using a callback that will
+# apply all of the changes and store the replacements in the restore buffer
+  mr r3, REG_GeckoBuffer # Gecko code list start
+  bl Callback_CalculateSize
+  mflr r4 # Callback function to calculate size
+  branchl r12, FN_ProcessGecko
+
+  b GECKO_COMPLETE
+
+Callback_CalculateSize:
+blrl
+  # r5 is input to this function, it contains the size of the replaced data
+  cmpwi r5, 0 # If size is 0, either we don't support this codetype or theres nothing to replace
+  beq Callback_CalculateSize_End
+
+  lwz r6, primaryDataBuffer(r13)
+  lwz r3, PDB_RESTORE_BUF_SIZE(r6)
+  addi r3, r3, 8 # For each new code, we need a target address and length
+  add r3, r3, r5 # Add size of the replacement to the total length
+  stw r3, PDB_RESTORE_BUF_SIZE(r6)
+
+Callback_CalculateSize_End:
+  blr
+
+Callback_ProcessGeckoCode:
+blrl
+
+.set REG_SourceDataPtr, 30
+.set REG_TargetDataPtr, 29
+.set REG_DataSize, 28
+
+.set REG_RestoreBufPos, 27
+
+  # r5 is input to this function, it contains the size of the replaced data
+  cmpwi r5, 0 # If size is 0, either we don't support this codetype or theres nothing to replace
+  beq Callback_ProcessGeckoCode_End
+
+  backup # TODO: Consider being more efficient about backup and restore?
+
+  mr REG_SourceDataPtr, r3
+  mr REG_TargetDataPtr, r4
+  mr REG_DataSize, r5
+
+  # Step 1: Back up the data about the be replaced
+  # TODO: I think the size is maybe incorrect atm for C2? C2 only replaces a branch
+  # TODO: For C2 will I also need to modify the branch back?
+  addi r3, REG_RestoreBufPos, 8 # destination
+  mr r4, REG_SourceDataPtr # source
+  mr r5, REG_DataSize
+  branchl r12, memcpy
+
+  restore
+
+Callback_ProcessGeckoCode_End:
+  blr
+
+GECKO_COMPLETE:
 
 # run macro to create the RestoreInitialRNG process
   Macro_RestoreInitialRNG

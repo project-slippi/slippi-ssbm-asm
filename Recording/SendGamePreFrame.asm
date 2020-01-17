@@ -28,7 +28,7 @@ backup
 # get player slot
   lbz REG_PlayerSlot,0xC(REG_PlayerData)
 # get current offset in buffer
-  lwz REG_Buffer,frameDataBuffer(r13)
+  lwz REG_Buffer,primaryDataBuffer(r13)
   lwz REG_BufferOffset,bufferOffset(r13)
   add REG_Buffer,REG_Buffer,REG_BufferOffset
 

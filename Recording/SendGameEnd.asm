@@ -31,7 +31,7 @@ backup
  beq Injection_Exit
 
 # get buffer
-  lwz REG_Buffer,frameDataBuffer(r13)
+  lwz REG_Buffer,primaryDataBuffer(r13)
 
 # request game information from slippi
   li r3, CMD_GAME_END

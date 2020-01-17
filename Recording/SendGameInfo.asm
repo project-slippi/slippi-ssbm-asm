@@ -33,13 +33,14 @@ backup
   li  r3,FULL_FRAME_DATA_BUF_LENGTH
   branchl r12,HSD_MemAlloc
   mr  REG_Buffer,r3
-  stw REG_Buffer,frameDataBuffer(r13)
+  stw REG_Buffer,primaryDataBuffer(r13)
 #Init current offset
   li  r3,0
   stw r3,bufferOffset(r13)
 
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
-  li r3, 0 # No callback
+  load r3, GeckoCodeSectionStart # Gecko code list start
+  li r4, 0 # No callback
   branchl r12, FN_ProcessGecko
   mr REG_GeckoListSize, r3
 

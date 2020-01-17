@@ -25,6 +25,18 @@
 .set CMD_GET_BUFFERED_FRAME_COUNT,0x90 # deprecated
 
 ################################################################################
+# Playback Directory Buffer
+################################################################################
+.set PDB_EXI_BUF_ADDR, 0x0 # u32
+.set PDB_SECONDARY_EXI_BUF_ADDR, PDB_EXI_BUF_ADDR + 4 # u32
+.set PDB_DYNAMIC_GECKO_ADDR, PDB_SECONDARY_EXI_BUF_ADDR + 4 # u32
+.set PDB_RESTORE_BUF_SIZE, PDB_DYNAMIC_GECKO_ADDR + 4 # u32
+.set PDB_RESTORE_BUF_ADDR, PDB_RESTORE_BUF_SIZE + 4 # u32
+.set PDB_RESTORE_BUF_POS, PDB_RESTORE_BUF_ADDR + 4 # u32
+
+.set PDB_SIZE, PDB_RESTORE_BUF_POS + 4
+
+################################################################################
 # Buffer Offsets
 ################################################################################
 .set Buffer_Length,(BufferStatus_Length)+(InitialRNG_Length)+(GameFrame_Length)
