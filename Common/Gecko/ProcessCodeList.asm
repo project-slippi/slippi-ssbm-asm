@@ -8,7 +8,6 @@
 ################################################################################
 # Outputs:
 # r3 - total size of code section
-# r4 - number of codes
 ################################################################################
 
 .include "Common/Common.s"
@@ -16,6 +15,10 @@
 .set REG_Callback, 30
 .set REG_Cursor, 29
 .set REG_CodeCount, 28
+
+.set REG_NextCodeDistance, 27
+.set REG_CopyFromAddress, 26
+.set REG_CopyLen, 25
 
 backup
 
@@ -26,14 +29,18 @@ li REG_CodeCount, 0
 load REG_Cursor, GeckoCodeSectionStart
 
 LOOP_START:
-lwz r4, 0(REG_Cursor)
-rlwinm r3, r4, 8, 0xFF
+lwz r3, 0(REG_Cursor)
+rlwinm r3, r3, 8, 0xFE # Load code type into r3. We ignore the last bit because that's the address modification bit
+
+li REG_NextCodeDistance, 8 # Normally it's 8 but this wouldn't work for codes that are longer
+li REG_CopyFromAddress, 0
+li REG_CopyLen, 0
+
+cmpwi r3, 0xC0
+beq CODE_HANDLER_C0
 
 cmpwi r3, 0xC2
 beq CODE_HANDLER_C2
-
-cmpwi r3, 0x02
-beq CODE_HANDLER_04
 
 cmpwi r3, 0x04
 beq CODE_HANDLER_04
@@ -41,36 +48,89 @@ beq CODE_HANDLER_04
 cmpwi r3, 0x06
 beq CODE_HANDLER_06
 
-# Here we have not matched any supported code types, in this case is the
-# best idea to just exit? Should make sure we support all code types people use
-b LOOP_EXIT
+cmpwi r3, 0x08
+beq CODE_HANDLER_08
+
+# Here we have not matched a codetype. We look for the exit string and if
+# it is not the exit string, we expect to progress by 8 spots to find the
+# next code, in this case the callback will not be fired
+
+# Checks if the first word is 0xFX000000
+lwz r3, 0(REG_Cursor)
+rlwinm r3, r3, 4, 0x0FFFFFFF # Rotate the don't care all the way to the left
+cmpwi r3, 0xF
+bne CODE_HANDLER_DEFAULT
+
+CHECK_SECOND_EXIT_WORD:
+lwz r3, 0x4(REG_Cursor)
+cmpwi r3, 0x0
+beq LOOP_EXIT
+
+CODE_HANDLER_DEFAULT:
+b CODE_HANDLER_COMPLETE
+
+CODE_HANDLER_C0:
+lwz r3, 0x4(REG_Cursor) # Get line count
+mulli r3, r3, 8 # multiply line count by number of bytes per line
+addi REG_NextCodeDistance, r3, 8 # add bytes taken up by first line
+
+b CODE_HANDLER_COMPLETE
 
 CODE_HANDLER_C2:
 lwz r3, 0x4(REG_Cursor) # Get line count
 mulli r3, r3, 8 # multiply line count by number of bytes per line
-addi r3, r3, 8 # add bytes taken up by first line
-add REG_Cursor, REG_Cursor, r3
+addi REG_NextCodeDistance, r3, 8 # add bytes taken up by first line
 
-b CODE_HANDLER_EXIT
+addi REG_CopyFromAddress, REG_Cursor, 8
+subi REG_CopyLen, REG_NextCodeDistance, 8
+
+b CODE_HANDLER_COMPLETE
 
 CODE_HANDLER_04:
-addi REG_Cursor, REG_Cursor, 8
+addi REG_CopyFromAddress, REG_Cursor, 4
+li REG_CopyLen, 4
 
-b CODE_HANDLER_EXIT
+b CODE_HANDLER_COMPLETE
 
 CODE_HANDLER_06:
+# Use data size and round up to the next address of 8 to fill out a line
+lwz r3, 4(REG_Cursor)
+addi r3, r3, 7
+rlwinm r3, r3, 0, 0xFFFFFFF8 # Remove last 3 bits to round up to next 8
+addi REG_NextCodeDistance, r3, 8 # add bytes taken up by first line
 
-CODE_HANDLER_EXIT:
+addi REG_CopyFromAddress, REG_Cursor, 8
+lwz REG_CopyLen, 4(REG_Cursor)
+
+b CODE_HANDLER_COMPLETE
+
+CODE_HANDLER_08:
+li REG_NextCodeDistance, 16
+
+CODE_HANDLER_COMPLETE:
 # Increment code count by 1
 addi REG_CodeCount, REG_CodeCount, 1
 
 # Skip callback if passed in as null
 cmpwi REG_Callback, 0
-beq LOOP_START
+beq LOOP_CONTINUE
 
 # Execute callback
+# Inputs:
+# - r3 - Address to start copying data from
+# - r4 - Address to copy data to
+# - r5 - Size of data (in bytes) to copy
+mr r3, REG_CopyFromAddress
+lwz r4, 0(REG_Cursor)
+rlwinm r4, r4, 0, 0x1FFFFFFF
+lis r5, 0x8000
+add r4, r4, r5
+li r5, REG_CopyLen
 mtctr REG_Callback
 bctrl
+
+LOOP_CONTINUE:
+add REG_Cursor, REG_Cursor, REG_NextCodeDistance
 b LOOP_START
 
 LOOP_EXIT:
@@ -78,6 +138,5 @@ LOOP_EXIT:
 # Prepare return values
 load r3, GeckoCodeSectionStart
 sub r3, REG_Cursor, r3 # Total size
-mr r4, REG_CodeCount # Number of lines
 
 restore
