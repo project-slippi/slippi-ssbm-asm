@@ -18,8 +18,8 @@
 .set REG_CodeCount, 28
 
 .set REG_NextCodeDistance, 27
-.set REG_CopyFromAddress, 26
-.set REG_CopyLen, 25
+#.set REG_CopyFromAddress, 26
+.set REG_ReplaceSize, 25
 
 backup
 
@@ -34,8 +34,7 @@ lwz r3, 0(REG_Cursor)
 rlwinm r3, r3, 8, 0xFE # Load code type into r3. We ignore the last bit because that's the address modification bit
 
 li REG_NextCodeDistance, 8 # Normally it's 8 but this wouldn't work for codes that are longer
-li REG_CopyFromAddress, 0
-li REG_CopyLen, 0
+li REG_ReplaceSize, 0
 
 cmpwi r3, 0xC0
 beq CODE_HANDLER_C0
@@ -82,14 +81,12 @@ lwz r3, 0x4(REG_Cursor) # Get line count
 mulli r3, r3, 8 # multiply line count by number of bytes per line
 addi REG_NextCodeDistance, r3, 8 # add bytes taken up by first line
 
-addi REG_CopyFromAddress, REG_Cursor, 8
-subi REG_CopyLen, REG_NextCodeDistance, 8
+li REG_ReplaceSize, 4
 
 b CODE_HANDLER_COMPLETE
 
 CODE_HANDLER_04:
-addi REG_CopyFromAddress, REG_Cursor, 4
-li REG_CopyLen, 4
+li REG_ReplaceSize, 4
 
 b CODE_HANDLER_COMPLETE
 
@@ -100,8 +97,7 @@ addi r3, r3, 7
 rlwinm r3, r3, 0, 0xFFFFFFF8 # Remove last 3 bits to round up to next 8
 addi REG_NextCodeDistance, r3, 8 # add bytes taken up by first line
 
-addi REG_CopyFromAddress, REG_Cursor, 8
-lwz REG_CopyLen, 4(REG_Cursor)
+lwz REG_ReplaceSize, 4(REG_Cursor)
 
 b CODE_HANDLER_COMPLETE
 
@@ -118,15 +114,13 @@ beq LOOP_CONTINUE
 
 # Execute callback
 # Inputs:
-# - r3 - Address to start copying data from
-# - r4 - Address to copy data to
-# - r5 - Size of data (in bytes) to copy
-mr r3, REG_CopyFromAddress
-lwz r4, 0(REG_Cursor)
-rlwinm r4, r4, 0, 0x1FFFFFFF
-lis r5, 0x8000
-add r4, r4, r5
-li r5, REG_CopyLen
+# - r3 - Codetype
+# - r4 - Code Address
+# - r5 - Replaced Code Size
+lwz r3, 0(REG_Cursor)
+rlwinm r3, r3, 8, 0xFE # Codetype Input
+mr r4, REG_Cursor # Code Address Input
+mr r5, REG_ReplaceSize
 mtctr REG_Callback
 bctrl
 

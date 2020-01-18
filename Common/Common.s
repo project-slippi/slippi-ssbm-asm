@@ -120,6 +120,7 @@ mtlr r0
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set SFX_Menu_CommonSound,0x80024030
 .set DiscError_ResumeGame,0x80024f6c
+.set TRK_flush_cache,0x80328f50
 
 ################################################################################
 # Const Definitions
