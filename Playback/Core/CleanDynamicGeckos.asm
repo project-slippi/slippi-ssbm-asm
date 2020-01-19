@@ -3,6 +3,7 @@
 ################################################################################
 
 .include "Common/Common.s"
+.include "Playback/Playback.s"
 
 .set REG_DirectoryBuffer, 30
 .set REG_CleanupBufReadPos, 29
@@ -27,6 +28,10 @@ branchl r12, memcpy
 lwz r3, 0(REG_CleanupBufReadPos)
 lwz r4, 4(REG_CleanupBufReadPos) # size
 branchl r12, TRK_flush_cache
+
+lwz r3, 4(REG_CleanupBufReadPos) # size
+add REG_CleanupBufReadPos, REG_CleanupBufReadPos, r3
+addi REG_CleanupBufReadPos, REG_CleanupBufReadPos, 8
 
 b LOOP_START
 
