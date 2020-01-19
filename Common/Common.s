@@ -55,7 +55,7 @@ mtlr r0
 # Local functions (added by us)
 .set FN_EXITransferBuffer,0x800055f0
 .set FN_GetIsFollower,0x800055f8
-.set FN_ProcessGecko,0x8019AF48 # TODO: What does Vin think of this?
+.set FN_ProcessGecko,0x800055fc
 
 # Game functions (applies to NTSC v1.02)
 .set HSD_Randi,0x80380580

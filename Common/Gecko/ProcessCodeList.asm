@@ -135,3 +135,4 @@ load r3, GeckoCodeSectionStart
 sub r3, REG_Cursor, r3 # Total size
 
 restore
+blr

@@ -202,7 +202,7 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
 # Step 4: Run through code list once to figure out how much space we need
 # to allocate for restoration data
   # initialize the backup size to zero
-  li r4, 0
+  li r4, 4 # Start with size 4 to fit null pointer to terminate restore
   stw r4, PDB_RESTORE_BUF_SIZE(REG_DirectoryBuffer)
 
   mr r3, REG_GeckoBuffer # Gecko code list start
@@ -214,9 +214,7 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   lwz r3, PDB_RESTORE_BUF_SIZE(REG_DirectoryBuffer)
   branchl r12, HSD_MemAlloc
   stw r3, PDB_RESTORE_BUF_ADDR(REG_DirectoryBuffer)
-  stw r3, PDB_RESTORE_BUF_POS(REG_DirectoryBuffer) # Init pos to start
-  cmpwi r3, 0
-  beq- GECKO_CLEANUP # If address came back 0, that means there were no replaced instructions
+  stw r3, PDB_RESTORE_BUF_WRITE_POS(REG_DirectoryBuffer) # Init pos to start
 
 # Step 6: Iterate through codes again, this time using a callback that will
 # apply all of the changes and store the replacements in the restore buffer
@@ -267,7 +265,7 @@ blrl
   oris REG_TargetDataPtr, r5, 0x8000 # Injection Address
 
   lwz REG_DirectoryBuffer2, primaryDataBuffer(r13)
-  lwz REG_RestoreBufPos, PDB_RESTORE_BUF_POS(REG_DirectoryBuffer2)
+  lwz REG_RestoreBufPos, PDB_RESTORE_BUF_WRITE_POS(REG_DirectoryBuffer2)
 
   # r3 contains the codetype, do a switch statement on it to prepare for memcpys
   cmpwi r3, 0x04
@@ -326,7 +324,7 @@ BACKUP_REPLACED:
   # Increment RestoreBufPos
   addi REG_RestoreBufPos, REG_RestoreBufPos, 8
   add REG_RestoreBufPos, REG_RestoreBufPos, REG_ReplaceSize
-  stw REG_RestoreBufPos, PDB_RESTORE_BUF_POS(REG_DirectoryBuffer2)
+  stw REG_RestoreBufPos, PDB_RESTORE_BUF_WRITE_POS(REG_DirectoryBuffer2)
 
   # Step 2: Replace data
   mr r3, REG_TargetDataPtr # destination
@@ -344,6 +342,12 @@ Callback_ProcessGeckoCode_End:
   blr
 
 GECKO_CLEANUP:
+  # Cleanup Step 1: Write null ptr to the end of cleanup
+  li r3, 0
+  lwz r4, PDB_RESTORE_BUF_WRITE_POS(REG_DirectoryBuffer)
+  stw r3, 0(r4)
+
+  # Cleanup Step 2: Flush instruction cache for entire gecko code region
   mr r3, REG_GeckoBuffer
   lwz r4, GeckoListSize(BufferPointer)
   branchl r12, TRK_flush_cache
