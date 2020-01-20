@@ -3,11 +3,6 @@
 ################################################################################
 .include "Common/Common.s"
 
-#Check if PAL
-  lbz r3,PALToggle(rtoc)
-  cmpwi r3,0x0
-  beq original
-
 #Get Flaots
   bl  Floats
   mflr r4

@@ -3,11 +3,6 @@
 ################################################################################
 .include "Common/Common.s"
 
-#Check if PAL
-  lbz r3,PALToggle(rtoc)
-  cmpwi r3,0x0
-  beq original
-
 backup
 
 lwz r31,0x10C(r30)

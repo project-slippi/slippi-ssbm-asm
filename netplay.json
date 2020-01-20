@@ -114,9 +114,8 @@
           "annotation": "Exiting Debug Menu Returns to CSS [Achilles]"
         },
         {
-          "type": "inject",
-          "address": "8016e510",
-          "sourceFile": "External/NeutralSpawn.asm",
+          "type": "injectFolder",
+          "sourceFolder": "External/NeutralSpawn",
           "annotation": "Neutral Spawns [UnclePunch]"
         },
         {
@@ -271,7 +270,7 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/PAL",
+          "sourceFolder": "External/PAL",
           "isRecursive": true,
           "annotation": "PAL Mods"
         }
@@ -349,12 +348,6 @@
           "sourceFolder": "Common/Initialize Player Data",
           "isRecursive": true,
           "annotation": "Initialize Player Data [UnclePunch]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/StaticPatches",
-          "isRecursive": true,
-          "annotation": "Patch static data based on toggles [UnclePunch]"
         },
         {
           "type": "injectFolder",

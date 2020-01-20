@@ -16,7 +16,7 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/PAL",
+          "sourceFolder": "External/PAL",
           "isRecursive": true,
           "annotation": "PAL Mods"
         }
