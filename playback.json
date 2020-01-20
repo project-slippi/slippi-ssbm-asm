@@ -48,12 +48,6 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF + Arduino Toggle UI/UCF",
-          "isRecursive": true,
-          "annotation": "UCF Handlers"
-        },
-        {
-          "type": "injectFolder",
           "sourceFolder": "External/Extended Nametag Box",
           "isRecursive": true,
           "annotation": "Extended Nametag Box"
@@ -227,24 +221,6 @@
           "type": "injectFolder",
           "sourceFolder": "Common",
           "isRecursive": false
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/StaticPatches",
-          "isRecursive": true,
-          "annotation": "Patch static data based on toggles [UnclePunch]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/Preload Stadium Transformations/Handlers",
-          "isRecursive": true,
-          "annotation": "PS Preload Handlers"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/PAL/Handlers",
-          "isRecursive": true,
-          "annotation": "PAL Handlers"
         },
         {
           "type": "injectFolder",
