@@ -131,6 +131,8 @@ mtlr r0
 
 .set GeckoCodeSectionStart,0x801910E8
 
+.set RtocAddress, 0x804df9e0
+
 .set ControllerFixOptions,0xDD8 # Each byte at offset is a player's setting
 .set UCFTextPointers,0x4fa0
 
@@ -141,6 +143,12 @@ mtlr r0
 .set PSPreloadToggle,-0xDC8   #offset for whether or not the replay is played with PS Preload Behavior
 .set FSToggle,-0xDC4    #offset for whether or not the replay is played with the Frozen PS toggle
 .set HideWaitingForGame,-0xDC0   #offset for whether or not to display the waiting for game text
+
+.set PALToggleAddr, RtocAddress + PALToggle
+.set PSPreloadToggleAddr, RtocAddress + PSPreloadToggle
+.set FSToggleAddr, RtocAddress + FSToggle
+.set HideWaitingForGameAddress, RtocAddress + HideWaitingForGame
+.set CFOptionsAddress, RtocAddress - ControllerFixOptions
 
 ################################################################################
 # Offsets

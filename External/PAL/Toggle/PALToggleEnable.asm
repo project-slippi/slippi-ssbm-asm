@@ -1,6 +1,7 @@
 ################################################################################
-# Address: 804dec14
+# Address: PALToggleAddr
 ################################################################################
+.include "Common/Common.s"
 
 # This is picked up by SendGameInfo to store whether
 # pre-loading is enabled. This bool is mostly deprecated
