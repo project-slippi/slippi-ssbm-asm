@@ -17,7 +17,7 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/Frozen PS",
+          "sourceFolder": "External/Frozen PS",
           "isRecursive": true,
           "annotation": "Disables Pokemon Stadium transformations"
         }

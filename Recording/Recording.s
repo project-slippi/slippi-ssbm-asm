@@ -3,13 +3,14 @@
 # Command Bytes
 .set CMD_DESCRIPTIONS, 0x35
 .set CMD_GAME_INFO, 0x36
+.set CMD_GECKO_LIST, 0x3D
 .set CMD_INITIAL_RNG, 0x3A
 .set CMD_PRE_FRAME, 0x37
 .set CMD_POST_FRAME, 0x38
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set COMMAND_COUNT, 8 # number of possible commands
+.set COMMAND_COUNT, 9 # number of possible commands
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
@@ -35,8 +36,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.0.0
-.set CURRENT_VERSION,0x03000000
+# current version: 3.1.0
+.set CURRENT_VERSION,0x03010000
 
 ################################################################################
 # Static Function Locations

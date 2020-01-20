@@ -1,19 +1,14 @@
 ################################################################################
-# Address: 801d4f14
+# Address: 801d14c8
 ################################################################################
 .include "Common/Common.s"
-.include "../Transformation.s"
+.include "Common/Preload Stadium Transformations/Transformation.s"
 
 .set PSData,31
 
-#Check if PS is Preloaded
-  lbz r3,PSPreloadToggle(rtoc)
-  cmpwi r3,0x0
-  beq Original
-
-#Reset Bool
+#Init Bool
   li  r3,0
   stb r3,isLoaded(PSData)
 
 Original:
-  lwz	r3, -0x4D28 (r13)
+  li	r29, 1

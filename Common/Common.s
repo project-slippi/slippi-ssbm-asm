@@ -55,6 +55,7 @@ mtlr r0
 # Local functions (added by us)
 .set FN_EXITransferBuffer,0x800055f0
 .set FN_GetIsFollower,0x800055f8
+.set FN_ProcessGecko,0x800055fc
 
 # Game functions (applies to NTSC v1.02)
 .set HSD_Randi,0x80380580
@@ -119,6 +120,7 @@ mtlr r0
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set SFX_Menu_CommonSound,0x80024030
 .set DiscError_ResumeGame,0x80024f6c
+.set TRK_flush_cache,0x80328f50
 
 ################################################################################
 # Const Definitions
@@ -127,11 +129,9 @@ mtlr r0
 .set CONST_ExiRead, 0 # arg value to make an EXI read
 .set CONST_ExiWrite, 1 # arg value to make an EXI write
 
-# For Slippi communication
-.set CONST_SlippiCmdGetFrame, 0x76
-.set CONST_SlippiCmdCheckForReplay, 0x88
-.set CONST_SlippiCmdCheckForStockSteal,0x89
-.set CONST_SlippiCmdGetBufferedFrameCount,0x90
+.set GeckoCodeSectionStart,0x801910E8
+
+.set RtocAddress, 0x804df9e0
 
 .set ControllerFixOptions,0xDD8 # Each byte at offset is a player's setting
 .set UCFTextPointers,0x4fa0
@@ -144,10 +144,15 @@ mtlr r0
 .set FSToggle,-0xDC4    #offset for whether or not the replay is played with the Frozen PS toggle
 .set HideWaitingForGame,-0xDC0   #offset for whether or not to display the waiting for game text
 
+.set PALToggleAddr, RtocAddress + PALToggle
+.set PSPreloadToggleAddr, RtocAddress + PSPreloadToggle
+.set FSToggleAddr, RtocAddress + FSToggle
+.set HideWaitingForGameAddress, RtocAddress + HideWaitingForGame
+.set CFOptionsAddress, RtocAddress - ControllerFixOptions
+
 ################################################################################
 # Offsets
 ################################################################################
-.set frameDataBuffer,-0x49b4
-.set secondaryDmaBuffer,-0x49b0
+.set primaryDataBuffer,-0x49b4
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac

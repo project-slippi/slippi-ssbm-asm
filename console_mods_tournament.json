@@ -16,9 +16,8 @@
       ],
       "build": [
         {
-          "type": "inject",
-          "address": "8016e510",
-          "sourceFile": "External/NeutralSpawn.asm",
+          "type": "injectFolder",
+          "sourceFolder": "External/NeutralSpawn",
           "annotation": "Neutral Spawns [UnclePunch]"
         },
         {

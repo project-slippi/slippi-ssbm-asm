@@ -15,6 +15,8 @@
 
 .set REG_Buffer,30
 .set REG_BufferOffset,29
+.set REG_GeckoListSize,28
+.set REG_GeckoCopyBuffer,27
 
 backup
 
@@ -31,10 +33,16 @@ backup
   li  r3,FULL_FRAME_DATA_BUF_LENGTH
   branchl r12,HSD_MemAlloc
   mr  REG_Buffer,r3
-  stw REG_Buffer,frameDataBuffer(r13)
+  stw REG_Buffer,primaryDataBuffer(r13)
 #Init current offset
   li  r3,0
   stw r3,bufferOffset(r13)
+
+#------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
+  load r3, GeckoCodeSectionStart # Gecko code list start
+  li r4, 0 # No callback
+  branchl r12, FN_ProcessGecko
+  mr REG_GeckoListSize, r3
 
 #------------- WRITE OUT COMMAND SIZES -------------
 # start file sending and indicate the sizes of the output commands
@@ -92,6 +100,11 @@ backup
   stb r3,CommandSizesStart+0x14(REG_Buffer)
   li r3, GAME_FRAME_BOOKEND_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0x15(REG_Buffer)
+
+# gecko code list command
+  li r3, CMD_GECKO_LIST
+  stb r3, CommandSizesStart+0x17(REG_Buffer)
+  sth REG_GeckoListSize,CommandSizesStart+0x18(REG_Buffer)
 
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
@@ -307,6 +320,32 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
   li  r5,CONST_ExiWrite
   branchl r12,FN_EXITransferBuffer
+
+#-------------- Transfer Gecko List ---------------
+# Create copy buffer
+  addi r3, REG_GeckoListSize, 1
+  branchl r12,HSD_MemAlloc
+  mr REG_GeckoCopyBuffer, r3
+
+  # Copy command
+  li r3, CMD_GECKO_LIST
+  stb r3, 0(REG_GeckoCopyBuffer)
+
+  # Copy gecko codes
+  addi r3, REG_GeckoCopyBuffer, 1 # destination
+  load r4, GeckoCodeSectionStart
+  mr r5, REG_GeckoListSize
+  branchl r12, memcpy
+
+  # Transfer codes
+  mr r3, REG_GeckoCopyBuffer
+  addi r4, REG_GeckoListSize, 1
+  li r5, CONST_ExiWrite
+  branchl r12, FN_EXITransferBuffer
+
+  # Free memory
+  mr r3, REG_GeckoCopyBuffer
+  branchl r12, HSD_Free
 
 # run macro to create the SendInitialRNG process
   Macro_SendInitialRNG

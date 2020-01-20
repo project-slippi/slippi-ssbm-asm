@@ -1,6 +1,6 @@
 ################################################################################
-# Address: CFOptionsAddress
+# Address: 0x801d460c
 ################################################################################
-.include "Common/Common.s"
+.include "Common/Preload Stadium Transformations/Transformation.s"
 
-.long 0x01010101
+lwz r4,TransformationID(r31)

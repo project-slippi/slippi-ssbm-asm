@@ -2,14 +2,9 @@
 # Address: 801d45ec
 ################################################################################
 .include "Common/Common.s"
-.include "../Transformation.s"
+.include "Common/Preload Stadium Transformations/Transformation.s"
 
 .set PSData,31
-
-#Check if PS is Preloaded
-  lbz r3,PSPreloadToggle(rtoc)
-  cmpwi r3,0x0
-  beq Original
 
 #Check if Transformation is decided/loaded
   lbz r3,isLoaded(PSData)
