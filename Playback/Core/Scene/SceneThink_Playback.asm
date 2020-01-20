@@ -68,7 +68,7 @@ blrl
   stb r4,0x4A(REG_Text)
 
 #Store Base Z Offset
-  lfs f1,ZPos(REG_Floats) #Z offset
+  lfs f1,TextZPos(REG_Floats) #Z offset
   stfs f1,0x8(REG_Text)
 
 #Scale Canvas Down
@@ -81,8 +81,8 @@ blrl
   ######################
 
 #Initialize Subtext
-  lfs   f1,XPos(REG_Floats)     #X offset of text
-  lfs   f2,YPos(REG_Floats)     #Y offset of text
+  lfs   f1,TextXPos(REG_Floats)     #X offset of text
+  lfs   f2,TextYPos(REG_Floats)     #Y offset of text
   mr    r3,REG_Text                 #struct pointer
   bl    Text
   mflr  r4
@@ -235,9 +235,9 @@ blrl
 FloatValues:
   blrl
 #Offsets
-  .set XPos,0x0
-  .set YPos,0x4
-  .set ZPos,0x8
+  .set TextXPos,0x0
+  .set TextYPos,0x4
+  .set TextZPos,0x8
   .set TextScale,0xC
   .set CanvasScaling,0x10
   .set WatermarkX,0x14
