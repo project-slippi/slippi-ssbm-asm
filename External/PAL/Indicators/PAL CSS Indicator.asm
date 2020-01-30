@@ -13,7 +13,7 @@
   load r12, 0x356A60        #offset for CSS texture in MnSlChr
   sub r3, r3, r12
   li r5, 0x238
-  branchl r12,0x800031F4    #memcpy
+  branchl r12, memcpy
   b Exit
 
 TextureData:

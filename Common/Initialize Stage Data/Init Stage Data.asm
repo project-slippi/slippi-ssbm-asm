@@ -5,7 +5,7 @@
 
 #Initialize data
   li  r4,516
-  branchl r12,0x8000c160
+  branchl r12, Zero_AreaLength
 
 Exit:
   cmplwi	r26, 0

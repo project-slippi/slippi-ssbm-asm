@@ -57,21 +57,25 @@ mtlr r0
 .set FN_GetIsFollower,0x800055f8
 .set FN_ProcessGecko,0x800055fc
 
-# Game functions (applies to NTSC v1.02)
+# The rest of these are NTSC v1.02 functions
+## HSD functions
 .set HSD_Randi,0x80380580
 .set HSD_MemAlloc,0x8037f1e4
 .set HSD_Free,0x8037f1b0
 .set HSD_PadFlushQueue,0x80376d04
 .set HSD_StartRender,0x80375538
 .set HSD_VICopyXFBASync,0x803761c0
+.set HSD_PadRumbleActiveID,0x80378430
 
+## GObj functions
 .set GObj_Create,0x803901f0
 .set GObj_Initialize,0x80390b68
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54
 .set GObj_RemoveProc,0x8038fed4
 
-.set Text_CreateTextStruct,0x803a6754
+## Text functions
+.set Text_CreateStruct,0x803a6754
 .set Text_InitializeSubtext,0x803a6b98
 .set Text_UpdateSubtextSize,0x803a7548
 .set Text_ChangeTextColor,0x803a74f0
@@ -79,6 +83,7 @@ mtlr r0
 .set Text_UpdateSubtextContents,0x803a70a0
 .set Text_RemoveText,0x803a5cc4
 
+## EXI functions
 .set EXIAttach,0x803464c0
 .set EXILock,0x80346d80
 .set EXISelect,0x80346688
@@ -88,39 +93,63 @@ mtlr r0
 .set EXIUnlock,0x80346e74
 .set EXIDetach,0x803465cc
 
+## Nametag data functions
 .set Nametag_LoadSlotText,0x8023754c
 .set Nametag_SetNameAsInUse,0x80237a04
 .set Nametag_GetNametagBlock,0x8015cc9c
 
+## VI/GX functions
 .set GXInvalidateVtxCache,0x8033c898
 .set GXInvalidateTexAll,0x8033f270
 .set VIWaitForRetrace,0x8034f314
 .set VISetBlack,0x80350100
 
+## Common/memory management
 .set OSReport,0x803456a8
 .set memcpy,0x800031f4
 .set strcpy,0x80325a50
 .set Zero_AreaLength,0x8000c160
+.set TRK_flush_cache,0x80328f50
+.set FileLoad_ToPreAllocatedSpace,0x80016580
+.set DiscError_ResumeGame,0x80024f6c
 
+## PlayerBlock/game-state related functions
 .set PlayerBlock_LoadStaticBlock,0x80031724
 .set PlayerBlock_UpdateCoords,0x80032828
 .set PlayerBlock_LoadExternalCharID,0x80032330
 .set PlayerBlock_LoadRemainingStocks,0x80033bd8
 .set PlayerBlock_LoadSlotType,0x8003241c
+.set PlayerBlock_LoadDataOffsetStart,0x8003418c
+.set PlayerBlock_LoadTeamID,0x80033370
+.set PlayerBlock_StoreInitialCoords,0x80032768
+.set PlayerBlock_LoadPlayerXPosition,0x800326cc
+.set PlayerBlock_UpdateFacingDirection,0x80033094
+.set PlayerBlock_LoadMainCharDataOffset,0x80034110
+.set SpawnPoint_GetXYZFromSpawnID,0x80224e64
+.set Damage_UpdatePercent,0x8006cc7c
+.set MatchEnd_GetWinningTeam,0x801654a0
 
+## Camera functions
 .set Camera_UpdatePlayerCameraBox,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
 
-.set NoContestOrRetry_,0x8016cf4c
-.set fetchAnimationHeader,0x80085fd4
-.set Damage_UpdatePercent,0x8006cc7c
-.set Obj_ChangeRotation_Yaw,0x8007592c
-.set MenuController_ChangeScreenMinor,0x801a4b60
-.set CheckIfGameEnginePaused,0x801a45e8
+## Audio/SFX functions
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set SFX_Menu_CommonSound,0x80024030
-.set DiscError_ResumeGame,0x80024f6c
-.set TRK_flush_cache,0x80328f50
+
+## Scene/input-related functions
+.set MenuController_ChangeScreenMinor,0x801a4b60
+.set SinglePlayerModeCheck,0x8016b41c
+.set CheckIfGameEnginePaused,0x801a45e8
+.set Inputs_GetPlayerHeldInputs,0x801a3680
+.set Rumble_StoreRumbleFlag,0x8015ed4c
+
+## Miscellenia/Unsorted
+.set fetchAnimationHeader,0x80085fd4
+.set Obj_ChangeRotation_Yaw,0x8007592c
+.set NoContestOrRetry_,0x8016cf4c
+.set Character_GetMaxCostumeCount,0x80169238
+
 
 ################################################################################
 # Const Definitions

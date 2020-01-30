@@ -10,7 +10,7 @@
 backup
 
 #Don't run in singleplayer
-  branchl r12,0x8016b41c
+  branchl r12, SinglePlayerModeCheck
   cmpwi r3,0
   bne Exit
 #Don't run for players 5 and 6
@@ -72,7 +72,7 @@ CheckIf2v2_Loop:
     beq GetTeamCount_IncLoop      #If =3, no player present
   #Get Team
     mr  r3,REG_Count
-    branchl r12,0x80033370
+    branchl r12, PlayerBlock_LoadTeamID
     cmpw  r3,REG_TeamID
     bne GetTeamCount_IncLoop
   #Increment team members
@@ -115,7 +115,7 @@ CreateTeamArray_Loop:
     beq CheckTeam_IncLoop      #If =3, no player present
   #Get Team
     mr  r3,REG_Count
-    branchl r12,0x80033370
+    branchl r12, PlayerBlock_LoadTeamID
     cmpw  r3,REG_TeamID
     bne CheckTeam_IncLoop
   #Add to array
@@ -197,7 +197,7 @@ SetSpawn_FoundStage:
   li  r3,0
   stw  r3,0x8(r4)
   mr  r3,REG_PlayerSlot
-  branchl r12,0x80032768
+  branchl r12, PlayerBlock_StoreInitialCoords
   b SetSpawn_UpdateFacingDirection
 
 SetSpawn_NotFound:
@@ -214,18 +214,18 @@ SetSpawn_NotFound_Teams:
 SetSpawn_NotFound_UpdatePosition:
 #Get XYZ from spawn ID
   addi  r4,sp,0x80
-  branchl r12,0x80224e64
+  branchl r12, SpawnPoint_GetXYZFromSpawnID
 #Set new XYZ spawn
   mr  r3,REG_PlayerSlot
   addi  r4,sp,0x80
-  branchl r12,0x80032768
+  branchl r12, PlayerBlock_StoreInitialCoords
   b SetSpawn_UpdateFacingDirection
 
 SetSpawn_UpdateFacingDirection:
 #Load X Position
   mr  r3,REG_PlayerSlot
   addi  r4,sp,0x80
-  branchl r12,0x800326cc
+  branchl r12, PlayerBlock_LoadPlayerXPosition
   lfs f1,0x80(sp)
 #Compare to 0
   lfs	f0, -0x5718 (rtoc)
@@ -239,7 +239,7 @@ SetSpawn_UpdateFacingDirection_FacingRight:
 SetSpawn_UpdateFacingDirection_Store:
 #Update Facing Direction
   mr  r3,REG_PlayerSlot
-  branchl r12,0x80033094
+  branchl r12, PlayerBlock_UpdateFacingDirection
 
 /*
 SetSpawn_AdjustEntryFrames:

@@ -14,7 +14,7 @@
 DecideTransformation:
 #Decide initial transformation
   li  r3,4
-  branchl r12,HSD_Randi
+  branchl r12, HSD_Randi
 #Check if something
   rlwinm	r0, r3, 2, 0, 29
   lha	r3, 0x00E2 (PSData)
@@ -58,7 +58,7 @@ GetFileString:
   addi  r5,PSData,200 #unk
   load r6,0x801d4220  #callback
   li  r7,0
-  branchl r12,0x80016580
+  branchl r12, FileLoad_ToPreAllocatedSpace
 
 #Set as loaded
   li  r3,1

@@ -10,7 +10,7 @@
   beq Original
 #Get PLayer
   lbz r3, 0(r31)
-  branchl r12,0x80034110
+  branchl r12, PlayerBlock_LoadMainCharDataOffset
 #Get Player Data
   lwz r4,0x2C(r3)
 #Check if Mewtwo

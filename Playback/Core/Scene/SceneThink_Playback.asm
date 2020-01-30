@@ -55,7 +55,7 @@ blrl
 #Create Text Struct
   li  r3,0
   li  r4,-1
-  branchl r12, Text_CreateTextStruct
+  branchl r12, Text_CreateStruct
 
 #BACKUP STRUCT POINTER
   mr REG_Text,r3

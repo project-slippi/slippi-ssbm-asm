@@ -9,7 +9,7 @@
 #Get Player Data Length
   load	r4,0x80458fd0
   lwz	r4,0x20(r4)
-  branchl	r12,0x8000c160
+  branchl r12, Zero_AreaLength
 
 exit:
   mr	r3,r30

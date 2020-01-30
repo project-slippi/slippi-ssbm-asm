@@ -84,7 +84,7 @@ CHANGE_TO_SMASH_TURN:
 #Get Nana's Block From Popo's in r4
 	lbz	r3,0xC(REG_PlayerData)		#P1 Slot
 	li	r4,0x1		#Subchar Bool
-	branchl	r12,0x8003418c
+	branchl	r12, PlayerBlock_LoadDataOffsetStart
 	cmpwi	r3,0x0
 	beq	Injection_Exit
 	lwz	r4,0x2C(r3)

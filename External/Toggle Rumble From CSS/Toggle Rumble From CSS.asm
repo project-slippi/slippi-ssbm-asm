@@ -26,7 +26,7 @@ loc_0x34:
   li r5, 0xE
   li r6, 0x0
   subi r7, r13, 0x66B0
-  branchl r12,0x80378430
+  branchl r12, HSD_PadRumbleActiveID
   li r4, 0x1
   b loc_0x74
 
@@ -37,7 +37,7 @@ loc_0x68:
 
 loc_0x74:
   mr r3, r23
-  branchl r12,0x8015ED4C
+  branchl r12, Rumble_StoreRumbleFlag
   li r4, 0x1
   stb r4, 7(r31)
   lis r4, 0xC040

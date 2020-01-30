@@ -201,7 +201,7 @@ ADJUST_COSTUME_NUMBER_LOOP:
   bne ADJUST_COSTUME_NUMBER_LOOP_INC
 #Get external character ID
   lbz r3,PlayerCharacter(r22)
-  branchl r12,0x80169238          #get max number of costumes
+  branchl r12, Character_GetMaxCostumeCount
 #Get players costume ID
   lbz r4,PlayerCostume(r22)
   cmpw r4,r3

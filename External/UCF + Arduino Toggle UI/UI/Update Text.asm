@@ -58,7 +58,7 @@ toggleLeft:
 
 playSFX:
   li  r3,2
-  branchl r12,0x80024030
+  branchl r12, SFX_Menu_CommonSound
 
 
 #############
@@ -84,7 +84,7 @@ updateText:
 
 #Update Text
   li  r4,0x1    #Subtext ID 1
-  branchl r12,0x803a70a0
+  branchl r12, Text_UpdateSubtextContents
 
 b exit
 

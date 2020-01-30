@@ -15,7 +15,7 @@
   load r5,0xFFD70000
   stw r5,0x100(sp)
   addi r5,sp,0x100
-  branchl r12,0x803a74f0
+  branchl r12, Text_ChangeTextColor
   b Exit
 
 #########################################################
@@ -86,7 +86,7 @@ CheckIfWonLastGame_CheckForTeams:
   bne CheckIfWonLastGame_FFA
   #If so find winning team
     mr  r3,MatchEndStruct
-    branchl r12,0x801654a0
+    branchl r12, MatchEnd_GetWinningTeam
   #Check this players team
     lbz   r4,0x5F(MatchEndPlayerStruct)
   #If this player was on winning team, return 1, if not return 0

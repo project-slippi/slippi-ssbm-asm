@@ -15,7 +15,7 @@ backup
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
-	branchl r12,0x803a6754
+	branchl r12, Text_CreateStruct
 
 #BACKUP STRUCT POINTER
 	mr text,r3
@@ -39,7 +39,7 @@ backup
 		mr r3,text       #struct pointer
 		bl TEXT.UCF
 		mflr r4 #pointer to ASCII
-		branchl r12,0x803a6b98
+		branchl r12, Text_InitializeSubtext
 
 ########################
 ## Create On/Off Text ##
@@ -60,7 +60,7 @@ backup
 		mr r3,text       #struct pointer
 		bl TEXT.OFF
 		mflr r4 #pointer to ASCII
-		branchl r12,0x803a6b98
+		branchl r12, Text_InitializeSubtext
 
 	#SET TEXT SPACING TO TIGHT
 		li r4,0x1
