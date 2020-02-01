@@ -11,7 +11,11 @@
 .set  OFST_DMGTAKEN,OFST_YPOS+0x4
 .set  OFST_EXPIRETIME,OFST_DMGTAKEN+0x2
 .set  OFST_SPAWNID,OFST_EXPIRETIME+0x4
-.set  ITEM_STRUCT_SIZE,OFST_SPAWNID+0x4
+.set  OFST_METADATA_1,OFST_SPAWNID+0x4
+.set  OFST_METADATA_2,OFST_METADATA_1+0x1
+.set  OFST_METADATA_3,OFST_METADATA_2+0x1
+.set  OFST_METADATA_4,OFST_METADATA_3+0x1
+.set  ITEM_STRUCT_SIZE,OFST_METADATA_4+0x1
 
 .macro Macro_SendItemInfo
 
@@ -109,6 +113,15 @@ SendItemInfo_AddToBuffer:
 # store item spawn ID
   lwz r3,0x1C(REG_ItemData)
   stw r3,OFST_SPAWNID(REG_Buffer)
+# store misc item data 0xDD4 -> 0xDF4
+  lbz r3,0xDD7(REG_ItemData) # This stores Samus missile type
+  stb r3,OFST_METADATA_1(REG_Buffer)
+  lbz r3,0xDDB(REG_ItemData) # This stores Turnip's face ID
+  stb r3,OFST_METADATA_2(REG_Buffer)
+  lbz r3,0xDEB(REG_ItemData) # This stores isLaunched bool for Samus/MewTwo
+  stb r3,OFST_METADATA_3(REG_Buffer)
+  lbz r3,0xDEF(REG_ItemData) # This stores charge power for Samus/MewTwo (0-7)
+  stb r3,OFST_METADATA_4(REG_Buffer)
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset, ITEM_STRUCT_SIZE
