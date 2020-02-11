@@ -1,6 +1,7 @@
 .set MAX_ITEMS, 15
 
 # Command Bytes
+.set CMD_SPLIT_MESSAGE, 0x10 # Used for splitting up a large command into smaller messages
 .set CMD_DESCRIPTIONS, 0x35
 .set CMD_GAME_INFO, 0x36
 .set CMD_GECKO_LIST, 0x3D
@@ -10,7 +11,7 @@
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set COMMAND_COUNT, 9 # number of possible commands
+.set COMMAND_COUNT, 10 # number of possible commands
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
@@ -21,6 +22,16 @@
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 41 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 4 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
+.set SPLIT_MESSAGE_PAYLOAD_LENGTH, 516 # byte count
+
+.set SPLIT_MESSAGE_INTERNAL_DATA_LEN, 512
+
+.set SPLIT_MESSAGE_OFST_COMMAND, 0x0 # u8
+.set SPLIT_MESSAGE_OFST_DATA, SPLIT_MESSAGE_OFST_COMMAND + 1 # SPLIT_MESSAGE_INTERNAL_DATA_LEN
+.set SPLIT_MESSAGE_OFST_SIZE, SPLIT_MESSAGE_OFST_DATA + SPLIT_MESSAGE_INTERNAL_DATA_LEN # u16, number of bytes actually contained in section
+.set SPLIT_MESSAGE_OFST_INTERNAL_CMD, SPLIT_MESSAGE_OFST_SIZE + 2 # u8
+.set SPLIT_MESSAGE_OFST_IS_COMPLETE, SPLIT_MESSAGE_OFST_INTERNAL_CMD + 1 # bool
+.set SPLIT_MESSAGE_BUF_LEN, SPLIT_MESSAGE_OFST_IS_COMPLETE + 1
 
 # Calculate out the maximum buffer length that will be needed. This buffer
 # is also used for transferring message descriptions and game info but that
@@ -36,8 +47,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.2.0
-.set CURRENT_VERSION,0x03020000
+# current version: 3.3.0
+.set CURRENT_VERSION,0x03030000
 
 ################################################################################
 # Static Function Locations

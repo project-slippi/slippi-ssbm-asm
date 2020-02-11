@@ -17,6 +17,7 @@
 .set REG_BufferOffset,29
 .set REG_GeckoListSize,28
 .set REG_GeckoCopyBuffer,27
+.set REG_GeckoCopyPos,26
 
 backup
 
@@ -105,6 +106,12 @@ backup
   li r3, CMD_GECKO_LIST
   stb r3, CommandSizesStart+0x17(REG_Buffer)
   sth REG_GeckoListSize,CommandSizesStart+0x18(REG_Buffer)
+
+# split message command
+  li r3, CMD_SPLIT_MESSAGE
+  stb r3, CommandSizesStart+0x1A(REG_Buffer)
+  li r3, SPLIT_MESSAGE_PAYLOAD_LENGTH
+  sth r3, CommandSizesStart+0x1B(REG_Buffer)
 
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
@@ -323,26 +330,58 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 
 #-------------- Transfer Gecko List ---------------
 # Create copy buffer
-  addi r3, REG_GeckoListSize, 1
-  branchl r12,HSD_MemAlloc
+  li r3, SPLIT_MESSAGE_BUF_LEN
+  branchl r12, HSD_MemAlloc
   mr REG_GeckoCopyBuffer, r3
+
+  li r3, CMD_SPLIT_MESSAGE
+  stb r3, SPLIT_MESSAGE_OFST_COMMAND(REG_GeckoCopyBuffer)
 
   # Copy command
   li r3, CMD_GECKO_LIST
-  stb r3, 0(REG_GeckoCopyBuffer)
+  stb r3, SPLIT_MESSAGE_OFST_INTERNAL_CMD(REG_GeckoCopyBuffer)
 
-  # Copy gecko codes
-  addi r3, REG_GeckoCopyBuffer, 1 # destination
+  # Initialize the data size, will be overwritten once last message is sent
+  li r3, SPLIT_MESSAGE_INTERNAL_DATA_LEN
+  sth r3, SPLIT_MESSAGE_OFST_SIZE(REG_GeckoCopyBuffer)
+
+  # Initialize isComplete, will be overwritten once last message is sent
+  li r3, 0
+  stb r3, SPLIT_MESSAGE_OFST_IS_COMPLETE(REG_GeckoCopyBuffer)
+
+  li REG_GeckoCopyPos, 0
+
+CODE_LIST_LOOP_START:
+  sub r3, REG_GeckoListSize, REG_GeckoCopyPos
+  cmpwi r3, SPLIT_MESSAGE_INTERNAL_DATA_LEN
+  bgt CODE_LIST_COPY_BLOCK
+
+  # This is the last message, write the size
+  sth r3, SPLIT_MESSAGE_OFST_SIZE(REG_GeckoCopyBuffer)
+
+  # Indicate last message
+  li r3, 1
+  stb r3, SPLIT_MESSAGE_OFST_IS_COMPLETE(REG_GeckoCopyBuffer)
+
+CODE_LIST_COPY_BLOCK:
+  # Copy next gecko list section
+  addi r3, REG_GeckoCopyBuffer, SPLIT_MESSAGE_OFST_DATA # destination
   load r4, GeckoCodeSectionStart
-  mr r5, REG_GeckoListSize
+  add r4, r4, REG_GeckoCopyPos
+  lhz r5, SPLIT_MESSAGE_OFST_SIZE(REG_GeckoCopyBuffer)
   branchl r12, memcpy
 
   # Transfer codes
   mr r3, REG_GeckoCopyBuffer
-  addi r4, REG_GeckoListSize, 1
+  li r4, SPLIT_MESSAGE_BUF_LEN
   li r5, CONST_ExiWrite
   branchl r12, FN_EXITransferBuffer
 
+  addi REG_GeckoCopyPos, REG_GeckoCopyPos, SPLIT_MESSAGE_INTERNAL_DATA_LEN
+  cmpw REG_GeckoCopyPos, REG_GeckoListSize
+  blt CODE_LIST_LOOP_START
+
+CODE_LIST_CLEANUP:
   # Free memory
   mr r3, REG_GeckoCopyBuffer
   branchl r12, HSD_Free
