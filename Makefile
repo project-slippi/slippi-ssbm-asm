@@ -18,10 +18,12 @@ CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
 CONSOLE_FROZEN   := $(C_DIR)/g_frozen.bin
 CONSOLE_LAG_PD	:= $(C_DIR)/g_lag_pd.bin
 CONSOLE_LAG_PDVB	:= $(C_DIR)/g_lag_pdvb.bin
+CONSOLE_WIDESCREEN := $(C_DIR)/g_widescreen.bin
 CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) \
 				$(CONSOLE_UCF_STEALTH) $(CONSOLE_TOGGLES) $(CONSOLE_MODS_STEALTH) \
 				$(CONSOLE_MODS_TOURNAMENT) $(CONSOLE_MODS_FRIENDLIES) \
-				$(CONSOLE_PAL) $(CONSOLE_FROZEN) $(CONSOLE_LAG_PD) $(CONSOLE_LAG_PDVB)
+				$(CONSOLE_PAL) $(CONSOLE_FROZEN) $(CONSOLE_LAG_PD) $(CONSOLE_LAG_PDVB) \
+				$(CONSOLE_WIDESCREEN)
 
 ALL_TARGETS 		:= $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
 .PHONY: $(ALL_TARGETS) clean
@@ -75,6 +77,10 @@ $(CONSOLE_LAG_PD): console_lag_pd.json
 	@echo ""
 
 $(CONSOLE_LAG_PDVB): console_lag_pdvb.json
+	gecko build -c $<
+	@echo ""
+
+$(CONSOLE_WIDESCREEN): console_widescreen.json
 	gecko build -c $<
 	@echo ""
 

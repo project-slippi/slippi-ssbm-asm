@@ -1,0 +1,28 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_widescreen.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Widescreen",
+      "authors": [
+        "UnclePunch",
+        "NikhilNarayana",
+        "JLaferri"
+      ],
+      "description": [
+        "Enables widescreen aspect ratio"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Widescreen",
+          "isRecursive": true,
+          "annotation": "Enables widescreen aspect ratio"
+        }
+      ]
+    }
+  ]
+}
