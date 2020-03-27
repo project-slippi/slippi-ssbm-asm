@@ -1,6 +1,7 @@
 ################################################################################
 # Address: FN_ShouldRecord # 0x80005604 from Recording.s
 ################################################################################
+.include "Common/Common.s"
 .include "Recording/Recording.s"
 
   getMinorMajor r3
