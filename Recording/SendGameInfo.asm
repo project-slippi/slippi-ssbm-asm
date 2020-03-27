@@ -22,7 +22,7 @@
 backup
 
 # Check if VS Mode
-  branchl r12,FN_IsVSMode
+  branchl r12,FN_ShouldRecord
   cmpwi r3,0x0
   beq Injection_Exit
 

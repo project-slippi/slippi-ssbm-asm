@@ -41,6 +41,12 @@ addi r1,r1,0xB0	# release the space
 mtlr r0
 .endm
 
+.macro getMinorMajor reg
+lis \reg, 0x8048 # load address to offset from for scene controller
+lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
+rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
+.endm
+
 ################################################################################
 # Settings
 ################################################################################

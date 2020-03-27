@@ -54,7 +54,7 @@
 # Static Function Locations
 ################################################################################
 # Local functions (added by us)
-.set FN_IsVSMode,0x80005604
+.set FN_ShouldRecord,0x80005604
 
 ################################################################################
 # Custom Playerblock Offsets
