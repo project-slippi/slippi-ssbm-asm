@@ -22,7 +22,6 @@
 .set CMD_IS_REPLAY_READY, 0x88
 .set CMD_IS_STOCK_STEAL,0x89
 .set CMD_GET_GECKO_CODES,0x8A
-.set CMD_GET_BUFFERED_FRAME_COUNT,0x90 # deprecated
 
 ################################################################################
 # Playback Directory Buffer
