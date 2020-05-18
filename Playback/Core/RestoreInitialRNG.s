@@ -1,4 +1,4 @@
-.include "Playback/Playback.s"
+#expects: .include "Playback/Playback.s"
 
 .macro Macro_RestoreInitialRNG
 

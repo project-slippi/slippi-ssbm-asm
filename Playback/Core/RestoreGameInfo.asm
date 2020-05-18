@@ -29,6 +29,8 @@
   branchl r12, HSD_MemAlloc
   mr REG_DirectoryBuffer, r3
   stw REG_DirectoryBuffer, primaryDataBuffer(r13) # Store directory buffer location
+  li r4, PDB_SIZE
+  branchl r12, Zero_AreaLength
 
 # allocate memory for the gameframe buffer used here and in ReceiveGameFrame
   li  r3,EXIBufferLength
@@ -46,9 +48,18 @@ REQUEST_DATA:
 # request game information from slippi
   li r3,CMD_GET_GAME_INFO        # store game info request ID
   stb r3,0x0(BufferPointer)
+
+# write memory locations to preserve when doing mem savestates
+  addi r3, REG_DirectoryBuffer, PDB_SFXDB_START
+  stw r3, 0x1(BufferPointer)
+  li r3, SFXDB_SIZE + 4 # include the latest frame which follows SFXDB
+  stw r3, 0x5(BufferPointer)
+  li r3, 0
+  stw r3, 0x9(BufferPointer)
+
 # Transfer buffer over DMA
   mr r3,BufferPointer   #Buffer Pointer
-  li  r4,0x1            #Buffer Length
+  li  r4,0xD            #Buffer Length
   li  r5,CONST_ExiWrite
   branchl r12,FN_EXITransferBuffer
 RECEIVE_DATA:

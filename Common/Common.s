@@ -41,6 +41,20 @@ addi r1,r1,0xB0	# release the space
 mtlr r0
 .endm
 
+.macro backupall
+mflr r0
+stw r0, 0x4(r1)
+stwu r1,-0x100(r1)
+stmw r3,0x8(r1)
+.endm
+
+.macro restoreall
+lmw r3,0x8(r1)
+lwz r0, 0x104(r1)
+addi r1,r1,0x100
+mtlr r0
+.endm
+
 .macro getMinorMajor reg
 lis \reg, 0x8048 # load address to offset from for scene controller
 lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
@@ -109,6 +123,9 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set GXInvalidateTexAll,0x8033f270
 .set VIWaitForRetrace,0x8034f314
 .set VISetBlack,0x80350100
+
+.set OSDisableInterrupts, 0x80347364
+.set OSRestoreInterrupts, 0x8034738c
 
 ## Common/memory management
 .set OSReport,0x803456a8

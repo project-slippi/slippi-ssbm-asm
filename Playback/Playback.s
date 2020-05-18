@@ -6,6 +6,11 @@
 
 # None
 
+.macro loadGlobalFrame reg
+lis \reg, 0x8048
+lwz \reg, -0x62A0(\reg)
+.endm
+
 ################################################################################
 # Const Definitions
 ################################################################################
@@ -24,6 +29,28 @@
 .set CMD_GET_GECKO_CODES,0x8A
 
 ################################################################################
+# SFX Storage
+################################################################################
+.set MAX_SOUNDS_PER_FRAME, 0x10
+.set SOUND_STORAGE_FRAME_COUNT, 7
+
+.set SFXS_ENTRY_SOUND_ID, 0 # u16, ID of the sound played
+.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 2 # u32
+.set SFXS_ENTRY_SIZE, SFXS_ENTRY_INSTANCE_ID + 4
+
+.set SFXS_LOG_INDEX, 0 # u8, Index where we are in the frame
+.set SFXS_LOG_ENTRIES, SFXS_LOG_INDEX + 1 # SFXS_ENTRY_SIZE * MAX_SOUNDS_PER_FRAME
+.set SFXS_LOG_SIZE, SFXS_LOG_ENTRIES + SFXS_ENTRY_SIZE * MAX_SOUNDS_PER_FRAME
+
+.set SFXS_FRAME_PENDING_LOG, 0 # SFXS_LOG_SIZE
+.set SFXS_FRAME_STABLE_LOG, SFXS_FRAME_PENDING_LOG + SFXS_LOG_SIZE # SFXS_LOG_SIZE
+.set SFXS_FRAME_SIZE, SFXS_FRAME_STABLE_LOG + SFXS_LOG_SIZE
+
+.set SFXDB_WRITE_INDEX, 0 # u8
+.set SFXDB_FRAMES, SFXDB_WRITE_INDEX + 1 # SFXS_FRAME_SIZE * SOUND_STORAGE_FRAME_COUNT
+.set SFXDB_SIZE, SFXDB_FRAMES + SFXS_FRAME_SIZE * SOUND_STORAGE_FRAME_COUNT
+
+################################################################################
 # Playback Directory Buffer
 ################################################################################
 .set PDB_EXI_BUF_ADDR, 0x0 # u32
@@ -33,8 +60,10 @@
 .set PDB_RESTORE_BUF_ADDR, PDB_RESTORE_BUF_SIZE + 4 # u32
 .set PDB_RESTORE_BUF_WRITE_POS, PDB_RESTORE_BUF_ADDR + 4 # u32
 .set PDB_RESTORE_C2_BRANCH, PDB_RESTORE_BUF_WRITE_POS + 4 # u32
+.set PDB_SFXDB_START, PDB_RESTORE_C2_BRANCH + 4 # SFXDB_SIZE
+.set PDB_LATEST_FRAME, PDB_SFXDB_START + SFXDB_SIZE # u32, must follow SFXDB as it is preserved
 
-.set PDB_SIZE, PDB_RESTORE_C2_BRANCH + 4
+.set PDB_SIZE, PDB_LATEST_FRAME + 4
 
 ################################################################################
 # Buffer Offsets
@@ -45,8 +74,14 @@
 # buffer status offsets
   .set BufferStatus_Status,0x0
 
+# rb status
+.set RBStatus_Start, BufferStatus_Start + BufferStatus_Length
+.set RBStatus_Length,0x1
+# rb status offsets
+  .set RBStatus_Status,0x0
+
 # initial RNG
-.set InitialRNG_Start, BufferStatus_Start + BufferStatus_Length
+.set InitialRNG_Start, RBStatus_Start + RBStatus_Length
 .set InitialRNG_Length,0x5
 # initial RNG offsets
   .set InitialRNG_Status,0x0
@@ -72,7 +107,7 @@
 
 .set GameFrame_Length, PlayerDataLength * 8
 
-.set Buffer_Length, BufferStatus_Length + InitialRNG_Length + GameFrame_Length
+.set Buffer_Length, GameFrame_Start + GameFrame_Length
 
 ################################################################################
 # Game Info Buffer Offsets

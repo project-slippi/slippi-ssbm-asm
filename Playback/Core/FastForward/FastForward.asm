@@ -36,10 +36,12 @@
 
 # execute normal code line
 PreviousCodeLine:
+/*
 # unmute  music and SFX
   li  r3,1
   li  r4,2
   branchl r12,Audio_AdjustMusicSFXVolume
+*/
   cmpw r26, r27
   b Exit
 
@@ -48,9 +50,11 @@ FastForward:
   #li  r3,1
   #branchl r12,VISetBlack
 # mute music and SFX
+/*
   li  r3,0
   li  r4,0
   branchl r12,Audio_AdjustMusicSFXVolume
+*/
 
 # try to execute update camera functions
   branchl r12,0x80030a50 # Camera_LoadCameraEntity
