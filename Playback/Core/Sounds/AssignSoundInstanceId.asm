@@ -1,35 +1,34 @@
 ################################################################################
-# Address: 0x800882b0
+# Address: 0x8038d224 # SFX_PlaySFX after instance ID has been written
 ################################################################################
 
 .include "Common/Common.s"
 .include "Playback/Playback.s"
 
-.set REG_PDB_ADDRESS, 31
-.set REG_SOUND_ID, 30 # from caller
-.set REG_SFXDB_ADDRESS, 29
-.set REG_WRITE_INDEX, 28
+# Execute replaced code line
+stw r0, -0x3F18 (r13)
 
-# I actually don't know if I need to include this, I can't get the second
-# branch of the SFX_PlayCharacterVoiceSFX function to run at all so I'm not
-# sure if this will ever even be hit... but here it is just in case, it's
-# effectively a duplicate of the other function except it branches to a diff
-# location
+# TODO: Should probably not attempt to run this if not in-game yet, or any of the
+# TODO: sound functions for that matter. PDB isnt initialized yet on waiting
+#getMinorMajor r3
+
+.set REG_PDB_ADDRESS, 31
+.set REG_SFXDB_ADDRESS, 30
+.set REG_SME_ENTRY, 29 # from caller
+.set REG_WRITE_INDEX, 28
 
 backup
 
 lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 
-rlwinm REG_SOUND_ID, REG_SOUND_ID, 0, 0xFFFF # extract half word ID
-
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 loadGlobalFrame r3
 lwz r4, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
 cmpw r3, r4
-bgt RESTORE_AND_EXIT # If new frame, skip check if we should play sound
+bgt ADJUST_WRITE_INDEX_END # If new frame, skip check if we should play sound
 
-CHECK_SOUND:
+ADJUST_WRITE_INDEX_OLD_FRAME:
 # First let's determine the write index for the current frame
 loadGlobalFrame r3
 lwz r4, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
@@ -41,43 +40,26 @@ sub r3, r4, r3
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 sub. REG_WRITE_INDEX, REG_WRITE_INDEX, r3
-bge FETCH_LOG_ADDRESS
+bge ADJUST_WRITE_INDEX_END
 addi REG_WRITE_INDEX, REG_WRITE_INDEX, SOUND_STORAGE_FRAME_COUNT
+ADJUST_WRITE_INDEX_END:
 
 FETCH_LOG_ADDRESS:
 mulli r3, REG_WRITE_INDEX, SFXS_FRAME_SIZE
-addi r6, REG_SFXDB_ADDRESS, SFXDB_FRAMES + SFXS_FRAME_STABLE_LOG
-add r6, r6, r3
+addi r6, REG_SFXDB_ADDRESS, SFXDB_FRAMES + SFXS_FRAME_PENDING_LOG
+add r6, r6, r3 # SFX log address
 
-li r8, 0
-b FIND_SOUND_LOOP_CONDITION
-FIND_SOUND_LOOP_START:
-mulli r3, r8, SFXS_ENTRY_SIZE
+FETCH_ENTRY_ADDRESS:
+lbz r3, SFXS_LOG_INDEX(r6)
+subi r3, r3, 1 # remove 1 because it was just incremented in PreventDuplicateSounds
+mulli r3, r3, SFXS_ENTRY_SIZE
 addi r5, r6, SFXS_LOG_ENTRIES
 add r5, r5, r3
 
-# Load sound ID and check if it is equal to this one
-lhz r3, SFXS_ENTRY_SOUND_ID(r5)
-cmpw REG_SOUND_ID, r3
-beq SOUND_ALREADY_PLAYED
+STORE_INSTANCE_ID:
+lwz r3, 0xC(REG_SME_ENTRY)
+stw r3, SFXS_ENTRY_INSTANCE_ID(r5)
 
-FIND_SOUND_LOOP_CONTINUE:
-addi r8, r8, 1
-
-FIND_SOUND_LOOP_CONDITION:
-lbz r3, SFXS_LOG_INDEX(r6)
-cmpw r8, r3
-blt FIND_SOUND_LOOP_START
-
-b RESTORE_AND_EXIT
-
-SOUND_ALREADY_PLAYED:
-# Skip destroy functions
-restore
-branch r12, 0x800882d0
-
-RESTORE_AND_EXIT:
 restore
 
 EXIT:
-addi r3, r31, 0
