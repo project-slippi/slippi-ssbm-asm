@@ -101,6 +101,9 @@ SKIP_PLAY_IF_NEEDED:
 cmpwi REG_IS_SOUND_ACTIVE, 0
 beq RESTORE_AND_EXIT
 
+# Store instance ID to pending log entry
+stw REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)
+
 # Set r3 to sound instance ID? Function normally returns this
 mr r3, REG_SOUND_INSTANCE_ID
 

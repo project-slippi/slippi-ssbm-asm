@@ -36,7 +36,7 @@ loadGlobalFrame REG_CURRENT_FRAME
 subi REG_CURRENT_FRAME, REG_CURRENT_FRAME, 1 # remove 1 from frame index because global frame has already been incremented
 lwz REG_LATEST_FRAME, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
 cmpw REG_CURRENT_FRAME, REG_LATEST_FRAME
-bgt ADJUST_WRITE_INDEX_END # If new frame, don't adjust write index
+bgt SOUND_TERMINATE_END # If new frame, don't adjust write index
 
 # Let's determine the write index for the current frame
 addi r4, REG_LATEST_FRAME, 1 # Simulate the latest frame being 1 frame ahead (would be the case for recording)
@@ -80,7 +80,7 @@ lhz r3, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r3) # Current stable sound ID
 # Get current pending sound ID
 mulli r4, r7, SFXS_ENTRY_SIZE
 add r4, r6, r4
-lhz r4, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r3) # Current pending sound ID
+lhz r4, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r4) # Current pending sound ID
 
 cmpw r3, r4
 beq STABLE_LOOP_CONTINUE # Stable sound has been found, move to next sound
@@ -105,10 +105,16 @@ addi r5, REG_SFXS_FRAME_ADDRESS, SFXS_FRAME_STABLE_LOG # Stable log address
 lbz r3, SFXS_LOG_INDEX(r5)
 cmpw REG_STABLE_CUR_IDX, r3
 blt STABLE_LOOP_START # If cur index is lower than length, do loop
+SOUND_TERMINATE_END:
 
 ################################################################################
 # Transfer pending log into stable log
 ################################################################################
+# Set SFXS_FRAME address again in case previous section was skipped
+addi r3, REG_SFXDB_ADDRESS, SFXDB_FRAMES
+mulli r4, REG_SOUND_WRITE_INDEX, SFXS_FRAME_SIZE
+add REG_SFXS_FRAME_ADDRESS, r3, r4 # SFXS_FRAME address
+
 COPY_PENDING_TO_STABLE:
 addi r3, REG_SFXS_FRAME_ADDRESS, SFXS_FRAME_STABLE_LOG
 addi r4, REG_SFXS_FRAME_ADDRESS, SFXS_FRAME_PENDING_LOG
