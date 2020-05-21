@@ -113,14 +113,14 @@ RestoreData:
   lwz r3,Buttons(PlayerBackup)
   stw r3,0x65C(PlayerData) #buttons
   lwz r3,XPos(PlayerBackup)
-  stw r3,0xB0(PlayerData) #x position
+  #stw r3,0xB0(PlayerData) #x position
   lwz r3,YPos(PlayerBackup)
-  stw r3,0xB4(PlayerData) #y position
+  #stw r3,0xB4(PlayerData) #y position
   lwz r3,FacingDirection(PlayerBackup)
-  stw r3,0x2C(PlayerData) #facing direction
+  #stw r3,0x2C(PlayerData) #facing direction
 .if STG_DesyncDebug==0
   lwz r3,ActionStateID(PlayerBackup)
-  stw r3,0x10(PlayerData) #animation state ID
+  #stw r3,0x10(PlayerData) #animation state ID
 .endif
 
 # UCF uses raw controller inputs for dashback, restore x analog byte here
@@ -161,7 +161,7 @@ RestoreData:
   lfs f1,0x40(sp)
   lfs f2,0x1830(PlayerData)
   fsubs f1,f1,f2
-  branchl r12, Damage_UpdatePercent
+  #branchl r12, Damage_UpdatePercent
 SkipPercentageRestore:
 
 # Correct spawn points on the first frame
