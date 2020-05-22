@@ -36,14 +36,12 @@ loadGlobalFrame REG_CURRENT_FRAME
 subi REG_CURRENT_FRAME, REG_CURRENT_FRAME, 1 # remove 1 from frame index because global frame has already been incremented
 lwz REG_LATEST_FRAME, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
 cmpw REG_CURRENT_FRAME, REG_LATEST_FRAME
-bgt SOUND_TERMINATE_END # If new frame, don't adjust write index
-
-# Let's determine the write index for the current frame
-addi r4, REG_LATEST_FRAME, 1 # Simulate the latest frame being 1 frame ahead (would be the case for recording)
+bgt SOUND_TERMINATE_END # If new frame, no need to try and kill sounds
 
 # If we are on the last frame that was run before a ffw, the following
-# will equal 1 I believe. The ffw end frame was never actually processed
-sub r3, r4, REG_CURRENT_FRAME
+# will equal 1. The ffw end frame was never actually processed
+sub r3, REG_LATEST_FRAME, REG_CURRENT_FRAME
+addi r3, r3, 1
 
 lbz REG_SOUND_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 sub. REG_SOUND_WRITE_INDEX, REG_SOUND_WRITE_INDEX, r3

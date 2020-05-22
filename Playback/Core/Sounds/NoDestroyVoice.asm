@@ -27,11 +27,11 @@ CHECK_SOUND:
 # First let's determine the write index for the current frame
 loadGlobalFrame r3
 lwz r4, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
-addi r4, r4, 1 # Simulate the latest frame being 1 frame ahead (would be the case for recording)
 
 # If we are on the last frame that was run before a ffw, the following
 # will equal 1 I believe. The ffw end frame was never actually processed
 sub r3, r4, r3
+addi r3, r3, 1
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 sub. REG_WRITE_INDEX, REG_WRITE_INDEX, r3

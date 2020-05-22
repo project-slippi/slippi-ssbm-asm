@@ -20,6 +20,7 @@ backup
 lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 li REG_IS_SOUND_ACTIVE, 0
+li REG_SOUND_INSTANCE_ID, 0
 rlwinm REG_SOUND_ID, r23, 0, 0xFFFF # Extract half word from sound ID input
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
@@ -32,11 +33,11 @@ CHECK_SOUND:
 # First let's determine the write index for the current frame
 loadGlobalFrame r3
 lwz r4, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
-addi r4, r4, 1 # Simulate the latest frame being 1 frame ahead (would be the case for recording)
 
 # If we are on the last frame that was run before a ffw, the following
 # will equal 1 I believe. The ffw end frame was never actually processed
 sub r3, r4, r3
+addi r3, r3, 1
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 sub. REG_WRITE_INDEX, REG_WRITE_INDEX, r3
@@ -91,6 +92,9 @@ add r5, r5, r3 # SFXS_ENTRY
 # Write sound to entry
 sth REG_SOUND_ID, SFXS_ENTRY_SOUND_ID(r5)
 
+# Instance ID will be 0 here if new sound and set later in AssignSoundInstanceId
+stw REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)
+
 # Increment pending log index
 lbz r3, SFXS_LOG_INDEX(r6)
 addi r3, r3, 1
@@ -100,9 +104,6 @@ SKIP_PLAY_IF_NEEDED:
 # Check if we should skip playing this sound
 cmpwi REG_IS_SOUND_ACTIVE, 0
 beq RESTORE_AND_EXIT
-
-# Store instance ID to pending log entry
-stw REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)
 
 # Set r3 to sound instance ID? Function normally returns this
 mr r3, REG_SOUND_INSTANCE_ID
