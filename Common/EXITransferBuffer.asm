@@ -18,6 +18,7 @@
 .set REG_TransferBehavior, 31
 .set REG_BufferPointer, 30
 .set REG_BufferLength, 29
+.set REG_InterruptIdx, 28
 
 ExiTransferBuffer:
 # Store stack frame
@@ -29,6 +30,11 @@ ExiTransferBuffer:
   mr REG_BufferLength,r4
 # Backup EXI transfer behavior
   mr REG_TransferBehavior,r5
+
+# Disable interrupts. I think perhaps we can have EXI transfer issues when
+# this process is interrupted?
+  branchl r12, OSDisableInterrupts
+  mr REG_InterruptIdx, r3
 
 # Start flush loop to write the data in buf through to RAM.
 # Cache blocks are 32 bytes in length and the buffer obtained from malloc
@@ -96,6 +102,9 @@ FLUSH_READ_LOOP:
   isync
 
 Exit:
+  mr r3, REG_InterruptIdx
+  branchl r12, OSRestoreInterrupts
+
 #restore registers and sp
   restore
   blr
