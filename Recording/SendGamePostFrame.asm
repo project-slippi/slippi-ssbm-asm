@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 8006c5d8
+# Address: 8006da34
 ################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
@@ -11,7 +11,7 @@
 # it to Slippi device
 ################################################################################
 
-.set REG_PlayerData,30
+.set REG_PlayerData,31
 .set REG_Buffer,29
 .set REG_BufferOffset,28
 .set REG_PlayerSlot,27
@@ -132,5 +132,4 @@ backup
 
 Injection_Exit:
   restore
-  lwz	r0, 0x003C (sp)
-  lwz	r31, 0x0034 (sp)
+  lwz r0, 0x001C (sp)

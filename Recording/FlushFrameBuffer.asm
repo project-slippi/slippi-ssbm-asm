@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 802fef88
+# Address: 803219ec
 ################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
@@ -61,4 +61,4 @@ backup
 
 Injection_Exit:
   restore
-  lwz	r0, 0x0034 (sp)
+  lwz r0, 0x001C (sp)

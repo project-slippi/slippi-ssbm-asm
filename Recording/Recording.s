@@ -47,8 +47,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.3.0
-.set CURRENT_VERSION,0x03030000
+# current version: 3.4.0
+.set CURRENT_VERSION,0x03040000
 
 ################################################################################
 # Static Function Locations
