@@ -125,6 +125,26 @@ backup
   HurtboxCollision_Send:
   stb r3,0x34(REG_Buffer)
 
+  # send self-induced air x speed
+  lwz r3,0x80(REG_PlayerData)
+  stw r3,0x35(REG_Buffer)
+
+  # send self-induced y speed
+  lwz r3,0x84(REG_PlayerData)
+  stw r3,0x39(REG_Buffer)
+
+  # send attack-based x speed
+  lwz r3,0x8c(REG_PlayerData)
+  stw r3,0x3d(REG_Buffer)
+
+  # send attack-based y speed
+  lwz r3,0x90(REG_PlayerData)
+  stw r3,0x41(REG_Buffer)
+
+  # send self-induced ground x speed
+  lwz r3,0xec(REG_PlayerData)
+  stw r3,0x45(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
