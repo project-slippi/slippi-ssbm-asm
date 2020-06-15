@@ -27,18 +27,25 @@ stw \reg,-0x4(sp)
 lfs \regf,-0x4(sp)
 .endm
 
-.macro backup
+.set BKP_FREE_SPACE_OFFSET, 0x38 # This is where the free space in our stack starts
+
+.macro backup space=0x78
 mflr r0
 stw r0, 0x4(r1)
-stwu r1,-0xB0(r1)	# make space for 12 registers
+stwu r1,-(BKP_FREE_SPACE_OFFSET + \space)(r1)	# make space for 12 registers
 stmw r20,0x8(r1)
 .endm
 
- .macro restore
+.macro restore space=0x78
 lmw r20,0x8(r1)
-lwz r0, 0xB4(r1)
-addi r1,r1,0xB0	# release the space
+lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space)(r1)
+addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
 mtlr r0
+.endm
+
+.macro byteAlign32 reg
+addi \reg, \reg, 31
+rlwinm \reg, \reg, 0, 0xFFFFFFE0
 .endm
 
 .macro backupall
