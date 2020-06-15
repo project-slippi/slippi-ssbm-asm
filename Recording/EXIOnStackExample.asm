@@ -12,8 +12,7 @@
 .set STACK_OFST_EXI_BUF, BKP_FREE_SPACE_OFFSET
 
 backup STACK_FREE_SPACE
-mr r3, sp
-addi r3, r3, STACK_OFST_EXI_BUF # This is the start address for the free space
+addi r3, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
 byteAlign32 r3 # Align to next 32 byte boundary
 
 li r4, 0xD0 # Command byte
