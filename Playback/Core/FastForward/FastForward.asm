@@ -36,12 +36,10 @@
 
 # execute normal code line
 PreviousCodeLine:
-/*
 # unmute  music and SFX
   li  r3,1
   li  r4,2
   branchl r12,Audio_AdjustMusicSFXVolume
-*/
   cmpw r26, r27
   b Exit
 
@@ -50,12 +48,17 @@ FastForward:
   #li  r3,1
   #branchl r12,VISetBlack
 # mute music and SFX
-/*
+  lwz r3,primaryDataBuffer(r13) # directory address
+  lwz r3,PDB_EXI_BUF_ADDR(r3) # EXI buf address
+  lbz r3,(RBStatus_Start)+(RBStatus_Status)(r3)
+  cmpwi r3, 1
+  beq SkipMute # If we are rb, skip mute
+
   li  r3,0
   li  r4,0
   branchl r12,Audio_AdjustMusicSFXVolume
-*/
 
+SkipMute:
 # try to execute update camera functions
   branchl r12,0x80030a50 # Camera_LoadCameraEntity
   branchl r12,0x8002a4ac # Updates camera values used in tag position calculation

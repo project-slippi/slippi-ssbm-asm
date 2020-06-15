@@ -230,36 +230,6 @@
       ]
     },
     {
-      "name": "Game Music ON",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Keep checked if you want music ON. Uncheck \"Game Music OFF\"."
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/GameMusicOn.bin"
-        }
-      ]
-    },
-    {
-      "name": "Game Music OFF",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Keep checked if you want music OFF. Uncheck \"Game Music ON\"."
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/GameMusicOff.bin"
-        }
-      ]
-    },
-    {
       "name": "PAL Toggle",
       "authors": [
         "UnclePunch"
