@@ -21,8 +21,10 @@
 backup STACK_FREE_SPACE
 
 # check if NOT VS Mode
-branchl r12,FN_ShouldRecord
-cmpwi r3,0x1
+getMinorMajor r8
+cmpwi r8, 0x0202
+beq Injection_Exit
+cmpwi r8, 0x0208
 beq Injection_Exit
 
 addi r3, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
@@ -32,8 +34,7 @@ li r4, CMD_MENU_FRAME # Command byte
 stb r4, 0x0(r3)
 
 # Two bytes for major / minor scene
-getMinorMajor r4
-sth r4, 0x1(r3)
+sth r8, 0x1(r3)
 
 # send player 1 cursor x position
 load r4 0x81118DEC
@@ -132,6 +133,18 @@ stb r4, 0x2C(r3)
 # 1 == Coin in hand
 # 2 == Coin down
 # 3 == Not plugged in
+
+# Reading this value involves needing to follow a dynamic pointer
+# This can segfault when not in the right scene
+# So just return 0's when not in there and don't follow the pointers
+
+# Load 0's into player coins
+load r4 0x00000000
+stw r4, 0x2D(r3)
+
+cmpwi r8, 0x0002
+bne Not_CSS
+
 # Player 1
 load r4 0x804a0bc0
 lwz r4, 0(r4)
@@ -157,6 +170,21 @@ addi r4, r4, 5
 lbz r4, 0(r4)
 stb r4, 0x30(r3)
 
+Not_CSS:
+
+# Reading this value involves needing to follow a dynamic pointer
+# This can segfault when not in the right scene
+# So just return 0's when not in there and don't follow the pointers
+
+# Load 0's into cursors
+load r4 0x00000000
+stw r4, 0x31(r3)
+load r4 0x00000000
+stw r4, 0x35(r3)
+
+cmpwi r8, 0x0102
+bne Not_SSS
+
 # Stage Select Cursor X
 # 4-byte float
 load r4 0x80bda810
@@ -176,6 +204,8 @@ lwz r4, 0(r4)
 addi r4, r4, 0x3C
 lwz r4, 0(r4)
 stw r4, 0x35(r3)
+
+Not_SSS:
 
 # Frame count
 load r4 0x80479D60
