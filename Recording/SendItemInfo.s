@@ -15,7 +15,8 @@
 .set  OFST_METADATA_2,OFST_METADATA_1+0x1
 .set  OFST_METADATA_3,OFST_METADATA_2+0x1
 .set  OFST_METADATA_4,OFST_METADATA_3+0x1
-.set  ITEM_STRUCT_SIZE,OFST_METADATA_4+0x1
+.set  OFST_OWNER,OFST_METADATA_4+0x1
+.set  ITEM_STRUCT_SIZE,OFST_OWNER+0x1
 
 .macro Macro_SendItemInfo
 
@@ -122,6 +123,20 @@ SendItemInfo_AddToBuffer:
   stb r3,OFST_METADATA_3(REG_Buffer)
   lbz r3,0xDEF(REG_ItemData) # This stores charge power for Samus/MewTwo (0-7)
   stb r3,OFST_METADATA_4(REG_Buffer)
+# Store item ownership
+  lwz r3, 0x518(REG_ItemData)
+  cmpwi r3, 0x0   # Is this a null pointer?
+  beq DontFollowItemOwnerPtr
+  lwz r3, 0x2C(r3)
+  cmpwi r3, 0x0   # Is this a null pointer?
+  beq DontFollowItemOwnerPtr
+  lbz r3, 0xC(r3)
+  b SendItemOwner
+DontFollowItemOwnerPtr:
+  li r3, -1
+SendItemOwner:
+  stb r3, OFST_OWNER(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset, ITEM_STRUCT_SIZE
