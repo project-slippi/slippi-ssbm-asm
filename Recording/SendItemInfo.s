@@ -127,9 +127,9 @@ SendItemInfo_AddToBuffer:
   lwz r3, 0x518(REG_ItemData)
   cmpwi r3, 0x0   # Is this a null pointer?
   beq DontFollowItemOwnerPtr
-  bne FollowItemOwnerPtr
-FollowItemOwnerPtr:
   lwz r3, 0x2C(r3)
+  cmpwi r3, 0x0   # Is this a null pointer?
+  beq DontFollowItemOwnerPtr
   lbz r3, 0xC(r3)
   b SendItemOwner
 DontFollowItemOwnerPtr:
