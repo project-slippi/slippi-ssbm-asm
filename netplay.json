@@ -19,7 +19,7 @@
   ],
   "codes": [
     {
-      "name": "Faster Melee Netplay Settings",
+      "name": "Required: General Codes",
       "authors": [
         "Achilles",
         "Dan Salvato",
@@ -65,12 +65,6 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/SinglesStages.bin",
           "annotation": "Singles Stages [Magus]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Boot to CSS",
-          "isRecursive": true,
-          "annotation": "Boot to CSS"
         },
         {
           "type": "injectFolder",
@@ -205,89 +199,15 @@
       ]
     },
     {
-      "name": "Normal Lag Reduction",
-      "authors": [
-        "Hannes Mann"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/NormalLagReduction.bin"
-        }
-      ]
-    },
-    {
-      "name": "Performance Lag Reduction",
-      "authors": [
-        "Hannes Mann",
-        "tauKhan"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/PerformanceLagReduction.bin"
-        }
-      ]
-    },
-    {
-      "name": "PAL Toggle",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Includes all character balances, Samus Cannot Bomb Jump Out of Zair, Remove Extender, DK Keeps Charge When Hit During Up B, Detection Bubbles Do Not Skip Hurtbox Collision Check, Freeze Glitch Fix, PAL Stock Icons and PAL CSS Indicator"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/PAL",
-          "isRecursive": true,
-          "annotation": "PAL Mods"
-        }
-      ]
-    },
-    {
-      "name": "Widescreen 16:9",
-      "authors": [
-        "Dan Salvato",
-        "mirrorbender",
-        "Achilles1515",
-        "UnclePunch"
-      ],
-      "description": [
-        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -----------------",
-        "Requires all players to have enabled for netplay."
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Widescreen",
-          "isRecursive": true,
-          "annotation": "Widescreen 16:9"
-        }
-      ]
-    },
-    {
-      "name": "Enable OSReport Print on Crash (1.02)",
-      "authors": [
-        "UnclePunch"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/OsReportPrintOnCrash.bin"
-        }
-      ]
-    },
-    {
-      "name": "Slippi Recording",
+      "name": "Required: Slippi Recording",
       "authors": [
         "Fizzi",
         "Achilles",
         "UnclePunch"
       ],
       "description": [
-        "Used in conjunction with Slippi plugged into PortB to extract game data"
+        "Saves replays, Slippi device must be in Slot B.",
+        "To disable saving replays, visit the Slippi settings in Config > GameCube"
       ],
       "build": [
         {
@@ -328,6 +248,119 @@
           "type": "injectFolder",
           "sourceFolder": "Common/Gecko",
           "annotation": "Static function to process Gecko codes [Fizzi]"
+        }
+      ]
+    },
+    {
+      "name": "Required: Slippi Online",
+      "authors": [
+        "Fizzi",
+        "UnclePunch"
+      ],
+      "description": [
+        "Adds online mode, Slippi device must be in Slot B.",
+        "Change settings in Config > GameCube"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Core",
+          "isRecursive": true,
+          "annotation": "Slippi Online [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Menus",
+          "isRecursive": true,
+          "annotation": "Online Menus [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Slippi Online Scene",
+          "isRecursive": true,
+          "annotation": "Scene set up [UnclePunch, Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Static",
+          "isRecursive": true,
+          "annotation": "Static Functions [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Logging",
+          "isRecursive": true,
+          "annotation": "Log injections [Fizzi]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD+VB.bin",
+          "annotation": "Polling Drift Fix + VB [tauKhan]"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Normal Lag Reduction",
+      "authors": [
+        "Hannes Mann"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Widescreen 16:9",
+      "authors": [
+        "Dan Salvato",
+        "mirrorbender",
+        "Achilles1515",
+        "UnclePunch"
+      ],
+      "description": [
+        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -------------------- ",
+        "Turning on optional codes will not cause desyncs."
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Widescreen",
+          "isRecursive": true,
+          "annotation": "Widescreen 16:9"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Disable Screen Shake",
+      "authors": [
+        "Achilles1515"
+      ],
+      "description": [
+        "Will prevent screen from shaking on hits, KOs, collisions, etc ----------------------- ",
+        "Turning on optional codes will not cause desyncs."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/DisableScreenShake.bin"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Center Align 2P HUD",
+      "authors": [
+        "Achilles1515"
+      ],
+      "description": [
+        "When playing online, character %'s will always be centered ------------------------- ",
+        "Turning on optional codes will not cause desyncs."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/Force2PCenterHud.bin"
         }
       ]
     }
