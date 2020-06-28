@@ -125,6 +125,21 @@ backup
   HurtboxCollision_Send:
   stb r3,0x34(REG_Buffer)
 
+# send onscreen position (relative to camera)
+  lbz r3,0x4(REG_PlayerData)
+  addi  r4,sp,0x80
+  branchl r12,0x800326cc        #get world position (topN)
+  lfs f1,0x778(REG_PlayerData)
+  lfs f2,0x780(REG_PlayerData)
+  fsubs f1,f1,f2                #get ECB top - ECB bottom (in an attempt to find the center of the char)
+  lfs f2,0x84(sp)
+  fadds f1,f1,f2
+  stfs f1,0x84(sp)              #add to topN Y
+  branchl r12,0x80030a50        #get dairantou CObj
+  addi  r4,sp,0x80
+  addi  r5,sp,0x90
+  branchl r12,0x8000e210        #get onscreen position
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
