@@ -320,8 +320,8 @@
         "UnclePunch"
       ],
       "description": [
-        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -------------------- ",
-        "Turning on optional codes will not cause desyncs."
+        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors ---------------------- ",
+        "Will not cause desyncs when playing online"
       ],
       "build": [
         {
@@ -339,7 +339,7 @@
       ],
       "description": [
         "Will prevent screen from shaking on hits, KOs, collisions, etc ----------------------- ",
-        "Turning on optional codes will not cause desyncs."
+        "Will not cause desyncs when playing online"
       ],
       "build": [
         {
@@ -355,12 +355,30 @@
       ],
       "description": [
         "When playing online, character %'s will always be centered ------------------------- ",
-        "Turning on optional codes will not cause desyncs."
+        "Will not cause desyncs when playing online"
       ],
       "build": [
         {
           "type": "binary",
           "sourceFile": "Binary/Force2PCenterHud.bin"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Flash Red on Failed L-Cancel",
+      "authors": [
+        "Achilles1515",
+        "Fizzi"
+      ],
+      "description": [
+        "When playing online, this will only affect your character --------------------------- ",
+        "Will not cause desyncs when playing online"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/FlashRedFailedLCancel",
+          "isRecursive": true
         }
       ]
     }
