@@ -52,7 +52,7 @@ blrl
 
 # BG values
 .set DOFST_PLAYERBG_OPA, DOFST_HUDPOS_OFFSET + 4
-.float 0.5
+.float 0.4
 .set DOFST_PLAYERBG_COLOR, DOFST_PLAYERBG_OPA + 4
 .byte 0,0,0,255
 .set DOFST_PLAYERBG_SCALEBASE, DOFST_PLAYERBG_COLOR + 4
@@ -66,9 +66,12 @@ blrl
 # BG scale per letter
 .set DOFST_PLAYERBG_XSCALEBASE, DOFST_PLAYERBG_YOFST + 4
 .float 0.4
+.set DOFST_PLAYERBG_XSCALEMULT, DOFST_PLAYERBG_XSCALEBASE + 4
+.float 0.25
+
 
 # strings
-.set DOFST_TEXT_FORMATSTRING, DOFST_PLAYERBG_XSCALEBASE + 4
+.set DOFST_TEXT_FORMATSTRING, DOFST_PLAYERBG_XSCALEMULT + 4
 .string "%s"
 .align 2
 .set DOFST_TEXT_DELAYSTRING, DOFST_TEXT_FORMATSTRING + 4
@@ -128,7 +131,10 @@ branchl r12, Text_InitializeSubtext
 # Set header text size
 mr r3, REG_TEXT_STRUCT
 li r4, 0
+# Scale text X based on Aspect Ratio
+lfs  f2,0x7C(sp)
 lfs f1, DOFST_TEXT_SIZE(REG_DATA_ADDR)
+fmuls f1,f1,f2
 lfs f2, DOFST_TEXT_SIZE(REG_DATA_ADDR)
 branchl r12, Text_UpdateSubtextSize
 
@@ -162,7 +168,7 @@ stfs f1, 0x28(REG_TEXT_STRUCT)
 .set REG_COUNT, 20
 .set REG_HUDPOS, 21
 .set REG_BG_JOBJ, 22
-.set REG_INSIG_JOBJ, 23
+.set REG_SUBTEXT, 23
 .set REG_BG_GOBJ, 24
 li  REG_COUNT, 0
 load REG_HUDPOS, 0x804a0ff0
@@ -195,6 +201,45 @@ load  r4,0x80391070
 li  r5,9
 li  r6,0
 branchl r12,0x8039069c
+
+#############################
+## Create Player Name Text ##
+#############################
+
+#Get HUD Position
+mulli r3,REG_COUNT,0xC
+add r3,r3,REG_HUDPOS
+# Set text
+lfs f1, 0x0(r3)
+lfs f2,DOFST_HUDPOS_MULT(REG_DATA_ADDR)
+# Scale Text X Position based on Aspect Ratio
+lfs  f3,0x7C(sp)
+fmuls f2,f2,f3
+fmuls f1,f1,f2
+lfs f2,DOFST_HUDPOS_OFFSET(REG_DATA_ADDR)
+fadds f1,f1,f2
+lfs f2, DOFST_PLAYERTEXT_Y_POS(REG_DATA_ADDR)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_MSRB_ADDR, MSRB_P1_NAME
+mulli r5, REG_COUNT, 31
+add r4,r4,r5
+branchl r12, Text_InitializeSubtext
+mr  REG_SUBTEXT,r3
+# Scale text X based on Aspect Ratio
+lfs  f1,0x7C(sp)
+lfs f2, DOFST_PLAYERTEXT_SIZE(REG_DATA_ADDR)
+fmuls f1,f1,f2
+# Set size
+mr r3, REG_TEXT_STRUCT
+mr  r4,REG_SUBTEXT
+lfs f2, DOFST_PLAYERTEXT_SIZE(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+
+############################
+## Create Text Background ##
+############################
+
 # Get HUD pos
 mr  r3,REG_COUNT
 branchl r12,0x802f3424
@@ -213,9 +258,6 @@ stfs  f1,0x3C (REG_BG_JOBJ)
 # Adjust scale
 lfs f1, DOFST_PLAYERBG_YSCALE (REG_DATA_ADDR)
 stfs f1, 0x30 (REG_BG_JOBJ)
-
-
-
 # Remove unneccessary dobjs
 mr  r3,REG_BG_JOBJ
 addi  r4,sp,0x80
@@ -242,6 +284,91 @@ stfs f1, 0xC(r3)
 lwz r4, DOFST_PLAYERBG_COLOR (REG_DATA_ADDR)
 stw r4, 0x4(r3)
 
+
+# Get total width of characters used in tag
+.set  CHAR_WIDTH_MAX, 17
+.set  TAG_WIDTH_MIN, 50
+.set  REG_WIDTH, 25
+.set  REG_CURR, 26
+.set  REG_WIDTH_INTERNAL, 12
+.set  REG_WIDTH_EXTERNAL, 11
+li  REG_WIDTH,0
+# Get subtext contents
+lwz  r3,0x5C(REG_TEXT_STRUCT)
+mr  r4,REG_SUBTEXT
+branchl r12,0x803a6fec
+addi  REG_CURR, r3, 0xE   #skip past header
+load REG_WIDTH_INTERNAL, 0x8040cb00
+lbz r3,0x4F(REG_TEXT_STRUCT)
+mulli r3,r3,4
+load  r4,0x804d1124
+lwzx  r3, r3, r4
+lwz REG_WIDTH_EXTERNAL, 0x4 (r3)
+DISPLAY_NAME_COUNT_LOOP:
+lbz r3,0x0(REG_CURR)
+# Check if null character
+cmpwi r3,0x0B
+beq DISPLAY_NAME_COUNT_NULL
+# Check if internal character
+cmpwi r3,0x20
+beq DISPLAY_NAME_COUNT_INTERNAL
+# Check if external character
+cmpwi r3,0x40
+beq DISPLAY_NAME_COUNT_EXTERNAL
+# Check if end of text
+lbz r3,0x0(REG_CURR)
+cmpwi r3,0x0F
+beq DISPLAY_NAME_COUNT_EXIT
+b DISPLAY_NAME_COUNT_NULL
+
+DISPLAY_NAME_COUNT_INTERNAL:
+lbz r3,0x1(REG_CURR)
+mulli r3,r3,2
+lbzx  r3,r3,REG_WIDTH_INTERNAL
+li  r4,CHAR_WIDTH_MAX
+sub r3,r4,r3
+add  REG_WIDTH,REG_WIDTH,r3
+addi  REG_CURR,REG_CURR,2
+b DISPLAY_NAME_COUNT_LOOP
+DISPLAY_NAME_COUNT_EXTERNAL:
+lbz r3,0x1(REG_CURR)
+mulli r3,r3,2
+lbzx  r3,r3,REG_WIDTH_EXTERNAL
+li  r4,CHAR_WIDTH_MAX
+sub r3,r4,r3
+add  REG_WIDTH,REG_WIDTH,r3
+addi  REG_CURR,REG_CURR,2
+b DISPLAY_NAME_COUNT_LOOP
+
+DISPLAY_NAME_COUNT_NULL:
+addi  REG_CURR,REG_CURR,1
+b DISPLAY_NAME_COUNT_LOOP
+DISPLAY_NAME_COUNT_EXIT:
+
+# Check if tag is min width
+cmpwi REG_WIDTH, TAG_WIDTH_MIN
+bge 0x8
+li  REG_WIDTH, TAG_WIDTH_MIN
+# Cast to float
+lis	r0, 0x4330
+lfd	f2, -0x6758 (rtoc)
+xoris	r3, REG_WIDTH,0x8000
+stw	r0,0x80(sp)
+stw	r3,0x84(sp)
+lfd	f1,0x80(sp)
+fsubs	f1,f1,f2		#Convert To Float
+# Multiply width by X to get background size
+lfs f2, DOFST_PLAYERBG_XSCALEMULT (REG_DATA_ADDR)
+fmuls f1,f1,f2
+stfs f1, 0x2C (REG_BG_JOBJ)
+
+# Scale BG X based on Aspect Ratio
+lfs  f1,0x7C(sp)
+lfs f2, 0x2C (REG_BG_JOBJ)
+fmuls f1,f1,f2
+stfs f1, 0x2C (REG_BG_JOBJ)
+
+/*
 # Count letters in tag
 .set  REG_NUM, 25
 .set  REG_CURR, 26
@@ -269,6 +396,8 @@ DISPLAY_NAME_COUNT_EXIT:
 cmpwi REG_NUM, 4
 ble DISPLAY_NAME_SHORT
 DISPLAY_NAME_LONG:
+
+
 # Scale BG based on tag length
 subi r3,REG_NUM,4
 lis	r0, 0x4330
@@ -292,42 +421,7 @@ lfs f1, DOFST_PLAYERBG_SCALEBASE (REG_DATA_ADDR)
 stfs f1, 0x2C (REG_BG_JOBJ)
 b DISPLAY_NAME_END
 DISPLAY_NAME_END:
-
-# Scale BG X based on Aspect Ratio
-lfs  f1,0x7C(sp)
-lfs f2, 0x2C (REG_BG_JOBJ)
-fmuls f1,f1,f2
-stfs f1, 0x2C (REG_BG_JOBJ)
-
-#Get HUD Position
-mulli r3,REG_COUNT,0xC
-add r3,r3,REG_HUDPOS
-# Set text
-lfs f1, 0x0(r3)
-lfs f2,DOFST_HUDPOS_MULT(REG_DATA_ADDR)
-# Scale Text X Position based on Aspect Ratio
-lfs  f3,0x7C(sp)
-fmuls f2,f2,f3
-fmuls f1,f1,f2
-lfs f2,DOFST_HUDPOS_OFFSET(REG_DATA_ADDR)
-fadds f1,f1,f2
-lfs f2, DOFST_PLAYERTEXT_Y_POS(REG_DATA_ADDR)
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_MSRB_ADDR, MSRB_P1_NAME
-mulli r5, REG_COUNT, 31
-add r4,r4,r5
-branchl r12, Text_InitializeSubtext
-
-# Scale text X based on Aspect Ratio
-lfs  f1,0x7C(sp)
-lfs f2, DOFST_PLAYERTEXT_SIZE(REG_DATA_ADDR)
-fmuls f1,f1,f2
-
-# Set size
-mr  r4,r3
-mr r3, REG_TEXT_STRUCT
-lfs f2, DOFST_PLAYERTEXT_SIZE(REG_DATA_ADDR)
-branchl r12, Text_UpdateSubtextSize
+*/
 
 DISPLAY_NAME_INC_LOOP:
 addi REG_COUNT, REG_COUNT, 1
