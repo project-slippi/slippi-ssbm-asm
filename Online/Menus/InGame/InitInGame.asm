@@ -368,61 +368,6 @@ lfs f2, 0x2C (REG_BG_JOBJ)
 fmuls f1,f1,f2
 stfs f1, 0x2C (REG_BG_JOBJ)
 
-/*
-# Count letters in tag
-.set  REG_NUM, 25
-.set  REG_CURR, 26
-addi r3, REG_MSRB_ADDR, MSRB_P1_NAME
-mulli r4, REG_COUNT, 31
-add REG_CURR,r3,r4
-li  REG_NUM,0
-DISPLAY_NAME_COUNT_LOOP:
-lbz r3,0x0(REG_CURR)
-cmpwi r3,0
-beq DISPLAY_NAME_COUNT_EXIT
-cmpwi r3,0x81
-blt DISPLAY_NAME_COUNT_ASCII
-DISPLAY_NAME_COUNT_SHIFT:
-addi  REG_CURR,REG_CURR,2
-b DISPLAY_NAME_COUNT_INCLOOP
-DISPLAY_NAME_COUNT_ASCII:
-addi  REG_CURR,REG_CURR,1
-b DISPLAY_NAME_COUNT_INCLOOP
-DISPLAY_NAME_COUNT_INCLOOP:
-addi  REG_NUM,REG_NUM,1
-b DISPLAY_NAME_COUNT_LOOP
-DISPLAY_NAME_COUNT_EXIT:
-# Check if over 4 characters
-cmpwi REG_NUM, 4
-ble DISPLAY_NAME_SHORT
-DISPLAY_NAME_LONG:
-
-
-# Scale BG based on tag length
-subi r3,REG_NUM,4
-lis	r0, 0x4330
-lfd	f2, -0x6758 (rtoc)
-xoris	r3, r3,0x8000
-stw	r0,0x80(sp)
-stw	r3,0x84(sp)
-lfd	f1,0x80(sp)
-fsubs	f1,f1,f2		#Convert To Float
-# Scale based on length
-lfs f2,DOFST_PLAYERBG_SCALEMULT (REG_DATA_ADDR)
-fmuls f1,f1,f2
-# Plus base length
-lfs f2, DOFST_PLAYERBG_SCALEBASE (REG_DATA_ADDR)
-fadds f1,f1,f2
-stfs f1, 0x2C (REG_BG_JOBJ)
-b DISPLAY_NAME_END
-DISPLAY_NAME_SHORT:
-#Base width
-lfs f1, DOFST_PLAYERBG_SCALEBASE (REG_DATA_ADDR)
-stfs f1, 0x2C (REG_BG_JOBJ)
-b DISPLAY_NAME_END
-DISPLAY_NAME_END:
-*/
-
 DISPLAY_NAME_INC_LOOP:
 addi REG_COUNT, REG_COUNT, 1
 cmpwi REG_COUNT, 6
