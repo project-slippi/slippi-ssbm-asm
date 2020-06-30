@@ -189,6 +189,10 @@ bl  ClientPause
 mflr  r3
 stw r3,0x40(r31)
 
+# Init pause
+li  r3,0
+stb r3, OFST_R13_ISPAUSE (r13)
+
 b GECKO_EXIT
 
 ################################################################################
@@ -293,6 +297,8 @@ ClientPause_Paused_Disconnect:
 li  r3,2
 branchl r12,0x80024030
 # End game
+branchl r12,0x8016c7f0
+# Change scene
 li  r3,3
 load  r4,0x8046b6a0
 stb r3,0x0(r4)

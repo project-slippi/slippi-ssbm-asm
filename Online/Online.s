@@ -20,6 +20,7 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_NAME_ENTRY_MODE,-0x505D # Byte, 0 = normal, 1 = connect code
 .set OFST_R13_SWITCH_TO_ONLINE_SUBMENU,-0x49ec # Function used to switch
 .set OFST_R13_CALLBACK,-0x5018 # Callback address
+.set OFST_R13_ISPAUSE,-0x5038 # client paused bool (originally used for tournament mode @ 8019b8e4)
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
