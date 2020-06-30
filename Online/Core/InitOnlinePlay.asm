@@ -184,6 +184,28 @@ mflr r4 # Function
 li r5, 0 # Priority
 branchl	r12, GObj_AddProc
 
+################################################################################
+# Initialize Client Pause
+################################################################################
+
+# Check if pause is disabled
+lbz r3,0x2 (r31)
+rlwinm. r3,r3,0,0x08
+beq PAUSE_INIT_END
+# Set client pause callback
+bl  ClientPause
+mflr  r3
+stw r3,0x40(r31)
+# Init isPause
+li  r3,0
+stb r3, OFST_R13_ISPAUSE (r13)
+# Enable pause
+lbz r3,0x2 (r31)
+li  r4,0
+rlwimi r3,r4,3,0x8
+stb r3,0x2 (r31)
+PAUSE_INIT_END:
+
 b GECKO_EXIT
 
 ################################################################################
@@ -228,6 +250,123 @@ stw r3, -ControllerFixOptions(rtoc)
 # TODO: Write to EXI that game has ended to confirm there was no desync?
 
 blr
+
+################################################################################
+# Routine: ClientPause
+# ------------------------------------------------------------------------------
+# Description: Handles pausing the game, clientside
+################################################################################
+
+#region ClientPause
+ClientPause:
+blrl
+
+.set  REG_INPUTS,31
+.set  REG_PORT,30
+
+backup
+
+# Get clients inputs
+lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
+lbz REG_PORT, ODB_LOCAL_PLAYER_INDEX(r3)
+load  r4,0x804c1fac
+mulli r3,REG_PORT,68
+add REG_INPUTS,r3,r4
+
+# Check pause state
+lbz r3, OFST_R13_ISPAUSE (r13)
+cmpwi r3,0
+beq ClientPause_Unpaused
+
+ClientPause_Paused:
+
+# Check if holding L R A
+lwz r3,0x0(REG_INPUTS)
+rlwinm. r0,r3,0,0x40
+beq ClientPause_Paused_CheckUnpause
+rlwinm. r0,r3,0,0x20
+beq ClientPause_Paused_CheckUnpause
+rlwinm. r0,r3,0,0x100
+beq ClientPause_Paused_CheckUnpause
+# Is holding LRA, check for start
+rlwinm. r0,r3,0,0x1000
+bne ClientPause_Paused_Disconnect
+
+ClientPause_Paused_CheckUnpause:
+# Check if just pressed Start
+lwz r3,0x8(REG_INPUTS)
+rlwinm. r0,r3,0,0x1000
+bne ClientPause_Paused_Unpause
+
+# nothing, exit
+b ClientPause_Exit
+
+################################################################################
+# Disconnect the client
+################################################################################
+
+ClientPause_Paused_Disconnect:
+# Play SFX
+li  r3,2
+branchl r12,0x80024030
+# End game
+branchl r12,0x8016c7f0
+# Change scene
+li  r3,3
+load  r4,0x8046b6a0
+stb r3,0x0(r4)
+# Unpause clientside
+#li  r3,0
+#stb r3, OFST_R13_ISPAUSE (r13)
+b ClientPause_Exit
+
+################################################################################
+# Unpause the client
+################################################################################
+
+ClientPause_Paused_Unpause:
+# Unpause clientside
+li  r3,0
+stb r3, OFST_R13_ISPAUSE (r13)
+# Show HUD
+branchl r12,0x802f33cc
+# Show Timer
+# Hide Pause UI
+mr  r3,REG_PORT
+branchl r12,0x801a10fc
+b ClientPause_Exit
+
+################################################################################
+# Check to pause the client
+################################################################################
+
+ClientPause_Unpaused:
+# Check if just pressed Start
+lwz r3,0x8(REG_INPUTS)
+rlwinm. r0,r3,0,0x1000
+beq ClientPause_Exit
+
+# Pause clientside
+li  r3,1
+stb r3, OFST_R13_ISPAUSE (r13)
+# Hide HUD
+branchl r12,0x802f3394
+# Hide Timer
+# Show Pause UI
+mr  r3,REG_PORT
+li  r4,0x5      #shows LRA start and stick
+branchl r12,0x801a0fec
+# Play SFX
+li  r3,5
+branchl r12,0x80024030
+b ClientPause_Exit
+
+ClientPause_Exit:
+li  r3,-1   # always return -1 so the game doesnt actually pause
+restore
+blr
+#endregion
+
 
 GECKO_EXIT:
 
