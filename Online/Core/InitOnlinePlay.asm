@@ -184,14 +184,27 @@ mflr r4 # Function
 li r5, 0 # Priority
 branchl	r12, GObj_AddProc
 
+################################################################################
+# Initialize Client Pause
+################################################################################
+
+# Check if pause is disabled
+lbz r3,0x2 (r31)
+rlwinm. r3,r3,0,0x08
+beq PAUSE_INIT_END
 # Set client pause callback
 bl  ClientPause
 mflr  r3
 stw r3,0x40(r31)
-
-# Init pause
+# Init isPause
 li  r3,0
 stb r3, OFST_R13_ISPAUSE (r13)
+# Enable pause
+lbz r3,0x2 (r31)
+li  r4,0
+rlwimi r3,r4,3,0x8
+stb r3,0x2 (r31)
+PAUSE_INIT_END:
 
 b GECKO_EXIT
 
