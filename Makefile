@@ -3,27 +3,29 @@
 # netplay.json and playback.json also build versions of GALJ01r2.ini for NTSC-J
 NETPLAY_INI 		:= Output/Netplay/GALE01r2.ini
 PLAYBACK_INI 		:= Output/Playback/GALE01r2.ini
+ONLINE_INI 		:= Output/Online/online.txt
 
 # GCT output for Nintendont
 C_DIR			:= Output/Console
 CONSOLE_CORE 		:= $(C_DIR)/g_core.bin
-CONSOLE_CORE_PORTA   := $(C_DIR)/g_core_porta.bin
+CONSOLE_CORE_PORTA   	:= $(C_DIR)/g_core_porta.bin
 CONSOLE_UCF		:= $(C_DIR)/g_ucf.bin
-CONSOLE_UCF_STEALTH		:= $(C_DIR)/g_ucf_stealth.bin
+CONSOLE_UCF_STEALTH	:= $(C_DIR)/g_ucf_stealth.bin
 CONSOLE_TOGGLES		:= $(C_DIR)/g_toggles.bin
-CONSOLE_MODS_STEALTH		:= $(C_DIR)/g_mods_stealth.bin
-CONSOLE_MODS_TOURNAMENT		:= $(C_DIR)/g_mods_tournament.bin
-CONSOLE_MODS_FRIENDLIES		:= $(C_DIR)/g_mods_friendlies.bin
+CONSOLE_MODS_STEALTH	:= $(C_DIR)/g_mods_stealth.bin
+CONSOLE_MODS_TOURNAMENT	:= $(C_DIR)/g_mods_tournament.bin
+CONSOLE_MODS_FRIENDLIES	:= $(C_DIR)/g_mods_friendlies.bin
 CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
-CONSOLE_FROZEN   := $(C_DIR)/g_frozen.bin
-CONSOLE_LAG_PD	:= $(C_DIR)/g_lag_pd.bin
+CONSOLE_FROZEN   	:= $(C_DIR)/g_frozen.bin
+CONSOLE_LAG_PD		:= $(C_DIR)/g_lag_pd.bin
 CONSOLE_LAG_PDVB	:= $(C_DIR)/g_lag_pdvb.bin
-CONSOLE			:= $(CONSOLE_CORE) $(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) \
-				$(CONSOLE_UCF_STEALTH) $(CONSOLE_TOGGLES) $(CONSOLE_MODS_STEALTH) \
-				$(CONSOLE_MODS_TOURNAMENT) $(CONSOLE_MODS_FRIENDLIES) \
-				$(CONSOLE_PAL) $(CONSOLE_FROZEN) $(CONSOLE_LAG_PD) $(CONSOLE_LAG_PDVB)
+CONSOLE			:= $(CONSOLE_CORE) \
+	$(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) $(CONSOLE_UCF_STEALTH) \
+	$(CONSOLE_TOGGLES) $(CONSOLE_MODS_STEALTH) $(CONSOLE_MODS_TOURNAMENT) \
+	$(CONSOLE_MODS_FRIENDLIES) $(CONSOLE_PAL) $(CONSOLE_FROZEN) \
+	$(CONSOLE_LAG_PD) $(CONSOLE_LAG_PDVB)
 
-ALL_TARGETS 		:= $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
+ALL_TARGETS 		:= $(ONLINE_INI) $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
 .PHONY: $(ALL_TARGETS) clean
 all: $(ALL_TARGETS)
 
@@ -87,6 +89,9 @@ $(NETPLAY_INI): netplay.json
 $(PLAYBACK_INI): playback.json
 	@gecko build -defsym "STG_EXIIndex=1" -c $<
 	@echo ""
+
+$(ONLINE_INI): online.json
+	@gecko build -defsym "STG_EXIIndex=1" -c $< -o $@
 
 # -----------------------------------------------------------------------------
 clean:
