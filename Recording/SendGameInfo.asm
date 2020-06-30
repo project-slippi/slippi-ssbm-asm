@@ -137,13 +137,13 @@ backup
 
 # nullify function pointers
   li  r3,0
-  stw r3, GameInfoBlockStart + 0x44 (GameInfoBlockStart)
-  stw r3, GameInfoBlockStart + 0x48 (GameInfoBlockStart)
-  stw r3, GameInfoBlockStart + 0x4C (GameInfoBlockStart)
-  stw r3, GameInfoBlockStart + 0x50 (GameInfoBlockStart)
-  stw r3, GameInfoBlockStart + 0x54 (GameInfoBlockStart)
-  stw r3, GameInfoBlockStart + 0x58 (GameInfoBlockStart)
-  stw r3, GameInfoBlockStart + 0x5C (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x44 (REG_Buffer)
+  stw r3, GameInfoBlockStart + 0x48 (REG_Buffer)
+  stw r3, GameInfoBlockStart + 0x4C (REG_Buffer)
+  stw r3, GameInfoBlockStart + 0x50 (REG_Buffer)
+  stw r3, GameInfoBlockStart + 0x54 (REG_Buffer)
+  stw r3, GameInfoBlockStart + 0x58 (REG_Buffer)
+  stw r3, GameInfoBlockStart + 0x5C (REG_Buffer)
 
 #------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
 
