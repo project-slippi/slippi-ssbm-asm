@@ -90,6 +90,16 @@ READ_DATA:
   li  r5,0x138                      #Match struct length
   branchl r12, memcpy
 
+# nullify function pointers
+  li  r3,0
+  stw r3, 0x44 (r31)
+  stw r3, 0x48 (r31)
+  stw r3, 0x4C (r31)
+  stw r3, 0x50 (r31)
+  stw r3, 0x54 (r31)
+  stw r3, 0x58 (r31)
+  stw r3, 0x5C (r31)
+
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
   subi r23,rtoc,DashbackOptions #Prepare game memory dashback toggle address

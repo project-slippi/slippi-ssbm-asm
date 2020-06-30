@@ -135,6 +135,16 @@ backup
   li  r5,GameInfoBlockLength
   branchl r12,memcpy
 
+# nullify function pointers
+  li  r3,0
+  stw r3, GameInfoBlockStart + 0x44 (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x48 (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x4C (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x50 (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x54 (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x58 (GameInfoBlockStart)
+  stw r3, GameInfoBlockStart + 0x5C (GameInfoBlockStart)
+
 #------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
 
 .set REG_LoopCount,20
