@@ -52,31 +52,56 @@ blrl
 
 backup
 
-# Get clients inputs
+# Check if opponent LRAS'd
+lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
+lbz r3, ODB_ONLINE_PLAYER_INDEX(r3)
+load  r4,0x804c1fac
+mulli r3,r3,68
+add r3, r3, r4
+
+ClientPause_CheckRemoteLRAS:
+
+# Check if opponent holding L R A
+lwz r3,0x0(r3)
+rlwinm. r0,r3,0,0x40
+beq ClientPause_PrepLocalInputs
+rlwinm. r0,r3,0,0x20
+beq ClientPause_PrepLocalInputs
+rlwinm. r0,r3,0,0x100
+beq ClientPause_PrepLocalInputs
+# Is holding LRA, check for start
+rlwinm. r0,r3,0,0x1000
+bne ClientPause_Paused_Disconnect
+
+ClientPause_PrepLocalInputs:
+
+# Get local clients inputs
 lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
 lbz REG_PORT, ODB_LOCAL_PLAYER_INDEX(r3)
 load  r4,0x804c1fac
 mulli r3,REG_PORT,68
 add REG_INPUTS,r3,r4
 
-# Check pause state
-lbz r3, OFST_R13_ISPAUSE (r13)
-cmpwi r3,0
-beq ClientPause_Unpaused
-
-ClientPause_Paused:
+ClientPause_CheckLocalLRAS:
 
 # Check if holding L R A
 lwz r3,0x0(REG_INPUTS)
 rlwinm. r0,r3,0,0x40
-beq ClientPause_Paused_CheckUnpause
+beq ClientPause_HandlePauseAndUnpause
 rlwinm. r0,r3,0,0x20
-beq ClientPause_Paused_CheckUnpause
+beq ClientPause_HandlePauseAndUnpause
 rlwinm. r0,r3,0,0x100
-beq ClientPause_Paused_CheckUnpause
+beq ClientPause_HandlePauseAndUnpause
 # Is holding LRA, check for start
 rlwinm. r0,r3,0,0x1000
 bne ClientPause_Paused_Disconnect
+
+ClientPause_HandlePauseAndUnpause:
+
+# Check pause state
+lbz r3, OFST_R13_ISPAUSE (r13)
+cmpwi r3,0
+beq ClientPause_Unpaused
 
 ClientPause_Paused_CheckUnpause:
 # Check if just pressed Start
