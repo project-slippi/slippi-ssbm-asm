@@ -67,20 +67,20 @@ blrl
 .set DOFST_PLAYERBG_XSCALEBASE, DOFST_PLAYERBG_YOFST + 4
 .float 0.4
 .set DOFST_PLAYERBG_XSCALEMULT, DOFST_PLAYERBG_XSCALEBASE + 4
-.float 0.25
+.float 0.2
 
 .set DOFST_PLAYERTEXT_XPOS, DOFST_PLAYERBG_XSCALEMULT + 4
-.float 274
+.float 275
 .set DOFST_PLAYERTEXT_YPOS, DOFST_PLAYERTEXT_XPOS + 4
-.float 452
+.float 454
 .set DOFST_PLAYERTEXT_ZPOS, DOFST_PLAYERTEXT_YPOS + 4
 .float 0
 .set DOFST_PLAYERTEXT_WIDTH, DOFST_PLAYERTEXT_ZPOS + 4
-.float 110
+.float 145
 .set DOFST_PLAYERTEXT_HEIGHT, DOFST_PLAYERTEXT_WIDTH + 4
 .float 300
 .set DOFST_PLAYERTEXT_CANVASSCALE, DOFST_PLAYERTEXT_HEIGHT + 4
-.float 1 #0.0521
+.float 0.75 #0.0521
 
 # strings
 .set DOFST_TEXT_FORMATSTRING, DOFST_PLAYERTEXT_CANVASSCALE + 4
@@ -218,7 +218,7 @@ mr REG_TEXT_STRUCT, r3
 li r4, 0x1
 stb r4, 0x48(REG_TEXT_STRUCT)
 # Set text to align center
-li r4, 0x0
+li r4, 0x1
 stb r4, 0x4A(REG_TEXT_STRUCT)
 
 # Scale Canvas Down
@@ -396,10 +396,10 @@ lwz r4, DOFST_PLAYERBG_COLOR (REG_DATA_ADDR)
 stw r4, 0x4(r3)
 
 
-/*
 # Get total width of characters used in tag
 .set  CHAR_WIDTH_MAX, 17
-.set  TAG_WIDTH_MIN, 50
+.set  TAG_WIDTH_MIN, 60
+.set  TAG_WIDTH_MAX, 115
 .set  REG_WIDTH, 25
 .set  REG_CURR, 26
 .set  REG_WIDTH_INTERNAL, 12
@@ -459,6 +459,9 @@ DISPLAY_NAME_COUNT_EXIT:
 cmpwi REG_WIDTH, TAG_WIDTH_MIN
 bge 0x8
 li  REG_WIDTH, TAG_WIDTH_MIN
+cmpwi REG_WIDTH, TAG_WIDTH_MAX
+ble 0x8
+li  REG_WIDTH, TAG_WIDTH_MAX
 # Cast to float
 lis	r0, 0x4330
 lfd	f2, -0x6758 (rtoc)
@@ -471,11 +474,12 @@ fsubs	f1,f1,f2		#Convert To Float
 lfs f2, DOFST_PLAYERBG_XSCALEMULT (REG_DATA_ADDR)
 fmuls f1,f1,f2
 stfs f1, 0x2C (REG_BG_JOBJ)
-*/
+
 
 # Set bg width
-lfs f1, DOFST_PLAYERBG_SCALEBASE (REG_DATA_ADDR)
-stfs f1, 0x2C (REG_BG_JOBJ)
+#lfs f1, DOFST_PLAYERBG_SCALEBASE (REG_DATA_ADDR)
+#stfs f1, 0x2C (REG_BG_JOBJ)
+
 # Scale BG X based on Aspect Ratio
 lfs  f1,0x7C(sp)
 lfs f2, 0x2C (REG_BG_JOBJ)
