@@ -52,7 +52,7 @@ blrl
 
 # BG values
 .set DOFST_PLAYERBG_OPA, DOFST_HUDPOS_OFFSET + 4
-.float 0.4
+.float 0.3
 .set DOFST_PLAYERBG_COLOR, DOFST_PLAYERBG_OPA + 4
 .byte 0,0,0,255
 .set DOFST_PLAYERBG_SCALEBASE, DOFST_PLAYERBG_COLOR + 4
@@ -81,12 +81,11 @@ blrl
 .float 300
 .set DOFST_PLAYERTEXT_CANVASSCALE, DOFST_PLAYERTEXT_HEIGHT + 4
 .float 0.75 #0.0521
+.set DOFST_PLAYERTEXT_XPOSWIDTHSCALE, DOFST_PLAYERTEXT_CANVASSCALE + 4
+.float 55 #0.0521
 
 # strings
-.set DOFST_TEXT_FORMATSTRING, DOFST_PLAYERTEXT_CANVASSCALE + 4
-.string "%s"
-.align 2
-.set DOFST_TEXT_DELAYSTRING, DOFST_TEXT_FORMATSTRING + 4
+.set DOFST_TEXT_DELAYSTRING, DOFST_PLAYERTEXT_XPOSWIDTHSCALE + 4
 .string "Delay: %df"
 .align 2
 
@@ -200,8 +199,14 @@ fmuls f2,f2,f3
 fmuls f1,f1,f2
 lfs f2,DOFST_PLAYERTEXT_XPOS(REG_DATA_ADDR)
 fadds f1,f1,f2
-#lfs f1, DOFST_PLAYERTEXT_XPOS (REG_DATA_ADDR)
+# Scale Text X AGAIN because of stupid width
+lfs f3,DOFST_PLAYERTEXT_XPOSWIDTHSCALE(REG_DATA_ADDR)
+lfs  f2,0x7C(sp)
+fmuls f2,f2,f3
+fsubs f2,f3,f2
+fadds f1,f1,f2
 stfs f1, 0x70 (sp)
+
 
 # Start prepping text struct
 li r3, 2
@@ -210,6 +215,8 @@ lfs f1, 0x70 (sp)
 lfs f2, DOFST_PLAYERTEXT_YPOS (REG_DATA_ADDR)
 lfs f3, DOFST_PLAYERTEXT_ZPOS (REG_DATA_ADDR)
 lfs f4, DOFST_PLAYERTEXT_WIDTH (REG_DATA_ADDR)
+lfs f5, 0x7C(sp)
+fmuls f4,f4,f5
 lfs f5, DOFST_PLAYERTEXT_HEIGHT (REG_DATA_ADDR)
 branchl r12, 0x803a5acc
 mr REG_TEXT_STRUCT, r3
@@ -397,7 +404,7 @@ stw r4, 0x4(r3)
 
 
 # Get total width of characters used in tag
-.set  CHAR_WIDTH_MAX, 17
+.set  CHAR_WIDTH_MAX, 20
 .set  TAG_WIDTH_MIN, 60
 .set  TAG_WIDTH_MAX, 115
 .set  REG_WIDTH, 25
