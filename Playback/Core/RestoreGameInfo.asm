@@ -95,7 +95,7 @@ READ_DATA:
 # which would pause the game. By clearing these, we avoid that issue with 2.1.0
   addi r3, r31, 0x40
   li r4, 0x1C
-  branchl Zero_AreaLength
+  branchl r12, Zero_AreaLength
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes

@@ -140,7 +140,7 @@ backup
 # use these callbacks for something
   addi r3, REG_Buffer, GameInfoBlockStart + 0x40
   li r4, 0x1C
-  branchl Zero_AreaLength
+  branchl r12, Zero_AreaLength
 
 #------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
 
