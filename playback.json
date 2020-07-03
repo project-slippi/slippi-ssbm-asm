@@ -19,7 +19,7 @@
   ],
   "codes": [
     {
-      "name": "Required FM Codes",
+      "name": "Required: General Codes",
       "authors": [
         "Achilles",
         "Dan Salvato",
@@ -55,152 +55,7 @@
       ]
     },
     {
-      "name": "Normal Lag Reduction",
-      "authors": [
-        "Hannes Mann"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/NormalLagReduction.bin"
-        }
-      ]
-    },
-    {
-      "name": "Game Music ON",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Keep checked if you want music ON. Uncheck \"Game Music OFF\"."
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/GameMusicOn.bin"
-        }
-      ]
-    },
-    {
-      "name": "Game Music OFF",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Keep checked if you want music OFF. Uncheck \"Game Music ON\"."
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/GameMusicOff.bin"
-        }
-      ]
-    },
-    {
-      "name": "Widescreen 16:9",
-      "authors": [
-        "Dan Salvato",
-        "mirrorbender",
-        "Achilles1515",
-        "UnclePunch"
-      ],
-      "description": [
-        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -----------------",
-        "Requires all players to have enabled for netplay."
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Widescreen",
-          "isRecursive": true,
-          "annotation": "Widescreen 16:9"
-        }
-      ]
-    },
-    {
-      "name": "Disable Screen Shake",
-      "authors": [
-        "Achilles1515"
-      ],
-      "description": [
-        "Disables all screen shaking"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Disable Screen Shake",
-          "isRecursive": false,
-          "annotation": "Disable Screen Shake"
-        }
-      ]
-    },
-    {
-      "name": "Hide HUD",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Hides the timer and player percent HUD elements"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Hide Timer and Player HUD",
-          "isRecursive": true,
-          "annotation": "Hide HUD"
-        }
-      ]
-    },
-    {
-      "name": "Hide Waiting For Game",
-      "authors": [
-        "Nikki",
-        "UnclePunch"
-      ],
-      "description": [
-        "Hides the waiting for game text and slippi.gg text and disables the SFX played before a replay starts",
-        "With this enabled, there will be no indication between matches that Melee is still running"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Playback/Hide Waiting For Game",
-          "isRecursive": true,
-          "annotation": "Hide Waiting For Game"
-        }
-      ]
-    },
-    {
-      "name": "Enable Develop Mode",
-      "authors": [
-        "UnclePunch"
-      ],
-      "description": [
-        "Turns develop (debug) mode on. Allows access to frame advance, hit/hurtbox display, and alternate camera angles"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Enable Develop Mode",
-          "isRecursive": true,
-          "annotation": "Enable Develop Mode"
-        }
-      ]
-    },
-    {
-      "name": "Enable OSReport Print on Crash (1.02)",
-      "authors": [
-        "UnclePunch"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/OsReportPrintOnCrash.bin"
-        }
-      ]
-    },
-    {
-      "name": "Slippi Playback",
+      "name": "Required: Slippi Playback",
       "authors": [
         "Fizzi",
         "UnclePunch",
@@ -238,6 +93,124 @@
           "type": "injectFolder",
           "sourceFolder": "Common/Gecko",
           "annotation": "Static function to process Gecko codes [Fizzi]"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Normal Lag Reduction",
+      "authors": [
+        "Hannes Mann"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Game Music OFF",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Keep checked if you want music OFF. Uncheck \"Game Music ON\"."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/GameMusicOff.bin"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Widescreen 16:9",
+      "authors": [
+        "Dan Salvato",
+        "mirrorbender",
+        "Achilles1515",
+        "UnclePunch"
+      ],
+      "description": [
+        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -----------------",
+        "Requires all players to have enabled for netplay."
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Widescreen",
+          "isRecursive": true,
+          "annotation": "Widescreen 16:9"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Disable Screen Shake",
+      "authors": [
+        "Achilles1515"
+      ],
+      "description": [
+        "Disables all screen shaking"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Disable Screen Shake",
+          "isRecursive": false,
+          "annotation": "Disable Screen Shake"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Hide HUD",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Hides the timer and player percent HUD elements"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Hide Timer and Player HUD",
+          "isRecursive": true,
+          "annotation": "Hide HUD"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Hide Waiting For Game",
+      "authors": [
+        "Nikki",
+        "UnclePunch"
+      ],
+      "description": [
+        "Hides the waiting for game text and slippi.gg text and disables the SFX played before a replay starts",
+        "With this enabled, there will be no indication between matches that Melee is still running"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Playback/Hide Waiting For Game",
+          "isRecursive": true,
+          "annotation": "Hide Waiting For Game"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Enable Develop Mode",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Turns develop (debug) mode on. Allows access to frame advance, hit/hurtbox display, and alternate camera angles"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Enable Develop Mode",
+          "isRecursive": true,
+          "annotation": "Enable Develop Mode"
         }
       ]
     }
