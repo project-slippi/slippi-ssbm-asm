@@ -136,14 +136,11 @@ backup
   branchl r12,memcpy
 
 # nullify function pointers
-  li  r3,0
-  stw r3, GameInfoBlockStart + 0x44 (REG_Buffer)
-  stw r3, GameInfoBlockStart + 0x48 (REG_Buffer)
-  stw r3, GameInfoBlockStart + 0x4C (REG_Buffer)
-  stw r3, GameInfoBlockStart + 0x50 (REG_Buffer)
-  stw r3, GameInfoBlockStart + 0x54 (REG_Buffer)
-  stw r3, GameInfoBlockStart + 0x58 (REG_Buffer)
-  stw r3, GameInfoBlockStart + 0x5C (REG_Buffer)
+# This is really only here for potential future proofing in case we want to
+# use these callbacks for something
+  addi r3, REG_Buffer, GameInfoBlockStart + 0x40
+  li r4, 0x1C
+  branchl Zero_AreaLength
 
 #------------- ADJUST GAME INFO BLOCK FOR SHEIK -------------
 

@@ -91,14 +91,11 @@ READ_DATA:
   branchl r12, memcpy
 
 # nullify function pointers
-  li  r3,0
-  stw r3, 0x44 (r31)
-  stw r3, 0x48 (r31)
-  stw r3, 0x4C (r31)
-  stw r3, 0x50 (r31)
-  stw r3, 0x54 (r31)
-  stw r3, 0x58 (r31)
-  stw r3, 0x5C (r31)
+# Dolphin v2.1.0 had an issue where it put something in the game start callback
+# which would pause the game. By clearing these, we avoid that issue with 2.1.0
+  addi r3, r31, 0x40
+  li r4, 0x1C
+  branchl Zero_AreaLength
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
