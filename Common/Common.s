@@ -257,7 +257,6 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 ## Miscellenia/Unsorted
 .set fetchAnimationHeader,0x80085fd4
 .set Obj_ChangeRotation_Yaw,0x8007592c
-.set NoContestOrRetry_,0x8016cf4c
 .set Character_GetMaxCostumeCount,0x80169238
 
 

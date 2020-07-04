@@ -49,14 +49,16 @@ blrl
 
 .set  REG_INPUTS,31
 .set  REG_PORT,30
+.set REG_ODB_ADDRESS,29
 
 backup
 
+lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
+
 # Check if opponent LRAS'd
-lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
-lbz r3, ODB_ONLINE_PLAYER_INDEX(r3)
+lbz REG_PORT, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS)
 load  r4,0x804c1fac
-mulli r3,r3,68
+mulli r3,REG_PORT,68
 add r3, r3, r4
 
 ClientPause_CheckRemoteLRAS:
@@ -76,8 +78,7 @@ bne ClientPause_Paused_Disconnect
 ClientPause_PrepLocalInputs:
 
 # Get local clients inputs
-lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
-lbz REG_PORT, ODB_LOCAL_PLAYER_INDEX(r3)
+lbz REG_PORT, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS)
 load  r4,0x804c1fac
 mulli r3,REG_PORT,68
 add REG_INPUTS,r3,r4
@@ -121,7 +122,9 @@ ClientPause_Paused_Disconnect:
 li  r3,2
 branchl r12,0x80024030
 # End game
-branchl r12,0x8016c7f0
+mr r3, REG_PORT
+li r4, 0x7
+branchl r12,NoContestOrRetry_
 # Change scene
 li  r3,3
 load  r4,0x8046b6a0
