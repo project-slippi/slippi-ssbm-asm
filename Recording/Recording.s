@@ -11,8 +11,8 @@
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set CMD_MENU_FRAME, 0x3E
 .set COMMAND_COUNT, 10 # number of possible commands
+.set CMD_MENU_FRAME, 0x3E # Not executed while in a recorded game
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
