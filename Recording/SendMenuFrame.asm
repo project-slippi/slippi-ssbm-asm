@@ -37,44 +37,88 @@ stb r4, 0x0(r3)
 sth r8, 0x1(r3)
 
 # send player 1 cursor x position
-load r4 0x81118DEC
-lwz r4, 0(r4)
-stw r4, 0x3(r3)
+# Each player has a heap-allocated struct, make sure the ptr is not NULL before reading
 
-# send player 1 cursor y position
-load r4 0x81118DF0
+load r4, CSS_CURSOR_STRUCT_PTR_P1
 lwz r4, 0(r4)
-stw r4, 0x7(r3)
+cmpwi r4, 0
+bne SendP1Cursor
 
-# send player 2 cursor x position
-load r4 0x8111826C
-lwz r4, 0(r4)
-stw r4, 0xB(r3)
+# set cursor values to 0
+load r5, 0x00000000
+stw r5, 0x3(r3)
+stw r5, 0x7(r3)
+b P2_Cursor
 
-# send player 2 cursor y position
-load r4 0x81118270
-lwz r4, 0(r4)
-stw r4, 0xF(r3)
+SendP1Cursor:
+# Load cursor x position
+lwz r5, 0x0c(r4)
+stw r5, 0x3(r3)
+# Load cursor y position
+lwz r5, 0x10(r4)
+stw r5, 0x7(r3)
 
-# send player 3 cursor x position
-load r4 0x811176EC
+P2_Cursor:
+load r4, CSS_CURSOR_STRUCT_PTR_P2
 lwz r4, 0(r4)
-stw r4, 0x13(r3)
+cmpwi r4, 0
+bne SendP2Cursor
 
-# send player 3 cursor y position
-load r4 0x811176F0
-lwz r4, 0(r4)
-stw r4, 0x17(r3)
+# set cursor values to 0
+load r5, 0x00000000
+stw r5, 0xB(r3)
+stw r5, 0xF(r3)
+b P3_Cursor
 
-# send player 4 cursor x position
-load r4 0x8111674C
-lwz r4, 0(r4)
-stw r4, 0x1B(r3)
+SendP2Cursor:
+# Load cursor x position
+lwz r5, 0x0c(r4)
+stw r5, 0xB(r3)
+# Load cursor y position
+lwz r5, 0x10(r4)
+stw r5, 0xF(r3)
 
-# send player 4 cursor y position
-load r4 0x81116750
+P3_Cursor:
+load r4, CSS_CURSOR_STRUCT_PTR_P3
 lwz r4, 0(r4)
-stw r4, 0x1F(r3)
+cmpwi r4, 0
+bne SendP3Cursor
+
+# set p1 cursor values to 0
+load r5, 0x00000000
+stw r5, 0x13(r3)
+stw r5, 0x17(r3)
+b P4_Cursor
+
+SendP3Cursor:
+# Load cursor x position
+lwz r5, 0x0c(r4)
+stw r5, 0x13(r3)
+# Load cursor y position
+lwz r5, 0x10(r4)
+stw r5, 0x17(r3)
+
+P4_Cursor:
+load r4, CSS_CURSOR_STRUCT_PTR_P4
+lwz r4, 0(r4)
+cmpwi r4, 0
+bne SendP4Cursor
+
+# set p1 cursor values to 0
+load r5, 0x00000000
+stw r5, 0x1B(r3)
+stw r5, 0x1F(r3)
+b CURSORS_DONE
+
+SendP4Cursor:
+# Load cursor x position
+lwz r5, 0x0c(r4)
+stw r5, 0x1B(r3)
+# Load cursor y position
+lwz r5, 0x10(r4)
+stw r5, 0x1F(r3)
+
+CURSORS_DONE:
 
 # Ready to fight banner visible (one byte)
 # banner "swoops in" frame by frame
@@ -187,7 +231,9 @@ bne Not_SSS
 
 # Stage Select Cursor X
 # 4-byte float
-load r4 0x80bda810
+load r4 0x804D7820
+lwz r4, 0(r4)
+addi r4, r4, 0x10
 lwz r4, 0(r4)
 addi r4, r4, 0x28
 lwz r4, 0(r4)
@@ -197,7 +243,9 @@ stw r4, 0x31(r3)
 
 # Stage Select Cursor y
 # 4-byte float
-load r4 0x80bda810
+load r4 0x804D7820
+lwz r4, 0(r4)
+addi r4, r4, 0x10
 lwz r4, 0(r4)
 addi r4, r4, 0x28
 lwz r4, 0(r4)

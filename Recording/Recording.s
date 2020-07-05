@@ -62,3 +62,11 @@
 ################################################################################
 .set PlayerBlockSize,0x2600
 .set LCancelStatus,0x25FF
+
+################################################################################
+# CSS Screen Player Cursor State Offsets
+################################################################################
+.set CSS_CURSOR_STRUCT_PTR_P1, 0x804A0BC0
+.set CSS_CURSOR_STRUCT_PTR_P2, 0x804A0BC4
+.set CSS_CURSOR_STRUCT_PTR_P3, 0x804A0BC8
+.set CSS_CURSOR_STRUCT_PTR_P4, 0x804A0BCC
