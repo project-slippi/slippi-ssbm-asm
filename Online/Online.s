@@ -237,7 +237,7 @@ lwz \reg, -0x62A0(\reg)
 .set PSTB_CHAR_COLOR, PSTB_CHAR_ID + 1 # u8
 .set PSTB_CHAR_OPT, PSTB_CHAR_COLOR + 1 # u8, 0 = unset, 1 = merge, 2 = clear
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
-.set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear
+.set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear, 3 = random
 .set PSTB_SIZE, PSTB_STAGE_OPT + 1
 
 ################################################################################

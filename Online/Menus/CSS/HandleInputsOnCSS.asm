@@ -266,7 +266,7 @@ li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 li r3, 0
 sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
-li r3, 0 # unselected stage
+li r3, 3 # dolphin will choose random stage
 stb r3, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
 # Start finding opponent
