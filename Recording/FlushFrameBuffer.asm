@@ -56,8 +56,11 @@ backup
   lwz r3,frameIndex(r13)
   bne WRITE_FINALIZED_FRAME
 # Convert latest online frame index to replay frame index format
-  lwz r4, OFST_R13_ODB_ADDR(r13) # data buffer address
-  lwz r4, ODB_STABLE_OPNT_FRAME_NUM(r4)
+  lwz r5, OFST_R13_ODB_ADDR(r13) # data buffer address
+  lbz r4, ODB_IS_DISCONNECTED(r5)
+  cmpwi r4, 0
+  bne WRITE_FINALIZED_FRAME # If disconnected, just write the current frame
+  lwz r4, ODB_STABLE_OPNT_FRAME_NUM(r5)
   addi r4, r4, CONST_FirstFrameIdx
   cmpw r4, r3
   bge WRITE_FINALIZED_FRAME # If latest frame greater than current frame, use current
