@@ -329,6 +329,13 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,FSToggle(rtoc)
   stb r3,FSToggleStart+0x0(REG_Buffer)
 
+#------------- SEND Major/Minor Scene ------------
+.set MinorMajorStart, (FSToggleStart + FSToggleLength)
+.set MinorMajorLength, 0x2
+
+  getMinorMajor r3
+  sth r3, MinorMajorStart(REG_Buffer)
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1

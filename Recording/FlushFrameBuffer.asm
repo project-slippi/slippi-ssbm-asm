@@ -3,6 +3,7 @@
 ################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
+.include "Online/Online.s"
 
 ################################################################################
 # Routine: FlushFrameBuffer
@@ -13,7 +14,8 @@
 # struct offsets
 .set  OFST_CMD,0x0
 .set  OFST_FRAME,OFST_CMD+0x1
-.set  BOOKEND_STRUCT_SIZE,OFST_FRAME+0x4
+.set  OFST_LATEST_FINALIZED_FRAME,OFST_FRAME+0x4
+.set  BOOKEND_STRUCT_SIZE,OFST_LATEST_FINALIZED_FRAME+0x4
 
 # registers
 .set REG_Buffer,30
@@ -44,6 +46,24 @@ backup
 # send frame count
   lwz r3,frameIndex(r13)
   stw r3,OFST_FRAME(REG_WritePos)
+
+# send the latest finalized frame index. This is only relevant during rollback
+# where we continue on with frames when their contents may change later.
+# Having this here helps any kind of real-time system listening to the file
+# wait until a frame will no longer change before processing it
+  getMinorMajor r3
+  cmpwi r3, SCENE_ONLINE_IN_GAME
+  lwz r3,frameIndex(r13)
+  bne WRITE_FINALIZED_FRAME
+# Convert latest online frame index to replay frame index format
+  lwz r4, OFST_R13_ODB_ADDR(r13) # data buffer address
+  lwz r4, ODB_STABLE_OPNT_FRAME_NUM(r4)
+  addi r4, r4, CONST_FirstFrameIdx
+  cmpw r4, r3
+  bge WRITE_FINALIZED_FRAME # If latest frame greater than current frame, use current
+  mr r3, r4
+WRITE_FINALIZED_FRAME:
+  stw r3,OFST_LATEST_FINALIZED_FRAME(REG_WritePos)
 
 # increment buffer offset, we dont need to write it to memory because it's
 # about to get cleared anyway
