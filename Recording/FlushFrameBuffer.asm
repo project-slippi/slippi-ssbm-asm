@@ -60,6 +60,9 @@ backup
   lbz r4, ODB_IS_DISCONNECTED(r5)
   cmpwi r4, 0
   bne WRITE_FINALIZED_FRAME # If disconnected, just write the current frame
+  lbz r4, ODB_IS_GAME_OVER(r5)
+  cmpwi r4, 0
+  bne WRITE_FINALIZED_FRAME # If game is over, just write the current frame
   lwz r4, ODB_STABLE_OPNT_FRAME_NUM(r5)
   addi r4, r4, CONST_FirstFrameIdx
   cmpw r4, r3
