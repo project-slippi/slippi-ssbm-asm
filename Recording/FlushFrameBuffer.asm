@@ -30,7 +30,8 @@ backup
   beq Injection_Exit
 
 # get buffer
-  lwz REG_Buffer,primaryDataBuffer(r13)
+  lwz r3, primaryDataBuffer(r13)
+  lwz REG_Buffer, RDB_TXB_ADDRESS(r3)
   lwz REG_BufferOffset,bufferOffset(r13)
   add REG_WritePos,REG_Buffer,REG_BufferOffset
 

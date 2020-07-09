@@ -33,6 +33,11 @@
 .set SPLIT_MESSAGE_OFST_IS_COMPLETE, SPLIT_MESSAGE_OFST_INTERNAL_CMD + 1 # bool
 .set SPLIT_MESSAGE_BUF_LEN, SPLIT_MESSAGE_OFST_IS_COMPLETE + 1
 
+# Main recording data buffer
+.set RDB_TXB_ADDRESS, 0x0 # u32
+.set RDB_GAME_END_SENT, RDB_TXB_ADDRESS + 4 # bool
+.set RDB_LEN, RDB_GAME_END_SENT + 1
+
 # Calculate out the maximum buffer length that will be needed. This buffer
 # is also used for transferring message descriptions and game info but that
 # length should be less than the frame buf length

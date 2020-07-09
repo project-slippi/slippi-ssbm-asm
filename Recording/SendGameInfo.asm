@@ -18,6 +18,7 @@
 .set REG_GeckoListSize,28
 .set REG_GeckoCopyBuffer,27
 .set REG_GeckoCopyPos,26
+.set REG_RDB,25
 
 backup
 
@@ -30,11 +31,19 @@ backup
 # according to UnclePunch, all allocated memory gets free'd when the scene
 # transitions. This means we don't need to worry about freeing this memory
 
-#Create write buffer
+# Create recording data buffer
+  li r3, RDB_LEN
+  branchl r12, HSD_MemAlloc
+  mr REG_RDB, r3
+  stw REG_RDB, primaryDataBuffer(r13)
+  li r4, RDB_LEN
+  branchl r12, Zero_AreaLength
+
+#Create TX buffer
   li  r3,FULL_FRAME_DATA_BUF_LENGTH
   branchl r12,HSD_MemAlloc
   mr  REG_Buffer,r3
-  stw REG_Buffer,primaryDataBuffer(r13)
+  stw REG_Buffer,RDB_TXB_ADDRESS(REG_RDB)
 #Init current offset
   li  r3,0
   stw r3,bufferOffset(r13)
