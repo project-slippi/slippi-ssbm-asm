@@ -32,7 +32,8 @@ backup
 # here we want to initalize some variables we plan on using throughout
   lbz REG_PlayerSlot,0xC(REG_PlayerData)      #loads this player slot
 # get current offset in buffer
-  lwz REG_Buffer,primaryDataBuffer(r13)
+  lwz r3, primaryDataBuffer(r13)
+  lwz REG_Buffer, RDB_TXB_ADDRESS(r3)
   lwz REG_BufferOffset,bufferOffset(r13)
   add REG_Buffer,REG_Buffer,REG_BufferOffset
 
