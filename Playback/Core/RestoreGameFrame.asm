@@ -166,7 +166,7 @@ SkipPercentageRestore:
 
 # Correct spawn points on the first frame
   lwz r3,frameIndex(r13)
-  cmpwi r3,-123
+  cmpwi r3,CONST_FirstFrameIdx
   bne SkipSpawnCorrection
 # Force Direction Change
   mr  r3,PlayerData

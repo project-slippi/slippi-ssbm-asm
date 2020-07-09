@@ -51,6 +51,8 @@ li r3, RXB_SIZE
 branchl r12, HSD_MemAlloc
 stw r3, ODB_RXB_ADDR(REG_ODB_ADDRESS)
 mr REG_RXB_ADDRESS, r3
+li r4, RXB_SIZE
+branchl r12, Zero_AreaLength # For frame num, may not be necessary
 
 # Prepare buffer for requesting savestate actions from Dolphin
 li r3, SSRB_SIZE

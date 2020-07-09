@@ -15,12 +15,12 @@
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
-.set GAME_INFO_PAYLOAD_LENGTH, 418 # byte count
+.set GAME_INFO_PAYLOAD_LENGTH, 420 # byte count
 .set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 72 # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 42 # byte count
-.set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 4 # byte count
+.set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
 .set SPLIT_MESSAGE_PAYLOAD_LENGTH, 516 # byte count
 
@@ -32,6 +32,11 @@
 .set SPLIT_MESSAGE_OFST_INTERNAL_CMD, SPLIT_MESSAGE_OFST_SIZE + 2 # u8
 .set SPLIT_MESSAGE_OFST_IS_COMPLETE, SPLIT_MESSAGE_OFST_INTERNAL_CMD + 1 # bool
 .set SPLIT_MESSAGE_BUF_LEN, SPLIT_MESSAGE_OFST_IS_COMPLETE + 1
+
+# Main recording data buffer
+.set RDB_TXB_ADDRESS, 0x0 # u32
+.set RDB_GAME_END_SENT, RDB_TXB_ADDRESS + 4 # bool
+.set RDB_LEN, RDB_GAME_END_SENT + 1
 
 # Calculate out the maximum buffer length that will be needed. This buffer
 # is also used for transferring message descriptions and game info but that
@@ -47,8 +52,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.6.1
-.set CURRENT_VERSION,0x03060100
+# current version: 3.7.0
+.set CURRENT_VERSION,0x03070000
 
 ################################################################################
 # Static Function Locations

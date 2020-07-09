@@ -19,7 +19,7 @@
   bne IncrementFrameIndex
 
 InitIndex:
-  li  r3,-123
+  li  r3,CONST_FirstFrameIdx
   stw r3,frameIndex(r13)
   b Exit
 
