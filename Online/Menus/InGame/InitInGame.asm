@@ -29,11 +29,11 @@ blrl
 
 # delay values
 .set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 605
+.float 616
 .set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float 415
+.float 435
 .set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 0.5
+.float 0.41
 
 # player text values
 .set DOFST_PLAYERTEXT_X_POS, DOFST_TEXT_SIZE + 4
