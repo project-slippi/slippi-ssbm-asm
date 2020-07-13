@@ -22,6 +22,7 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_CALLBACK,-0x5018 # Callback address
 .set OFST_R13_ISPAUSE,-0x5038 # byte, client paused bool (originally used for tournament mode @ 8019b8e4)
 .set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
+.set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
@@ -75,6 +76,20 @@ lwz \reg, -0x62A0(\reg)
 0xA = int8, isConnected (0 = connected, -1 = disconnected)
 0xB = padding
 */
+
+################################################################################
+# ISWINNER Values
+################################################################################
+.set ISWINNER_NULL, -1    # indicates this is the first match / no previous winner
+.set ISWINNER_LOST, 0    # indicates the player lost the previous match
+.set ISWINNER_WON, 1    # indicates the player won the previous match
+
+################################################################################
+# Stage Behavior Arg Values (r3 for FN_LOCK_IN_AND_SEARCH and FN_TX_LOCK_IN)
+# 0+ = specify stage ID.
+################################################################################
+.set  SB_RAND, -2
+.set  SB_NOTSEL, -1
 
 ################################################################################
 # Savestate Request Buffer

@@ -184,8 +184,8 @@ bl CSSSceneDecide        #SceneDecide, previously 0x801baad0
 .byte 1                     #Minor Scene ID
 .byte 3                    #Amount of persistent heaps
 .align 2
-.long 0x801b1514            #ScenePrep
-.long 0x801b154c            #SceneDecide
+bl  SSSScenePrep            #ScenePrep, prev 0x801b1514
+bl  SSSSceneDecide          #SceneDecide, prev 0x801b154c
 .byte 9                     #Common Minor ID (SSS)
 .align 2
 .long 0x80480668            #Minor Data 1
@@ -335,67 +335,138 @@ bne CSSSceneDecide_Advance
 b CSSSceneDecide_Exit
 
 CSSSceneDecide_Advance:
-# Get match state info
-li r3, 0
-branchl r12, FN_LoadMatchState
-mr REG_MSRB_ADDR, r3
+# Check for direct mode
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_UNRANKED
+beq CSSSceneDecide_Adv_IsUnranked
+cmpwi r3, ONLINE_MODE_DIRECT
+beq CSSSceneDecide_Adv_IsDirect
+cmpwi r3, ONLINE_MODE_RANKED
+beq CSSSceneDecide_Adv_IsRanked
 
-# Copy Match Info. In-Game scene prep function will copy this data into the In-Game
-# minor scene data (0x10), which ultimately gets used.
-lwz	REG_VS_SSS_DATA, -0x77C0 (r13)
-addi	REG_VS_SSS_DATA, REG_VS_SSS_DATA, 1424 + 0x8   # adding 0x8 to skip past some unk stuff
-mr  r3,REG_VS_SSS_DATA
-addi r4,REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK    #
-li  r5,0x60 + (0x24*6)  #match data + player data
-branchl r12,memcpy
+################################################################################
+# Unranked Mode Logic
+################################################################################
+CSSSceneDecide_Adv_IsUnranked:
+b CSSSceneDecide_LoadSplash
 
-# Write data for left character
+################################################################################
+# Ranked Mode Logic
+################################################################################
+CSSSceneDecide_Adv_IsRanked:
+b CSSSceneDecide_LoadSplash
 
-# Write selected character to where ScenePrep_ClassicMode function will read from
-branchl r12, 0x8017eb30
+################################################################################
+# Direct Mode Logic
+################################################################################
+CSSSceneDecide_Adv_IsDirect:
+# First match is random, advance to splash screen
+lbz r3, OFST_R13_ISWINNER (r13)
+extsb r3,r3
+cmpwi r3,ISWINNER_NULL
+beq CSSSceneDecide_LoadSplash
 
-lbz r4, MSRB_GAME_INFO_BLOCK + 0x60(REG_MSRB_ADDR) # load char id
-stb r4, 0(r3) # write char id
-lbz r4, MSRB_GAME_INFO_BLOCK + 0x63(REG_MSRB_ADDR) # load char color
-stb r4, 1(r3) # write char color
+# Winner of last match does not decide stage, advance to splash screen
+cmpwi r3,ISWINNER_WON
+beq CSSSceneDecide_LoadSplash
 
-li r4, 0
-stb r4, 2(r3) # difficulty, unused, could maybe leave unset
-li r4, 3
-stb r4, 5(r3) # stocks, unused, could maybe leave unset
-li r4, 0x78
-stb r4, 4(r3) # name to show under char. 0x78 = char name, 0 = nametag
+# Loser of last match decides the stage, advance to SSS
+cmpwi r3, ISWINNER_LOST
+bne 0x0  # unhandled, stall
+lbz r3, OFST_R13_CHOSESTAGE (r13)   # If the loser already decided the stage, advance to splash screen
+cmpwi r3,0
+beq CSSSceneDecide_LoadSSS
+b CSSSceneDecide_LoadSplash
 
-# Write data for right character
-
-# Prepare to write to data used to set up right character
-load r4, 0x803ddec8
-lwz r4, 0xc(r4)
-
-lbz r3, MSRB_GAME_INFO_BLOCK + 0x60 + 0x24(REG_MSRB_ADDR) # load char 2 id
-stb r3, 2(r4)
-li r3, 0x2121 # store empty slots for chars 2/3
-sth r3, 3(r4)
-
-# Here we write P2 color. this was done in sort of a hacky way. the PreventP2Color
-# file will prevent us setting this value early from getting overwritten.
-# I'm not sure what the function at line 801b364c does but it seems to always
-# return zero. Ideally we would set a mem location here that would cause that
-# function to return the color we want, but I couldn't figure out how
-load r4, 0x80490880
-lbz r3, MSRB_GAME_INFO_BLOCK + 0x63 + 0x24(REG_MSRB_ADDR) # load char 2 color
-stb r3, 0x16(r4)
-
-# Free the buffer we allocated to get match settings
-mr r3, REG_MSRB_ADDR
-branchl r12, HSD_Free
+################################################################################
+# Load Splash Screen
+################################################################################
+CSSSceneDecide_LoadSplash:
+bl  SplashSceneInit
 
 # Set next scene as Splash
 load r4, 0x80479d30
 li r3, 0x05
 stb r3, 0x5(r4)
+b CSSSceneDecide_Exit
+
+################################################################################
+# Load SSS
+################################################################################
+CSSSceneDecide_LoadSSS:
+# Set next scene as SSS
+load r4, 0x80479d30
+li r3, 2
+stb r3, 0x5(r4)
+b CSSSceneDecide_Exit
 
 CSSSceneDecide_Exit:
+restore
+blr
+#endregion
+
+#region SSSScenePrep
+SSSScenePrep:
+backup
+
+# Call original function
+branchl r12,0x801b1514
+
+restore
+blr
+#endregion
+#region SSSSceneDecide
+SSSSceneDecide:
+.set REG_MINORSCENE, 31
+.set REG_MSRB_ADDR, 30
+
+backup
+mr  REG_MINORSCENE,r3
+
+# Check how SSS was exited
+lwz r4,0x14(REG_MINORSCENE)
+lbz r4,0x4(r4)
+cmpwi r4,0
+bne SSSSceneDecide_Advance
+SSSSceneDecide_Back:
+# Go back to CSS
+li  r3,0
+branchl r12,0x801a42a0
+b SSSSceneDecide_Exit
+
+SSSSceneDecide_Advance:
+# Set stage as selected
+li  r3,1
+stb r3,OFST_R13_CHOSESTAGE (r13)
+
+# Get MSRB
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr  REG_MSRB_ADDR,r3
+
+# Check to see if both players are ready and start match if they are
+CHECK_SHOULD_START_MATCH:
+lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
+lbz r4, MSRB_IS_REMOTE_PLAYER_READY(REG_MSRB_ADDR)
+cmpw  r3,r4
+bne SSSSceneDecide_Advance_NotReady # If both players are not ready, go to CSS
+
+SSSSceneDecide_Advance_IsReady:
+# Both players are locked in, jump straight to splash screen
+bl  SplashSceneInit         #init splash screen
+# Set next scene as Splash
+load r4, 0x80479d30
+li r3, 0x05
+stb r3, 0x5(r4)
+b SSSSceneDecide_Exit
+
+SSSSceneDecide_Advance_NotReady:
+# Go back to CSS
+li  r3,0
+branchl r12,0x801a42a0
+b SSSSceneDecide_Exit
+
+SSSSceneDecide_Exit:
 restore
 blr
 #endregion
@@ -427,6 +498,10 @@ VSSceneDecide_Lost:
 li  r3,0
 VSSceneDecide_UpdateWinnerEnd:
 stb r3,OFST_R13_ISWINNER(r13)
+
+# Reset CHOSESTAGE bool
+li  r3,0
+stb r3, OFST_R13_CHOSESTAGE (r13)
 
 # Go back to CSS
 load r4, 0x80479d30
@@ -544,6 +619,70 @@ backup
 load r4, 0x80479d30
 li r3, 0x03
 stb r3, 0x5(r4)
+
+restore
+blr
+#endregion
+#region SplashSceneInit
+SplashSceneInit:
+.set  REG_MSRB_ADDR,31
+.set  REG_VS_SSS_DATA,30
+backup
+
+# Get match state info
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
+# Copy Match Info. In-Game scene prep function will copy this data into the In-Game
+# minor scene data (0x10), which ultimately gets used.
+lwz	REG_VS_SSS_DATA, -0x77C0 (r13)
+addi	REG_VS_SSS_DATA, REG_VS_SSS_DATA, 1424 + 0x8   # adding 0x8 to skip past some unk stuff
+mr  r3,REG_VS_SSS_DATA
+addi r4,REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK    #
+li  r5,0x60 + (0x24*6)  #match data + player data
+branchl r12,memcpy
+
+# Write data for left character
+
+# Write selected character to where ScenePrep_ClassicMode function will read from
+branchl r12, 0x8017eb30
+
+lbz r4, MSRB_GAME_INFO_BLOCK + 0x60(REG_MSRB_ADDR) # load char id
+stb r4, 0(r3) # write char id
+lbz r4, MSRB_GAME_INFO_BLOCK + 0x63(REG_MSRB_ADDR) # load char color
+stb r4, 1(r3) # write char color
+
+li r4, 0
+stb r4, 2(r3) # difficulty, unused, could maybe leave unset
+li r4, 3
+stb r4, 5(r3) # stocks, unused, could maybe leave unset
+li r4, 0x78
+stb r4, 4(r3) # name to show under char. 0x78 = char name, 0 = nametag
+
+# Write data for right character
+
+# Prepare to write to data used to set up right character
+load r4, 0x803ddec8
+lwz r4, 0xc(r4)
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x60 + 0x24(REG_MSRB_ADDR) # load char 2 id
+stb r3, 2(r4)
+li r3, 0x2121 # store empty slots for chars 2/3
+sth r3, 3(r4)
+
+# Here we write P2 color. this was done in sort of a hacky way. the PreventP2Color
+# file will prevent us setting this value early from getting overwritten.
+# I'm not sure what the function at line 801b364c does but it seems to always
+# return zero. Ideally we would set a mem location here that would cause that
+# function to return the color we want, but I couldn't figure out how
+load r4, 0x80490880
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x63 + 0x24(REG_MSRB_ADDR) # load char 2 color
+stb r3, 0x16(r4)
+
+# Free the buffer we allocated to get match settings
+mr r3, REG_MSRB_ADDR
+branchl r12, HSD_Free
 
 restore
 blr
