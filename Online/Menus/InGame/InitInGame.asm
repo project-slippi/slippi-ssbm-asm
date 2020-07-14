@@ -19,15 +19,15 @@ blrl
 .set DOFST_TEXT_BASE_Z, 0
 .float 0
 .set DOFST_TEXT_BASE_CANVAS_SCALING, DOFST_TEXT_BASE_Z + 4
-.float 1
+.float 0.1
 
 # delay values
 .set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 27
+.float 270
 .set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float -10
+.float 194
 .set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 0.04
+.float 0.33
 
 # BG values
 .set DOFST_PLAYERBG_OPA, DOFST_TEXT_SIZE + 4
