@@ -710,6 +710,9 @@ bne UPDATE_LOCKED_IN
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
 bne NOT_SELECT_STAGE
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+bne NOT_SELECT_STAGE
 lbz r3, OFST_R13_ISWINNER (r13)
 cmpwi r3,ISWINNER_LOST              # Check if this is the loser
 bne NOT_SELECT_STAGE
