@@ -172,6 +172,9 @@ mr  REG_Canvas, r3
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
+# Write HUD canvas to ODB
+stw REG_Canvas, ODB_HUD_CANVAS(REG_ODB_ADDRESS)
+
 bl DATA_BLRL
 mflr REG_DATA_ADDR
 
