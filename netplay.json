@@ -5,6 +5,13 @@
       "header": [
         "# GALE01 - Super Smash Bros. Melee NTSC-U 1.02",
         "",
+        "[Gecko_Enabled]",
+        "$Required: General Codes",
+        "$Required: Slippi Recording",
+        "$Required: Slippi Online",
+        "$Recommended: Normal Lag Reduction",
+        "$Recommended: Polling drift fix + VB",
+        "",
         "[Gecko]"
       ]
     },
@@ -12,6 +19,13 @@
       "file": "Output/Netplay/GALJ01r2.ini",
       "header": [
         "# GALJ01 - Super Smash Bros. Melee NTSC-J 1.02",
+        "",
+        "[Gecko_Enabled]",
+        "$Required: General Codes",
+        "$Required: Slippi Recording",
+        "$Required: Slippi Online",
+        "$Recommended: Normal Lag Reduction",
+        "$Recommended: Polling drift fix + VB",
         "",
         "[Gecko]"
       ]
