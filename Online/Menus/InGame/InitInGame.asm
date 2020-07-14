@@ -42,7 +42,7 @@ blrl
 .float -24.06
 # BG X scale per letter
 .set DOFST_PLAYERBG_XSCALEMULT, DOFST_PLAYERBG_YOFST + 4
-.float 0.014
+.float 0.016
 
 .set DOFST_PLAYERTEXT_XPOS, DOFST_PLAYERBG_XSCALEMULT + 4
 .float -3.5    #higher values = right

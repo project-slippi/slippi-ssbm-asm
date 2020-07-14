@@ -14,8 +14,9 @@ li	r3, 1
 branchl r12, SFX_Menu_CommonSound
 
 # Execute callback function
-lwz r3, OFST_R13_CALLBACK(r13)
-mtctr r3
+li  r3, SB_RAND     # first stage in direct is always random
+lwz r12, OFST_R13_CALLBACK(r13)
+mtctr r12
 bctrl
 
 # Skip the regular stuff that would run on success (saving the nametag)
