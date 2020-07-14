@@ -125,7 +125,8 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 # STG_EXIIndex is now set during build with arg -defsym STG_EXIIndex=1
 #.set STG_EXIIndex, 1 # 0 is SlotA, 1 is SlotB. Indicates which slot to use
 
-.set STG_DesyncDebug, 0 # Debug flag for OSReporting desyncs
+.set STG_DesyncDebug, 0 # Prod: 0 | Debug flag for OSReporting desyncs
+.set STG_ResyncPlayback, 1 # Prod: 1 | Flag for re-syncing playback when it desyncs
 
 ################################################################################
 # Static Function Locations
