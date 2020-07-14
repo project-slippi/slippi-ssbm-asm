@@ -42,40 +42,27 @@ blrl
 .float -24.06
 # BG X scale per letter
 .set DOFST_PLAYERBG_XSCALEMULT, DOFST_PLAYERBG_YOFST + 4
-.float 0.016
+.float 0.0146
 
 .set DOFST_PLAYERTEXT_XPOS, DOFST_PLAYERBG_XSCALEMULT + 4
-.float -3.5    #higher values = right
+.float 0.8    #higher values = right
 .set DOFST_PLAYERTEXT_YPOS, DOFST_PLAYERTEXT_XPOS + 4
-.float 21.5     #higher values = down
+.float 20.64     #higher values = down
 .set DOFST_PLAYERTEXT_ZPOS, DOFST_PLAYERTEXT_YPOS + 4
 .float 0
-.set DOFST_PLAYERTEXT_WIDTH, DOFST_PLAYERTEXT_ZPOS + 4
-.float 145
-.set DOFST_PLAYERTEXT_HEIGHT, DOFST_PLAYERTEXT_WIDTH + 4
-.float 300
-.set DOFST_PLAYERTEXT_CANVASSCALE, DOFST_PLAYERTEXT_HEIGHT + 4
+.set DOFST_PLAYERTEXT_CANVASSCALE, DOFST_PLAYERTEXT_ZPOS + 4
 .float 0.06 #0.0521
+.set DOFST_PLAYERTEXT_WIDTH, DOFST_PLAYERTEXT_CANVASSCALE + 4
+.float 150
+.set DOFST_PLAYERTEXT_SIZE, DOFST_PLAYERTEXT_WIDTH + 4
+.float 0.54
+
+.set DOFST_FLOAT_ZERO, DOFST_PLAYERTEXT_SIZE + 4
+.float 0
 
 # strings
-.set DOFST_TEXT_DELAYSTRING, DOFST_PLAYERTEXT_CANVASSCALE + 4
+.set DOFST_TEXT_DELAYSTRING, DOFST_FLOAT_ZERO + 4
 .string "Delay: %df"
-.align 2
-
-.set DOFST_TEXTHEADER_SIZE, 10
-TEXT_HEADER_BLRL:
-blrl
-#.byte 0x10                  #center
-.byte 0x16                  #kerning
-.byte 0xC, 255, 255, 255    #color
-.byte 0x0E
-.hword 138, 138             #bound
-.align 2
-
-.set DOFST_TEXTTERMINATOR_SIZE, 3
-TEXT_TERMINATOR_BLRL:
-blrl
-.byte 0xf, 0xd, 00
 .align 2
 
 #########################################
@@ -251,95 +238,58 @@ lfs f1, 0x0(r3)
 stfs f1, 0x70 (sp)
 
 
-# Start prepping text struct
+# Start prepping player text struct
 li r3, 2
-mr  r4, REG_Canvas
-lfs f1, 0x70 (sp)
-lfs f2, DOFST_PLAYERTEXT_XPOS (REG_DATA_ADDR)
-fadds f1,f1,f2
-lfs f2, DOFST_PLAYERTEXT_YPOS (REG_DATA_ADDR)
-lfs f3, DOFST_PLAYERTEXT_ZPOS (REG_DATA_ADDR)
-lfs f4, DOFST_PLAYERTEXT_WIDTH (REG_DATA_ADDR)
-lfs f5, DOFST_PLAYERTEXT_HEIGHT (REG_DATA_ADDR)
-branchl r12, 0x803a5acc
+mr r4, REG_Canvas
+branchl r12, Text_CreateStruct
 mr REG_TEXT_STRUCT, r3
 
-# Fixed Width
 li r4, 0x1
-stb r4, 0x48(REG_TEXT_STRUCT)
-# Set text to align center
-li r4, 0x1
-stb r4, 0x4A(REG_TEXT_STRUCT)
+stb r4, 0x48(REG_TEXT_STRUCT) # Fixed Width
+stb r4, 0x4A(REG_TEXT_STRUCT) # Set text to align center
+stb r4, 0x4C(REG_TEXT_STRUCT) # Unk?
+stb r4, 0x49(REG_TEXT_STRUCT) # kerning?
 
 # Scale Canvas Down
 lfs f1, DOFST_PLAYERTEXT_CANVASSCALE(REG_DATA_ADDR)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
+# Set struct position
+lfs f1, 0x70 (sp)
+lfs f2, DOFST_PLAYERTEXT_XPOS (REG_DATA_ADDR)
+fadds f1,f1,f2
+stfs f1, 0x0(REG_TEXT_STRUCT) # X pos
+lfs f1, DOFST_PLAYERTEXT_YPOS (REG_DATA_ADDR)
+stfs f1, 0x4(REG_TEXT_STRUCT) # Y pos
+lfs f1, DOFST_PLAYERTEXT_ZPOS (REG_DATA_ADDR)
+stfs f1, 0x8(REG_TEXT_STRUCT) # Z pos
+
+# Set max width for text
+lfs f1, DOFST_PLAYERTEXT_WIDTH(REG_DATA_ADDR)
+stfs f1, 0xC(REG_TEXT_STRUCT) # Write width
+stfs f1, 0x10(REG_TEXT_STRUCT) # I think this is height but I don't think it does anything
+
 #############################
 ## Create Player Name Text ##
 #############################
-
-# alloc buffer of size (15 * 3) + 1. (3 bytes per character, plus a terminator)
-li  r3,(15*3) + 1
-branchl r12,HSD_MemAlloc
-mr  REG_TAG_BUFFER,r3
-
-# convert to menu text
-mr  r3,REG_TAG_BUFFER
+# Initialize header
+crset 6 # Dunno if this does anything?
+lfs f1, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
+lfs f2, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
+mr r3, REG_TEXT_STRUCT
 addi r4, REG_MSRB_ADDR, MSRB_P1_NAME
 mulli r5, REG_COUNT, 31
-add r4,r4,r5
-branchl r12,0x803a67ec
-mr  REG_TAG_SIZE,r3
+add r4, r4, r5
+branchl r12, Text_InitializeSubtext
 
-# alloc mem for menu text
-addi  r3,REG_TAG_SIZE, DOFST_TEXTHEADER_SIZE + DOFST_TEXTTERMINATOR_SIZE
-branchl r12,0x803a5798
-mr  REG_TAG_ALLOC,r3
-
-# copy header
-mr  r3,REG_TAG_ALLOC
-bl  TEXT_HEADER_BLRL
-mflr  r4
-li  r5,DOFST_TEXTHEADER_SIZE
-branchl r12,memcpy
-
-# copy text
-addi  r3, REG_TAG_ALLOC, DOFST_TEXTHEADER_SIZE
-mr  r4, REG_TAG_BUFFER
-mr  r5,REG_TAG_SIZE
-branchl r12,memcpy
-
-# copy terminator
-addi  r3, REG_TAG_ALLOC, DOFST_TEXTHEADER_SIZE
-add r3,r3,REG_TAG_SIZE
-bl  TEXT_TERMINATOR_BLRL
-mflr  r4
-li  r5,DOFST_TEXTTERMINATOR_SIZE
-branchl r12,memcpy
-
-mr  r3,REG_TEXT_STRUCT
-li  r4,0
-branchl r12,0x803a6368
-stw REG_TAG_ALLOC,0x5C(REG_TEXT_STRUCT)
-/*
-# finalize struct
-stw REG_TAG_ALLOC,0x5C(REG_TEXT_STRUCT)
-li  r3,0
-stw r3, 0x60(REG_TEXT_STRUCT)                  #store 0 to curr (0x60)
-li  r3,16
-branchl r12,0x803a5798
-stw r3,0x68(REG_TEXT_STRUCT)                #store size
-li  r4,16
-branchl r12, Zero_AreaLength                #zero out
-li  r3,16
-sth r3,0x6E(REG_TEXT_STRUCT)                #store size
-*/
-
-# free buffer
-mr  r3, REG_TAG_BUFFER
-branchl r12,HSD_MemAlloc
+# Set header text size
+mr r3, REG_TEXT_STRUCT
+li r4, 0
+# Scale text X based on Aspect Ratio
+lfs f1, DOFST_PLAYERTEXT_SIZE(REG_DATA_ADDR)
+lfs f2, DOFST_PLAYERTEXT_SIZE(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
 
 ############################
 ## Create Text Background ##
@@ -414,15 +364,19 @@ stw r4, 0x4(r3)
 # Get total width of characters used in tag
 .set  CHAR_WIDTH_MAX, 20
 .set  TAG_WIDTH_MIN, 60
-.set  TAG_WIDTH_MAX, 115
+.set  TAG_WIDTH_MAX, 144
+.set  TEXTHEADER_SIZE, 15
 .set  REG_WIDTH, 25
 .set  REG_CURR, 10
 .set  REG_WIDTH_INTERNAL, 12
 .set  REG_WIDTH_EXTERNAL, 11
+
 li  REG_WIDTH,0
 # Get subtext contents
-lwz  r3,0x5C(REG_TEXT_STRUCT)
-addi  REG_CURR, r3, DOFST_TEXTHEADER_SIZE   #skip past header
+lwz  r3, 0x5C(REG_TEXT_STRUCT)
+li r4, 0
+branchl r12, 0x803a6fec # Text_GetSubtext
+addi  REG_CURR, r3, TEXTHEADER_SIZE   #skip past header
 load REG_WIDTH_INTERNAL, 0x8040cb00
 lbz r3,0x4F(REG_TEXT_STRUCT)
 mulli r3,r3,4
