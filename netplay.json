@@ -5,6 +5,19 @@
       "header": [
         "# GALE01 - Super Smash Bros. Melee NTSC-U 1.02",
         "",
+        "[Core]",
+        "CPUThread = True",
+        "GPUDeterminismMode = fake-completion",
+        "PollingMethod = OnSIRead",
+        "FastDiscSpeed = True",
+        "",
+        "[Gecko_Enabled]",
+        "$Required: General Codes",
+        "$Required: Slippi Recording",
+        "$Required: Slippi Online",
+        "$Recommended: Normal Lag Reduction",
+        "$Recommended: Polling drift fix + VB",
+        "",
         "[Gecko]"
       ]
     },
@@ -12,6 +25,19 @@
       "file": "Output/Netplay/GALJ01r2.ini",
       "header": [
         "# GALJ01 - Super Smash Bros. Melee NTSC-J 1.02",
+        "",
+        "[Core]",
+        "CPUThread = True",
+        "GPUDeterminismMode = fake-completion",
+        "PollingMethod = OnSIRead",
+        "FastDiscSpeed = True",
+        "",
+        "[Gecko_Enabled]",
+        "$Required: General Codes",
+        "$Required: Slippi Recording",
+        "$Required: Slippi Online",
+        "$Recommended: Normal Lag Reduction",
+        "$Recommended: Polling drift fix + VB",
         "",
         "[Gecko]"
       ]
@@ -291,11 +317,6 @@
           "sourceFolder": "Online/Logging",
           "isRecursive": true,
           "annotation": "Log injections [Fizzi]"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/LagReduction/PD+VB.bin",
-          "annotation": "Polling Drift Fix + VB [tauKhan]"
         }
       ]
     },
@@ -304,10 +325,30 @@
       "authors": [
         "Hannes Mann"
       ],
+      "description": [
+        "Reduces input lag"
+      ],
       "build": [
         {
           "type": "binary",
           "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Polling drift fix + VB",
+      "authors": [
+        "Dan Salvato",
+        "tauKhan"
+      ],
+      "description": [
+        "Synchronizes polling rate with FPS."
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD+VB.bin",
+          "annotation": "Polling Drift Fix + VB [tauKhan]"
         }
       ]
     },

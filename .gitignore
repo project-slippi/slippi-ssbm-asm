@@ -218,3 +218,6 @@ pip-log.txt
 .mr.developer.cfg
 
 .idea/
+
+Output/Netplay/build-netplay.bat - Shortcut.lnk
+Output/Playback/build-playback.bat - Shortcut.lnk

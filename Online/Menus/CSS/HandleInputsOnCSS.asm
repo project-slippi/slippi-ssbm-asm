@@ -112,6 +112,13 @@ HANDLE_IDLE:
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
 beq SKIP_START_MATCH # Exit if start was not pressed
 
+# Initialize ISWINNER (first match)
+li  r3, ISWINNER_NULL
+stb r3, OFST_R13_ISWINNER (r13)
+# Init CHOSESTAGE bool
+li  r3,0
+stb r3, OFST_R13_CHOSESTAGE (r13)
+
 # Check if character has been selected, if not, do nothing
 lbz r3, -0x49A9(r13)
 cmpwi r3, 0
@@ -119,10 +126,19 @@ beq SKIP_START_MATCH
 
 # Check which mode we are playing. direct mode should launch text entry
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_UNRANKED
+beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beql FN_LOAD_CODE_ENTRY # If direct mode, load text code entry
-bnel FN_LOCK_IN_AND_SEARCH # Otherwise lock in and trigger matchmaking
+beq HANDLE_IDLE_DIRECT
+b 0x0
 
+HANDLE_IDLE_UNRANKED:
+li  r3, SB_RAND     # stages in unranked are always random
+bl FN_LOCK_IN_AND_SEARCH # lock in and trigger matchmaking
+b SKIP_START_MATCH
+
+HANDLE_IDLE_DIRECT:
+bl FN_LOAD_CODE_ENTRY # load text code entry
 b SKIP_START_MATCH
 
 ################################################################################
@@ -156,14 +172,75 @@ bne CHECK_SHOULD_START_MATCH
 
 # Check if start is pressed to see whether we should lock in
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
-beq CHECK_SHOULD_START_MATCH
+bne HANDLE_CONNECTED_ADVANCE
 
+# Check if direct mode && loser && already chose stage
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
+bne CHECK_SHOULD_START_MATCH
+lbz r3, OFST_R13_ISWINNER (r13)
+cmpwi r3,ISWINNER_LOST              # Check if this is the loser
+bne CHECK_SHOULD_START_MATCH
+lbz r3, OFST_R13_CHOSESTAGE (r13)
+cmpwi r3,1                          # Check if loser picked stage already
+bne CHECK_SHOULD_START_MATCH
+b HANDLE_CONNECTED_ADVANCE
+
+HANDLE_CONNECTED_ADVANCE:
 # Check if character has been selected, if not, do nothing
 lbz r3, -0x49A9(r13)
 cmpwi r3, 0
 beq CHECK_SHOULD_START_MATCH
 
+# Check which mode we are playing.
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_UNRANKED
+beq HANDLE_CONNECTED_UNRANKED
+cmpwi r3, ONLINE_MODE_DIRECT
+beq HANDLE_CONNECTED_DIRECT
+b 0x0                           # stall if neither
+
+# Branch to this mode's behavior
+HANDLE_CONNECTED_UNRANKED:
+li  r3, SB_RAND       # stages always random for unranked
 bl FN_TX_LOCK_IN
+b CHECK_SHOULD_START_MATCH
+HANDLE_CONNECTED_DIRECT:
+# Loser picks the stage
+lbz r3, OFST_R13_ISWINNER (r13)
+cmpwi r3,ISWINNER_LOST
+beq HANDLE_CONNECTED_DIRECT_ISLOSER
+# Winner is unselected
+cmpwi r3,ISWINNER_WON
+beq HANDLE_CONNECTED_DIRECT_ISWINNER
+b 0x0
+
+HANDLE_CONNECTED_DIRECT_ISWINNER:
+li  r3, SB_NOTSEL       # lock in, use opponents stage
+bl FN_TX_LOCK_IN
+b CHECK_SHOULD_START_MATCH
+
+HANDLE_CONNECTED_DIRECT_ISLOSER:
+# Check if loser picked stage already
+lbz r3, OFST_R13_CHOSESTAGE (r13)
+cmpwi r3,0
+beq HANDLE_CONNECTED_DIRECT_LOADSSS
+HANDLE_CONNECTED_DIRECT_SENDSTAGE:
+# Send selected stage
+lwz	r3, -0x77C0 (r13)
+addi	r3, r3, 1424 + 0x8   # adding 0x8 to skip past some scene state stuff
+lhz r3, 0x1E (r3)
+bl FN_TX_LOCK_IN
+b CHECK_SHOULD_START_MATCH
+HANDLE_CONNECTED_DIRECT_LOADSSS:
+# Request scene change
+li  r3,1
+stb	r3, -0x49AA (r13)
+# Set lock in callback function
+bl FN_TX_LOCK_IN_BLRL
+mflr r3
+stw r3, OFST_R13_CALLBACK(r13)
+b SKIP_START_MATCH
 
 # Check to see if both players are ready and start match if they are
 CHECK_SHOULD_START_MATCH:
@@ -171,11 +248,6 @@ lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
 lbz r4, MSRB_IS_REMOTE_PLAYER_READY(REG_MSRB_ADDR)
 and. r3, r3, r4
 beq SKIP_START_MATCH # If not both players are ready, skip
-
-# TEMP: Set random stage byte to skip SSS
-load r4,0x8045BF17
-li r3,0x1
-stb r3,0x0(r4)
 
 # Once both players are ready, start the game
 restore
@@ -239,9 +311,19 @@ blr
 
 ################################################################################
 # Function: Lock in character selection
+# r3 = stage behavior.
+#     -2 = random stage
+#     -1 = unselected (use opponents stage)
+#      0+ = specify stage ID.
 ################################################################################
+FN_TX_LOCK_IN_BLRL:
+blrl
 FN_TX_LOCK_IN:
+.set  REG_SB, 31    # stage behavior
 backup
+
+# Backup stage behavior
+mr  REG_SB,r3
 
 # Prepare buffer for EXI transfer
 li r3, PSTB_SIZE
@@ -264,10 +346,33 @@ lbz r3, 0x73(r4) # load char color
 stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
-li r3, 0
+
+# Handle stage
+cmpwi REG_SB, -2
+beq FN_TX_LOCK_IN_STAGE_RAND
+cmpwi REG_SB, -1
+beq FN_TX_LOCK_IN_STAGE_UNSET
+cmpwi REG_SB, 0
+bge FN_TX_LOCK_IN_STAGE_PICK
+
+FN_TX_LOCK_IN_STAGE_RAND:
+li  r3,0
+li  r4,3
+b FN_TX_LOCK_IN_STAGE_SEND
+
+FN_TX_LOCK_IN_STAGE_UNSET:
+li  r3,0
+li  r4,0
+b FN_TX_LOCK_IN_STAGE_SEND
+
+FN_TX_LOCK_IN_STAGE_PICK:
+mr  r3,REG_SB
+li  r4,1
+b FN_TX_LOCK_IN_STAGE_SEND
+
+FN_TX_LOCK_IN_STAGE_SEND:
 sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
-li r3, 0 # unselected stage
-stb r3, PSTB_STAGE_OPT(REG_TXB_ADDR)
+stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
 # Start finding opponent
 mr r3, REG_TXB_ADDR
@@ -283,6 +388,10 @@ blr
 
 ################################################################################
 # Function: Simple function to lock in and search
+# r3 = stage behavior.
+#     -2 = random stage
+#     -1 = unselected (use opponents stage)
+#      0+ = specify stage ID.
 ################################################################################
 FN_LOCK_IN_AND_SEARCH_BLRL:
 blrl

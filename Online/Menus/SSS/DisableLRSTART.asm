@@ -1,19 +1,16 @@
 ################################################################################
-# Address: 0x801b1630
+# Address: 0x8025b8a4   # injecting where the NOW LOADING screen is created
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-# Ensure that this is an online in-game
+# Ensure that this is an online SSS
 getMinorMajor r3
-cmpwi r3, SCENE_ONLINE_IN_GAME
-bne EXIT # If not online in game
+cmpwi r3, SCENE_ONLINE_SSS
+bne EXIT # If not online CSS, continue as normal
 
-# This will cause the next scene to be CSS
-load r4, 0x80479d30
-li r3, 0x01
-stb r3, 0x5(r4)
+branch r12, 0x8025b8cc # Skip LRA code
 
 EXIT:
-lwz r0, 0x001C(sp)
+li	r3, 0

@@ -190,6 +190,9 @@ lbz r4, 0x5C(r4)
 mr r3, REG_TEXT_STRUCT
 branchl r12, Text_CopyPremadeTextDataToStruct
 
+# Kill SFX
+#branchl r12,0x80023694
+
 restore
 b EXIT
 

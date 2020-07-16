@@ -20,7 +20,9 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_NAME_ENTRY_MODE,-0x505D # Byte, 0 = normal, 1 = connect code
 .set OFST_R13_SWITCH_TO_ONLINE_SUBMENU,-0x49ec # Function used to switch
 .set OFST_R13_CALLBACK,-0x5018 # Callback address
-.set OFST_R13_ISPAUSE,-0x5038 # client paused bool (originally used for tournament mode @ 8019b8e4)
+.set OFST_R13_ISPAUSE,-0x5038 # byte, client paused bool (originally used for tournament mode @ 8019b8e4)
+.set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
+.set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
@@ -74,6 +76,20 @@ lwz \reg, -0x62A0(\reg)
 0xA = int8, isConnected (0 = connected, -1 = disconnected)
 0xB = padding
 */
+
+################################################################################
+# ISWINNER Values
+################################################################################
+.set ISWINNER_NULL, -1    # indicates this is the first match / no previous winner
+.set ISWINNER_LOST, 0    # indicates the player lost the previous match
+.set ISWINNER_WON, 1    # indicates the player won the previous match
+
+################################################################################
+# Stage Behavior Arg Values (r3 for FN_LOCK_IN_AND_SEARCH and FN_TX_LOCK_IN)
+# 0+ = specify stage ID.
+################################################################################
+.set  SB_RAND, -2
+.set  SB_NOTSEL, -1
 
 ################################################################################
 # Savestate Request Buffer
@@ -187,8 +203,10 @@ lwz \reg, -0x62A0(\reg)
 .set ODB_STABLE_ROLLBACK_END_FRAME, ODB_STABLE_ROLLBACK_IS_ACTIVE + 1 # s32
 .set ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE, ODB_STABLE_ROLLBACK_END_FRAME + 4 # bool
 .set ODB_STABLE_SAVESTATE_FRAME, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE + 1 # s32
-.set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_SAVESTATE_FRAME + 4 # bool
-.set ODB_SIZE, ODB_SHOULD_FORCE_PAD_RENEW + 1
+.set ODB_STABLE_OPNT_FRAME_NUM, ODB_STABLE_SAVESTATE_FRAME + 4 # s32
+.set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_OPNT_FRAME_NUM + 4 # bool
+.set ODB_HUD_CANVAS, ODB_SHOULD_FORCE_PAD_RENEW + 1 # u32
+.set ODB_SIZE, ODB_HUD_CANVAS + 4
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
@@ -237,7 +255,7 @@ lwz \reg, -0x62A0(\reg)
 .set PSTB_CHAR_COLOR, PSTB_CHAR_ID + 1 # u8
 .set PSTB_CHAR_OPT, PSTB_CHAR_COLOR + 1 # u8, 0 = unset, 1 = merge, 2 = clear
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
-.set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear
+.set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear, 3 = random
 .set PSTB_SIZE, PSTB_STAGE_OPT + 1
 
 ################################################################################

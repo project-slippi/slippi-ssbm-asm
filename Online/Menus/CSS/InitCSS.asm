@@ -109,7 +109,9 @@ blrl
 .string "enter code"
 .set TPO_STRING_SEARCH, TPO_STRING_ENTER_CODE + 11
 .string "search"
-.set TPO_STRING_LOCKED_IN, TPO_STRING_SEARCH + 7
+.set TPO_STRING_SELECT_STAGE, TPO_STRING_SEARCH + 7
+.string "select stage"
+.set TPO_STRING_LOCKED_IN, TPO_STRING_SELECT_STAGE + 13
 .string "Locked in"
 .set TPO_STRING_SEARCHING_FOR, TPO_STRING_LOCKED_IN + 10
 .string "Searching for %s"
@@ -704,6 +706,25 @@ mr r4, REG_SUBTEXT_IDX
 cmpwi r3, 0
 bne UPDATE_LOCKED_IN
 
+# If direct && loser && not locked in, show press start to select stage
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
+bne NOT_SELECT_STAGE
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+bne NOT_SELECT_STAGE
+lbz r3, OFST_R13_ISWINNER (r13)
+cmpwi r3,ISWINNER_LOST              # Check if this is the loser
+bne NOT_SELECT_STAGE
+lbz r3, OFST_R13_CHOSESTAGE (r13)
+cmpwi r3,0                          # Check if loser picked stage already
+bne NOT_SELECT_STAGE
+# Prep "press start" text to use
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_PRESS_START_TO
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_SELECT_STAGE
+b UPDATE_PRESS_START_TEXT
+
+NOT_SELECT_STAGE:
 # Prep "press start" text to use
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_PRESS_START_TO
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_LOCK_IN

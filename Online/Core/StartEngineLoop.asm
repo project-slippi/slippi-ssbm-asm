@@ -20,14 +20,14 @@ blrl
 .set DOFST_TEXT_BASE_Z, 0
 .float 0
 .set DOFST_TEXT_BASE_CANVAS_SCALING, DOFST_TEXT_BASE_Z + 4
-.float 0.1
+.float 1
 
 .set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 3310
+.float 1.3
 .set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float 900
+.float -45
 .set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 6.5
+.float 0.07
 .set DOFST_TEXT_COLOR, DOFST_TEXT_SIZE + 4
 .long 0xFF0000FF
 
@@ -84,7 +84,7 @@ bl DATA_BLRL
 mflr REG_DATA_ADDR
 
 li r3, 2
-lwz r4, -0x4924 (r13) # Same canvas as nametags
+lwz r4, ODB_HUD_CANVAS(REG_ODB_ADDRESS) # HUD canvas used for names and delay (does not stretch in widescreen)
 branchl r12, Text_CreateStruct
 mr REG_TEXT_STRUCT, r3
 
