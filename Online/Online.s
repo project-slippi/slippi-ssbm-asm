@@ -280,6 +280,13 @@ lwz \reg, -0x62A0(\reg)
 .set CSSDT_SIZE, CSSDT_PREV_CONNECTED_STATE + 1
 
 ################################################################################
+# Name Entry Direct Code Buffer
+###############################################################################
+.set NEDC_CMD, 0 # u8
+.set NEDC_NAME_ENTRY_INDEX, NEDC_CMD + 1 # u8
+.set NEDC_SIZE, NEDC_NAME_ENTRY_INDEX + 1
+
+################################################################################
 # Online status buffer offsets
 ################################################################################
 .set OSB_APP_STATE, 0 # 0 = not logged in, 1 = logged in, 2 = update required
