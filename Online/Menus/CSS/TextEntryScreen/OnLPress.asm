@@ -10,15 +10,23 @@
 .set REG_TX_ADDR, 22 # Index used to transmit direct code index through DMA. 
 .set BufferPointer, 30 # The buffer to where the returned direct code where will be stored. 
 
+# Stop all pending sounds
+branchl r12, SFX_StopSFXInstance
+
 # Only decrement while index is > 0
 cmpwi REG_CODE_INDEX, 0x0
-ble EXIT 
+bgt START  
+
+# Play failure noise
+li r3, 3
+branchl r12, SFX_Menu_CommonSound
+
+b EXIT
+
+START:
 
 # Subtract direct codes index by 1
 subi REG_CODE_INDEX, REG_CODE_INDEX, 1
-
-# Stop all pending sounds
-branchl r12, SFX_StopSFXInstance
 
 backup
 
