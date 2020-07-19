@@ -46,9 +46,11 @@ blrl
 .float -118
 .set DOFST_TEXT_HIGHLIGHT_COLOR, DOFST_TEXT_Y_POS_LR_ARROW + 4
 .long 0xFFCB00FF
+.set DOFST_TEXT_NOT_SELECTED_COLOR, DOFST_TEXT_HIGHLIGHT_COLOR + 4
+.long 0x8E9196FF 
 
 # Line Text Strings
-.set DOFST_TEXT_STRING_LINE1, DOFST_TEXT_HIGHLIGHT_COLOR + 4
+.set DOFST_TEXT_STRING_LINE1, DOFST_TEXT_NOT_SELECTED_COLOR + 4
 .string "Enter your %s above."
 .set DOFST_TEXT_STRING_LINE2, DOFST_TEXT_STRING_LINE1 + 21
 .string "Your opponent will also need to enter yours"
@@ -165,6 +167,12 @@ lfs f1, DOFST_TEXT_TRIG_FONT_SIZE(REG_DATA_ADDR)
 lfs f2, DOFST_TEXT_TRIG_FONT_SIZE(REG_DATA_ADDR)
 branchl r12, Text_UpdateSubtextSize
 
+# TODO: Finish implementing me.
+# mr r3, REG_TEXT_STRUCT
+# li r4, 3
+# addi r5, REG_DATA_ADDR, DOFST_TEXT_NOT_SELECTED_COLOR
+# branchl r12, Text_ChangeTextColor
+
 # Initialize RTrig 
 lfs f1, DOFST_TEXT_X_POS_RTRIG(REG_DATA_ADDR)
 lfs f2, DOFST_TEXT_Y_POS_LTRIG(REG_DATA_ADDR)
@@ -206,6 +214,13 @@ mr r3, REG_TEXT_STRUCT
 lfs f1, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
 lfs f2, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
 branchl r12, Text_UpdateSubtextSize
+
+# TODO: Finish implementing me
+# mr r3, REG_TEXT_STRUCT
+# li r4, 6
+# addi r5, REG_DATA_ADDR, DOFST_TEXT_NOT_SELECTED_COLOR
+# branchl r12, Text_ChangeTextColor
+
 
 restore
 
