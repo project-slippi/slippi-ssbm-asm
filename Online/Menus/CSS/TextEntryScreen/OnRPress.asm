@@ -8,6 +8,7 @@
 # TODO: Do more testing to make sure register isn't used elsewhere.
 .set REG_CODE_INDEX, 21 # Index into our direct codes list.
 .set REG_RUN_ONCE, 23
+.set REG_PREV_ERROR, 20
 .set REG_TX_ADDR, 22 # Index used to transmit direct code index through DMA. 
 .set BufferPointer, 30 # The buffer to where the returned direct code where will be stored. 
 
@@ -51,6 +52,11 @@ lbz r3, 0x0 (BufferPointer)
 cmpwi r3, 0x01
 beq OOB_ERROR 
 
+# Check if the last R press resulted in an out of bounds.
+# If so, we skip over playing the normal sound.
+cmpwi REG_PREV_ERROR, 0x01
+beq UPDATE_NAME_ENTRY
+
 # Debugging
     # lwz r5, 0x0(BufferPointer)
     # logf LOG_LEVEL_NOTICE, "Retrieved tag: %x" 
@@ -59,6 +65,8 @@ beq OOB_ERROR
 li r3, 2
 branchl r12, SFX_Menu_CommonSound
 
+# Update the text displayed on the screen.
+UPDATE_NAME_ENTRY:
 branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
 b CLEANUP
 
@@ -74,10 +82,15 @@ restore
 
 # Revert cur index to within bounds and re-retrieve data
 subi REG_CODE_INDEX, REG_CODE_INDEX, 1
+
+# Raise flag, so success sound isn't played when we reload previous direct code.
+li REG_PREV_ERROR, 0x1
+
 b START_TRANSFER
 
 CLEANUP:
 restore
+li REG_PREV_ERROR, 0x0
 
 EXIT:
 
