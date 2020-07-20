@@ -486,6 +486,26 @@ branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
 VSSceneDecide_UpdateWinner:
+.set  REG_Count,20
+.set  REG_Winners,21
+# todo: add check for teams (if that ever gets added)
+# Count number of winners
+li  REG_Count,0
+li  REG_Winners,0
+VSSceneDecide_UpdateWinner_Loop:
+mr  r3,REG_Count
+bl  CheckIfWonLastGame
+cmpwi r3,0
+beq VSSceneDecide_UpdateWinner_IncLoop
+addi  REG_Winners,REG_Winners,1
+VSSceneDecide_UpdateWinner_IncLoop:
+addi  REG_Count,REG_Count,1
+cmpwi REG_Count,4
+blt VSSceneDecide_UpdateWinner_Loop
+# ensure game only had 1 winner
+cmpwi REG_Winners,1
+bne VSSceneDecide_Lost
+
 #Update ISWINNER static bool
 lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
 bl  CheckIfWonLastGame
