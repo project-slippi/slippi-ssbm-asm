@@ -287,6 +287,13 @@ lwz \reg, -0x62A0(\reg)
 .set NEDC_SIZE, NEDC_NAME_ENTRY_INDEX + 1
 
 ################################################################################
+# Name Entry Auto Complete 
+###############################################################################
+.set NEAC_CMD, 0 # u8
+.set NEAC_CURRENT_TEXT, NEAC_CMD + 1
+.set NEAC_SIZE, NEAC_CURRENT_TEXT + 24
+
+################################################################################
 # Online status buffer offsets
 ################################################################################
 .set OSB_APP_STATE, 0 # 0 = not logged in, 1 = logged in, 2 = update required
