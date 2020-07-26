@@ -49,6 +49,15 @@ branchl r12, FN_EXITransferBuffer
 # Debugging
 #    logf LOG_LEVEL_NOTICE, "Auto complete: %x" 
 
+# DMA read
+li r4, 0x24
+mr r3, BufferPointer
+li r5, CONST_ExiRead
+branchl r12, FN_EXITransferBuffer
+
+branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
+
+# Free buffer 
 mr r3, REG_TX_ADDR
 li r4, NEAC_SIZE
 branchl r12, HSD_Free
