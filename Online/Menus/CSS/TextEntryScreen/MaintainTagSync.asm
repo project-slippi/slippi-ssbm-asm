@@ -28,6 +28,9 @@ lbz r4, 0x58(r28) # get current position
 cmpw r3, r4
 beq EXIT
 
+cmpwi r19, 0x0
+bne EXIT
+
 # Here position is different, update text and update position
 stb r3, 0x58(r28) # store position
 branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
