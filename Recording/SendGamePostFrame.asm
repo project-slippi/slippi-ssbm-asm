@@ -146,6 +146,41 @@ backup
   lwz r3,0xec(REG_PlayerData)
   stw r3,0x45(REG_Buffer)
 
+  # Note: All ECB Coords are offsets from the character's center
+  #   Not absolute positions
+
+  # ECB top edge, x coord
+  lwz r3,0x774(REG_PlayerData)
+  stw r3,0x49(REG_Buffer)
+
+  # ECB top edge, y coord
+  lwz r3,0x0778(REG_PlayerData)
+  stw r3,0x4D(REG_Buffer)
+
+  # ECB bottom edge, x coord
+  lwz r3,0x77C(REG_PlayerData)
+  stw r3,0x51(REG_Buffer)
+
+  # ECB bottom edge, y coord
+  lwz r3,0x780(REG_PlayerData)
+  stw r3,0x55(REG_Buffer)
+
+  # ECB right edge, x coord
+  lwz r3,0x784(REG_PlayerData)
+  stw r3,0x59(REG_Buffer)
+
+  # ECB right edge, y coord
+  lwz r3,0x788(REG_PlayerData)
+  stw r3,0x5D(REG_Buffer)
+
+  # ECB left edge, x coord
+  lwz r3,0x78C(REG_PlayerData)
+  stw r3,0x61(REG_Buffer)
+
+  # ECB left edge, y coord
+  lwz r3,0x790(REG_PlayerData)
+  stw r3,0x65(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
