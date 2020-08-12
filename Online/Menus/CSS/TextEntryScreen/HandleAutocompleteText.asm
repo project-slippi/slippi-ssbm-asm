@@ -23,7 +23,8 @@ CODE_START:
  mflr REG_DATA_ADDR
 
 addi r29, REG_DATA_ADDR, DEFAULT_COLOR 
-cmpw ACL, r4
+lbz r21, 0x58 (r30)
+cmpw r21, r4
 bgt EXIT
 addi r29, REG_DATA_ADDR, AUTOCOMPLETE_COLOR
 

@@ -24,6 +24,12 @@ mr REG_TX_ADDR, r3
 li r3, CONST_SlippiCmdNameEntryAutoComplete
 stb r3, NEAC_CMD (REG_TX_ADDR)
 
+# cmpwi ACL, 0x0
+# bne WRITE_LENGTH
+# li ACL, 0x01
+# WRITE_LENGTH:
+# stb ACL, NEAC_TEXT_LENGTH (REG_TX_ADDR)
+
 # Copy current text to buffer.
 addi r3, REG_TX_ADDR, 1
 mr r4, BufferPointer
@@ -60,7 +66,7 @@ branchl r12, FN_EXITransferBuffer
 
 lbz ACL, 0x18 (BufferPointer)
 # addi BufferPointer, BufferPointer, 0x01
-stb ACL, 0x0058 (r28)
+# stb ACL, 0x0058 (r28)
 branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
 
 # Free buffer 
