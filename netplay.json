@@ -428,6 +428,23 @@
           "isRecursive": true
         }
       ]
+    },
+    {
+      "name": "Optional: Turn Green When Actionable",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "When playing online, this will only affect your character --------------------------- ",
+        "Will not cause desyncs when playing online"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/GreenDuringWait",
+          "isRecursive": true
+        }
+      ]
     }
   ]
 }
