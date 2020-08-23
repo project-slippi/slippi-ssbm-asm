@@ -4,10 +4,10 @@
 
 .include "Common/Common.s"
 
-backup 
-li r3, 7
-stb r3, 0x58(r28) # store position
-# branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
-restore
-
+backup
+li r3, 8 
+stb r3, 0x58 (r28) # store position
 li r0, 57
+sth r0, 0 (r27)
+restore
+branchl r12, 0x8023CE4C 
