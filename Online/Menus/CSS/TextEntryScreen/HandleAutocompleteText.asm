@@ -23,6 +23,9 @@ mflr REG_DATA_ADDR
 
 addi r29, REG_DATA_ADDR, DEFAULT_COLOR 
 lbz r21, 0x58 (r30)
+cmpwi r21, 0x7
+beq EXIT
+
 cmpw r21, r4
 bgt EXIT
 addi r29, REG_DATA_ADDR, AUTOCOMPLETE_COLOR
