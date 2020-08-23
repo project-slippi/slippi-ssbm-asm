@@ -26,6 +26,10 @@ branchl r12, SFX_StopSFXInstance
 START_TRANSFER:
 backup
 
+# Set cursor position to start of tag.
+li r3, 0 
+stb r3, 0x58 (r28) # store position
+
 # Debugging trigger outputs
     # mr r5, REG_CODE_INDEX
     # logf LOG_LEVEL_NOTICE, "Pressed R. Current Index: %d" 

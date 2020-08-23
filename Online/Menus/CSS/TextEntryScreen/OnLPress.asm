@@ -30,6 +30,10 @@ subi REG_CODE_INDEX, REG_CODE_INDEX, 1
 
 backup
 
+# Set cursor position to start of tag.
+li r3, 0 
+stb r3, 0x58 (r28) # store position
+
 # Play sound
 li	r3, 2 
 branchl r12, SFX_Menu_CommonSound
