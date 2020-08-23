@@ -38,6 +38,12 @@ li r5, 0
 
 # Load the cursor location
 lbz ACL, 0x58 (r28) 
+
+# No bother trying to autocomplete if we're entering the final character.
+# TODO: Move prior to any mem alloc. 
+cmpwi ACL, 0x7
+bge FREE 
+
 mulli ACL, ACL, 0x2
 
 # Write only the text up to the cursor to DMA buffer.
@@ -51,12 +57,16 @@ blt WRITE_OPP_CODE_LOOP_START
 
 # Clear any remaining autocompleted portions.
 li r3, 0
+cmpwi r5, 0xE
+bge DMA_WRITE
+
 CLEAR_REST_TEXT:
     sthx r3, r7, r5
-    addi r4, r4, 3
     addi r5, r5, 2
-    cmpwi r5, 18
+    cmpwi r5, 0xE
 blt CLEAR_REST_TEXT
+
+DMA_WRITE:
 
 # Dma write
 mr r3, REG_TX_ADDR
@@ -75,6 +85,7 @@ branchl r12, FN_EXITransferBuffer
 
 branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
 
+FREE: 
 # Free buffer 
 mr r3, REG_TX_ADDR
 li r4, NEAC_SIZE
