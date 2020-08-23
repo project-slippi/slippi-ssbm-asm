@@ -8,22 +8,26 @@
 .set REG_InputIndex,29
 .set REG_PrevInput,28
 
+.set	OFST_PlCo,-0x514C
+.set	InputIndex,0x804c1f78
+.set	InputArray,0x8046b108
+.set	PlayerBlock_LoadPlayerGObj,0x8003418c
+
 #Original codeline
 	stfs f0,0x2C(REG_PlayerData)    # Entry point, store new facing direction
 
 # Check for toggle bool
-  lbz r4,0x618(REG_PlayerData)        #get player port
-  subi r3,rtoc,ControllerFixOptions   #get UCF toggle bool base address
-  lbzx r3,r3,r4	          #get players UCF toggle bool
-  cmpwi r3,0x1
-  beq Init # if equal, skip to start of handler
+	lbz r4,0x618(REG_PlayerData)        #get player port
+	subi r3,rtoc,ControllerFixOptions   #get UCF toggle bool base address
+	lbzx r3,r3,r4	          #get players UCF toggle bool
+	cmpwi r3,0x1
+	beq Init # if equal, skip to start of handler
 # Check for dashback bool (set by slp playback)
-  subi r3,rtoc,DashbackOptions
-  lbzx r3,r3,r4
-  cmpwi r3,0x1
-  bne Exit_Without_Restore
+	subi r3,rtoc,DashbackOptions
+	lbzx r3,r3,r4
+	cmpwi r3,0x1
+	bne Exit_Without_Restore
 
-Init:
 #Init
 	backup
 	bl	Floats
@@ -36,7 +40,7 @@ CHECK_IF_SLOW_TURN:
 	bne Injection_Exit
 
 CHECK_SMASH_TURN_INPUT_CONDITIONS:
-	lwz r4,-0x514C(r13)
+	lwz r4,OFST_PlCo(r13)
 	lfs f1,0x0620(REG_PlayerData)
 	fabs f1,f1
 	lfs f2,0x3C(r4)				#PlCo constant 0.8
@@ -53,7 +57,7 @@ SKIP_IF_NANA:
 	bne Injection_Exit
 
 BEGIN_HW_INPUTS:
-	load r3,0x804c1f78
+	load r3,InputIndex
 	lbz REG_InputIndex,0x1(r3)    # HSD_PadRenewMasterStatus gets index for which inputs to get from here
 
 LOAD_2_FRAMES_PAST_INPUTS:
@@ -84,7 +88,7 @@ CHANGE_TO_SMASH_TURN:
 #Get Nana's Block From Popo's in r4
 	lbz	r3,0xC(REG_PlayerData)		#P1 Slot
 	li	r4,0x1		#Subchar Bool
-	branchl	r12, PlayerBlock_LoadDataOffsetStart
+	branchl	r12,PlayerBlock_LoadPlayerGObj
 	cmpwi	r3,0x0
 	beq	Injection_Exit
 	lwz	r4,0x2C(r3)
@@ -119,7 +123,7 @@ FETCH_INPUT:   # Gets hw input according to controller port and frame index in r
 	addi r3, r3, 5
 
 GET_INPUT:
-	load r4,0x8046b108  # Input array location.
+	load r4,InputArray  # Input array location.
 	mulli r3, r3, 48
 	add r4, r4, r3  # Add index to get inputs from the right frame
 	mulli r3, r5, 0xC
