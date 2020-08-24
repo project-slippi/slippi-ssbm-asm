@@ -284,6 +284,8 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set CONST_SlippiCmdGetOnlineStatus,0xB9
 .set CONST_SlippiCmdCleanupConnections,0xBA
 .set CONST_SlippiCmdSendNameEntryIndex,0xBB
+.set CONST_SlippiCmdNameEntryAutoComplete,0xBC
+
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
