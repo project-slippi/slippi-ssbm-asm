@@ -7,7 +7,7 @@
 backup
 
 # Check if we have have an autocomplete result loaded.
-lhz r3, 0x18 (r30)
+lhz r3, 0x15 (r30)
 cmpwi r3, 0x0
 beq ERROR 
 
@@ -18,8 +18,8 @@ branchl r12, SFX_Menu_CommonSound
 # There's text that can be autocompleted. So we load it.
 li r3, 7 
 stb r3, 0x58 (r28) # store position
-li r0, 57
-sth r0, 0 (r27)
+#li r0, 57
+#sth r0, 0 (r27)
 
 li r3, 57 # Select the confirm button
 load r4, 0x804a04f2
