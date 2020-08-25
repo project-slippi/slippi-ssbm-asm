@@ -7,7 +7,10 @@
 backup
 
 # Check if we have have an autocomplete result loaded.
-lhz r3, 0x15 (r30)
+lbz r4, 0x58 (r28) # Get cursor position/index.
+mulli r4, r4, 0x3 # Multiply by 3 to get data location. 
+lhzx r3, r4, r30 # Load the character at the cursor location.
+# If there's no data (0), than we have no autocomplete suggestion.
 cmpwi r3, 0x0
 beq ERROR 
 
