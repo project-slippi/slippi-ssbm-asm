@@ -12,6 +12,21 @@
 .set REG_TX_ADDR, 22 # Index used to transmit direct code index through DMA. 
 .set BufferPointer, 30 # The buffer to where the returned direct code where will be stored. 
 
+# Check to see if we've just entered name entry.
+# And if we have, we'll reset the index into our list of direct codes.
+backup
+addi r4, r13, OFST_R13_SB_ADDR 
+lbz r3, -0x10 (r4)
+cmpwi r3, 0x01
+bne RESTORE 
+# Clear flag in scene buffer.
+li r3, 0x0
+stb r3, -0x10 (r4) 
+restore
+# Rest run once flag. 
+li REG_RUN_ONCE, 0x0
+
+INIT_CHECK:
 cmpwi REG_RUN_ONCE, 0x0
 bgt START 
 li REG_CODE_INDEX, -1
@@ -99,3 +114,7 @@ li REG_PREV_ERROR, 0x0
 EXIT:
 
 branchl r12, 0x8023ce38
+
+RESTORE:
+restore
+b INIT_CHECK

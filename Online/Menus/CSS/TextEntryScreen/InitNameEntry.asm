@@ -215,14 +215,13 @@ lfs f1, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
 lfs f2, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
 branchl r12, Text_UpdateSubtextSize
 
-# TODO: Finish implementing me
-# mr r3, REG_TEXT_STRUCT
-# li r4, 6
-# addi r5, REG_DATA_ADDR, DOFST_TEXT_NOT_SELECTED_COLOR
-# branchl r12, Text_ChangeTextColor
-
-
 restore
 
 EXIT:
+
+# Write flag for index into name entry.
+li r3, 1
+addi r4, r13, OFST_R13_SB_ADDR 
+stb r3, -0x10 (r4)
+
 li r3, 0
