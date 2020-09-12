@@ -263,7 +263,7 @@ lwz \reg, -0x62A0(\reg)
 ################################################################################
 
 .set CMTB_CMD, 0 #u8
-.set CMTB_MESSAGE, CMTB_CMD + 1 #u8, 0 = ggs, 1 = brb, 2 = g2g, 3=one more, 4=last one
+.set CMTB_MESSAGE, CMTB_CMD + 1 #u8, 0x01=ggs,0x2=brb,0x4=Last One,0x8=One More, .... See Pad Values on HandleInpuOnCSS.asm for all 
 .set CMTB_SIZE, CMTB_MESSAGE + 1
 
 ################################################################################
