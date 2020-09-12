@@ -66,8 +66,18 @@ blrl
 .set TPO_PRESS_Z_Y, TPO_LINES_SIZE + 4
 .float 132.5
 
+# User Chat Label Properties
+# This is supposed to set the chat message cheat on top of
+# the original user display
+.set TPO_USER_Y, TPO_PRESS_Z_Y + 4
+.float 40 # Y Pos of User Display, 0x4
+.set TPO_USER_X, TPO_USER_Y + 4
+.float -112 # X Pos of User Display, 0x0
+.set TPO_USER_SIZE, TPO_USER_X + 4
+.float 0.5 # Scaling, 0xC
+
 # Player Label Properties
-.set TPO_PLAYING_Y, TPO_PRESS_Z_Y + 4
+.set TPO_PLAYING_Y, TPO_USER_SIZE + 4
 .float -246
 .set TPO_PLAYING_LABEL_X, TPO_PLAYING_Y + 4
 .float -130
@@ -87,9 +97,12 @@ blrl
 .long 0x8E9196FF
 .set TPO_COLOR_RED, TPO_COLOR_GRAY + 4
 .long 0xFF0000FF
+.set TPO_COLOR_CHAT, TPO_COLOR_RED + 4
+.long 0x3CBCFFFF
+
 
 # String Properties
-.set TPO_EMPTY_STRING, TPO_COLOR_RED + 4
+.set TPO_EMPTY_STRING, TPO_COLOR_CHAT + 4
 .string ""
 .set TPO_STRING_UNRANKED, TPO_EMPTY_STRING + 1
 .string "Unranked Mode"
@@ -318,6 +331,42 @@ lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
 
+# Initialize Opponent Chat Message text
+lfs f1, TPO_PLAYING_VALUE_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, Text_InitializeSubtext
+
+mr r3, REG_TEXT_STRUCT
+li r4, STIDX_PLAYING_CHAT
+lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
+lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
+branchl r12, Text_UpdateSubtextSize
+
+mr r3, REG_TEXT_STRUCT
+li r4, STIDX_PLAYING_CHAT
+addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT
+branchl r12, Text_ChangeTextColor
+
+# Initialize User Chat Message text
+lfs f1, TPO_USER_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_USER_Y(REG_TEXT_PROPERTIES)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, Text_InitializeSubtext
+
+mr r3, REG_TEXT_STRUCT
+li r4, STIDX_USER_CHAT
+lfs f1, TPO_USER_SIZE(REG_TEXT_PROPERTIES)
+lfs f2, TPO_USER_SIZE(REG_TEXT_PROPERTIES)
+branchl r12, Text_UpdateSubtextSize
+
+mr r3, REG_TEXT_STRUCT
+li r4, STIDX_USER_CHAT
+addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT
+branchl r12, Text_ChangeTextColor
+
 # Initialize error lines
 lfs f2, TPO_ERR_LINE1_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
@@ -416,10 +465,12 @@ blrl
 .set STIDX_PRESS_Z, 7
 .set STIDX_PLAYING_LABEL, 8
 .set STIDX_PLAYING_OPP, 9
-.set STIDX_ERR_LINE1, 10
-.set STIDX_ERR_LINE2, 11
-.set STIDX_ERR_LINE3, 12
-.set STIDX_ERR_LINE4, 13
+.set STIDX_PLAYING_CHAT, 10
+.set STIDX_USER_CHAT, 11
+.set STIDX_ERR_LINE1, 12
+.set STIDX_ERR_LINE2, 13
+.set STIDX_ERR_LINE3, 14
+.set STIDX_ERR_LINE4, 15
 .set LINE_IDX_GAP, 2
 .set LINE_COUNT, 3
 
@@ -525,6 +576,19 @@ addi r5, REG_MSRB_ADDR, MSRB_OPP_NAME
 
 UPDATE_PLAYING_VALUE:
 li r4, STIDX_PLAYING_OPP
+bl FN_UPDATE_TEXT
+
+UPDATE_PLAYING_CHAT:
+addi r5, REG_MSRB_ADDR, MSRB_OPP_CHAT
+li r4, STIDX_PLAYING_CHAT
+bl FN_UPDATE_TEXT
+
+################################################################################
+# Manage user chat
+################################################################################
+UPDATE_USER_CHAT:
+addi r5, REG_MSRB_ADDR, MSRB_USER_CHAT
+li r4, STIDX_USER_CHAT
 bl FN_UPDATE_TEXT
 
 ################################################################################

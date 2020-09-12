@@ -242,7 +242,9 @@ lwz \reg, -0x62A0(\reg)
 .set MSRB_P1_NAME, MSRB_DELAY_FRAMES + 1 # string (31)
 .set MSRB_P2_NAME, MSRB_P1_NAME + 31 # string (31)
 .set MSRB_OPP_NAME, MSRB_P2_NAME + 31 # string (31)
-.set MSRB_ERROR_MSG, MSRB_OPP_NAME + 31 # string (121)
+.set MSRB_OPP_CHAT, MSRB_OPP_NAME + 31 # string (31)
+.set MSRB_USER_CHAT, MSRB_OPP_CHAT + 31 # string (31)
+.set MSRB_ERROR_MSG, MSRB_USER_CHAT + 31 # string (121)
 .set ERROR_MESSAGE_LEN, 241
 .set MSRB_GAME_INFO_BLOCK, MSRB_ERROR_MSG + ERROR_MESSAGE_LEN # MATCH_STRUCT_LEN
 .set MSRB_SIZE, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
@@ -263,7 +265,7 @@ lwz \reg, -0x62A0(\reg)
 ################################################################################
 
 .set CMTB_CMD, 0 #u8
-.set CMTB_MESSAGE, CMTB_CMD + 1 #u8, 0x01=ggs,0x2=brb,0x4=Last One,0x8=One More, .... See Pad Values on HandleInpuOnCSS.asm for all 
+.set CMTB_MESSAGE, CMTB_CMD + 1 #u8, 0x01=ggs,0x2=brb,0x4=Last One,0x8=One More, .... See Pad Values on HandleInpuOnCSS.asm for all
 .set CMTB_SIZE, CMTB_MESSAGE + 1
 
 ################################################################################
