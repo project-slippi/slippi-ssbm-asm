@@ -123,8 +123,6 @@ b SKIP_START_MATCH
 # Case 1: Handle idle case
 ################################################################################
 HANDLE_IDLE:
-# Send Chat command if any of the inputs was pressed
-bl FN_CHECK_CHAT_INPUTS
 # When idle, pressing start will start finding match
 # Check if start was pressed
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
@@ -210,9 +208,6 @@ lbz r3, -0x49A9(r13)
 cmpwi r3, 0
 beq CHECK_SHOULD_START_MATCH
 
-# Send Chat command if any of the inputs was pressed
-bl FN_CHECK_CHAT_INPUTS
-
 # Check which mode we are playing.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
@@ -265,6 +260,10 @@ b SKIP_START_MATCH
 
 # Check to see if both players are ready and start match if they are
 CHECK_SHOULD_START_MATCH:
+
+# Send Chat command if any of the inputs was pressed
+bl FN_CHECK_CHAT_INPUTS
+
 lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
 lbz r4, MSRB_IS_REMOTE_PLAYER_READY(REG_MSRB_ADDR)
 and. r3, r3, r4
