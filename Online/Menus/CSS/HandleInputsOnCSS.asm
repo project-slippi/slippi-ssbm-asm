@@ -10,6 +10,22 @@
 .set REG_TXB_ADDR, 25
 .set REG_CSSDT_ADDR, 24
 
+# Controller immediate input values  for CSS chat messages
+.set PAD_LEFT, 0x01
+.set PAD_RIGHT, 0x02
+.set PAD_DOWN, 0x04
+.set PAD_UP, 0x08
+
+.set L_PAD_LEFT, 0x40+PAD_LEFT
+.set L_PAD_RIGHT, 0x40+PAD_RIGHT
+.set L_PAD_DOWN, 0x40+PAD_DOWN
+.set L_PAD_UP, 0x40+PAD_UP
+
+.set R_PAD_LEFT, 0x20+PAD_LEFT
+.set R_PAD_RIGHT, 0x20+PAD_RIGHT
+.set R_PAD_DOWN, 0x20+PAD_DOWN
+.set R_PAD_UP, 0x20+PAD_UP
+
 # Deal with replaced codeline
 beq+ START
 branch r12, 0x80263334
@@ -107,6 +123,8 @@ b SKIP_START_MATCH
 # Case 1: Handle idle case
 ################################################################################
 HANDLE_IDLE:
+# Send Chat command if any of the inputs was pressed
+bl FN_CHECK_CHAT_INPUTS
 # When idle, pressing start will start finding match
 # Check if start was pressed
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
@@ -191,6 +209,9 @@ HANDLE_CONNECTED_ADVANCE:
 lbz r3, -0x49A9(r13)
 cmpwi r3, 0
 beq CHECK_SHOULD_START_MATCH
+
+# Send Chat command if any of the inputs was pressed
+bl FN_CHECK_CHAT_INPUTS
 
 # Check which mode we are playing.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -451,6 +472,86 @@ li r4, 1
 li r5, CONST_ExiWrite
 branchl r12, FN_EXITransferBuffer
 
+mr r3, REG_TXB_ADDR
+branchl r12, HSD_Free
+
+restore
+blr
+
+################################################################################
+# Function: Check if chat input was pressed and send it to the EXI device
+################################################################################
+# skip my test if pad was not pressed
+FN_CHECK_CHAT_INPUTS:
+backup
+
+cmpwi REG_INPUTS, PAD_LEFT
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, PAD_RIGHT
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, PAD_UP
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, PAD_DOWN
+beq HANDLE_CHAT_INPUT_PRESSED
+
+cmpwi REG_INPUTS, L_PAD_LEFT
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, L_PAD_RIGHT
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, L_PAD_UP
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, L_PAD_DOWN
+beq HANDLE_CHAT_INPUT_PRESSED
+
+cmpwi REG_INPUTS, R_PAD_LEFT
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, R_PAD_RIGHT
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, R_PAD_UP
+beq HANDLE_CHAT_INPUT_PRESSED
+cmpwi REG_INPUTS, R_PAD_DOWN
+bnel HANDLE_SKIP_CHAT_INPUT
+
+HANDLE_CHAT_INPUT_PRESSED:
+# Play a sound indicating the message is going out
+li r3, 0xb7
+li r4, 127
+li r5, 64
+branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
+
+mr r3, REG_INPUTS
+bl FN_SEND_CHAT_COMMAND
+HANDLE_SKIP_CHAT_INPUT:
+restore
+blr
+
+################################################################################
+# Function: Send Chat Commnad 0 = ggs, 1 = brb, 2 = g2g, 3=one more, 4=last one
+################################################################################
+FN_SEND_CHAT_COMMAND:
+
+mr r14, r3 # Store Controller Input argument
+backup
+
+# Prepare buffer for EXI transfer
+li r3, CMTB_SIZE # Store same bytes as Buffer Size
+branchl r12, HSD_MemAlloc
+mr REG_TXB_ADDR, r3 # Save the address where the memory has been allocated to
+
+# Write tx data
+li r3, CONST_SlippiCmdSendChatMessage # set command on allocated address
+stb r3, CMTB_CMD(REG_TXB_ADDR)
+
+mr r3, r14 # set message id from controller_input argument
+stb r3, CMTB_MESSAGE(REG_TXB_ADDR)
+
+# transfer the bufffer
+mr r3, REG_TXB_ADDR
+li r4, CMTB_SIZE # length of buffer
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+# free the allocated memory
 mr r3, REG_TXB_ADDR
 branchl r12, HSD_Free
 
