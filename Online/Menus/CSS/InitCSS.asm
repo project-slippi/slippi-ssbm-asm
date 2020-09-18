@@ -374,11 +374,11 @@ branchl r12, Text_ChangeTextColor
 lfs f1, TPO_PLAYING_LABEL_X(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_STRING_DIRECT
+addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, Text_InitializeSubtext
 
 mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_LABEL # stidx = 2
+li r4, STIDX_PLAYING_LABEL
 lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
@@ -396,46 +396,10 @@ addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, Text_InitializeSubtext
 
 mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_OPP # stidx = 3
+li r4, STIDX_PLAYING_OPP
 lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
-
-# Initialize Opponent Chat Message text
-lfs f1, TPO_PLAYING_VALUE_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_CHAT # stidx = 4
-lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_CHAT
-addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT
-branchl r12, Text_ChangeTextColor
-
-# Initialize User Chat Message text
-lfs f1, TPO_USER_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_USER_Y(REG_TEXT_PROPERTIES)
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_USER_CHAT # stidx = 5
-lfs f1, TPO_USER_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_USER_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_USER_CHAT
-addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT
-branchl r12, Text_ChangeTextColor
 
 # Initialize error lines
 lfs f2, TPO_ERR_LINE1_Y(REG_TEXT_PROPERTIES)
@@ -468,7 +432,7 @@ mr r3, REG_TEXT_STRUCT
 addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING # change to empty string
 branchl r12, Text_InitializeSubtext
 
-mr r4, r3 # stidx = 5
+mr r4, r3
 mr r3, REG_TEXT_STRUCT
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
@@ -481,7 +445,7 @@ mr r3, REG_TEXT_STRUCT
 addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING # change to empty string
 branchl r12, Text_InitializeSubtext
 
-mr r4, r3 # stidx = 6
+mr r4, r3
 mr r3, REG_TEXT_STRUCT
 lfs f1, TPO_SPINNER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_SPINNER_SIZE(REG_TEXT_PROPERTIES)
@@ -506,7 +470,7 @@ mr REG_SUBTEXT_IDX, r3
 
 # Set line font size
 mr r3, REG_TEXT_STRUCT
-mr r4, REG_SUBTEXT_IDX # stidx = 7
+mr r4, REG_SUBTEXT_IDX
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
@@ -535,12 +499,10 @@ blrl
 .set STIDX_PRESS_Z, 7
 .set STIDX_PLAYING_LABEL, 8
 .set STIDX_PLAYING_OPP, 9
-.set STIDX_PLAYING_CHAT, 10
-.set STIDX_USER_CHAT, 11
-.set STIDX_ERR_LINE1, 12
-.set STIDX_ERR_LINE2, 13
-.set STIDX_ERR_LINE3, 14
-.set STIDX_ERR_LINE4, 15
+.set STIDX_ERR_LINE1, 10
+.set STIDX_ERR_LINE2, 11
+.set STIDX_ERR_LINE3, 12
+.set STIDX_ERR_LINE4, 13
 .set LINE_IDX_GAP, 2
 .set LINE_COUNT, 3
 
@@ -616,10 +578,6 @@ bl FN_UPDATE_TEXT
 # Manage Chat Messages: If there's a new message, then initialize a
 # disappearing text
 ################################################################################
-lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
-cmpwi r3, MM_STATE_CONNECTION_SUCCESS
-beq SKIP_CHAT_MESSAGES
-
 # r25 will store the user name string memory address
 lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
@@ -708,7 +666,7 @@ SKIP_CHAT_MESSAGES:
 ################################################################################
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_CONNECTION_SUCCESS
-beq SKIP_UPDATE_PLAYING_LABEL
+beq UPDATE_PLAYING_LABEL_CONNECTED
 
 # Here we are not connected, clear
 addi r5, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
@@ -720,7 +678,6 @@ addi r5, REG_TEXT_PROPERTIES, TPO_STRING_PLAYING_LABEL
 UPDATE_PLAYING_LABEL:
 li r4, STIDX_PLAYING_LABEL
 bl FN_UPDATE_TEXT
-SKIP_UPDATE_PLAYING_LABEL:
 
 ################################################################################
 # Manage playing opponent name
