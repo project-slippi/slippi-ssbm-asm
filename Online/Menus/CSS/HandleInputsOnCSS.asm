@@ -512,11 +512,6 @@ cmpwi REG_INPUTS, R_PAD_DOWN
 bnel HANDLE_SKIP_CHAT_INPUT
 
 HANDLE_CHAT_INPUT_PRESSED:
-# Play a sound indicating the message is going out
-li r3, 0xb7
-li r4, 127
-li r5, 64
-branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
 
 mr r3, REG_INPUTS
 bl FN_SEND_CHAT_COMMAND

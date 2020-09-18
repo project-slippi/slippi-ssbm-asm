@@ -155,7 +155,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 
 ## GObj functions
 .set GObj_Create,0x803901f0
-.set GObj_Initialize,0x80390b68
+.set GObj_Initialize,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54
 .set GObj_RemoveProc,0x8038fed4
