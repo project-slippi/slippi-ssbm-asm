@@ -579,16 +579,20 @@ bl FN_UPDATE_TEXT
 # disappearing text
 ################################################################################
 # r25 will store the user name string memory address
+# r26 will store chat message id
 lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
-beq SKIP_CHAT_MESSAGES
+beq CHECK_OPP_CHAT_MESSAGE
 addi r25, REG_MSRB_ADDR, MSRB_P1_NAME
+mr r26, r3
 b UPDATE_CHAT_MESSAGES
 
-lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
+CHECK_OPP_CHAT_MESSAGE:
+lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq SKIP_CHAT_MESSAGES
 addi r25, REG_MSRB_ADDR, MSRB_P2_NAME
+mr r26, r3
 
 UPDATE_CHAT_MESSAGES:
 # Only allow x number of messages being shown at the same time
@@ -625,7 +629,9 @@ branchl r12, Zero_AreaLength
 # initialize timer 0x80195b38
 li r3, 0x60 # max value of byte which is 255, approx 4 seconds 255/60 = 4.25 secs
 stb r3, CSSCMDT_TIMER(r23)
-lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR) # message id
+
+# initialize message id
+mr r3, r26
 stb r3, CSSCMDT_MSG_ID(r23)
 
 # Set Message index + increase by 1
