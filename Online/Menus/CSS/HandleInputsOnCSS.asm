@@ -10,7 +10,7 @@
 .set REG_TXB_ADDR, 25
 .set REG_CSSDT_ADDR, 24
 
-# Controller immediate input values  for CSS chat messages
+# Controller immediate input values for CSS chat messages
 .set PAD_LEFT, 0x01
 .set PAD_RIGHT, 0x02
 .set PAD_DOWN, 0x04
@@ -123,6 +123,10 @@ b SKIP_START_MATCH
 # Case 1: Handle idle case
 ################################################################################
 HANDLE_IDLE:
+
+# Check if we should open chat window
+# bl FN_CHECK_CHAT_INPUTS
+
 # When idle, pressing start will start finding match
 # Check if start was pressed
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
@@ -261,7 +265,7 @@ b SKIP_START_MATCH
 # Check to see if both players are ready and start match if they are
 CHECK_SHOULD_START_MATCH:
 
-# Send Chat command if any of the inputs was pressed
+# Check if we should open chat window
 bl FN_CHECK_CHAT_INPUTS
 
 lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
@@ -484,6 +488,10 @@ blr
 FN_CHECK_CHAT_INPUTS:
 backup
 
+# Always store last input in CSS data table
+mr r3, REG_INPUTS
+stb r3, CSSDT_CHAT_LAST_INPUT(REG_CSSDT_ADDR)
+
 cmpwi REG_INPUTS, PAD_LEFT
 beq HANDLE_CHAT_INPUT_PRESSED
 cmpwi REG_INPUTS, PAD_RIGHT
@@ -513,8 +521,14 @@ bnel HANDLE_SKIP_CHAT_INPUT
 
 HANDLE_CHAT_INPUT_PRESSED:
 
+# If chat window is already open, skip
+lbz r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR)
+cmpwi r3, 0
+bne HANDLE_SKIP_CHAT_INPUT
+
 mr r3, REG_INPUTS
-bl FN_SEND_CHAT_COMMAND
+bl FN_OPEN_CHAT_WINDOW
+
 HANDLE_SKIP_CHAT_INPUT:
 restore
 blr
@@ -549,6 +563,569 @@ branchl r12, FN_EXITransferBuffer
 mr r3, REG_TXB_ADDR
 branchl r12, HSD_Free
 
+# Play a sound indicating a new message was sent
+li r3, 0xb7
+li r4, 127
+li r5, 64
+branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
+
+restore
+blr
+
+################################################################################
+# Function: Starts THINK Function to show the chat window
+# r3 holds the input argument which decides the offset of the text messages to show
+##############################################################################
+FN_OPEN_CHAT_WINDOW:
+
+mr r14, r3 # Store Controller Input argument
+backup
+
+# Play a sound indicating a new message
+li r3, 0xb7
+li r4, 127
+li r5, 64
+branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
+
+# Save in memory that we have the chat opened and store the pad input
+mr r3, r14 # controller input
+stb r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR) # Load where buf is stored
+
+# Get Memory Buffer for Chat Window Data Table
+li r3, CSSCWDT_SIZE # Buffer Size
+branchl r12, HSD_MemAlloc
+mr r23, r3 # save result address into r23
+
+# Zero out CSS data table
+li r4, CSSCWDT_SIZE
+branchl r12, Zero_AreaLength
+
+# Set Buffer Initial Data
+mr r3, r14 # controller input
+stb r3, CSSCWDT_INPUT(r23) # 0x80195424
+
+# Set CSS DataTable Address
+mr r3, REG_CSSDT_ADDR # store address to CSS Data Table
+stw r3, CSSCWDT_CSSDT_ADDR(r23)
+
+# create gobj for think function
+li r3, 0x4
+li r4, 0x5
+li r5, 0x80
+branchl r12, GObj_Create
+mr r14, r3 # save GOBJ pointer
+
+li r4, 4 # user data kind
+load r5, HSD_Free # destructor
+mr r6, r23 # memory pointer of allocated buffer above
+branchl r12, GObj_Initialize
+
+mr r3, r14 # set r3 to GOBJ pointer
+bl CSS_ONLINE_CHAT_WINDOW_THINK
+mflr r4 # Function to Run
+li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
+branchl r12, GObj_AddProc
+
+FN_OPEN_CHAT_WINDOW_END:
+
+restore
+blr
+
+################################################################################
+# CHAT MSG THINK Function: Looping function to keep on
+# updating the text until timer runs out
+################################################################################
+CSS_ONLINE_CHAT_WINDOW_THINK:
+blrl
+.set REG_CHAT_WINDOW_GOBJ, 14
+.set REG_TEXT_PROPERTIES, 15
+.set REG_CHAT_TEXT_PROPERTIES, 20
+.set REG_CHAT_WINDOW_GOBJ_DATA_ADDR, 16
+.set REG_CHAT_WINDOW_INPUT, 17
+.set REG_CHAT_WINDOW_SECOND_INPUT, 22
+.set REG_CHAT_WINDOW_TIMER, 18
+.set REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 19
+.set REG_CHAT_WINDOW_CSSDT_ADDR, 21
+
+.set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
+.set CHAT_WINDOW_IDLE_TIMER_TIME, 0x60 # initial idle timer before window disappears
+.set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
+
+mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
+backup
+
+# get gobj and get values for each of the data buffer
+lwz REG_CHAT_WINDOW_GOBJ_DATA_ADDR, CHAT_ENTITY_DATA_OFFSET(REG_CHAT_WINDOW_GOBJ) # get address of data buffer
+lbz REG_CHAT_WINDOW_INPUT, CSSCWDT_INPUT(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+lbz REG_CHAT_WINDOW_TIMER, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+lwz REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+lwz REG_CHAT_WINDOW_CSSDT_ADDR, CSSCWDT_CSSDT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+lbz REG_CHAT_WINDOW_SECOND_INPUT, CSSDT_CHAT_LAST_INPUT(REG_CHAT_WINDOW_CSSDT_ADDR)
+
+# if text is not initialized, assume we need to initalize everything
+# else skip to idle timer check
+cmpwi REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 0x00000000
+bne CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_INPUT
+
+##### BEGIN: INITIALIZING CHAT WINDOW TIMER ###########
+li r3, CHAT_WINDOW_IDLE_TIMER_TIME # idle timer
+mr REG_CHAT_WINDOW_TIMER, r3
+stb r3, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+##### END: INITIALIZING CHAT WINDOW TIMER ###########
+
+##### BEGIN: INITIALIZING CHAT WINDOW TEXT ###########
+
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+# INIT MSG Properties based on input button
+cmpwi REG_CHAT_WINDOW_INPUT, PAD_UP
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES
+cmpwi REG_CHAT_WINDOW_INPUT, PAD_DOWN
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES
+cmpwi REG_CHAT_WINDOW_INPUT, PAD_RIGHT
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES
+cmpwi REG_CHAT_WINDOW_INPUT, PAD_LEFT
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES
+
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES:
+bl UP_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES:
+bl DOWN_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES:
+bl RIGHT_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES:
+bl LEFT_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END:
+
+# Create Text Struct
+li r3, 0x1 # Text kerning to close
+li r4, 0x0 # Align Left
+lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) # Z offset
+lfs f2, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES) # Scale
+bl FN_CREATE_TEXT_STRUCT # 801954ec
+
+# Save Text Struct Address
+mr REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, r3
+stw REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+
+# Create Subtext: Header
+mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
+addi r6, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUT_NAME # String pointer
+lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
+lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
+bl FN_CREATE_SUBTEXT_CONCATENATED
+mr r4, r3 # sub text index for next function call
+
+# Create Subtext: Labels
+mr r10, r4 # save sub text index of header # 0x80195520
+mr r11, r4 # initialize looping index
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_START:
+
+# calculate Y offset by moving it down a bit
+addi r3, r11, CHAT_WINDOW_HEADER_MARGIN_LINES
+lfs f2, TPO_CHAT_LABEL_MARGIN(REG_TEXT_PROPERTIES) # margin between labels
+bl FN_MULTIPLY_FLOAT_RF
+fmr f3, f1 # 0x80195588
+
+# calculate address of label
+cmpwi r11, 0x0
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR
+cmpwi r11, 0x1
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
+cmpwi r11, 0x2
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR
+cmpwi r11, 0x3
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR
+
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_UP # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR:
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_DOWN # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR:
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_RIGHT # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR:
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_LEFT # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END:
+
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_MSG_ADDR:
+# calculate address of message
+mr r3, r11
+addi r3, r3, 1
+mulli r7, r3, CHAT_TEXT_STRING_LENGTH
+
+mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_LABEL_FORMAT # String Format pointer
+addi r6, r6, 0 # label String pointer (this is a noop, actual cal assignment is done above)
+add r7, REG_CHAT_TEXT_PROPERTIES, r7 # message String pointer
+lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
+lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+bl FN_CREATE_SUBTEXT_CONCATENATED
+mr r11, r3 # save subtext index
+
+# Loop back if last index has not been reached
+addi r3, r10, 4 # Last index we want header + 4 labels
+cmpw r11, r3
+bne CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_START
+
+##### END: INITIALIZING CHAT WINDOW TEXT ###########
+b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT # just initialize on first loop
+
+CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_INPUT: # 0x8019562C
+# load last input from the CSS Data table
+# if there's any input, Send Message
+cmpwi REG_CHAT_WINDOW_SECOND_INPUT, 0
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+
+# Clear Timer
+li r3, 0
+stb r3, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+
+# Send Chat command # 0x80195638
+# combine so we get 0x00(first input)(second input) i.e: 0x0024 if first was 2 and second was 4
+mr r3, REG_CHAT_WINDOW_INPUT
+mr r4, REG_CHAT_WINDOW_SECOND_INPUT
+
+li r5, 4 # shift first input 4 bytes to the left
+slw r3, r3, r5
+add r3, r3, r4 # add second input to highest byte
+bl FN_SEND_CHAT_COMMAND
+
+b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
+
+CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER:
+# check timer and decrease until is 0
+cmpwi REG_CHAT_WINDOW_TIMER, 0
+beq CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC # if timer is 0, then exit and delete think func.
+
+CSS_ONLINE_CHAT_WINDOW_THINK_DECREASE_IDLE_TIMER:
+subi REG_CHAT_WINDOW_TIMER, REG_CHAT_WINDOW_TIMER, 1
+stb REG_CHAT_WINDOW_TIMER, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+
+b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
+
+CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
+
+# clear out chat window opened flag on the CSS Data Table
+li r3, 0
+stb r3, CSSDT_CHAT_WINDOW_OPENED(REG_CHAT_WINDOW_CSSDT_ADDR)
+
+# remove proc
+mr r3, REG_CHAT_WINDOW_GOBJ
+branchl r12, GObj_RemoveProc
+
+# remove text
+mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR
+branchl r12, Text_RemoveText
+
+CSS_ONLINE_CHAT_WINDOW_THINK_EXIT:
+restore
+blr
+
+
+
+################################################################################
+# Properties
+################################################################################
+TEXT_PROPERTIES:
+blrl
+# Base Properties
+.set TPO_BASE_Z, 0
+.float 0
+.set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
+.float 0.1
+
+# Chat Labels Propiertes
+.set TPO_CHAT_LABEL_X, TPO_BASE_CANVAS_SCALING + 4
+.float -330
+.set TPO_CHAT_LABEL_Y, TPO_CHAT_LABEL_X + 4
+.float 0
+.set TPO_CHAT_LABEL_SIZE, TPO_CHAT_LABEL_Y + 4
+.float 0.45
+.set TPO_CHAT_LABEL_MARGIN, TPO_CHAT_LABEL_SIZE + 4
+.float 25
+
+# Text colors
+.set TPO_COLOR_WHITE, TPO_CHAT_LABEL_MARGIN + 4
+.long 0xFFFFFFFF # white
+
+# String Properties
+.set TPO_EMPTY_STRING, TPO_COLOR_WHITE + 4
+.string ""
+.set TPO_STRING_CHAT_SHORTCUTS, TPO_EMPTY_STRING + 1
+.string "Chat Shortcuts: %s"
+.set TPO_STRING_CHAT_LABEL_FORMAT, TPO_STRING_CHAT_SHORTCUTS + 19
+.string "%s: %s"
+.set TPO_STRING_GENERAL, TPO_STRING_CHAT_LABEL_FORMAT + 7
+.string "General"
+.set TPO_STRING_COMPLIMENTS, TPO_STRING_GENERAL + 8
+.string "Compliments"
+.set TPO_STRING_APOLOGIES, TPO_STRING_COMPLIMENTS + 12
+.string "Apologies"
+.set TPO_STRING_GAME, TPO_STRING_APOLOGIES + 10
+.string "Game"
+.set TPO_STRING_UP, TPO_STRING_GAME + 5
+.string "Up"
+.set TPO_STRING_DOWN, TPO_STRING_UP + 3
+.string "Down"
+.set TPO_STRING_RIGHT, TPO_STRING_DOWN + 5
+.string "Right"
+.set TPO_STRING_LEFT, TPO_STRING_RIGHT + 6
+.string "Left"
+.set TPO_STRING_PLUS, TPO_STRING_LEFT + 5
+.short 0x817B # ＋
+.byte 0x00
+.align 2
+
+################################################################################
+# Chat Message Properties
+# Hack: CAP TO SAME LENGTH to ensure pointers are always reached
+################################################################################
+.set CHAT_TEXT_STRING_LENGTH, 14 +1  # +1 is string ending char
+UP_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
+.string "UP            "
+.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME + CHAT_TEXT_STRING_LENGTH
+.string "ggs           "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "One More      "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
+.string "brb           "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "Back          "
+.align 2
+
+DOWN_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
+.string "DOWN          "
+.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
+.string "Bad Connection"
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "Well Played   "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
+.string "FT3           "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "FT5           "
+.align 2
+
+RIGHT_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
+.string "RIGHT         "
+.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
+.string "Ok            "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "Nope          "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
+.string "Sorry         "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "Thanks        "
+.align 2
+
+LEFT_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
+.string "LEFT          "
+.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
+.string "Change Char   "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "Changing Char "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
+.string "Please        "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "No problem    "
+.align 2
+
+################################################################################
+# Function: Initializes Text struct
+# r3 = kerning, r4 = alignment, f1 = z offset, f2 = scaling
+################################################################################
+FN_CREATE_TEXT_STRUCT:
+# gp registers
+.set REG_KERNING, 6
+.set REG_ALIGNMENT, REG_KERNING+1
+.set REG_TEXT_STRUCT_ADDR, REG_ALIGNMENT+1
+# float registers
+.set REG_Z_OFFSET, REG_KERNING
+.set REG_SCALING, REG_Z_OFFSET+1
+
+# Save arguments
+mr REG_KERNING, r3
+mr REG_ALIGNMENT, r4
+
+fmr REG_Z_OFFSET, f1
+fmr REG_SCALING, f2
+backup
+
+# Create Text Struct
+li r3, 0 # 0x8019563C
+li r4, 0
+branchl r12, Text_CreateStruct
+mr REG_TEXT_STRUCT_ADDR, r3
+
+# Set text kerning
+stb REG_KERNING, 0x49(REG_TEXT_STRUCT_ADDR)
+# Set text alignment
+stb REG_ALIGNMENT, 0x4A(REG_TEXT_STRUCT_ADDR)
+# set z offset
+stfs REG_Z_OFFSET, 0x8(REG_TEXT_STRUCT_ADDR)
+# set scale
+stfs REG_SCALING, 0x24(REG_TEXT_STRUCT_ADDR)
+stfs REG_SCALING, 0x28(REG_TEXT_STRUCT_ADDR)
+
+# Return text struct Pointer in r3
+mr r3, REG_TEXT_STRUCT_ADDR
+restore
+blr
+
+################################################################################
+# Function: Creates and initalizes a subtext
+# r3 = text struct pointer, r4 = string pointer, r5 = color pointer, f1 = text size, f2 = x, f3 = y pos
+################################################################################
+FN_CREATE_SUBTEXT:
+# gp registers
+.set REG_TEXT_STRUCT_ADDR, 28
+.set REG_STRING_ADDR, REG_TEXT_STRUCT_ADDR+1
+.set REG_COLOR_ADDR, REG_STRING_ADDR+1
+.set REG_SUBTEXT_INDEX, REG_COLOR_ADDR+1
+# float registers
+.set REG_SIZE, REG_TEXT_STRUCT_ADDR
+.set REG_X, REG_SIZE+1
+.set REG_Y, REG_X+1
+
+# Save arguments
+mr REG_TEXT_STRUCT_ADDR, r3
+mr REG_STRING_ADDR, r4
+mr REG_COLOR_ADDR, r5
+
+fmr REG_SIZE, f1
+fmr REG_X, f2
+fmr REG_Y, f3
+backup
+
+# Initialize subtext
+mr r3, REG_TEXT_STRUCT_ADDR
+mr r4, REG_STRING_ADDR
+fmr f1, REG_X
+fmr f2, REG_Y
+branchl r12, Text_InitializeSubtext
+mr REG_SUBTEXT_INDEX, r3
+
+# Set Text Size
+mr r3, REG_TEXT_STRUCT_ADDR
+mr r4, REG_SUBTEXT_INDEX
+fmr f1, REG_SIZE
+fmr f2, REG_SIZE
+branchl r12, Text_UpdateSubtextSize
+
+# Set Text Color
+mr r3, REG_TEXT_STRUCT_ADDR
+mr r4, REG_SUBTEXT_INDEX
+mr r5, REG_COLOR_ADDR
+branchl r12, Text_ChangeTextColor
+
+
+# Return subtext index
+mr r3, REG_SUBTEXT_INDEX
+restore
+blr
+
+################################################################################
+# Function: Creates and initalizes a subtext # 801957A0
+# r3 = text struct pointer, r4 = color pointer, r5 = string format pointer, r6-r{n}= string pointers, f1 = text size, f2 = x, f3 = y pos
+################################################################################
+FN_CREATE_SUBTEXT_CONCATENATED:
+# gp registers
+.set REG_TEXT_STRUCT_ADDR, 21
+.set REG_STRING_FORMAT_ADDR, REG_TEXT_STRUCT_ADDR+1
+.set REG_STRING_1_ADDR, REG_STRING_FORMAT_ADDR+1
+.set REG_STRING_2_ADDR, REG_STRING_1_ADDR+1
+.set REG_STRING_3_ADDR, REG_STRING_2_ADDR+1
+.set REG_COLOR_ADDR, REG_STRING_3_ADDR+1
+.set REG_SUBTEXT_INDEX, REG_COLOR_ADDR+1
+# float registers
+.set REG_SIZE, REG_TEXT_STRUCT_ADDR
+.set REG_X, REG_SIZE+1
+.set REG_Y, REG_X+1
+
+# Save arguments
+mr REG_TEXT_STRUCT_ADDR, r3
+mr REG_COLOR_ADDR, r4
+mr REG_STRING_FORMAT_ADDR, r5
+mr REG_STRING_1_ADDR, r6
+mr REG_STRING_2_ADDR, r7
+mr REG_STRING_3_ADDR, r8
+
+fmr REG_SIZE, f1
+fmr REG_X, f2
+fmr REG_Y, f3
+backup
+
+mr r4, REG_STRING_FORMAT_ADDR
+mr r5, REG_COLOR_ADDR
+bl FN_CREATE_SUBTEXT
+mr REG_SUBTEXT_INDEX, r3 # sub text index
+
+# Concatenate user name with message "User: Message"
+mr r3, REG_TEXT_STRUCT_ADDR
+mr r4, REG_SUBTEXT_INDEX
+mr r5, REG_STRING_FORMAT_ADDR
+mr r6, REG_STRING_1_ADDR
+mr r7, REG_STRING_2_ADDR
+mr r8, REG_STRING_3_ADDR
+branchl r12, Text_UpdateSubtextContents
+
+# Return subtext index
+mr r3, REG_SUBTEXT_INDEX
+restore
+blr
+
+################################################################################
+# Converts int to float returns f3 as converted value (stolen from CreateText.asm)
+################################################################################
+IntToFloat:
+stwu r1,-0x100(r1)	# make space for 12 registers
+stfs  f2,0x8(r1)
+
+lis	r0, 0x4330
+lfd	f2, -0x6758 (rtoc)
+xoris	r3, r3,0x8000
+stw	r0,0xF0(sp)
+stw	r3,0xF4(sp)
+lfd	f1,0xF0(sp)
+fsubs	f1,f1,f2		#Convert To Float
+
+lfs  f2,0x8(r1)
+addi	r1,r1,0x100	# release the space
+blr
+
+################################################################################
+# Multiplies r3=int with f2=float
+# return result in f1
+################################################################################
+FN_MULTIPLY_FLOAT_RF:
+backup
+bl IntToFloat # returns f1
+fmuls f1, f1, f2
 restore
 blr
 

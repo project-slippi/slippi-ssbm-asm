@@ -289,7 +289,9 @@ lwz \reg, -0x62A0(\reg)
 .set CSSDT_FRAME_COUNTER, CSSDT_SPINNER3 + 1 # u16
 .set CSSDT_PREV_LOCK_IN_STATE, CSSDT_FRAME_COUNTER + 2 # bool
 .set CSSDT_PREV_CONNECTED_STATE, CSSDT_PREV_LOCK_IN_STATE + 1 # u8
-.set CSSDT_CHAT_MSG_COUNT, CSSDT_PREV_CONNECTED_STATE + 1 # u8
+.set CSSDT_CHAT_WINDOW_OPENED, CSSDT_PREV_CONNECTED_STATE + 1 # u8
+.set CSSDT_CHAT_LAST_INPUT, CSSDT_CHAT_WINDOW_OPENED + 1 # u8
+.set CSSDT_CHAT_MSG_COUNT, CSSDT_CHAT_LAST_INPUT + 1 # u8
 .set CSSDT_LAST_CHAT_MSG_INDEX, CSSDT_CHAT_MSG_COUNT + 1 # u8
 .set CSSDT_SIZE, CSSDT_LAST_CHAT_MSG_INDEX + 1
 
@@ -301,8 +303,17 @@ lwz \reg, -0x62A0(\reg)
 .set CSSCMDT_MSG_INDEX, CSSCMDT_MSG_ID + 1 # u8
 .set CSSCMDT_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_INDEX + 1 # u32
 .set CSSCMDT_USER_NAME_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR + 4 # u32
-.set CSSCMDT_CSSDT_ADDR, CSSCMDT_USER_NAME_ADDR + 4 # u32
+.set CSSCMDT_CSSDT_ADDR, CSSCMDT_USER_NAME_ADDR + 4 # u32 CSS Data Table Address
 .set CSSCMDT_SIZE, CSSCMDT_CSSDT_ADDR + 4
+
+################################################################################
+# CSS Chat Window Data Table
+################################################################################
+.set CSSCWDT_INPUT, 0 # u8
+.set CSSCWDT_TIMER, CSSCWDT_INPUT + 1 # u8
+.set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
+.set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
+.set CSSCWDT_SIZE, CSSCWDT_TEXT_STRUCT_ADDR + 4
 
 ################################################################################
 # Online status buffer offsets
