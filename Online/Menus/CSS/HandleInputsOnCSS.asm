@@ -125,7 +125,7 @@ b SKIP_START_MATCH
 HANDLE_IDLE:
 
 # Check if we should open chat window
-# bl FN_CHECK_CHAT_INPUTS
+bl FN_CHECK_CHAT_INPUTS
 
 # When idle, pressing start will start finding match
 # Check if start was pressed
@@ -882,14 +882,14 @@ blrl
 .set TPO_STRING_GAME, TPO_STRING_APOLOGIES + 10
 .string "Game"
 .set TPO_STRING_UP, TPO_STRING_GAME + 5
-.string "Up"
-.set TPO_STRING_DOWN, TPO_STRING_UP + 3
-.string "Down"
-.set TPO_STRING_RIGHT, TPO_STRING_DOWN + 5
-.string "Right"
-.set TPO_STRING_LEFT, TPO_STRING_RIGHT + 6
-.string "Left"
-.set TPO_STRING_PLUS, TPO_STRING_LEFT + 5
+.string "U"
+.set TPO_STRING_DOWN, TPO_STRING_UP + 2
+.string "D"
+.set TPO_STRING_RIGHT, TPO_STRING_DOWN + 2
+.string "R"
+.set TPO_STRING_LEFT, TPO_STRING_RIGHT + 2
+.string "L"
+.set TPO_STRING_PLUS, TPO_STRING_LEFT + 2
 .short 0x817B # ＋
 .byte 0x00
 .align 2
