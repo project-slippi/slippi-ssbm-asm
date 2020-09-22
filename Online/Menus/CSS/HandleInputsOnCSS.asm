@@ -586,7 +586,7 @@ FN_OPEN_CHAT_WINDOW:
 mr REG_CHAT_INPUTS, r3 # Store Controller Input argument
 backup
 
-# Play a sound indicating a new message TODO: move to a function 
+# Play a sound indicating a new message TODO: move to a function
 li r3, 0xb7
 li r4, 127
 li r5, 64
@@ -678,7 +678,8 @@ blrl
 
 .set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
-.set CHAT_WINDOW_IDLE_TIMER_TIME, 0x60 # initial idle timer before window disappears
+.set CHAT_WINDOW_IDLE_TIMER_TIME, 0x70 # initial idle timer before window disappears
+.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x20 # initial delay before allowing to send messages
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
 mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
@@ -777,11 +778,11 @@ fadds f3, f3, f1
 cmpwi r11, 0x0
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR
 cmpwi r11, 0x1
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR
 cmpwi r11, 0x2
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR
 cmpwi r11, 0x3
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
 
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_UP # label String pointer
@@ -822,6 +823,11 @@ bne CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_START
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT # just initialize on first loop
 
 CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_INPUT: # 0x8019562C
+# prevent spam: Only allow input if a few frames have passed
+lbz r3, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+cmpwi r3, CHAT_WINDOW_IDLE_TIMER_TIME-CHAT_WINDOW_IDLE_TIMER_DELAY
+bgt CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+
 # load last input from the CSS Data table
 # if there's any input, Send Message
 cmpwi REG_CHAT_WINDOW_SECOND_INPUT, 0
@@ -910,23 +916,17 @@ blrl
 .string "Chat: %s"
 .set TPO_STRING_CHAT_LABEL_FORMAT, TPO_STRING_CHAT_SHORTCUTS + 9
 .string "%s: %s"
-.set TPO_STRING_GENERAL, TPO_STRING_CHAT_LABEL_FORMAT + 7
-.string "General"
-.set TPO_STRING_COMPLIMENTS, TPO_STRING_GENERAL + 8
-.string "Compliments"
-.set TPO_STRING_APOLOGIES, TPO_STRING_COMPLIMENTS + 12
-.string "Apologies"
-.set TPO_STRING_GAME, TPO_STRING_APOLOGIES + 10
+.set TPO_STRING_GAME, TPO_STRING_CHAT_LABEL_FORMAT + 7
 .string "Game"
 .set TPO_STRING_UP, TPO_STRING_GAME + 5
 .string "U"
-.set TPO_STRING_DOWN, TPO_STRING_UP + 2
-.string "D"
-.set TPO_STRING_RIGHT, TPO_STRING_DOWN + 2
-.string "R"
-.set TPO_STRING_LEFT, TPO_STRING_RIGHT + 2
+.set TPO_STRING_LEFT, TPO_STRING_UP + 2
 .string "L"
-.set TPO_STRING_PLUS, TPO_STRING_LEFT + 2
+.set TPO_STRING_RIGHT, TPO_STRING_LEFT + 2
+.string "R"
+.set TPO_STRING_DOWN, TPO_STRING_RIGHT + 2
+.string "D"
+.set TPO_STRING_PLUS, TPO_STRING_DOWN + 2
 .short 0x817B # ＋
 .byte 0x00
 .align 2
@@ -935,61 +935,61 @@ blrl
 # Chat Message Properties
 # Hack: CAP TO SAME LENGTH to ensure pointers are always reached
 ################################################################################
-.set CHAT_TEXT_STRING_LENGTH, 14 +1  # +1 is string ending char
+.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
 UP_CHAT_TEXT_PROPERTIES:
 blrl
 .set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "UP            "
+.string "Common                "
 .set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME + CHAT_TEXT_STRING_LENGTH
-.string "ggs           "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "One More      "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
-.string "brb           "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "Back          "
-.align 2
-
-DOWN_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "DOWN          "
-.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "Bad Connection"
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "Well Played   "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
-.string "FT3           "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "FT5           "
-.align 2
-
-RIGHT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "RIGHT         "
-.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "Ok            "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "Nope          "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
-.string "Sorry         "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "Thanks        "
+.string "ggs                   "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "one more              "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "brb                   "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "good luck             "
 .align 2
 
 LEFT_CHAT_TEXT_PROPERTIES:
 blrl
 .set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "LEFT          "
+.string "Compliments           "
 .set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "Change Char   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "Changing Char "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_DOWN + CHAT_TEXT_STRING_LENGTH
-.string "Please        "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "No problem    "
+.string "well played           "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "too good              "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "that was fun          "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "thanks                "
+.align 2
+
+RIGHT_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
+.string "Reactions             "
+.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
+.string "lol                   "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "sorry                 "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "oops                  "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "wow                   "
+.align 2
+
+DOWN_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
+.string "Misc                  "
+.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
+.string "back                  "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "thinking              "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "let's play again later"
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "bad connection        "
 .align 2
 
 ################################################################################
