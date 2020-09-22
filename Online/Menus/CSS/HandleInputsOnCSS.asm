@@ -578,17 +578,22 @@ blr
 ##############################################################################
 FN_OPEN_CHAT_WINDOW:
 
-mr r14, r3 # Store Controller Input argument
+.set REG_CHAT_INPUTS, 14
+.set REG_CHAT_GOBJ, 20
+.set REG_CHAT_JOBJ, 21
+.set TEXT_GXLINK, 12
+
+mr REG_CHAT_INPUTS, r3 # Store Controller Input argument
 backup
 
-# Play a sound indicating a new message
+# Play a sound indicating a new message TODO: move to a function 
 li r3, 0xb7
 li r4, 127
 li r5, 64
 branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
 
 # Save in memory that we have the chat opened and store the pad input
-mr r3, r14 # controller input
+mr r3, REG_CHAT_INPUTS # controller input
 stb r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR) # Load where buf is stored
 
 # Get Memory Buffer for Chat Window Data Table
@@ -601,7 +606,7 @@ li r4, CSSCWDT_SIZE
 branchl r12, Zero_AreaLength
 
 # Set Buffer Initial Data
-mr r3, r14 # controller input
+mr r3, REG_CHAT_INPUTS # controller input
 stb r3, CSSCWDT_INPUT(r23) # 0x80195424
 
 # Set CSS DataTable Address
@@ -613,20 +618,43 @@ li r3, 0x4
 li r4, 0x5
 li r5, 0x80
 branchl r12, GObj_Create
-mr r14, r3 # save GOBJ pointer
+mr REG_CHAT_GOBJ, r3 # save GOBJ pointer
 
+# create jbobj (custom chat window background)
+lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
+lwz r3, 0x18(r3) # pointer to our custom bg jobj
+branchl r12,0x80370e44 #Create Jboj
+mr  REG_CHAT_JOBJ,r3
+
+# Add JOBJ To GObj
+mr  r3,REG_CHAT_GOBJ
+li r4, 4
+mr  r5,REG_CHAT_JOBJ
+branchl r12,0x80390a70 # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
+
+# Add GX Link that draws the background
+mr  r3,REG_CHAT_GOBJ
+load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
+li  r5, 1
+li  r6, 128
+branchl r12,0x8039069c # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
+
+# Add User Data to GOBJ ( Our buffer )
+mr r3, REG_CHAT_GOBJ
 li r4, 4 # user data kind
 load r5, HSD_Free # destructor
 mr r6, r23 # memory pointer of allocated buffer above
 branchl r12, GObj_Initialize
 
-mr r3, r14 # set r3 to GOBJ pointer
+# Set Think Function that runs every frame
+mr r3, REG_CHAT_GOBJ # set r3 to GOBJ pointer
 bl CSS_ONLINE_CHAT_WINDOW_THINK
 mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
 FN_OPEN_CHAT_WINDOW_END:
+
 
 restore
 blr
@@ -641,12 +669,14 @@ blrl
 .set REG_TEXT_PROPERTIES, 15
 .set REG_CHAT_TEXT_PROPERTIES, 20
 .set REG_CHAT_WINDOW_GOBJ_DATA_ADDR, 16
+.set REG_CHAT_WINDOW_JOBJ_ADDR, 23
 .set REG_CHAT_WINDOW_INPUT, 17
 .set REG_CHAT_WINDOW_SECOND_INPUT, 22
 .set REG_CHAT_WINDOW_TIMER, 18
 .set REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 19
 .set REG_CHAT_WINDOW_CSSDT_ADDR, 21
 
+.set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set CHAT_WINDOW_IDLE_TIMER_TIME, 0x60 # initial idle timer before window disappears
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
@@ -656,6 +686,7 @@ backup
 
 # get gobj and get values for each of the data buffer
 lwz REG_CHAT_WINDOW_GOBJ_DATA_ADDR, CHAT_ENTITY_DATA_OFFSET(REG_CHAT_WINDOW_GOBJ) # get address of data buffer
+lwz REG_CHAT_WINDOW_JOBJ_ADDR, CHAT_JOBJ_OFFSET(REG_CHAT_WINDOW_GOBJ) # get address of data buffer
 lbz REG_CHAT_WINDOW_INPUT, CSSCWDT_INPUT(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
 lbz REG_CHAT_WINDOW_TIMER, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
 lwz REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
@@ -832,6 +863,10 @@ stb r3, CSSDT_CHAT_WINDOW_OPENED(REG_CHAT_WINDOW_CSSDT_ADDR)
 # remove proc
 mr r3, REG_CHAT_WINDOW_GOBJ
 branchl r12, GObj_RemoveProc
+
+# destroy gobj
+mr r3, REG_CHAT_WINDOW_GOBJ
+branchl r12, GObj_Destroy
 
 # remove text
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR
