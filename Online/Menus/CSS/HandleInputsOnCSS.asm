@@ -124,8 +124,8 @@ b SKIP_START_MATCH
 ################################################################################
 HANDLE_IDLE:
 
-# Check if we should open chat window
-bl FN_CHECK_CHAT_INPUTS
+# uncomment to debug the chat window
+# bl FN_CHECK_CHAT_INPUTS
 
 # When idle, pressing start will start finding match
 # Check if start was pressed
