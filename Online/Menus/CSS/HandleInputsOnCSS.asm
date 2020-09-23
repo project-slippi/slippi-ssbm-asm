@@ -679,7 +679,7 @@ blrl
 .set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set CHAT_WINDOW_IDLE_TIMER_TIME, 0x90 # initial idle timer before window disappears
-.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x15 # initial delay before allowing to send messages
+.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x22 # initial delay before allowing to send messages
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
 mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
