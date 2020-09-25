@@ -209,6 +209,7 @@ blrl
 ################################################################################
 # Chat Message Properties
 # Hack: CAP TO SAME LENGTH to ensure pointers are always reached
+# TODO: Find a way to reuse this between HandleInputOnCSS.asm and this file.
 ################################################################################
 .set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
 UP_CHAT_TEXT_PROPERTIES:
