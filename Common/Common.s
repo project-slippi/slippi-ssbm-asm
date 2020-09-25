@@ -135,6 +135,9 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FN_EXITransferBuffer,0x800055f0
 .set FN_GetIsFollower,0x800055f8
 .set FN_ProcessGecko,0x800055fc
+.set FN_MultiplyRWithF,0x800055ec
+.set FN_IntToFloat,0x800055f4
+.set FG_CreateSubtext,0x800056b4
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608

@@ -679,7 +679,8 @@ blrl
 .set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set CHAT_WINDOW_IDLE_TIMER_TIME, 0x90 # initial idle timer before window disappears
-.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x22 # initial delay before allowing to send messages
+.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x10 # initial delay before allowing to send messages
+.set CHAT_WINDOW_MAX_MESSAGES, 0x2 # Max messages allowed before blocking new ones
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
 mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
@@ -756,9 +757,11 @@ addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
 addi r6, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUT_NAME # String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
-lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
-bl FN_CREATE_SUBTEXT_CONCATENATED
+lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
+lfs f3, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+lfs f4, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
+li r9, 1 # Create Subtext Concatenated
+branchl r12, FG_CreateSubtext
 mr r4, r3 # sub text index for next function call
 
 # Create Subtext: Labels
@@ -769,9 +772,9 @@ CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_START:
 # calculate Y offset by moving it down a bit
 addi r3, r11, CHAT_WINDOW_HEADER_MARGIN_LINES
 lfs f2, TPO_CHAT_LABEL_MARGIN(REG_TEXT_PROPERTIES) # margin between labels
-bl FN_MULTIPLY_FLOAT_RF
+branchl r12, FN_MultiplyRWithF
 lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
-fadds f3, f3, f1
+fadds f4, f3, f1
 #fmr f3, f1 # 0x80195588
 
 # calculate address of label
@@ -810,8 +813,10 @@ addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_LABEL_FORMAT # String Format point
 addi r6, r6, 0 # label String pointer (this is a noop, actual cal assignment is done above)
 add r7, REG_CHAT_TEXT_PROPERTIES, r7 # message String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
-bl FN_CREATE_SUBTEXT_CONCATENATED
+lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
+lfs f3, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+li r9, 1 # Create Subtext Concatenated
+branchl r12, FG_CreateSubtext
 mr r11, r3 # save subtext index
 
 # Loop back if last index has not been reached
@@ -832,6 +837,11 @@ bgt CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
 # if there's any input, Send Message
 cmpwi REG_CHAT_WINDOW_SECOND_INPUT, 0
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+
+# if current message count is X, do not allow to send another
+lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
+cmpwi r3, CHAT_WINDOW_MAX_MESSAGES
+bgt CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
 
 # Clear Timer
 li r3, 0
@@ -957,11 +967,11 @@ blrl
 .set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
 .string "well played           "
 .set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "too good              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
 .string "that was fun          "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
 .string "thanks                "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "too good              "
 .align 2
 
 RIGHT_CHAT_TEXT_PROPERTIES:
@@ -969,11 +979,11 @@ blrl
 .set TPO_STRING_CHAT_SHORTCUT_NAME, 0
 .string "Reactions             "
 .set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "lol                   "
+.string "oof                   "
 .set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "sorry                 "
+.string "my b                  "
 .set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "oops                  "
+.string "lol                   "
 .set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
 .string "wow                   "
 .align 2
@@ -983,7 +993,7 @@ blrl
 .set TPO_STRING_CHAT_SHORTCUT_NAME, 0
 .string "Misc                  "
 .set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "back                  "
+.string "okay                  "
 .set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
 .string "thinking              "
 .set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
@@ -1031,138 +1041,6 @@ stfs REG_SCALING, 0x28(REG_TEXT_STRUCT_ADDR)
 
 # Return text struct Pointer in r3
 mr r3, REG_TEXT_STRUCT_ADDR
-restore
-blr
-
-################################################################################
-# Function: Creates and initalizes a subtext
-# r3 = text struct pointer, r4 = string pointer, r5 = color pointer, f1 = text size, f2 = x, f3 = y pos
-################################################################################
-FN_CREATE_SUBTEXT:
-# gp registers
-.set REG_TEXT_STRUCT_ADDR, 28
-.set REG_STRING_ADDR, REG_TEXT_STRUCT_ADDR+1
-.set REG_COLOR_ADDR, REG_STRING_ADDR+1
-.set REG_SUBTEXT_INDEX, REG_COLOR_ADDR+1
-# float registers
-.set REG_SIZE, REG_TEXT_STRUCT_ADDR
-.set REG_X, REG_SIZE+1
-.set REG_Y, REG_X+1
-
-# Save arguments
-mr REG_TEXT_STRUCT_ADDR, r3
-mr REG_STRING_ADDR, r4
-mr REG_COLOR_ADDR, r5
-
-fmr REG_SIZE, f1
-fmr REG_X, f2
-fmr REG_Y, f3
-backup
-
-# Initialize subtext
-mr r3, REG_TEXT_STRUCT_ADDR
-mr r4, REG_STRING_ADDR
-fmr f1, REG_X
-fmr f2, REG_Y
-branchl r12, Text_InitializeSubtext
-mr REG_SUBTEXT_INDEX, r3
-
-# Set Text Size
-mr r3, REG_TEXT_STRUCT_ADDR
-mr r4, REG_SUBTEXT_INDEX
-fmr f1, REG_SIZE
-fmr f2, REG_SIZE
-branchl r12, Text_UpdateSubtextSize
-
-# Set Text Color
-mr r3, REG_TEXT_STRUCT_ADDR
-mr r4, REG_SUBTEXT_INDEX
-mr r5, REG_COLOR_ADDR
-branchl r12, Text_ChangeTextColor
-
-
-# Return subtext index
-mr r3, REG_SUBTEXT_INDEX
-restore
-blr
-
-################################################################################
-# Function: Creates and initalizes a subtext # 801957A0
-# r3 = text struct pointer, r4 = color pointer, r5 = string format pointer, r6-r{n}= string pointers, f1 = text size, f2 = x, f3 = y pos
-################################################################################
-FN_CREATE_SUBTEXT_CONCATENATED:
-# gp registers
-.set REG_TEXT_STRUCT_ADDR, 21
-.set REG_STRING_FORMAT_ADDR, REG_TEXT_STRUCT_ADDR+1
-.set REG_STRING_1_ADDR, REG_STRING_FORMAT_ADDR+1
-.set REG_STRING_2_ADDR, REG_STRING_1_ADDR+1
-.set REG_STRING_3_ADDR, REG_STRING_2_ADDR+1
-.set REG_COLOR_ADDR, REG_STRING_3_ADDR+1
-.set REG_SUBTEXT_INDEX, REG_COLOR_ADDR+1
-# float registers
-.set REG_SIZE, REG_TEXT_STRUCT_ADDR
-.set REG_X, REG_SIZE+1
-.set REG_Y, REG_X+1
-
-# Save arguments
-mr REG_TEXT_STRUCT_ADDR, r3
-mr REG_COLOR_ADDR, r4
-mr REG_STRING_FORMAT_ADDR, r5
-mr REG_STRING_1_ADDR, r6
-mr REG_STRING_2_ADDR, r7
-mr REG_STRING_3_ADDR, r8
-
-fmr REG_SIZE, f1
-fmr REG_X, f2
-fmr REG_Y, f3
-backup
-
-mr r4, REG_STRING_FORMAT_ADDR
-mr r5, REG_COLOR_ADDR
-bl FN_CREATE_SUBTEXT
-mr REG_SUBTEXT_INDEX, r3 # sub text index
-
-# Concatenate user name with message "User: Message"
-mr r3, REG_TEXT_STRUCT_ADDR
-mr r4, REG_SUBTEXT_INDEX
-mr r5, REG_STRING_FORMAT_ADDR
-mr r6, REG_STRING_1_ADDR
-mr r7, REG_STRING_2_ADDR
-mr r8, REG_STRING_3_ADDR
-branchl r12, Text_UpdateSubtextContents
-
-# Return subtext index
-mr r3, REG_SUBTEXT_INDEX
-restore
-blr
-
-################################################################################
-# Converts int to float returns f3 as converted value (stolen from CreateText.asm)
-################################################################################
-IntToFloat:
-stwu r1,-0x100(r1)	# make space for 12 registers
-stfs  f2,0x8(r1)
-
-lis	r0, 0x4330
-lfd	f2, -0x6758 (rtoc)
-xoris	r3, r3,0x8000
-stw	r0,0xF0(sp)
-stw	r3,0xF4(sp)
-lfd	f1,0xF0(sp)
-fsubs	f1,f1,f2		#Convert To Float
-
-lfs  f2,0x8(r1)
-addi	r1,r1,0x100	# release the space
-blr
-
-################################################################################
-# Multiplies r3=int with f2=float
-# return result in f1
-################################################################################
-FN_MULTIPLY_FLOAT_RF:
-backup
-bl IntToFloat # returns f1
-fmuls f1, f1, f2
 restore
 blr
 
