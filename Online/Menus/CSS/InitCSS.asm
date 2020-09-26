@@ -1146,12 +1146,24 @@ cmpwi REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, 0x00000000
 bne CSS_ONLINE_CHAT_CHECK_TIMER # already has values means that is set so skip to timer check
 
 ##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
+
+# Change Text Struct Descriptor to use a higher GX
+load r3, 0x80bd5c6c # Text Struct Descriptor
+li r4, 3 # gx_link we want
+stb r4, 0xE(r3)
+
 # Create Text Struct
 li r3, 0
 li r4, 0
 branchl r12, Text_CreateStruct
 mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
 stw REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+# Restore Text Struct descriptor
+load r3, 0x80bd5c6c # Text Struct Descriptor
+li r4, 1 # gx_link we want
+stb r4, 0xE(r3)
+
 
 # Set text kerning to close
 li r4, 0x1
