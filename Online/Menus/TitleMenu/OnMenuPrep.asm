@@ -27,7 +27,6 @@
 .set DLG_USER_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set DLG_OPTION_YES, 0x1
 .set DLG_OPTION_NO, 0x0
-.set DLG_INPUT_DELAY, 0xA
 
 # PAD Constants for dialog when using Inputs_GetPlayerHeldInputs on the dialog
 .set PAD_LEFT, 0x40 # on r4 is 00040000
@@ -50,8 +49,7 @@
 .set MENU_DLG_USER_DATA_OFFSET, 0x8
 
 # Dialog Buffer Data Table
-.set DLG_DT_INPUT_DELAY, 0x0 # u8
-.set DLG_DT_SELECTED_OPTION, DLG_DT_INPUT_DELAY+1 # u8
+.set DLG_DT_SELECTED_OPTION, 0 # u8
 .set DLG_DT_SUBMENU_GOBJ_ADDR, DLG_DT_SELECTED_OPTION+1 # u32
 .set DLG_DT_TEXT_STRUCT_ADDR, DLG_DT_SUBMENU_GOBJ_ADDR+4 # u32
 .set DLG_DT_SIZE, DLG_DT_TEXT_STRUCT_ADDR + 4
@@ -515,6 +513,13 @@ FN_CREATE_DIALOG:
 
 backup
 
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+lfs REG_F_0, TPO_FLOAT_0(REG_TEXT_PROPERTIES)
+lfs REG_F_1, TPO_FLOAT_1(REG_TEXT_PROPERTIES)
+
 # Create User Data:
 # We will be adding a very small buffer to be able to track the selected option
 # Get Memory Buffer for Chat Window Data Table
@@ -528,10 +533,6 @@ mr REG_DLG_BUFFER_ADDRESS, r3 # save result address into REG_DLG_BUFFER_ADDRESS
 mr r4, REG_DLG_BUFFER_SIZE # buffer size
 branchl r12, Zero_AreaLength
 
-# Set Buffer Initial Data
-li r3, 0x0
-stb r3, DLG_DT_INPUT_DELAY(REG_DLG_BUFFER_ADDRESS)
-
 # 0: means no is selected, 1: yes is selected
 li r3, DLG_OPTION_NO # Initial Selected Option
 stb r3, DLG_DT_SELECTED_OPTION(REG_DLG_BUFFER_ADDRESS)
@@ -543,15 +544,6 @@ stw r3, DLG_DT_SUBMENU_GOBJ_ADDR(REG_DLG_BUFFER_ADDRESS)
 # Save Pointer to User data To keep track of it
 stw REG_DLG_BUFFER_ADDRESS, MENU_DLG_USER_DATA_OFFSET(REG_SM_GOBJ)
 
-# Get float value 0.0
-li r3, 0
-bl IntToFloat
-fmr REG_F_0, f1
-
-# Get float value 1.0
-li r3, 1
-bl IntToFloat
-fmr REG_F_1, f1
 
 # Create GObj
 li r3, 6 # GObj Type (6 is menu type?)
@@ -673,7 +665,7 @@ branchl r12, GObj_Initialize # 0x80390b68;
 mr r3, REG_DLG_GOBJ
 bl FN_LogoutDialogThink
 mflr r4 # Function
-li r5, 4 # Priority
+li r5, 15 # Priority
 branchl	r12, GObj_AddProc
 
 restore
@@ -689,6 +681,13 @@ FN_LogoutDialogThink: #801978fc
 blrl
 backup
 
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+lfs REG_F_0, TPO_FLOAT_0(REG_TEXT_PROPERTIES) # load 0.0
+lfs REG_F_1, TPO_FLOAT_1(REG_TEXT_PROPERTIES) # load 1.0
+
 mr REG_DLG_GOBJ, r3
 lwz REG_DLG_JOBJ, DLG_JOBJ_OFFSET(REG_DLG_GOBJ) # Get Jobj
 lwz REG_DLG_USER_DATA_ADDR, DLG_USER_DATA_OFFSET(REG_DLG_GOBJ) # get address of data buffer
@@ -697,15 +696,15 @@ lbz REG_DLG_SELECTED_OPTION, DLG_DT_SELECTED_OPTION(REG_DLG_USER_DATA_ADDR) # Ge
 lwz REG_DLG_MENU_GOBJ_ADDR, DLG_DT_SUBMENU_GOBJ_ADDR(REG_DLG_USER_DATA_ADDR) # get address of submenu's gboj
 lwz REG_DLG_TEXT_STRUCT_ADDR, DLG_DT_TEXT_STRUCT_ADDR(REG_DLG_USER_DATA_ADDR) # get address of text struct
 
+# Always Animate the dialog
+mr r3, REG_DLG_JOBJ
+branchl r12, JObj_AnimAll
+
 # Only Initialize Text if needed
 cmpwi REG_DLG_TEXT_STRUCT_ADDR, 0
 bne FN_LogoutDialogThink_ConfigureUI
 
 FN_LogoutDialogThink_InitText:
-
-# INIT PROPERTIES
-bl TEXT_PROPERTIES
-mflr REG_TEXT_PROPERTIES
 
 # Create Text Object
 li r3, 0
@@ -733,20 +732,10 @@ stfs f0, 0x28(r3) # Scale Y
 stb r0, 0x4A(REG_DLG_TEXT_STRUCT_ADDR) # Set text to align center
 branchl r12, Text_CopyPremadeTextDataToStruct
 
+# exit to next frame when dialog is first initialized
+b FN_LogoutDialogThink_Exit
+
 FN_LogoutDialogThink_ConfigureUI:
-# Get float value 0.0
-li r3, 0
-bl IntToFloat
-fmr REG_F_0, f1
-
-# Get float value 1.0
-li r3, 1
-bl IntToFloat
-fmr REG_F_1, f1
-
-# Always Animate the dialog
-mr r3, REG_DLG_JOBJ
-branchl r12, JObj_AnimAll
 
 # Configure "No" Button
 mr r3,REG_DLG_JOBJ # jobj
@@ -790,15 +779,10 @@ lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
 branchl r12, JObj_AnimAll
 # Configure "Yes" Button!
 
-# If no delay continue, else branch to exit
-lbz r3, DLG_DT_INPUT_DELAY(REG_DLG_USER_DATA_ADDR) # Initialized Offset
-cmpwi r3, DLG_INPUT_DELAY # minimum of x frames
-blt FN_LogoutDialogThink_Exit
-
 FN_LogoutDialogThink_CheckInputs:
 # Check input and switch option if left or right
 li r3, 0
-branchl r12, Inputs_GetPlayerHeldInputs # 0x801a3680
+branchl r12, 0x801A36A0 # Inputs_GetPlayerInstantInputs
 
 # Exit function if no input # 0x8019796c
 cmpwi r3, PAD_LEFT
@@ -811,11 +795,6 @@ cmpwi r3, PAD_B
 beq FN_LogoutDialogThink_CloseDialog
 b FN_LogoutDialogThink_Exit
 
-FN_LogoutDialogThink_ResetInputDelay:
-# Mark as initialized
-li r3, 0
-stb r3, DLG_DT_INPUT_DELAY(REG_DLG_USER_DATA_ADDR) # Initialized Offset
-blr
 
 FN_LogoutDialogThink_SwitchOption:
 li	r3, 2
@@ -824,8 +803,6 @@ branchl r12, SFX_Menu_CommonSound
 xori r3, REG_DLG_SELECTED_OPTION, 0x1 # alternate selected option
 stb r3, DLG_DT_SELECTED_OPTION(REG_DLG_USER_DATA_ADDR) # Store to proper user data offset
 
-
-bl FN_LogoutDialogThink_ResetInputDelay
 b FN_LogoutDialogThink_Exit
 
 FN_LogoutDialogThink_DoLogout:
@@ -848,7 +825,9 @@ FN_LogoutDialogThink_CloseDialog:
 li	r3, 0
 branchl r12, SFX_Menu_CommonSound
 
-bl FN_LogoutDialogThink_ResetInputDelay
+# remove all anims
+mr r3, REG_DLG_JOBJ
+branchl r12, 0x8036F6B4 # HSD_JObjRemoveAnimAll
 
 # remove proc
 mr r3, REG_DLG_GOBJ
@@ -862,7 +841,7 @@ branchl r12, GObj_Destroy
 mr r3, REG_DLG_TEXT_STRUCT_ADDR
 branchl r12, Text_RemoveText
 
-# Save Pointer to User data To keep track of it
+# Clear Pointer to this gobj's User data to restore input on submenu
 load r3, 00000000
 stw r3, MENU_DLG_USER_DATA_OFFSET(REG_DLG_MENU_GOBJ_ADDR)
 
@@ -870,31 +849,8 @@ b FN_LogoutDialogThink_Exit
 
 FN_LogoutDialogThink_Exit:
 
-# Mark as initialized
-lbz r3, DLG_DT_INPUT_DELAY(REG_DLG_USER_DATA_ADDR) # Initialized Offset
-addi r3, r3, 1
-stb r3, DLG_DT_INPUT_DELAY(REG_DLG_USER_DATA_ADDR) # Initialized Offset
-
 restore
 blr
-
-
-IntToFloat:
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stfs  f2,0x8(r1)
-
-lis	r0, 0x4330
-lfd	f2, -0x6758 (rtoc)
-xoris	r3, r3,0x8000
-stw	r0,0xF0(sp)
-stw	r3,0xF4(sp)
-lfd	f1,0xF0(sp)
-fsubs	f1,f1,f2		#Convert To Float
-
-lfs  f2,0x8(r1)
-addi	r1,r1,0x100	# release the space
-blr
-
 
 ################################################################################
 # Properties
@@ -916,6 +872,11 @@ blrl
 .float 20
 .set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
 .float 0.05
+
+.set TPO_FLOAT_0, TPO_DLG_LABEL_CANVAS_SCALE+4
+.float 0.0
+.set TPO_FLOAT_1, TPO_FLOAT_0+4
+.float 1.0
 
 .align 2
 
