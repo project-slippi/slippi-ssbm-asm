@@ -7,16 +7,24 @@
 
 # general registers
 .set REG_FG_USER_DISPLAY, 21
-.set REG_DLG_MENU_GOBJ_ADDR, REG_FG_USER_DISPLAY+1
-.set REG_DLG_BUFFER_SIZE, REG_DLG_MENU_GOBJ_ADDR+1
+.set REG_DLG_BUFFER_SIZE, REG_FG_USER_DISPLAY+1
 .set REG_DLG_BUFFER_ADDRESS, REG_DLG_BUFFER_SIZE+1
+
 .set REG_DLG_GOBJ, REG_DLG_BUFFER_ADDRESS+1
 .set REG_DLG_JOBJ, REG_DLG_GOBJ+1
+
+.set REG_JOBJ_DESC_ADDR, REG_DLG_USER_DATA_ADDR
+.set REG_JOBJ_DESC_ANIM_JOINT_ADDR, REG_JOBJ_DESC_ADDR+1
+.set REG_JOBJ_DESC_MAT_JOINT_ADDR, REG_JOBJ_DESC_ANIM_JOINT_ADDR+1
+.set REG_JOBJ_DESC_SHAPE_JOINT_ADDR, REG_JOBJ_DESC_MAT_JOINT_ADDR+1
+
+# Registers used on Dialog think function, start at REG_DLG_JOBJ
 .set REG_DLG_USER_DATA_ADDR, REG_DLG_JOBJ+1
 .set REG_DLG_SELECTED_OPTION, REG_DLG_USER_DATA_ADDR+1 # 0: NO, 1: YES
-.set REG_DLG_TEXT_STRUCT_ADDR, REG_DLG_SELECTED_OPTION+1
+.set REG_DLG_MENU_GOBJ_ADDR, REG_DLG_SELECTED_OPTION+1
+.set REG_DLG_TEXT_STRUCT_ADDR, REG_DLG_MENU_GOBJ_ADDR+1
 .set REG_TEXT_PROPERTIES, REG_DLG_TEXT_STRUCT_ADDR+1
-.set REG_JOBJ_DESC_OFFSET, REG_TEXT_PROPERTIES+1
+
 
 # float registers
 .set REG_F_0, 22
@@ -35,13 +43,10 @@
 .set PAD_B, 0x02 # on r4 is 00000200
 
 # Dialog Static Memory JOBJ Descriptors Locations/Pointers
-# Important: These pointers are set at an -A0 offset after returning from another scene
-# when returning from a scene the pointer of the original Desc has value of 0x3f800000 float: 1.0
-.set JOBJ_DESC_DLG, 0x81202714 # memory address of dialog jobj # value is actually, on scene return changes to: 0x81202674
-.set JOBJ_DESC_DLG_ANIM_JOINT, 0x81205820 # memory address of dialog anim joint, on scene return changes to: 0x81205780
-.set JOBJ_DESC_DLG_MAT_JOINT, 0x81205AA8 # memory address of dialog mat joint, on scene return changes to: 0x81205a08
-.set JOBJ_DESC_DLG_SHAPE_JOINT, 0x81205BA0 # memory address of dialog shape joint, on scene return changes to: 0x81205b00
-.set JOBJ_FIRST_BOOT_OFFSET, -0xA0 # Offsets of the above pointers when is not first boot
+.set JOBJ_DESC_DLG, 0x803efa0c # archive memory address of dialog jobj
+.set JOBJ_DESC_DLG_ANIM_JOINT, 0x803efa24 # archive memory address of dialog anim joint
+.set JOBJ_DESC_DLG_MAT_JOINT, 0x803efa40 # archive memory address of dialog mat joint
+.set JOBJ_DESC_DLG_SHAPE_JOINT, 0x803efa60 # archive memory address of dialog shape joint
 .set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
 
 # Offset from submenu gobj where we are storing dialog user data buffer when
@@ -323,6 +328,7 @@ li r4, CONST_SlippiCmdOpenLogIn
 b FN_OnlineSubmenuThink_TRIGGER_EXI_MSG
 
 FN_OnlineSubmenuThink_HANDLE_LOGOUT: # crash at 80370c28
+
 # Play Warning sfx
 li r3, 0xbc
 li r4, 127
@@ -513,6 +519,28 @@ FN_CREATE_DIALOG:
 
 backup
 
+# load jobjects in memory
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_ADDR, r3
+
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG_ANIM_JOINT
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_ANIM_JOINT_ADDR, r3
+
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG_MAT_JOINT
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_MAT_JOINT_ADDR, r3
+
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG_SHAPE_JOINT
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_SHAPE_JOINT_ADDR, r3
+
+
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
 mflr REG_TEXT_PROPERTIES
@@ -552,23 +580,8 @@ li r5, 0x80 # some type of priority
 branchl r12, GObj_Create
 mr REG_DLG_GOBJ, r3 # 0x803901f0 store result
 
-# calculate JOBJ descriptor offset
-# if this is not first boot then shift the descriptors' pointers
-
-li REG_JOBJ_DESC_OFFSET, 0x0 # offset is 0 by default
-
-load r3, JOBJ_DESC_DLG
-lwz r3, 0x0(r3)
-load r4, 0x3f800000 # value that replaces pointer
-cmpw r4, r3
-bne SKIP_SET_DLG_JOBJ_OFFSET
-
-li REG_JOBJ_DESC_OFFSET, JOBJ_FIRST_BOOT_OFFSET
-SKIP_SET_DLG_JOBJ_OFFSET:
-
-# Create JOBJ # 801975e8
-load r3, JOBJ_DESC_DLG
-add r3, r3, REG_JOBJ_DESC_OFFSET
+# Create JOBJ
+mr r3, REG_JOBJ_DESC_ADDR
 branchl r12, JObj_LoadJoint # 0x80370E44 # (this func only uses r3)
 mr REG_DLG_JOBJ, r3 # store result
 
@@ -607,12 +620,9 @@ branchl r12, JObj_SetFlagsAll # 0x80371D9c
 
 # Add Animations to JObj
 mr r3, REG_DLG_JOBJ
-load r4, JOBJ_DESC_DLG_ANIM_JOINT
-add r4, r4, REG_JOBJ_DESC_OFFSET
-load r5, JOBJ_DESC_DLG_MAT_JOINT
-add r5, r5, REG_JOBJ_DESC_OFFSET
-load r6, JOBJ_DESC_DLG_SHAPE_JOINT
-add r6, r6, REG_JOBJ_DESC_OFFSET
+mr r4, REG_JOBJ_DESC_ANIM_JOINT_ADDR
+mr r5, REG_JOBJ_DESC_MAT_JOINT_ADDR
+mr r6, REG_JOBJ_DESC_SHAPE_JOINT_ADDR
 branchl r12, JObj_AddAnimAll #, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
 
 mr r3, REG_DLG_JOBJ
@@ -652,7 +662,6 @@ load r4, 0x80391070 # GX Callback func to use
 li r5, 6 # Assigns the gx_link index
 li r6, 0x80 # sets the priority
 branchl r12, GObj_SetupGXLink # 0x8039069c
-
 
 # Add User Data to GOBJ ( Our buffer )
 mr r3, REG_DLG_GOBJ

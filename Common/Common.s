@@ -328,6 +328,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 ################################################################################
 .set primaryDataBuffer,-0x49b4
 .set secondaryDmaBuffer,-0x49b0
+.set archiveDataBuffer, -0x4AE8
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
 
