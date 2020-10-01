@@ -38,8 +38,9 @@
 .set PAD_DOWN, 0x4
 .set PAD_UP, 0x8
 
-.set MAX_CHAT_MESSAGES, 4
-.set MAX_CHAT_MESSAGE_LINES, 6
+.set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
+.set MAX_CHAT_MESSAGE_LINES, 14
+.set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -681,7 +682,7 @@ branchl r12, Zero_AreaLength
 
 # Set Buffer Initial Data
 # initialize timer 0x80195b38
-li r3, 0x60 # max value of byte which is 255, approx 4 seconds 255/60 = 4.25 secs
+li r3, CHAT_MESSAGE_DISPLAY_TIMER # max value of byte which is 255, approx 4 seconds 255/60 = 4.25 secs
 stb r3, CSSCMDT_TIMER(r23)
 
 # initialize message id

@@ -1,0 +1,20 @@
+################################################################################
+# Address: 0x803a5cc4 # Replaces Text_RemoveText WIP: Does not work properly yet
+################################################################################
+
+.include "Common/Common.s"
+.include "Online/Online.s"
+
+.set REG_MEM_ADDR, 23
+
+backup
+# r3 holds the size
+mr REG_MEM_ADDR, r3
+
+mr r3, REG_MEM_ADDR
+branchl r12, HSD_Free
+
+mr r3, REG_MEM_ADDR # Return Pointer to saved memory
+restore
+
+blr

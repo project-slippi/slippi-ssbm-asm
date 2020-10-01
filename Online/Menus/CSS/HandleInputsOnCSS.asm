@@ -125,7 +125,7 @@ b SKIP_START_MATCH
 HANDLE_IDLE:
 
 # uncomment to debug the chat window
-# bl FN_CHECK_CHAT_INPUTS
+bl FN_CHECK_CHAT_INPUTS
 
 # When idle, pressing start will start finding match
 # Check if start was pressed
@@ -679,8 +679,8 @@ blrl
 .set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set CHAT_WINDOW_IDLE_TIMER_TIME, 0x90 # initial idle timer before window disappears
-.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x08 # initial delay before allowing to send messages
-.set CHAT_WINDOW_MAX_MESSAGES, 0x2 # Max messages allowed before blocking new ones
+.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x0A # initial delay before allowing to send messages
+.set CHAT_WINDOW_MAX_MESSAGES, 0x04 # Max messages allowed before blocking new ones
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
 mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
@@ -842,7 +842,7 @@ beq CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
 # if current message count is X, do not allow to send another
 lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
 cmpwi r3, CHAT_WINDOW_MAX_MESSAGES
-bgt CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+bge CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
 
 # Clear Timer
 li r3, 0
@@ -1009,7 +1009,7 @@ blrl
 ################################################################################
 FN_CREATE_TEXT_STRUCT:
 # gp registers
-.set REG_KERNING, 6
+.set REG_KERNING, 22
 .set REG_ALIGNMENT, REG_KERNING+1
 .set REG_TEXT_STRUCT_ADDR, REG_ALIGNMENT+1
 # float registers

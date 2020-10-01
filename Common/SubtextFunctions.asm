@@ -72,7 +72,7 @@ cmpwi REG_OUTLINE, 1
 blt INIT_SINGLE_TEXT_START
 
 INIT_OUTLINED_TEXT_START:
-li REG_LOOP_INDEX, 2 # subindex start SET to 4 to restore 4 outlines
+li REG_LOOP_INDEX, 4 # subindex start SET to 4 to restore outlines
 TEXT_LOOP_START:
 
 # Get X+Y Position
@@ -88,7 +88,7 @@ cmpwi REG_LOOP_INDEX, 3 # top outline
 beq TEXT_LOOP_SHIFT_OUTLINE_TOP
 cmpwi REG_LOOP_INDEX, 4 # bottom outline
 beq TEXT_LOOP_SHIFT_OUTLINE_BOTTOM
-b TEXT_LOOP_SHIFT_OUTLINE_TOP # Remove to restore 4 outlines
+#b TEXT_LOOP_SHIFT_OUTLINE_TOP # Remove to restore 4 outlines
 b TEXT_LOOP_INITIALIZE_SUBTEXT
 
 TEXT_LOOP_SHIFT_OUTLINE_LEFT:
@@ -118,9 +118,10 @@ fmr f1, REG_SCALE_X
 fmr f2, REG_SCALE_Y
 
 # If reached last index, scale y down
-cmpwi REG_LOOP_INDEX, TEXT_LAST_INDEX
-bne TEXT_LOOP_INITIALIZE_SUBTEXT_SCALE_SET
-fmr f2, REG_OUTLINE_SIZE
+# uncomment to mimic outlines
+#cmpwi REG_LOOP_INDEX, TEXT_LAST_INDEX
+#bne TEXT_LOOP_INITIALIZE_SUBTEXT_SCALE_SET
+#fmr f2, REG_OUTLINE_SIZE
 
 TEXT_LOOP_INITIALIZE_SUBTEXT_SCALE_SET:
 branchl r12, Text_UpdateSubtextSize

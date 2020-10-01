@@ -168,6 +168,8 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set JObj_RemoveAnimAll,0x8036f6b4
 
 ## Text functions
+.set Text_AllocateMenuTextMemory,0x803A5798
+.set Text_FreeMenuTextMemory,0x80390228 # Not sure about this one, but it has a similar behavior to the Allocate
 .set Text_CreateStruct,0x803a6754
 .set Text_AllocateTextObject,0x803a5acc
 .set Text_CopyPremadeTextDataToStruct,0x803a6368
