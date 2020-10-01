@@ -1152,9 +1152,10 @@ bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so
 ##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
 
 # Change Text Struct Descriptor to use a higher GX
-load r3, 0x80bd5c6c # Text Struct Descriptor
+lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
 li r4, 3 # gx_link we want
 stb r4, 0xE(r3)
+load r3, 0x80bd5c6c
 
 # Create Text Struct
 li r3, 0
@@ -1164,10 +1165,9 @@ mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
 stw REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 # Restore Text Struct descriptor
-load r3, 0x80bd5c6c # Text Struct Descriptor
-li r4, 1 # gx_link we want
+lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
+li r4, 1 # original gx_link to restore
 stb r4, 0xE(r3)
-
 
 # Set text kerning to close
 li r4, 0x1
