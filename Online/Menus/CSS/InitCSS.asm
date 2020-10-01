@@ -38,6 +38,9 @@
 .set PAD_DOWN, 0x4
 .set PAD_UP, 0x8
 
+.set MAX_CHAT_MESSAGES, 4
+.set MAX_CHAT_MESSAGE_LINES, 6
+
 # Ensure that this is an online CSS
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_CSS
@@ -648,7 +651,7 @@ mr r26, r3
 UPDATE_CHAT_MESSAGES:
 # Start at the top after x messages
 lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR)
-cmpwi r3, 6
+cmpwi r3, MAX_CHAT_MESSAGE_LINES
 ble CREATE_CHAT_MESSAGE
 # if we reached the limit, reset the last message index to 0
 li r3, 0
@@ -1143,7 +1146,7 @@ lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 # if text is not initialized, do it and move to next frame
 cmpwi REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, 0x00000000
-bne CSS_ONLINE_CHAT_CHECK_TIMER # already has values means that is set so skip to timer check
+bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so skip to timer check
 
 ##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
 
@@ -1272,11 +1275,11 @@ fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 # Create Outlined subtext
 mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR # text struct pointer
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT # text color
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHATMSG_FORMAT # concatenate user name with message "User: Message"
-mr r6, REG_CHATMSG_USER_NAME_ADDR # User name
-mr r7, REG_CHATMSG_MSG_STRING_ADDR # Message
-li r9, 3 # create with outlines and concatenate
-addi r10, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_BG # color outline
+li r5, 1 # outline text
+addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_BG # color outline
+addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHATMSG_FORMAT # concatenate user name with message "User: Message"
+mr r8, REG_CHATMSG_USER_NAME_ADDR # User name
+mr r9, REG_CHATMSG_MSG_STRING_ADDR # Message
 lfs f1, TPO_CHATMSG_SIZE(REG_TEXT_PROPERTIES) # chat message scale
 lfs f2, TPO_CHATMSG_SIZE(REG_TEXT_PROPERTIES) # chat message scale
 fmr f3, REG_CHATMSG_TEXT_X_POS # x pos
@@ -1287,6 +1290,25 @@ lfs f6, TPO_CHATMSG_OUTLINE_OFFSET(REG_TEXT_PROPERTIES) # chat message scale
 branchl r12, FG_CreateSubtext
 
 ##### END: INITIALIZING CHAT MSG TEXT ###########
+
+CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES:
+lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # 4
+cmpwi r3, MAX_CHAT_MESSAGES
+blt CSS_ONLINE_CHAT_CHECK_TIMER
+
+# if last chat message index is 0 and my index is max - 1 (if messages are rotating on the top again)
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index
+cmpw r3, REG_CHATMSG_MSG_INDEX
+bge CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES_SKIP_TOP_ROTATION
+
+cmpwi REG_CHATMSG_MSG_INDEX, MAX_CHAT_MESSAGE_LINES
+ble CSS_ONLINE_CHAT_REMOVE_PROC
+
+CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES_SKIP_TOP_ROTATION:
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index
+sub r3, r3, REG_CHATMSG_MSG_INDEX
+cmpwi r3, MAX_CHAT_MESSAGES
+bgt CSS_ONLINE_CHAT_REMOVE_PROC
 
 CSS_ONLINE_CHAT_CHECK_TIMER:
 

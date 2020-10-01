@@ -679,7 +679,7 @@ blrl
 .set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set CHAT_WINDOW_IDLE_TIMER_TIME, 0x90 # initial idle timer before window disappears
-.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x10 # initial delay before allowing to send messages
+.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x08 # initial delay before allowing to send messages
 .set CHAT_WINDOW_MAX_MESSAGES, 0x2 # Max messages allowed before blocking new ones
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
@@ -754,13 +754,14 @@ stw REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_G
 # Create Subtext: Header
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
-addi r6, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUT_NAME # String pointer
+li r5, 0 # no outline
+addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
+addi r8, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUT_NAME # String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f3, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
 lfs f4, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
-li r9, 1 # Create Subtext Concatenated
 branchl r12, FG_CreateSubtext
 mr r4, r3 # sub text index for next function call
 
@@ -788,16 +789,16 @@ cmpwi r11, 0x3
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
 
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
-addi r6, REG_TEXT_PROPERTIES, TPO_STRING_UP # label String pointer
+addi r8, REG_TEXT_PROPERTIES, TPO_STRING_UP # label String pointer
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR:
-addi r6, REG_TEXT_PROPERTIES, TPO_STRING_DOWN # label String pointer
+addi r8, REG_TEXT_PROPERTIES, TPO_STRING_DOWN # label String pointer
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR:
-addi r6, REG_TEXT_PROPERTIES, TPO_STRING_RIGHT # label String pointer
+addi r8, REG_TEXT_PROPERTIES, TPO_STRING_RIGHT # label String pointer
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR:
-addi r6, REG_TEXT_PROPERTIES, TPO_STRING_LEFT # label String pointer
+addi r8, REG_TEXT_PROPERTIES, TPO_STRING_LEFT # label String pointer
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END:
 
@@ -805,17 +806,17 @@ CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_MSG_ADDR:
 # calculate address of message
 mr r3, r11
 addi r3, r3, 1
-mulli r7, r3, CHAT_TEXT_STRING_LENGTH
+mulli r9, r3, CHAT_TEXT_STRING_LENGTH
 
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_LABEL_FORMAT # String Format pointer
-addi r6, r6, 0 # label String pointer (this is a noop, actual cal assignment is done above)
-add r7, REG_CHAT_TEXT_PROPERTIES, r7 # message String pointer
+li r5, 0 # No outlines
+addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_LABEL_FORMAT # String Format pointer
+add r9, REG_CHAT_TEXT_PROPERTIES, r9 # message String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f3, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
-li r9, 1 # Create Subtext Concatenated
 branchl r12, FG_CreateSubtext
 mr r11, r3 # save subtext index
 
