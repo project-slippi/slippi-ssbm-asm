@@ -235,6 +235,20 @@
           "annotation": "Enable Develop Mode"
         }
       ]
+    },
+    {
+      "name": "Optional: Lagless FoD",
+      "authors": ["Achilles", "Myougi", "Dan Salvato"],
+      "description": [
+        "Disables particles and reflection on FoD to improve performance"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
+          "annotation": "Lagless FoD"
+        }
+      ]
     }
   ]
 }
