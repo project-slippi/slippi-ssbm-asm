@@ -226,8 +226,15 @@ stw r4, 0x31(r3)
 load r4 0x00000000
 stw r4, 0x35(r3)
 
+# 0x0102 is offline SSS
+# 0x0108 is online SSS
 cmpwi r8, 0x0102
-bne Not_SSS
+beq Is_SSS
+cmpwi r8, 0x0108
+beq Is_SSS
+b Not_SSS
+
+Is_SSS:
 
 # Stage Select Cursor X
 # 4-byte float
