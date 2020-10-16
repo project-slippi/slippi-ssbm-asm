@@ -14,6 +14,11 @@
 # Init
   backup
   lwz REG_Buffer,OFST_R13_SB_ADDR(r13)
+# Ensure buffer exists
+  cmpwi REG_Buffer,0
+  bne  GetFileLength_REQUEST_DATA
+  restore
+  b GetFileLength_NO_REPLACEMENT
 
 GetFileLength_REQUEST_DATA:
 # request game information from slippi
