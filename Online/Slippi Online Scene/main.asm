@@ -1,10 +1,13 @@
-#To be inserted at 801a45bc
+#To be inserted at 801a45b8
 .include "../../Common/Common.s"
 .include "Online/Online.s"
 #.include "../Globals.s"
 .include "Header.s"
 
 .set  ExitSceneID,40
+
+# Original codeline
+  addi	r29, r3, 4
 
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
@@ -101,7 +104,8 @@ Major Scene Table:
 
 
 #Get major scene struct
-  branchl r12,0x801a50ac
+  #branchl r12,0x801a50ac
+  load r3,0x803daca4
 GetMajorStruct_Loop:
   lbz	r4, 0x0001 (r3)
   cmpw r4,REG_MajorScene
@@ -806,4 +810,3 @@ Injection_Exit:
   restore
   li  r3,ExitSceneID
   stb r3,0x0(r30)
-  li	r31, 0
