@@ -11,7 +11,7 @@
 .include "Common/Common.s"
 .include "Recording/Recording.s"
 
-.set PAYLOAD_LEN, 0x3F
+.set PAYLOAD_LEN, 0x40
 .set EXI_BUF_LEN, PAYLOAD_LEN + 1
 
 .set STACK_FREE_SPACE, EXI_BUF_LEN + 0x20 # Add 0x20 to deal with byte alignment
@@ -276,6 +276,11 @@ stb r4, 0x3D(r3)
 load r4 0x804A04F3
 lbz r4, 0(r4)
 stb r4, 0x3E(r3)
+
+# Online character costume
+load r4 0x803F0E09
+lbz r4, 0(r4)
+stb r4, 0x3F(r3)
 
 #------------- Transfer Buffer ------------
 # r3 is the buffer arg, but it's already set
