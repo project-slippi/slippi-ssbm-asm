@@ -2,6 +2,7 @@
 # Address: 8016e74c
 ################################################################################
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Recording/Recording.s"
 .include "Recording/SendInitialRNG.s"
 .include "Recording/SendItemInfo.s"
@@ -15,10 +16,7 @@
 
 .set REG_Buffer,30
 .set REG_BufferOffset,29
-.set REG_GeckoListSize,28
-.set REG_GeckoCopyBuffer,27
-.set REG_GeckoCopyPos,26
-.set REG_RDB,25
+.set REG_RDB,28
 
 backup
 
@@ -286,7 +284,7 @@ UCF_LOOP:
 
 # Init loop
   li  REG_LoopCount,0                               #init loop count
-  addi REG_PlayerDataStart,r31,PlayerDataStart     #player data start in match struct
+  addi REG_PlayerDataStart,r31,PlayerDataStart      #player data start in match struct
   addi r23,REG_Buffer,NametagDataStart              #Start of nametag data in buffer
 SEND_GAME_INFO_NAMETAG_LOOP:
 #Get nametag data in buffer in r24
@@ -345,6 +343,76 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   getMinorMajor r3
   sth r3, MinorMajorStart(REG_Buffer)
 
+#------------- SEND Display Names ------------
+.set DisplayNameStart, (MinorMajorStart + MinorMajorLength)
+.set DisplayNameLength, 0x7C
+# Offsets
+.set PlayerDataStart, 96       #player data starts in match struct
+.set PlayerDataLength, 36      #length of each player's data
+.set PlayerStatus, 0x1         #offset of players in-game status
+# Constants
+.set BytesToCopy, 31               # 2 bytes per char + 1 byte for null terminator = 31 bytes
+# Registers
+.set REG_LoopCount, 20
+.set REG_PlayerDataStart, 21
+.set REG_CurrentPlayerData, 22
+.set REG_BufferDisplayNameStart, 23
+.set REG_BufferCurrentDisplayName, 24
+.set REG_MSRB_ADDR, 25
+
+# Get MSRB address
+  li r3, 0
+  branchl r12, FN_LoadMatchState
+  mr REG_MSRB_ADDR, r3
+
+# Move to offset of the first name
+  addi r4, REG_MSRB_ADDR, MSRB_P1_NAME
+  
+# Init loop
+  li  REG_LoopCount, 0                                               # init loop count
+  addi REG_PlayerDataStart, r31, PlayerDataStart                     # player data start in match struct
+  addi REG_BufferDisplayNameStart, REG_Buffer, DisplayNameStart      # Start of nametag data in buffer
+  DISPLAY_NAME_LOOP:
+  #Check if player exists
+  mulli REG_CurrentPlayerData, REG_LoopCount, PlayerDataLength
+  add REG_CurrentPlayerData, REG_CurrentPlayerData, REG_PlayerDataStart
+  lbz r3, PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3, 0
+  bne SEND_DISPLAY_NAME_NO_NAME
+
+#Get display name data in buffer in REG_BufferCurrentDisplayName
+  mulli r3, REG_LoopCount, BytesToCopy                                # calculate the offset of the start of the next name
+  add REG_BufferCurrentDisplayName, r3, REG_BufferDisplayNameStart    # add the offset and start of the display names in the buffer to get the current display name address
+
+# INCREASE THIS ONCE WE ADD MORE THAN 2 PLAYERS FOR ONLINE PLAY
+  cmpwi REG_LoopCount, 2
+  bge SEND_DISPLAY_NAME_NO_NAME
+
+#Get display name address and copy first 15 characters to nametag to buffer
+  add r4, REG_MSRB_ADDR, r3            # add the offset to MSRB address to get start of the next display name
+  mr  r3, REG_BufferCurrentDisplayName
+  li r5, BytesToCopy
+  branchl r12, memcpy                   # dest: REG_BufferCurrentDisplayName, source: MSRB_ADDR + offset, size: BytesToCopy
+  b DISPLAY_NAME_INC_LOOP
+
+  SEND_DISPLAY_NAME_NO_NAME:
+# Fill with zeroes
+  mr r3, REG_BufferCurrentDisplayName
+  li r4, BytesToCopy
+  branchl r12, Zero_AreaLength
+
+  DISPLAY_NAME_INC_LOOP:
+  addi REG_LoopCount, REG_LoopCount, 1
+  cmpwi REG_LoopCount, 4
+  blt DISPLAY_NAME_LOOP
+
+# Free MSRB
+  mr r3, REG_MSRB_ADDR
+  branchl r12, HSD_Free
+
+#------------- SEND Connect Codes ------------
+# TODO
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
@@ -352,6 +420,9 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   branchl r12,FN_EXITransferBuffer
 
 #-------------- Transfer Gecko List ---------------
+.set REG_GeckoListSize,20
+.set REG_GeckoCopyBuffer,21
+.set REG_GeckoCopyPos,22
 # Create copy buffer
   li r3, SPLIT_MESSAGE_BUF_LEN
   branchl r12, HSD_MemAlloc
