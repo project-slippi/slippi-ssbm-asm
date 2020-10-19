@@ -10,6 +10,11 @@
 .set REG_SFXDB_ADDRESS, 29
 .set REG_WRITE_INDEX, 28
 
+# Ensure that this is an online match
+getMinorMajor r3
+cmpwi r3, SCENE_ONLINE_IN_GAME
+bne EXIT
+
 backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
