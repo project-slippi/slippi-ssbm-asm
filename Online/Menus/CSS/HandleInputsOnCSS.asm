@@ -5,6 +5,7 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
+.set REG_ZERO, 28
 .set REG_INPUTS, 27
 .set REG_MSRB_ADDR, 26
 .set REG_TXB_ADDR, 25
@@ -30,6 +31,7 @@ bne EXIT # If not online CSS, continue as normal
 mr REG_INPUTS, r7
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR) # Load where buf is stored
+li REG_ZERO, 0 # set to zero just in case :)
 
 ################################################################################
 # Play sound on lock-in state 1 -> 0 transition
@@ -174,11 +176,11 @@ cmpwi r3, DISCONNECT_HOLD_DELAY
 ble SKIP_DISCONNECT
 
 # reset disconnect hold timer when disconnecting
-bl FN_RESET_DISCONNECT_HOLD_TIMER
+stb REG_ZERO, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 bl FN_RESET_CONNECTIONS
 b SKIP_START_MATCH
 RESET_HOLD_TIMER:
-bl FN_RESET_DISCONNECT_HOLD_TIMER
+stb REG_ZERO, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 SKIP_DISCONNECT:
 
 # Handle case where we are not yet locked-in
@@ -471,14 +473,6 @@ mr r3, REG_TXB_ADDR
 branchl r12, HSD_Free
 
 restore
-blr
-
-################################################################################
-# Function: Reset disconnect button hold timer
-################################################################################
-FN_RESET_DISCONNECT_HOLD_TIMER:
-li r3, 0
-stb r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 blr
 
 ################################################################################
