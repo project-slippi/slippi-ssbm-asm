@@ -10,6 +10,8 @@
 .set REG_TXB_ADDR, 25
 .set REG_CSSDT_ADDR, 24
 
+.set DISCONNECT_HOLD_DELAY, 0x30 # 3 seconds
+
 # Deal with replaced codeline
 beq+ START
 branch r12, 0x80263334
@@ -157,12 +159,28 @@ b SKIP_START_MATCH
 ################################################################################
 HANDLE_CONNECTED:
 
-# Handle disconnect
-rlwinm.	r0, REG_INPUTS, 0, 0x10
-beq SKIP_DISCONNECT
+# Handle disconnect when input is hold for X seconds
+branchl r12, Inputs_GetPlayerHeldInputs
+li r3, 0x4
+srw r3, r4, r3 # shift return value (r4) 4 bytes to the right, 1 means Z is pressed
+cmpwi r3, 0x1
+bne RESET_HOLD_TIMER # if button is no longer pressed, reset hold timer
 
+# increase time holding Z
+lbz r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
+addi r3, r3, 1
+stb r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
+
+# skip disconnect if hold time is less than delay
+cmpwi r3, DISCONNECT_HOLD_DELAY
+ble SKIP_DISCONNECT
+
+# reset disconnect hold timer when disconnecting
+bl FN_RESET_DISCONNECT_HOLD_TIMER
 bl FN_RESET_CONNECTIONS
 b SKIP_START_MATCH
+RESET_HOLD_TIMER:
+bl FN_RESET_DISCONNECT_HOLD_TIMER
 SKIP_DISCONNECT:
 
 # Handle case where we are not yet locked-in
@@ -453,6 +471,19 @@ branchl r12, FN_EXITransferBuffer
 
 mr r3, REG_TXB_ADDR
 branchl r12, HSD_Free
+
+restore
+blr
+
+################################################################################
+# Function: Reset disconnect button hold timer
+################################################################################
+FN_RESET_DISCONNECT_HOLD_TIMER:
+backup
+
+
+li r3, 0
+stb r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 
 restore
 blr
