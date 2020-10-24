@@ -161,10 +161,8 @@ HANDLE_CONNECTED:
 
 # Handle disconnect when input is hold for X seconds
 branchl r12, Inputs_GetPlayerHeldInputs
-li r3, 0x4
-srw r3, r4, r3 # shift return value (r4) 4 bytes to the right, 1 means Z is pressed
-cmpwi r3, 0x1
-bne RESET_HOLD_TIMER # if button is no longer pressed, reset hold timer
+rlwinm. r0, r4, 0, 0x10
+beq RESET_HOLD_TIMER # if button is no longer pressed, reset hold timer
 
 # increase time holding Z
 lbz r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
@@ -479,13 +477,8 @@ blr
 # Function: Reset disconnect button hold timer
 ################################################################################
 FN_RESET_DISCONNECT_HOLD_TIMER:
-backup
-
-
 li r3, 0
 stb r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
-
-restore
 blr
 
 ################################################################################
