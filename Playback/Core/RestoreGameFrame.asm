@@ -12,6 +12,7 @@
 .set PlayerDataStatic,28
 .set BufferPointer,27
 .set PlayerBackup,26
+.set REG_PDB_ADDR,25
 
 ################################################################################
 #                   subroutine: readInputs
@@ -31,8 +32,8 @@
   mr PlayerDataStatic,r3
 
 # get buffer pointer
-  lwz r3,primaryDataBuffer(r13)
-  lwz BufferPointer,PDB_EXI_BUF_ADDR(r3)
+  lwz REG_PDB_ADDR,primaryDataBuffer(r13)
+  lwz BufferPointer,PDB_EXI_BUF_ADDR(REG_PDB_ADDR)
 
 #Check if this player is a follower
   mr  r3,PlayerData
@@ -112,7 +113,13 @@ RestoreData:
   stw r3,0x650(PlayerData) #trigger
   lwz r3,Buttons(PlayerBackup)
   stw r3,0x65C(PlayerData) #buttons
-.if STG_ResyncPlayback==1
+
+# The following logic will overwrite values that will allow for resyncs. It will
+# only run if the resync logic has been enabled
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq SKIP_RESYNC
+
   lwz r3,XPos(PlayerBackup)
   stw r3,0xB0(PlayerData) #x position
   lwz r3,YPos(PlayerBackup)
@@ -123,7 +130,7 @@ RestoreData:
   lwz r3,ActionStateID(PlayerBackup)
   stw r3,0x10(PlayerData) #animation state ID
 .endif
-.endif
+SKIP_RESYNC:
 
 # UCF uses raw controller inputs for dashback, restore x analog byte here
   load r3, 0x8046b108 # start location of circular buffer
@@ -146,6 +153,10 @@ RestoreData:
   lbz r3,AnalogRawInput(PlayerBackup)
   stb r3, 0x2(r20) #store raw x analog
 
+# If we do not have resync logic enabled, don't try to restore percentage
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq SkipPercentageRestore
 # Get percentage
   lwz r3,Percentage(PlayerBackup)
   cmpwi r3,-1      #If this value is -1, the slp does not contain the data
@@ -163,9 +174,7 @@ RestoreData:
   lfs f1,0x40(sp)
   lfs f2,0x1830(PlayerData)
   fsubs f1,f1,f2
-.if STG_ResyncPlayback==1
   branchl r12, Damage_UpdatePercent
-.endif
 SkipPercentageRestore:
 
 # Correct spawn points on the first frame

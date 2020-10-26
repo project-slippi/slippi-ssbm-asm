@@ -193,6 +193,10 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,FrozenPSBool(BufferPointer)
   stb r3,FSToggle(rtoc)
 
+# Get bool for whether resync logic should be used
+  lbz r3,ShouldResyncBool(BufferPointer)
+  stb r3,PDB_SHOULD_RESYNC(REG_DirectoryBuffer)
+
 #--------------- Apply Dynamic Gecko Codes ---------------------
 # Step 1: Grab size of gecko code list and create a buffer to store them
   # TODO: Make sure that returned size includes the termination sequence (8 bytes)

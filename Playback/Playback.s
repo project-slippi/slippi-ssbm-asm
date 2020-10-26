@@ -62,8 +62,9 @@ lwz \reg, -0x62A0(\reg)
 .set PDB_RESTORE_C2_BRANCH, PDB_RESTORE_BUF_WRITE_POS + 4 # u32
 .set PDB_SFXDB_START, PDB_RESTORE_C2_BRANCH + 4 # SFXDB_SIZE
 .set PDB_LATEST_FRAME, PDB_SFXDB_START + SFXDB_SIZE # u32, must follow SFXDB as it is preserved
+.set PDB_SHOULD_RESYNC, PDB_LATEST_FRAME + 4 # bool
 
-.set PDB_SIZE, PDB_LATEST_FRAME + 4
+.set PDB_SIZE, PDB_SHOULD_RESYNC + 1
 
 ################################################################################
 # Buffer Offsets
@@ -130,10 +131,12 @@ lwz \reg, -0x62A0(\reg)
     .set PSPreloadBool_Length,0x1
   .set FrozenPSBool,0x19F
     .set FrozenPSBool_Length,0x1
-  .set GeckoListSize,0x1A0
+  .set ShouldResyncBool,0x1A0
+    .set ShouldResyncBool_Length,0x1
+  .set GeckoListSize,0x1A1
     .set GeckoListSize_Length,0x4
 
-  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + GeckoListSize_Length
+  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + GeckoListSize_Length
 
   .if GameInfoLength > Buffer_Length
     .set EXIBufferLength, GameInfoLength
