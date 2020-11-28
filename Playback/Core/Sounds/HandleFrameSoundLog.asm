@@ -23,6 +23,11 @@ branch r12, 0x801a5024 # go to where branch would have taken us
 .set REG_LATEST_FRAME, 23
 
 START:
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, 0x010E
+bne EXIT
+
 backup
 
 branchl r12, OSDisableInterrupts # Not backing up r3 output, don't use r3 in body
@@ -147,3 +152,5 @@ mr r3, REG_INTERRUPT_IDX
 branchl r12, OSRestoreInterrupts
 
 restore
+
+EXIT:

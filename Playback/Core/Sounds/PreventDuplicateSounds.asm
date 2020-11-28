@@ -15,6 +15,11 @@
 .set REG_SOUND_ID, 27
 .set REG_SOUND_INSTANCE_ID, 26
 
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, 0x010E
+bne EXIT
+
 backup
 
 lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address

@@ -16,6 +16,11 @@
 # effectively a duplicate of the other function except it branches to a diff
 # location
 
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, 0x010E
+bne EXIT
+
 backup
 
 lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address

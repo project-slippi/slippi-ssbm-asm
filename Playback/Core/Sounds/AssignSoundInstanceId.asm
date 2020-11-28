@@ -8,9 +8,10 @@
 # Execute replaced code line
 stw r0, -0x3F18 (r13)
 
-# TODO: Should probably not attempt to run this if not in-game yet, or any of the
-# TODO: sound functions for that matter. PDB isnt initialized yet on waiting
-#getMinorMajor r3
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, 0x010E
+bne EXIT
 
 .set REG_PDB_ADDRESS, 31
 .set REG_SFXDB_ADDRESS, 30

@@ -10,6 +10,11 @@
 .set REG_SFXDB_ADDRESS, 29
 .set REG_WRITE_INDEX, 28
 
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, 0x010E
+bne EXIT
+
 backup
 
 lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
