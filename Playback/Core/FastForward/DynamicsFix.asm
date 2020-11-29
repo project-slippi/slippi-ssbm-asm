@@ -3,9 +3,7 @@
 ################################################################################
 .include "Common/Common.s"
 
-.set REG_JObj,23
-
-# ensure some flags are set
+# setup mtx for fighter jobj
   lwz r3,0x28(r27)
   bl JOBJ_SetupMatrixSubAll
   b Exit
