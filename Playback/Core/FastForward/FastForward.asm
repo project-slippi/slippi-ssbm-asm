@@ -61,6 +61,15 @@ FastForward:
 SkipMute:
 # try to execute update camera functions
   branchl r12,0x80030a50 # Camera_LoadCameraEntity
+
+  # The commented line under is the parent function for all this bullshit
+  # we need to call to keep gameplay logic in-sync during a ffw. Unfortunately
+  # calling it directly makes FFW speed over 3x worse. This likely means there
+  # are some minor bugs while FFW'ing since ideally we would call this function.
+  # Additionally calling this function causes a bunch of flashing during rollbacks
+  # with stuff becoming invisible and coming back in
+  # branchl r12,0x800301d0 # DrawCamera+ECBDevelopBoxes
+
   branchl r12,0x8002a4ac # Updates camera values used in tag position calculation
 
 # call Player_SetOffscreenBool for all characters. This happens as part of the

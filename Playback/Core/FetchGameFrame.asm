@@ -78,6 +78,16 @@ FetchFrameInfo_RECEIVE_DATA:
   b FetchFrameInfo_REQUEST_DATA
 
 FetchFrameInfo_Exit:
+
+# Logic so that we can bp on a very specific frame
+/*
+lwz r3, frameIndex(r13)
+cmpwi r3, 2778
+bne SKIP_BP_LINE
+li r3, 0 # Dummy line where we can set a bp
+SKIP_BP_LINE:
+*/
+
   restore
 #-----------------------------------------------
 
