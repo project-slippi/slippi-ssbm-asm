@@ -617,6 +617,14 @@ lbz r3, 0x60 + 0x24(REG_VS_SSS_DATA) # load p2 char id
 stw r3, 0x1C (r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3, 0x20 (r4)
+lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
+stw r3, 0x24 (r4)
+lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load char color
+stb r3, 0x28 (r4)
+lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
+stw r3, 0x2C (r4)
+lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load char color
+stb r3, 0x30 (r4)
 # Preload the stage
 lhz r3, 0xE (REG_VS_SSS_DATA)
 stw r3, 0xC (r4)
