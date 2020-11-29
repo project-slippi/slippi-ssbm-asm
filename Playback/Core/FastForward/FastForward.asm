@@ -86,11 +86,8 @@ SkipMute:
 FN_ProcessGX:
   backup
 
-
-branchl r12,0x8021b2d8
-
-  # Set current CObj to main camera. This is for a condition in
-  # Player_SetOffscreenBool at line 80086ad4
+# Set current CObj to main camera. This is for a condition in
+# Player_SetOffscreenBool at line 80086ad4
   branchl r12,0x80030a50 # Camera_LoadCameraEntity
   lwz r3, 0x28(r3)
   branchl r12, 0x80368458 # HSD_CObjSetCurrent

@@ -3,6 +3,15 @@
 ################################################################################
 .include "Common/Common.s"
 
+# the fighters jobj matrix is not setup after performing dynamics calculations
+# luckily for HAL, the shadow render sets up the matrix during rendering. this is
+# very likely not intentional.
+
+# this caused bone positions to not update accurately when fast forwarding because
+# it wasnt rendering and setting up the matrix as a result.
+
+# (vanilla shaodw mtx update during render @ 8037f8f4)
+
 # setup mtx for fighter jobj
   lwz r3,0x28(r27)
   bl JOBJ_SetupMatrixSubAll
