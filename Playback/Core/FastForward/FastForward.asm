@@ -76,18 +76,18 @@ SkipMute:
 # camera tasks after the main updateFunction loop so it doesn't run during
 # a FFW normally. It is responsible for deciding whether to display the
 # offscreen bubble
-  bl FN_SetOffscreenBools
+  bl FN_ProcessGX
 
 # do a stupid cmp operation so that the blt at 801a5020 will branch
   cmpwi r3, 0xFF
   b Exit
 
 # Routine: Set all offscreen bools
-FN_SetOffscreenBools:
+FN_ProcessGX:
   backup
 
-  load r31, 0x80453080
-  li r30, 0
+
+branchl r12,0x8021b2d8
 
   # Set current CObj to main camera. This is for a condition in
   # Player_SetOffscreenBool at line 80086ad4
@@ -95,18 +95,32 @@ FN_SetOffscreenBools:
   lwz r3, 0x28(r3)
   branchl r12, 0x80368458 # HSD_CObjSetCurrent
 
-FNSOB_LoopStart:
-  lwz r3, 0xB0(r31)
-  cmpwi r3, 0
-  beq FNSOB_LoopContinue
+FNPGX_LoopStart:
+.set REG_FighterGObj, 20
+.set REG_FighterData, 21
+# Get first created fighter gobj
+  lwz	r3, -0x3E74 (r13)
+  lwz	REG_FighterGObj, 0x0020 (r3)
+  b FNPGX_LoopCheck
+FNPGX_Loop:
+# get data
+  lwz REG_FighterData,0x2C(REG_FighterGObj)
 
+# if not sleep, update camera stuff
+  lbz r3,0x221F(REG_FighterData)
+  rlwinm. r0,r3,0,0x10
+  bne FNPGX_Loop_NoOffscreen
+  mr  r3,REG_FighterGObj
   branchl r12, 0x80086a8c # Player_SetOffscreenBool
+FNPGX_Loop_NoOffscreen:
 
-FNSOB_LoopContinue:
-  addi r30, r30, 1
-  addi r31, r31, 0xE90
-  cmpwi r30, 4
-  blt FNSOB_LoopStart
+FNPGX_LoopNext:
+# get next gobj
+  lwz	REG_FighterGObj, 0x8 (REG_FighterGObj)
+FNPGX_LoopCheck:
+# if gobj exists, process it
+  cmpwi REG_FighterGObj,0
+  bne FNPGX_Loop
 
   restore
   blr
