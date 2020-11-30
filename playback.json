@@ -115,6 +115,12 @@
           "type": "injectFolder",
           "sourceFolder": "Common/Gecko",
           "annotation": "Static function to process Gecko codes [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/FastForward",
+          "isRecursive": true,
+          "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
         }
       ]
     },

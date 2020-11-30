@@ -4,6 +4,7 @@
 
 .include "Common/Common.s"
 .include "Online/Online.s"
+.include "Common/FastForward/FunctionMacros.s"
 
 # run equivalent code
 beq+ START
@@ -170,60 +171,14 @@ bne RESTORE_AND_EXIT # If no rollback active, continue as normal
 
 # Here we have a rollback, we are going to loop back to the start of the
 # updateFunction loop
-
-# Execute update camera functions (fixes HUD nametag mis-positions)
-branchl r12, 0x80030a50 # Camera_LoadCameraEntity
-branchl r12, 0x8002a4ac # Updates camera values used in tag position calculation
-
-# call Player_SetOffscreenBool for all characters. This happens as part of the
-# camera tasks after the main updateFunction loop so it doesn't run during
-# a FFW normally. It is responsible for deciding whether to display the
-# offscreen bubble
-bl FN_SetOffscreenBools
+bl FN_ExecCameraTasks
 
 # Loop back to start of updateFunction loop
 restore
 branch r12, 0x801a4de4 # Continue rollback, branch to the start of game engine loop
 
-################################################################################
-# Routine: SetOffscreenBools
-# ------------------------------------------------------------------------------
-# Description: Sets the offscreen bool values for all players
-################################################################################
-FN_SetOffscreenBools:
-backup
-
-load r31, 0x80453080
-li r30, 0
-
-# Set current CObj to main camera. This is for a condition in
-# Player_SetOffscreenBool at line 80086ad4
-branchl r12, 0x80030a50 # Camera_LoadCameraEntity
-lwz r3, 0x28(r3)
-branchl r12, 0x80368458 # HSD_CObjSetCurrent
-
-FNSOB_LoopStart:
-lwz r3, 0xB0(r31)
-cmpwi r3, 0
-beq FNSOB_CheckFollower
-
-branchl r12, 0x80086a8c # Player_SetOffscreenBool
-
-FNSOB_CheckFollower:
-lwz r3, 0xB4(r31)
-cmpwi r3, 0
-beq FNSOB_LoopContinue
-
-branchl r12, 0x80086a8c # Player_SetOffscreenBool
-
-FNSOB_LoopContinue:
-addi r30, r30, 1
-addi r31, r31, 0xE90
-cmpwi r30, 4
-blt FNSOB_LoopStart
-
-restore
-blr
+# Functions section
+FunctionBody_ExecCameraTasks
 
 # Terminate code
 RESTORE_AND_EXIT:

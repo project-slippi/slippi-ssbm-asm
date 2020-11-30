@@ -95,7 +95,6 @@ lwz r3, OFST_R13_SB_ADDR(r13) # Buf to use as EXI buf
 addi r3, r3, 3
 bl 0b
 mflr r4
-crset 6
 branchl r12, 0x80323cf4 # sprintf
 
 lwz r3, OFST_R13_SB_ADDR(r13) # Buf to use as EXI buf

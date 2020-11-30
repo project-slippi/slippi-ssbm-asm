@@ -45,6 +45,12 @@
           "type": "binary",
           "sourceFile": "Binary/LagReduction/PD+VB.bin",
           "annotation": "Polling Drift Fix + VB [tauKhan]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/FastForward",
+          "isRecursive": true,
+          "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
         }
       ]
     }

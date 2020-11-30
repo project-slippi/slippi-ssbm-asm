@@ -10,6 +10,12 @@
 # this caused bone positions to not update accurately when fast forwarding because
 # it wasnt rendering and setting up the matrix as a result.
 
+# when dynamics are updated, a flag is set on some fighter bone jobjs. it only
+# does this if the fighter state uses dynamics.
+# this fix runs after the game processes dynamics and does the updates
+# right away if the flag has been set, this will cause them to be correct even
+# when ffw'ing as they no longer rely on the shadow render cleaning them up
+
 # (vanilla shaodw mtx update during render @ 8037f8f4)
 
 # setup mtx for fighter jobj
