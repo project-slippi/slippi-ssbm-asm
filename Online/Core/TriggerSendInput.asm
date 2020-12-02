@@ -299,14 +299,23 @@ lbz r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi r3, 0
 beq LOAD_OPPONENT_INPUTS
 
+# loop over each remote player
+li REG_LOOP_IDX, 0 # loop index
+li REG_REMOTE_PLAYER_IDX, 0 # player index
+
 CHECK_WHETHER_TO_ROLL_BACK:
+# Look up the frame number for this remote player and store it in r3
+mulli r6, REG_LOOP_IDX, 4
+addi r6, r6, RXB_OPNT_FRAME_NUMS
+lwzx r3, r6, REG_RXB_ADDRESS
+
 # If receivedFrame < savestateFrame, we still dont have the inputs we need to
 # rollback, in this case, we can continue loading the same stale inputs to
 # continue on into prediction land
-lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
+# lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 sub. r3, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
-blt LOAD_OPPONENT_INPUTS
+blt CONTINUE_ROLLBACK_CHECK_LOOP
 
 # If we get here, we have a savestate ready and we have received the inputs
 # required to handle the savestate, so let's check the inputs to see if we need
@@ -365,7 +374,11 @@ bne TRIGGER_ROLLBACK
 b TRIGGER_LOOP_START
 
 INPUTS_MATCH:
-# Here inputs are the same as what we predicted, increment the read idx and the
+# Run through the loop again if this isn't the final player.
+cmpwi REG_LOOP_IDX, 2
+bne CONTINUE_ROLLBACK_CHECK_LOOP
+
+# Here inputs are the same as what we predicted for all players, increment the read idx and the
 # savestate frame and continue, we will no longer need to roll back to that frame
 lwz r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 addi r3, r3, 1
@@ -406,6 +419,12 @@ stw REG_FRAME_INDEX, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
 # logic will kick in properly the next time this function is called
 restore
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
+
+CONTINUE_ROLLBACK_CHECK_LOOP:
+addi REG_LOOP_IDX, REG_LOOP_IDX, 1
+addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
+cmpwi REG_LOOP_IDX, 3
+blt CHECK_WHETHER_TO_ROLL_BACK
 
 ################################################################################
 # Section 9: Try to read opponent's input for this frame
@@ -496,6 +515,8 @@ CALC_OPNT_PAD_OFFSET:
 # Slippi should have told us to wait
 mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
 addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
+mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
+add r5, r5, r6
 
 # get offset from sp of online player's pad data
 # lbz r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS) # online player index
