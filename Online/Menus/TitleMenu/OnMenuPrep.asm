@@ -5,7 +5,59 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set REG_FG_USER_DISPLAY, 30
+# general registers
+.set REG_FG_USER_DISPLAY, 21
+.set REG_DLG_BUFFER_SIZE, REG_FG_USER_DISPLAY+1
+.set REG_DLG_BUFFER_ADDRESS, REG_DLG_BUFFER_SIZE+1
+
+.set REG_DLG_GOBJ, REG_DLG_BUFFER_ADDRESS+1
+.set REG_DLG_JOBJ, REG_DLG_GOBJ+1
+
+.set REG_JOBJ_DESC_ADDR, REG_DLG_USER_DATA_ADDR
+.set REG_JOBJ_DESC_ANIM_JOINT_ADDR, REG_JOBJ_DESC_ADDR+1
+.set REG_JOBJ_DESC_MAT_JOINT_ADDR, REG_JOBJ_DESC_ANIM_JOINT_ADDR+1
+.set REG_JOBJ_DESC_SHAPE_JOINT_ADDR, REG_JOBJ_DESC_MAT_JOINT_ADDR+1
+
+# Registers used on Dialog think function, start at REG_DLG_JOBJ
+.set REG_DLG_USER_DATA_ADDR, REG_DLG_JOBJ+1
+.set REG_DLG_SELECTED_OPTION, REG_DLG_USER_DATA_ADDR+1 # 0: NO, 1: YES
+.set REG_DLG_MENU_GOBJ_ADDR, REG_DLG_SELECTED_OPTION+1
+.set REG_DLG_TEXT_STRUCT_ADDR, REG_DLG_MENU_GOBJ_ADDR+1
+.set REG_TEXT_PROPERTIES, REG_DLG_TEXT_STRUCT_ADDR+1
+
+
+# float registers
+.set REG_F_0, 22
+.set REG_F_1, 23
+
+# Dialog Constants
+.set DLG_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
+.set DLG_USER_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
+.set DLG_OPTION_YES, 0x1
+.set DLG_OPTION_NO, 0x0
+
+# PAD Constants for dialog when using Inputs_GetPlayerHeldInputs on the dialog
+.set PAD_LEFT, 0x40 # on r4 is 00040000
+.set PAD_RIGHT, 0x80 # on r4 is 00080000
+.set PAD_A, 0x01 # on r4 is 00000100
+.set PAD_B, 0x02 # on r4 is 00000200
+
+# Dialog Static Memory JOBJ Descriptors Locations/Pointers
+.set JOBJ_DESC_DLG, 0x803efa0c # archive memory address of dialog jobj
+.set JOBJ_DESC_DLG_ANIM_JOINT, 0x803efa24 # archive memory address of dialog anim joint
+.set JOBJ_DESC_DLG_MAT_JOINT, 0x803efa40 # archive memory address of dialog mat joint
+.set JOBJ_DESC_DLG_SHAPE_JOINT, 0x803efa60 # archive memory address of dialog shape joint
+.set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
+
+# Offset from submenu gobj where we are storing dialog user data buffer when
+# open
+.set MENU_DLG_USER_DATA_OFFSET, 0x8
+
+# Dialog Buffer Data Table
+.set DLG_DT_SELECTED_OPTION, 0 # u8
+.set DLG_DT_SUBMENU_GOBJ_ADDR, DLG_DT_SELECTED_OPTION+1 # u32
+.set DLG_DT_TEXT_STRUCT_ADDR, DLG_DT_SUBMENU_GOBJ_ADDR+4 # u32
+.set DLG_DT_SIZE, DLG_DT_TEXT_STRUCT_ADDR + 4
 
 backup
 
@@ -178,11 +230,21 @@ blr
 # Description: Think function for online submenu
 ################################################################################
 .set REG_FG_USER_DISPLAY, 27
+.set REG_SM_GOBJ, 19
 
 FN_OnlineSubmenuThink:
 blrl
 
 backup
+
+################################################################################
+# Check if confirm dialog is open or not, and prevent input if it is
+################################################################################
+mr REG_SM_GOBJ, r3
+
+lwz r3, MENU_DLG_USER_DATA_OFFSET(REG_SM_GOBJ)
+cmpwi r3, 0
+bne FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
 ################################################################################
 # Most of the below is ported code from function 8022cc28 (Menus_RegularMatch)
@@ -265,9 +327,16 @@ branchl r12, SFX_Menu_CommonSound
 li r4, CONST_SlippiCmdOpenLogIn
 b FN_OnlineSubmenuThink_TRIGGER_EXI_MSG
 
-FN_OnlineSubmenuThink_HANDLE_LOGOUT:
-li r4, CONST_SlippiCmdLogOut
-b FN_OnlineSubmenuThink_TRIGGER_EXI_MSG
+FN_OnlineSubmenuThink_HANDLE_LOGOUT: # crash at 80370c28
+
+# Play Warning sfx
+li r3, 0xbc
+li r4, 127
+li r5, 64
+branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
+
+bl FN_CREATE_DIALOG
+b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
 FN_OnlineSubmenuThink_HANDLE_UPDATE:
 li	r3, 1
@@ -445,6 +514,380 @@ blrl
 .short 0x0648
 .short 0x0649
 .short 0x064A
+
+FN_CREATE_DIALOG:
+
+backup
+
+# load jobjects in memory
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_ADDR, r3
+
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG_ANIM_JOINT
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_ANIM_JOINT_ADDR, r3
+
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG_MAT_JOINT
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_MAT_JOINT_ADDR, r3
+
+lwz r3, archiveDataBuffer(r13)
+load r4, JOBJ_DESC_DLG_SHAPE_JOINT
+branchl r12, HSD_ArchiveGetPublicAddress # 0x80380358
+mr REG_JOBJ_DESC_SHAPE_JOINT_ADDR, r3
+
+
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+lfs REG_F_0, TPO_FLOAT_0(REG_TEXT_PROPERTIES)
+lfs REG_F_1, TPO_FLOAT_1(REG_TEXT_PROPERTIES)
+
+# Create User Data:
+# We will be adding a very small buffer to be able to track the selected option
+# Get Memory Buffer for Chat Window Data Table
+li REG_DLG_BUFFER_SIZE, REG_DLG_BUFFER_SIZE # buffer size
+
+mr r3, REG_DLG_BUFFER_SIZE # Buffer Size
+branchl r12, HSD_MemAlloc
+mr REG_DLG_BUFFER_ADDRESS, r3 # save result address into REG_DLG_BUFFER_ADDRESS
+
+# Zero out CSS data table
+mr r4, REG_DLG_BUFFER_SIZE # buffer size
+branchl r12, Zero_AreaLength
+
+# 0: means no is selected, 1: yes is selected
+li r3, DLG_OPTION_NO # Initial Selected Option
+stb r3, DLG_DT_SELECTED_OPTION(REG_DLG_BUFFER_ADDRESS)
+
+# save submenu gobj
+mr r3, REG_SM_GOBJ
+stw r3, DLG_DT_SUBMENU_GOBJ_ADDR(REG_DLG_BUFFER_ADDRESS)
+
+# Save Pointer to User data To keep track of it
+stw REG_DLG_BUFFER_ADDRESS, MENU_DLG_USER_DATA_OFFSET(REG_SM_GOBJ)
+
+
+# Create GObj
+li r3, 6 # GObj Type (6 is menu type?)
+li r4, 7 # On-Pause Function (dont run on pause)
+li r5, 0x80 # some type of priority
+branchl r12, GObj_Create
+mr REG_DLG_GOBJ, r3 # 0x803901f0 store result
+
+# Create JOBJ
+mr r3, REG_JOBJ_DESC_ADDR
+branchl r12, JObj_LoadJoint # 0x80370E44 # (this func only uses r3)
+mr REG_DLG_JOBJ, r3 # store result
+
+# Add JOBJ to GObj
+mr r3,REG_DLG_GOBJ
+li	r4, 3
+mr r5,REG_DLG_JOBJ
+branchl r12, GObj_AddToObj # 0x80390A70
+
+
+# Hide Interrogation Mark
+mr r3,REG_DLG_JOBJ # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 10 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Set invisible flag on JObj
+lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
+li r4, 0x10
+branchl r12, JObj_SetFlagsAll # 0x80371D9c
+
+# Hide Progress Bar
+mr r3,REG_DLG_JOBJ # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 11 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Set invisible flag on JObj
+lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
+li r4, 0x10
+branchl r12, JObj_SetFlagsAll # 0x80371D9c
+# Hide Progress Bar!
+
+
+# Add Animations to JObj
+mr r3, REG_DLG_JOBJ
+mr r4, REG_JOBJ_DESC_ANIM_JOINT_ADDR
+mr r5, REG_JOBJ_DESC_MAT_JOINT_ADDR
+mr r6, REG_JOBJ_DESC_SHAPE_JOINT_ADDR
+branchl r12, JObj_AddAnimAll #, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
+
+mr r3, REG_DLG_JOBJ
+fmr f1, REG_F_0
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+
+# Configure "Yes" Button
+mr r3,REG_DLG_JOBJ # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 6 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Move to the Left
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+load r4, 0xC0600000
+stw r4, 0x38(r3)
+# Configure "Yes" Button!
+
+
+# Configure "No" Button
+mr r3,REG_DLG_JOBJ # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 7 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Move to the Right
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+load r4, 0x405c0000
+stw r4, 0x38(r3)
+# Configure "No" Button!
+
+# AddGXLink
+mr r3, REG_DLG_GOBJ
+load r4, 0x80391070 # GX Callback func to use
+li r5, 6 # Assigns the gx_link index
+li r6, 0x80 # sets the priority
+branchl r12, GObj_SetupGXLink # 0x8039069c
+
+# Add User Data to GOBJ ( Our buffer )
+mr r3, REG_DLG_GOBJ
+li r4, 4 # user data kind
+load r5, HSD_Free # destructor
+mr r6, REG_DLG_BUFFER_ADDRESS # memory pointer of allocated buffer above
+branchl r12, GObj_Initialize # 0x80390b68;
+
+#Create Proc
+mr r3, REG_DLG_GOBJ
+bl FN_LogoutDialogThink
+mflr r4 # Function
+li r5, 15 # Priority
+branchl	r12, GObj_AddProc
+
+restore
+blr
+
+
+################################################################################
+# Routine: FN_LogoutDialogThink
+# ------------------------------------------------------------------------------
+# Description: Handles Confirm Dialog when pressing logout
+################################################################################
+FN_LogoutDialogThink: #801978fc
+blrl
+backup
+
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+lfs REG_F_0, TPO_FLOAT_0(REG_TEXT_PROPERTIES) # load 0.0
+lfs REG_F_1, TPO_FLOAT_1(REG_TEXT_PROPERTIES) # load 1.0
+
+mr REG_DLG_GOBJ, r3
+lwz REG_DLG_JOBJ, DLG_JOBJ_OFFSET(REG_DLG_GOBJ) # Get Jobj
+lwz REG_DLG_USER_DATA_ADDR, DLG_USER_DATA_OFFSET(REG_DLG_GOBJ) # get address of data buffer
+
+lbz REG_DLG_SELECTED_OPTION, DLG_DT_SELECTED_OPTION(REG_DLG_USER_DATA_ADDR) # Get selected option from bufffer
+lwz REG_DLG_MENU_GOBJ_ADDR, DLG_DT_SUBMENU_GOBJ_ADDR(REG_DLG_USER_DATA_ADDR) # get address of submenu's gboj
+lwz REG_DLG_TEXT_STRUCT_ADDR, DLG_DT_TEXT_STRUCT_ADDR(REG_DLG_USER_DATA_ADDR) # get address of text struct
+
+# Always Animate the dialog
+mr r3, REG_DLG_JOBJ
+branchl r12, JObj_AnimAll
+
+# Only Initialize Text if needed
+cmpwi REG_DLG_TEXT_STRUCT_ADDR, 0
+bne FN_LogoutDialogThink_ConfigureUI
+
+FN_LogoutDialogThink_InitText:
+
+# Create Text Object
+li r3, 0
+li r4, 1 # gx_link?
+lfs f0, TPO_DLG_LABEL_UNK0(REG_TEXT_PROPERTIES)
+lfs f1, TPO_DLG_LABEL_X_POS(REG_TEXT_PROPERTIES)
+lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+lfs f3, TPO_DLG_LABEL_SCALE_FACTOR(REG_TEXT_PROPERTIES) # Scale Factor
+lfs f4, TPO_DLG_LABEL_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
+lfs f5, TPO_DLG_LABEL_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
+branchl r12, Text_AllocateTextObject #0x803a5acc
+mr REG_DLG_TEXT_STRUCT_ADDR, r3
+
+# Save Text Struct Address
+mr REG_DLG_TEXT_STRUCT_ADDR, r3
+stw REG_DLG_TEXT_STRUCT_ADDR, DLG_DT_TEXT_STRUCT_ADDR(REG_DLG_USER_DATA_ADDR)
+
+# Initialize Struct Stuff
+li r0, 1
+li r4, 0x13F # Premade Text id "Are you Sure?"
+mr r3, REG_DLG_TEXT_STRUCT_ADDR
+lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
+stfs f0, 0x24(r3) # Scale X
+stfs f0, 0x28(r3) # Scale Y
+stb r0, 0x4A(REG_DLG_TEXT_STRUCT_ADDR) # Set text to align center
+branchl r12, Text_CopyPremadeTextDataToStruct
+
+# exit to next frame when dialog is first initialized
+b FN_LogoutDialogThink_Exit
+
+FN_LogoutDialogThink_ConfigureUI:
+
+# Configure "No" Button
+mr r3,REG_DLG_JOBJ # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 7 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Set Animation Frame (frame 0 is turned off, frame 1+ is on)
+fmr f1, REG_F_0 # Turn off
+cmpwi REG_DLG_SELECTED_OPTION, DLG_OPTION_NO
+bne FN_LogoutDialogThink_ConfigureUI_Animate_No
+fmr f1, REG_F_1 # Turn on
+
+FN_LogoutDialogThink_ConfigureUI_Animate_No:
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
+# Configure "No" Button!
+
+# Configure "Yes" Button
+mr r3,REG_DLG_JOBJ # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 6 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Set Animation Frame (frame 0 is turned off, frame 1+ is on)
+fmr f1, REG_F_0 # Turn off
+cmpwi REG_DLG_SELECTED_OPTION, DLG_OPTION_YES
+bne FN_LogoutDialogThink_ConfigureUI_Animate_Yes
+fmr f1, REG_F_1 # Turn on
+
+FN_LogoutDialogThink_ConfigureUI_Animate_Yes: # 801979b4
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
+# Configure "Yes" Button!
+
+FN_LogoutDialogThink_CheckInputs:
+# Check input and switch option if left or right
+li r3, 0
+branchl r12, 0x801A36A0 # Inputs_GetPlayerInstantInputs
+
+# Exit function if no input # 0x8019796c
+cmpwi r3, PAD_LEFT
+beq FN_LogoutDialogThink_SwitchOption
+cmpwi r3, PAD_RIGHT
+beq FN_LogoutDialogThink_SwitchOption
+cmpwi r3, PAD_A
+beq FN_LogoutDialogThink_DoLogout
+cmpwi r3, PAD_B
+beq FN_LogoutDialogThink_CloseDialog
+b FN_LogoutDialogThink_Exit
+
+
+FN_LogoutDialogThink_SwitchOption:
+li	r3, 2
+branchl r12, SFX_Menu_CommonSound
+
+xori r3, REG_DLG_SELECTED_OPTION, 0x1 # alternate selected option
+stb r3, DLG_DT_SELECTED_OPTION(REG_DLG_USER_DATA_ADDR) # Store to proper user data offset
+
+b FN_LogoutDialogThink_Exit
+
+FN_LogoutDialogThink_DoLogout:
+# only logout if selected option is YES
+cmpwi REG_DLG_SELECTED_OPTION, DLG_OPTION_YES
+bne FN_LogoutDialogThink_CloseDialog
+
+
+li r4, CONST_SlippiCmdLogOut
+# Use the scene buffer cause it's not being used for anything
+lwz r3, OFST_R13_SB_ADDR(r13)
+stb r4, 0(r3) # Store command byte
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+b FN_LogoutDialogThink_CloseDialog
+
+FN_LogoutDialogThink_CloseDialog:
+li	r3, 0
+branchl r12, SFX_Menu_CommonSound
+
+# remove all anims
+mr r3, REG_DLG_JOBJ
+branchl r12, 0x8036F6B4 # HSD_JObjRemoveAnimAll
+
+# remove proc
+mr r3, REG_DLG_GOBJ
+branchl r12, GObj_RemoveProc
+
+# destroy gobj
+mr r3, REG_DLG_GOBJ
+branchl r12, GObj_Destroy
+
+# Delete Text
+mr r3, REG_DLG_TEXT_STRUCT_ADDR
+branchl r12, Text_RemoveText
+
+# Clear Pointer to this gobj's User data to restore input on submenu
+load r3, 00000000
+stw r3, MENU_DLG_USER_DATA_OFFSET(REG_DLG_MENU_GOBJ_ADDR)
+
+b FN_LogoutDialogThink_Exit
+
+FN_LogoutDialogThink_Exit:
+
+restore
+blr
+
+################################################################################
+# Properties
+################################################################################
+TEXT_PROPERTIES:
+blrl
+# Label properties
+.set TPO_DLG_LABEL_X_POS, 0
+.float -5.5
+.set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
+.float -2.8
+.set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
+.float 9
+.set TPO_DLG_LABEL_SCALE_FACTOR,  TPO_DLG_LABEL_UNK0+4
+.float 23
+.set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_SCALE_FACTOR+4
+.float 250
+.set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
+.float 20
+.set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
+.float 0.05
+
+.set TPO_FLOAT_0, TPO_DLG_LABEL_CANVAS_SCALE+4
+.float 0.0
+.set TPO_FLOAT_1, TPO_FLOAT_0+4
+.float 1.0
+
+.align 2
 
 EXIT:
 lis r3, 0x804A

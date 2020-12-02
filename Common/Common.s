@@ -152,17 +152,28 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set HSD_VICopyXFBASync,0x803761c0
 .set HSD_PerfSetStartTime,0x8037E214
 .set HSD_PadRumbleActiveID,0x80378430
+.set HSD_ArchiveGetPublicAddress, 0x80380358
 
 ## GObj functions
-.set GObj_Create,0x803901f0
-.set GObj_Initialize,0x80390b68
+.set GObj_Create,0x803901f0 #(obj_type,subclass,priority)
+.set GObj_Initialize,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
 .set GObj_Destroy,0x80390228
-.set GObj_AddProc,0x8038fd54
+.set GObj_AddProc,0x8038fd54 # (obj,func,priority)
 .set GObj_RemoveProc,0x8038fed4
+.set GObj_AddToObj,0x80390A70 #(gboj,obj_kind,obj_ptr)
+.set GObj_SetupGXLink, 0x8039069c #(gobj,function,gx_link,priority)
 
 ## JObj Functions
 .set JObj_GetJObjChild,0x80011e24
 .set JObj_RemoveAnimAll,0x8036f6b4
+.set JObj_LoadJoint, 0x80370E44 #(jobj_desc_ptr)
+.set JObj_AddAnim, 0x8036FA10 # (jobj,an_joint,mat_joint,sh_joint)
+.set JObj_AddAnimAll, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
+.set JObj_ReqAnimAll, 0x8036F8BC #(HSD_JObj* jobj, f32 frame)
+.set JObj_AnimAll, 0x80370928 #(jobj)
+.set JObj_ClearFlagsAll, 0x80371F9C #(jobj,flags)
+.set JObj_SetFlags, 0x80371D00 # (jobj,flags)
+.set JObj_SetFlagsAll, 0x80371D9c # (jobj,flags)
 
 ## Text functions
 .set Text_CreateStruct,0x803a6754
@@ -202,6 +213,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set InsertAlarm, 0x80343778
 
 ## Common/memory management
+.set va_arg, 0x80322620
 .set OSReport,0x803456a8
 .set memcpy,0x800031f4
 .set memcmp,0x803238c8
@@ -237,6 +249,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set SFX_StopSFXInstance, 0x800236b8
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set SFX_Menu_CommonSound,0x80024030
+.set SFX_PlaySoundAtFullVolume, 0x800237a8 #SFX_PlaySoundAtFullVolume(r3=soundid,r4=volume?,r5=priority)
 
 ## Scene/input-related functions
 .set NoContestOrRetry_,0x8016cf4c
@@ -315,6 +328,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 ################################################################################
 .set primaryDataBuffer,-0x49b4
 .set secondaryDmaBuffer,-0x49b0
+.set archiveDataBuffer, -0x4AE8
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
 
