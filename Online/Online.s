@@ -277,7 +277,8 @@ lwz \reg, -0x62A0(\reg)
 .set CSSDT_FRAME_COUNTER, CSSDT_SPINNER3 + 1 # u16
 .set CSSDT_PREV_LOCK_IN_STATE, CSSDT_FRAME_COUNTER + 2 # bool
 .set CSSDT_PREV_CONNECTED_STATE, CSSDT_PREV_LOCK_IN_STATE + 1 # u8
-.set CSSDT_SIZE, CSSDT_PREV_CONNECTED_STATE + 1
+.set CSSDT_Z_BUTTON_HOLD_TIMER, CSSDT_PREV_CONNECTED_STATE + 1 # u8 amount of frames Z has been hold for
+.set CSSDT_SIZE, CSSDT_Z_BUTTON_HOLD_TIMER + 1
 
 ################################################################################
 # Online status buffer offsets

@@ -5,10 +5,13 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
+.set REG_ZERO, 28
 .set REG_INPUTS, 27
 .set REG_MSRB_ADDR, 26
 .set REG_TXB_ADDR, 25
 .set REG_CSSDT_ADDR, 24
+
+.set DISCONNECT_HOLD_DELAY, 0x30 # 3 seconds
 
 # Deal with replaced codeline
 beq+ START
@@ -28,6 +31,7 @@ bne EXIT # If not online CSS, continue as normal
 mr REG_INPUTS, r7
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR) # Load where buf is stored
+li REG_ZERO, 0 # set to zero just in case :)
 
 ################################################################################
 # Play sound on lock-in state 1 -> 0 transition
@@ -157,12 +161,26 @@ b SKIP_START_MATCH
 ################################################################################
 HANDLE_CONNECTED:
 
-# Handle disconnect
-rlwinm.	r0, REG_INPUTS, 0, 0x10
-beq SKIP_DISCONNECT
+# Handle disconnect when input is hold for X seconds
+branchl r12, Inputs_GetPlayerHeldInputs
+rlwinm. r0, r4, 0, 0x10
+beq RESET_HOLD_TIMER # if button is no longer pressed, reset hold timer
 
+# increase time holding Z
+lbz r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
+addi r3, r3, 1
+stb r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
+
+# skip disconnect if hold time is less than delay
+cmpwi r3, DISCONNECT_HOLD_DELAY
+ble SKIP_DISCONNECT
+
+# reset disconnect hold timer when disconnecting
+stb REG_ZERO, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 bl FN_RESET_CONNECTIONS
 b SKIP_START_MATCH
+RESET_HOLD_TIMER:
+stb REG_ZERO, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 SKIP_DISCONNECT:
 
 # Handle case where we are not yet locked-in
