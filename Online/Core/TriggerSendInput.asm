@@ -301,7 +301,7 @@ CHECK_WHETHER_TO_ROLL_BACK:
 # If receivedFrame < savestateFrame, we still dont have the inputs we need to
 # rollback, in this case, we can continue loading the same stale inputs to
 # continue on into prediction land
-lwz r3, RXB_OPNT_FRAME_NUM(REG_RXB_ADDRESS)
+lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 sub. r3, r3, r4 # Load offset for RXB
 blt LOAD_OPPONENT_INPUTS
@@ -411,7 +411,7 @@ branch r12, 0x80376cec # branch to restore of parent function to skip handling i
 
 LOAD_OPPONENT_INPUTS:
 # get input index to use for opponent
-lwz r3, RXB_OPNT_FRAME_NUM(REG_RXB_ADDRESS)
+lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 sub r3, r3, REG_FRAME_INDEX # opponent input index
 
 # make sure that we have the opponent input we need
