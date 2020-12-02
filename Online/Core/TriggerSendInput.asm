@@ -14,6 +14,8 @@
 .set REG_RXB_ADDRESS, 24
 .set REG_SSRB_ADDR, 23
 .set REG_VARIOUS_1, 22
+.set REG_LOOP_IDX, 21
+.set REG_REMOTE_PLAYER_IDX, 20
 
 #backup registers and sp
 backup
@@ -303,7 +305,7 @@ CHECK_WHETHER_TO_ROLL_BACK:
 # continue on into prediction land
 lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-sub. r3, r3, r4 # Load offset for RXB
+sub. r3, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
 blt LOAD_OPPONENT_INPUTS
 
 # If we get here, we have a savestate ready and we have received the inputs
@@ -410,8 +412,23 @@ branch r12, 0x80376cec # branch to restore of parent function to skip handling i
 ################################################################################
 
 LOAD_OPPONENT_INPUTS:
+# loop over each remote player
+li REG_LOOP_IDX, 0 # loop index
+li REG_REMOTE_PLAYER_IDX, 0 # player index
+
+LOOP_LOAD_OPPONENT_INPUTS:
+# skip over the local player's port for inputs
+lbz r3, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS) # local player index
+cmpw REG_REMOTE_PLAYER_IDX, r3
+bne SKIP_INCREMENT_OPP_INDEX
+addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
+
+SKIP_INCREMENT_OPP_INDEX:
 # get input index to use for opponent
-lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
+mulli r6, REG_LOOP_IDX, 4
+addi r6, r6, RXB_OPNT_FRAME_NUMS
+lwzx r3, r6, REG_RXB_ADDRESS
+# lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 sub r3, r3, REG_FRAME_INDEX # opponent input index
 
 # make sure that we have the opponent input we need
@@ -481,8 +498,8 @@ mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
 addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
 
 # get offset from sp of online player's pad data
-lbz r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS) # online player index
-mulli r3, r3, PAD_REPORT_SIZE
+# lbz r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS) # online player index
+mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
 addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
 
 # copy opponent pad data to stack
@@ -490,6 +507,11 @@ add r3, sp, r3 # destination
 add r4, REG_RXB_ADDRESS, r5 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
+
+addi REG_LOOP_IDX, REG_LOOP_IDX, 1
+addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
+cmpwi REG_LOOP_IDX, 3
+blt LOOP_LOAD_OPPONENT_INPUTS
 
 b INCREMENT_AND_EXIT
 
