@@ -328,6 +328,8 @@ addi r3, r3, RXB_OPNT_INPUTS
 lbz r4, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDX(REG_ODB_ADDRESS)
 mulli r4, r4, PAD_REPORT_SIZE
 addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs
+mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is
+add r4, r4, r5
 
 add r6, REG_RXB_ADDRESS, r3
 add r7, REG_ODB_ADDRESS, r4
@@ -475,6 +477,8 @@ beq LOAD_STALE_INPUTS
 lbz REG_PREDICTED_WRITE_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDX(REG_ODB_ADDRESS) # idx where to write predicted inputs
 mulli r3, REG_PREDICTED_WRITE_IDX, PAD_REPORT_SIZE
 addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS # offset from REG_ODB_ADDRESS where to write
+mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is
+add r3, r3, r5
 
 # copy predicted pad data to predicted input buffer for later comparison
 # in order to decide whether to roll back
@@ -488,6 +492,11 @@ addi r3, REG_PREDICTED_WRITE_IDX, 1
 cmpwi r3, ROLLBACK_MAX_FRAME_COUNT
 blt SKIP_PREDICTED_INPUTS_WRITE_IDX_ADJUST
 subi r3, r3, ROLLBACK_MAX_FRAME_COUNT
+
+# Skip updating the write index until the last player
+cmpwi REG_LOOP_IDX, 2
+bne LOAD_STALE_INPUTS
+
 SKIP_PREDICTED_INPUTS_WRITE_IDX_ADJUST:
 stb r3, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDX(REG_ODB_ADDRESS)
 
