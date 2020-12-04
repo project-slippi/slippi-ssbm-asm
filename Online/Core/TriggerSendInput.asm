@@ -16,6 +16,7 @@
 .set REG_VARIOUS_1, 22
 .set REG_LOOP_IDX, 21
 .set REG_REMOTE_PLAYER_IDX, 20
+.set REG_MISSING_REMOTE_INPUTS, 19
 
 #backup registers and sp
 backup
@@ -302,6 +303,7 @@ beq LOAD_OPPONENT_INPUTS
 # loop over each remote player
 li REG_LOOP_IDX, 0 # loop index
 li REG_REMOTE_PLAYER_IDX, 0 # player index
+li REG_MISSING_REMOTE_INPUTS, 0 # flag for whether we have all remote inputs
 
 CHECK_WHETHER_TO_ROLL_BACK:
 # Look up the frame number for this remote player and store it in r3
@@ -315,8 +317,14 @@ lwzx r3, r6, REG_RXB_ADDRESS
 # lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 sub. r3, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
-blt CONTINUE_ROLLBACK_CHECK_LOOP
+bge HAVE_PLAYER_INPUTS
 
+# Set the flag to indicate we're missing a player's inputs, so we don't increment
+# the savestate frame further down.
+li REG_MISSING_REMOTE_INPUTS, 1
+b CONTINUE_ROLLBACK_CHECK_LOOP
+
+HAVE_PLAYER_INPUTS:
 # If we get here, we have a savestate ready and we have received the inputs
 # required to handle the savestate, so let's check the inputs to see if we need
 # to roll back
@@ -378,6 +386,10 @@ b TRIGGER_LOOP_START
 INPUTS_MATCH:
 # Run through the loop again if this isn't the final player.
 cmpwi REG_LOOP_IDX, 2
+bne CONTINUE_ROLLBACK_CHECK_LOOP
+
+# Skip savestate increment if we were missing input from one or more players
+cmpwi REG_MISSING_REMOTE_INPUTS, 0
 bne CONTINUE_ROLLBACK_CHECK_LOOP
 
 # Here inputs are the same as what we predicted for all players, increment the read idx and the
