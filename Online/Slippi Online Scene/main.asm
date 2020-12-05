@@ -477,7 +477,8 @@ blr
 
 #region VSSceneDecide
 VSSceneDecide:
-.set REG_MSRB_ADDR,31
+.set REG_MSRB_ADDR, 31
+.set REG_TXB_ADDR, 30
 
 backup
 
@@ -526,6 +527,39 @@ stb r3,OFST_R13_ISWINNER(r13)
 # Reset CHOSESTAGE bool
 li  r3,0
 stb r3, OFST_R13_CHOSESTAGE (r13)
+
+# Prepare to reset RNG seed. This fixes the issue where both clients would
+# random the same character following a game
+
+# Prepare buffer for EXI transfer
+li r3, 4
+branchl r12, HSD_MemAlloc
+mr REG_TXB_ADDR, r3
+
+# Write tx data
+li r3, CONST_SlippiCmdGetNewSeed
+stb r3, 0(REG_TXB_ADDR)
+
+# Initiate get new seed command
+mr r3, REG_TXB_ADDR
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+# Read back information
+mr r3, REG_TXB_ADDR
+li r4, 0x4
+li r5, CONST_ExiRead
+branchl r12, FN_EXITransferBuffer
+
+# Copy RNG seed over
+lis r4, 0x804D
+lwz r3, 0(REG_TXB_ADDR)
+stw r3, 0x5F90(r4) #RNG seed
+
+# Free the TX buffer
+mr r3, REG_TXB_ADDR
+branchl r12, HSD_Free
 
 # Go back to CSS
 load r4, 0x80479d30
