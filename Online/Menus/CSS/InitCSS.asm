@@ -17,6 +17,31 @@
 .set REG_VARIOUS_5, 22
 .set REG_LR, 21
 
+# Registers to be used in Chat Messagees Think Function
+.set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
+.set REG_CHATMSG_GOBJ, 14
+.set REG_CHATMSG_GOBJ_DATA_ADDR, REG_CHATMSG_GOBJ+1
+.set REG_CHATMSG_TIMER, REG_CHATMSG_GOBJ_DATA_ADDR+1
+.set REG_CHATMSG_MSG_ID, REG_CHATMSG_TIMER+1
+.set REG_CHATMSG_MSG_INDEX, REG_CHATMSG_MSG_ID+1
+.set REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, REG_CHATMSG_MSG_INDEX+1
+.set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
+.set REG_CHATMSG_USER_NAME_ADDR, REG_CHATMSG_MSG_STRING_ADDR+1
+.set REG_CHAT_TEXT_PROPERTIES, REG_CHATMSG_USER_NAME_ADDR+1
+# float registers
+.set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
+.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
+
+ # Chat Messages Pad Mapping
+.set PAD_LEFT, 0x1
+.set PAD_RIGHT, 0x2
+.set PAD_DOWN, 0x4
+.set PAD_UP, 0x8
+
+.set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
+.set MAX_CHAT_MESSAGE_LINES, 14
+.set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
+
 # Ensure that this is an online CSS
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_CSS
@@ -26,16 +51,33 @@ b LOAD_START
 ################################################################################
 # Properties
 ################################################################################
+.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
 TEXT_PROPERTIES:
 blrl
 # Base Properties
 .set TPO_BASE_Z, 0
 .float 0
-.set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
+.set TPO_CHATMSG_Z, TPO_BASE_Z + 4
+.float 0
+.set TPO_BASE_CANVAS_SCALING, TPO_CHATMSG_Z + 4
 .float 0.1
 
+# Chat Message Propiertes
+.set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
+.float -330
+.set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
+.float -285
+.set TPO_CHATMSG_SIZE, TPO_CHATMSG_Y + 4
+.float 0.45
+.set TPO_CHATMSG_SIZE_SM, TPO_CHATMSG_SIZE + 4
+.float 0.40
+.set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
+.float 1
+.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
+.float 25
+
 # Header properties
-.set TPO_HEADER_X, TPO_BASE_CANVAS_SCALING + 4
+.set TPO_HEADER_X, TPO_CHATMSG_SIZE_MARGIN + 4
 .float 70
 .set TPO_HEADER_Y, TPO_HEADER_X + 4
 .float 23
@@ -65,9 +107,22 @@ blrl
 # Press Z properties
 .set TPO_PRESS_Z_Y, TPO_LINES_SIZE + 4
 .float 132.5
+# Press D Properties
+.set TPO_PRESS_D_Y, TPO_PRESS_Z_Y + 4
+.float 152.5
+
+# User Chat Label Properties
+# This is supposed to set the chat message cheat on top of
+# the original user display
+.set TPO_USER_Y, TPO_PRESS_D_Y + 4
+.float 40 # Y Pos of User Display, 0x4
+.set TPO_USER_X, TPO_USER_Y + 4
+.float -112 # X Pos of User Display, 0x0
+.set TPO_USER_SIZE, TPO_USER_X + 4
+.float 0.5 # Scaling, 0xC
 
 # Player Label Properties
-.set TPO_PLAYING_Y, TPO_PRESS_Z_Y + 4
+.set TPO_PLAYING_Y, TPO_USER_SIZE + 4
 .float -246
 .set TPO_PLAYING_LABEL_X, TPO_PLAYING_Y + 4
 .float -130
@@ -87,9 +142,14 @@ blrl
 .long 0x8E9196FF
 .set TPO_COLOR_RED, TPO_COLOR_GRAY + 4
 .long 0xFF0000FF
+.set TPO_COLOR_CHAT, TPO_COLOR_RED + 4
+.long 0xFFFFFFFF # white
+.set TPO_COLOR_CHAT_BG, TPO_COLOR_CHAT + 4
+.long 0x00000000 # black
+
 
 # String Properties
-.set TPO_EMPTY_STRING, TPO_COLOR_RED + 4
+.set TPO_EMPTY_STRING, TPO_COLOR_CHAT_BG + 4
 .string ""
 .set TPO_STRING_UNRANKED, TPO_EMPTY_STRING + 1
 .string "Unranked Mode"
@@ -127,7 +187,9 @@ blrl
 .string "Error"
 .set TPO_STRING_PLAYING_LABEL, TPO_STRING_ERROR + 6
 .string "Playing:"
-.set TPO_STRING_PRESS_Z_TO, TPO_STRING_PLAYING_LABEL + 9
+.set TPO_STRING_USER_D_PAD_TO_CHAT, TPO_STRING_PLAYING_LABEL + 9
+.string "Use D-Pad to Chat"
+.set TPO_STRING_PRESS_Z_TO, TPO_STRING_USER_D_PAD_TO_CHAT + 18
 .string "Press Z to %s"
 .set TPO_STRING_HOLD_Z_TO, TPO_STRING_PRESS_Z_TO + 14
 .string "Hold Z to %s"
@@ -137,7 +199,9 @@ blrl
 .string "cancel"
 .set TPO_STRING_CLEAR_ERROR, TPO_STRING_CANCEL + 7
 .string "clear error"
-.set TPO_STRING_SPINNER_1, TPO_STRING_CLEAR_ERROR + 12
+.set TPO_STRING_CHATMSG_FORMAT, TPO_STRING_CLEAR_ERROR + 12
+.string "%s: %s"
+.set TPO_STRING_SPINNER_1, TPO_STRING_CHATMSG_FORMAT + 7
 .short 0x817B # ＋
 .byte 0x00
 .set TPO_STRING_SPINNER_2, TPO_STRING_SPINNER_1 + 3
@@ -147,6 +211,61 @@ blrl
 .short 0x817C # －
 .byte 0x00
 .align 2
+
+################################################################################
+# Chat Message Properties
+# Hack: CAP TO SAME LENGTH to ensure pointers are always reached
+# TODO: Find a way to reuse this between HandleInputOnCSS.asm and this file.
+################################################################################
+.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
+UP_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_MSG_UP, 0
+.string "ggs                   "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "one more              "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "brb                   "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "good luck             "
+.align 2
+
+LEFT_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_MSG_UP, 0
+.string "well played           "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "that was fun          "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "thanks                "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "too good              "
+.align 2
+
+RIGHT_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_MSG_UP, 0
+.string "oof                   "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "my b                  "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "lol                   "
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "wow                   "
+.align 2
+
+DOWN_CHAT_TEXT_PROPERTIES:
+blrl
+.set TPO_STRING_MSG_UP, 0
+.string "okay                  "
+.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
+.string "thinking              "
+.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
+.string "let's play again later"
+.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
+.string "bad connection        "
+.align 2
+
 
 ################################################################################
 # User text config
@@ -255,7 +374,7 @@ addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, Text_InitializeSubtext
 
 # Set header text size
-mr r4, r3
+mr r4, r3 # stidx = 0
 mr r3, REG_TEXT_STRUCT
 lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
@@ -279,13 +398,31 @@ addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, Text_InitializeSubtext
 
 mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PRESS_Z
+li r4, STIDX_PRESS_Z # stidx = 1
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
 
 mr r3, REG_TEXT_STRUCT
 li r4, STIDX_PRESS_Z
+addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
+branchl r12, Text_ChangeTextColor
+
+# Initialize Use D-PAD to Chat
+lfs f1, TPO_HEADER_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_PRESS_D_Y(REG_TEXT_PROPERTIES)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, Text_InitializeSubtext
+
+mr r3, REG_TEXT_STRUCT
+li r4, STIDX_PRESS_D # stidx = 1
+lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
+lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
+branchl r12, Text_UpdateSubtextSize
+
+mr r3, REG_TEXT_STRUCT
+li r4, STIDX_PRESS_D
 addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
 branchl r12, Text_ChangeTextColor
 
@@ -416,12 +553,13 @@ blrl
 .set STIDX_SPINNER2, 4
 .set STIDX_SPINNER3, 6
 .set STIDX_PRESS_Z, 7
-.set STIDX_PLAYING_LABEL, 8
-.set STIDX_PLAYING_OPP, 9
-.set STIDX_ERR_LINE1, 10
-.set STIDX_ERR_LINE2, 11
-.set STIDX_ERR_LINE3, 12
-.set STIDX_ERR_LINE4, 13
+.set STIDX_PRESS_D, 8
+.set STIDX_PLAYING_LABEL, 9
+.set STIDX_PLAYING_OPP, 10
+.set STIDX_ERR_LINE1, 11
+.set STIDX_ERR_LINE2, 12
+.set STIDX_ERR_LINE3, 13
+.set STIDX_ERR_LINE4, 14
 .set LINE_IDX_GAP, 2
 .set LINE_COUNT, 3
 
@@ -494,6 +632,99 @@ li r4, STIDX_HEADER
 bl FN_UPDATE_TEXT
 
 ################################################################################
+# Manage Chat Messages: If there's a new message, then initialize a
+# disappearing text
+################################################################################
+# r25 will store the user name string memory address
+# r26 will store chat message id
+lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
+cmpwi r3, 0
+beq CHECK_OPP_CHAT_MESSAGE
+addi r25, REG_MSRB_ADDR, MSRB_P1_NAME
+mr r26, r3
+b UPDATE_CHAT_MESSAGES
+
+CHECK_OPP_CHAT_MESSAGE:
+lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR)
+cmpwi r3, 0
+beq SKIP_CHAT_MESSAGES
+addi r25, REG_MSRB_ADDR, MSRB_P2_NAME
+mr r26, r3
+
+UPDATE_CHAT_MESSAGES:
+# Start at the top after x messages
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR)
+cmpwi r3, MAX_CHAT_MESSAGE_LINES
+ble CREATE_CHAT_MESSAGE
+# if we reached the limit, reset the last message index to 0
+li r3, 0
+stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
+beq SKIP_CHAT_MESSAGES
+
+CREATE_CHAT_MESSAGE:
+# Play a sound indicating a new message
+li r3, 0xb7
+li r4, 127
+li r5, 64
+branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
+
+# Store Increased Message Count
+lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR)
+addi r3, r3, 1
+stb r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR)
+
+# Get Memory Buffer for Chat Message Data Table
+li r3, CSSCMDT_SIZE
+branchl r12, HSD_MemAlloc
+mr r23, r3 # save result address into r23
+
+# Zero out CSS data table
+li r4, CSSDT_SIZE
+branchl r12, Zero_AreaLength
+
+# Set Buffer Initial Data
+# initialize timer 0x80195b38
+li r3, CHAT_MESSAGE_DISPLAY_TIMER # max value of byte which is 255, approx 4 seconds 255/60 = 4.25 secs
+stb r3, CSSCMDT_TIMER(r23)
+
+# initialize message id
+mr r3, r26
+stb r3, CSSCMDT_MSG_ID(r23)
+
+# Set Message index + increase by 1
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR)
+stb r3, CSSCMDT_MSG_INDEX(r23) # set index in the new buffer
+addi r3, r3, 1 # increase message index
+stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
+
+# Set Username Address
+stw r25, CSSCMDT_USER_NAME_ADDR(r23)
+
+# Set CSS DataTable Address
+mr r3, REG_CSSDT_ADDR # store address to CSSDT_DT
+stw r3, CSSCMDT_CSSDT_ADDR(r23)
+
+# create gobj for think function
+li r3, 0x4
+li r4, 0x5
+li r5, 0x80
+branchl r12, GObj_Create
+mr r14, r3 # save pointer to GOBJ
+
+li r4, 4 # user data kind 0x80195b7c
+load r5, HSD_Free # destructor
+mr r6, r23 # memory pointer of allocated buffer above
+branchl r12, GObj_Initialize
+
+mr r3, r14 # set pointer back to GOBJ
+bl CSS_ONLINE_CHAT_THINK
+mflr r4 # Function to Run
+li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
+branchl r12, GObj_AddProc
+
+SKIP_CHAT_MESSAGES:
+
+################################################################################
 # Manage playing label
 ################################################################################
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
@@ -527,6 +758,24 @@ addi r5, REG_MSRB_ADDR, MSRB_OPP_NAME
 
 UPDATE_PLAYING_VALUE:
 li r4, STIDX_PLAYING_OPP
+bl FN_UPDATE_TEXT
+
+################################################################################
+# Manage press D text
+################################################################################
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+beq UPDATE_PRESS_D_CONNECTED
+
+# clear on all other cases
+addi r5, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+b UPDATE_PRESS_D_TEXT
+
+UPDATE_PRESS_D_CONNECTED:
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_USER_D_PAD_TO_CHAT
+
+UPDATE_PRESS_D_TEXT:
+li r4, STIDX_PRESS_D
 bl FN_UPDATE_TEXT
 
 ################################################################################
@@ -877,6 +1126,241 @@ restore
 blr
 
 ################################################################################
+# CHAT MSG THINK Function: Looping function to keep on
+# updating the text until timer runs out
+################################################################################
+CSS_ONLINE_CHAT_THINK:
+blrl
+mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
+backup
+
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+# get gobj and get values for each of the data buffer
+lwz REG_CHATMSG_GOBJ_DATA_ADDR, CHAT_ENTITY_DATA_OFFSET(REG_CHATMSG_GOBJ) # get address of data buffer
+lbz REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
+lbz REG_CHATMSG_MSG_ID, CSSCMDT_MSG_ID(REG_CHATMSG_GOBJ_DATA_ADDR)
+lbz REG_CHATMSG_MSG_INDEX, CSSCMDT_MSG_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
+lwz REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
+lwz REG_CHATMSG_USER_NAME_ADDR, CSSCMDT_USER_NAME_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
+lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+# if text is not initialized, do it and move to next frame
+cmpwi REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, 0x00000000
+bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so skip to timer check
+
+##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
+
+# Change Text Struct Descriptor to use a higher GX
+lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
+li r4, 3 # gx_link we want
+stb r4, 0xE(r3)
+load r3, 0x80bd5c6c
+
+# Create Text Struct
+li r3, 0
+li r4, 0
+branchl r12, Text_CreateStruct
+mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
+stw REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+# Restore Text Struct descriptor
+lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
+li r4, 1 # original gx_link to restore
+stb r4, 0xE(r3)
+
+# Set text kerning to close
+li r4, 0x1
+stb r4, 0x49(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+# Set text to align left
+li r4, 0x0
+stb r4, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+
+# Store Base Z Offset
+lfs f1, TPO_CHATMSG_Z(REG_TEXT_PROPERTIES) #Z offset
+stfs f1, 0x8(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+
+# Scale Canvas Down
+lfs f1, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES)
+stfs f1, 0x24(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+stfs f1, 0x28(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+
+# INIT MSG Properties based on input button (lowest bit)
+mr r3, REG_CHATMSG_MSG_ID
+li r4, 4
+srw r3, r3, r4
+
+cmpwi r3, PAD_UP
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES
+cmpwi r3, PAD_DOWN
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES
+cmpwi r3, PAD_RIGHT
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES
+cmpwi r3, PAD_LEFT
+beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES
+
+
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES:
+bl UP_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES:
+bl DOWN_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES:
+bl RIGHT_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES:
+bl LEFT_CHAT_TEXT_PROPERTIES
+mflr REG_CHAT_TEXT_PROPERTIES
+b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
+CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END:
+
+# get message input (highest bit)
+mr r3, REG_CHATMSG_MSG_ID
+li r4, 4
+srw r3, r3, r4 # shift right = 0x0N
+slw r3, r3, r4 # shift left = 0xN0
+sub r3, REG_CHATMSG_MSG_ID, r3
+
+# calculate address of label
+cmpwi r3, PAD_UP # up
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR
+cmpwi r3, PAD_LEFT # left
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR
+cmpwi r3, PAD_RIGHT # right
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR
+cmpwi r3, PAD_DOWN # down
+beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
+
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
+addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_UP # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR:
+addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_LEFT # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR:
+addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_RIGHT # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR:
+addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_DOWN # label String pointer
+b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+
+addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_EMPTY_STRING # set empty string by default
+CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END:
+
+
+SET_CHATMSG_TEXT_HEADER:
+mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
+
+# calculate float locations for message
+mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
+branchl r12, FN_IntToFloat # returns f1
+
+# calculate Y offset based on message index
+lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f1, f1, f4 # multiply index by margin
+fmr f3, f1 # store our desired Y offset in f3
+
+# load X+Y Starting position of text
+lfs f1, TPO_CHATMSG_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_CHATMSG_Y(REG_TEXT_PROPERTIES)
+
+fadds f2, f2, f3 # add the offset
+fmr REG_CHATMSG_TEXT_X_POS, f1 # store current position to reuse them
+fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
+
+
+# Create Outlined subtext
+mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR # text struct pointer
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT # text color
+li r5, 1 # outline text
+addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_BG # color outline
+addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHATMSG_FORMAT # concatenate user name with message "User: Message"
+mr r8, REG_CHATMSG_USER_NAME_ADDR # User name
+mr r9, REG_CHATMSG_MSG_STRING_ADDR # Message
+lfs f1, TPO_CHATMSG_SIZE(REG_TEXT_PROPERTIES) # chat message scale
+lfs f2, TPO_CHATMSG_SIZE(REG_TEXT_PROPERTIES) # chat message scale
+fmr f3, REG_CHATMSG_TEXT_X_POS # x pos
+fmr f4, REG_CHATMSG_TEXT_Y_POS # y pos
+lfs f5, TPO_CHATMSG_SIZE_SM(REG_TEXT_PROPERTIES) # chat message scale
+lfs f6, TPO_CHATMSG_OUTLINE_OFFSET(REG_TEXT_PROPERTIES) # chat message scale
+
+branchl r12, FG_CreateSubtext
+
+##### END: INITIALIZING CHAT MSG TEXT ###########
+
+CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES:
+lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # 4
+cmpwi r3, MAX_CHAT_MESSAGES
+blt CSS_ONLINE_CHAT_CHECK_TIMER
+
+# if last chat message index is 0 and my index is max - 1 (if messages are rotating on the top again)
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index
+cmpw r3, REG_CHATMSG_MSG_INDEX
+bge CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES_SKIP_TOP_ROTATION
+
+cmpwi REG_CHATMSG_MSG_INDEX, MAX_CHAT_MESSAGE_LINES
+ble CSS_ONLINE_CHAT_REMOVE_PROC
+
+CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES_SKIP_TOP_ROTATION:
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index
+sub r3, r3, REG_CHATMSG_MSG_INDEX
+cmpwi r3, MAX_CHAT_MESSAGES
+bgt CSS_ONLINE_CHAT_REMOVE_PROC
+
+CSS_ONLINE_CHAT_CHECK_TIMER:
+
+# check timer and decrease until is 0
+cmpwi REG_CHATMSG_TIMER, 0
+beq CSS_ONLINE_CHAT_REMOVE_PROC # if timer is 0, then exit and delete think func.
+
+subi REG_CHATMSG_TIMER, REG_CHATMSG_TIMER, 1
+stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+b CSS_ONLINE_CHAT_CHECK_EXIT
+
+CSS_ONLINE_CHAT_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
+
+# remove proc
+mr r3, REG_CHATMSG_GOBJ
+branchl r12, GObj_RemoveProc
+
+# destroy gobj
+mr r3, REG_CHATMSG_GOBJ
+branchl r12, GObj_Destroy
+
+# remove text
+mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
+branchl r12, Text_RemoveText
+
+# Decrease chat message count by 1
+lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
+subi r3, r3, 1
+stb r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # store the new message count
+
+# If This is the last message being removed, reset the Last MSG Index to 0
+lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index
+mr r4, REG_CHATMSG_MSG_INDEX
+addi r4, r4, 1 # compare with last index + 1
+cmpw r3, r4
+beq CSS_ONLINE_CHAT_RESET_MSG_INDEX
+b CSS_ONLINE_CHAT_CHECK_EXIT
+
+CSS_ONLINE_CHAT_RESET_MSG_INDEX:
+li r3, 0
+stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
+
+CSS_ONLINE_CHAT_CHECK_EXIT:
+restore
+blr
+
+
+################################################################################
 # Update subtext function for use only by think function
 # Will set r3 to REG_TEXT_STRUCT. Expects caller to set other args
 ################################################################################
@@ -888,6 +1372,7 @@ branchl r12, Text_UpdateSubtextContents
 
 mtlr REG_LR
 blr
+
 
 EXIT:
 lwz	r6, -0x49C8(r13)
