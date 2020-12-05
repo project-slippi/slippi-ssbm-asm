@@ -11,7 +11,7 @@ bne EXIT # If not online CSS, continue as normal
 
 # Set the same size that is set on the Menu for now
 # TODO: Test how many messages this handles for Chat
-li r3, 0x4800 # set the
+li r3, 0x4800 
 b AFTER_EXIT
 
 EXIT:
