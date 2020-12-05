@@ -16,7 +16,6 @@
 .set REG_VARIOUS_1, 22
 .set REG_LOOP_IDX, 21
 .set REG_REMOTE_PLAYER_IDX, 20
-.set REG_MISSING_REMOTE_INPUTS, 19
 
 #backup registers and sp
 backup
@@ -302,14 +301,17 @@ beq LOAD_OPPONENT_INPUTS
 
 # loop over each remote player
 li REG_LOOP_IDX, 0 # loop index
-li REG_REMOTE_PLAYER_IDX, 0 # player index
-li REG_MISSING_REMOTE_INPUTS, 0 # flag for whether we have all remote inputs
 
 # store current savestate frame in temporary per-player savestate frames
 lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 stw r4, ODB_SAVESTATE_FRAMES+0x0(REG_ODB_ADDRESS)
 stw r4, ODB_SAVESTATE_FRAMES+0x4(REG_ODB_ADDRESS)
 stw r4, ODB_SAVESTATE_FRAMES+0x8(REG_ODB_ADDRESS)
+
+/*# store whether each player increments the savestate frame during this step
+stb r4, ODB_SAVESTATE_FRAME_SET+0x0(REG_ODB_ADDRESS)
+stb r4, ODB_SAVESTATE_FRAME_SET+0x1(REG_ODB_ADDRESS)
+stb r4, ODB_SAVESTATE_FRAME_SET+0x2(REG_ODB_ADDRESS)*/
 
 CHECK_WHETHER_TO_ROLL_BACK:
 # Look up the frame number for this remote player and store it in r3
@@ -397,6 +399,11 @@ lwzx r3, r6, REG_ODB_ADDRESS # get our player-specific savestate frame
 addi r3, r3, 1
 stwx r3, r6, REG_ODB_ADDRESS
 
+/*# Set the flag indicating this player has advanced the savestate frame.
+addi r3, REG_LOOP_IDX, ODB_SAVESTATE_FRAME_SET
+li r4, 1
+stbx r4, r3, REG_ODB_ADDRESS*/
+
 # increment read index
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS # load this player's read idx
@@ -434,26 +441,43 @@ branch r12, 0x80376cec # branch to restore of parent function to skip handling i
 
 CONTINUE_ROLLBACK_CHECK_LOOP:
 addi REG_LOOP_IDX, REG_LOOP_IDX, 1
-addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
 cmpwi REG_LOOP_IDX, 3
 blt CHECK_WHETHER_TO_ROLL_BACK
 
 # determine a new savestate frame using the lowest of each player's savestate frame
-li REG_LOOP_IDX, 1 # loop index, use p[0] as starting value
-lwz r3, ODB_SAVESTATE_FRAMES+0x0(REG_ODB_ADDRESS) # old savestate frame
+li REG_LOOP_IDX, 0 # loop index, use p[0] as starting value
+lwz r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS) # stores end savestate frame to use
 
-#logf LOG_LEVEL_WARN, "Starting player savestate check at %d", "mr r5, 3"
+logf LOG_LEVEL_WARN, "Attempting to advance savestate frame past %d", "mr r5, 3"
+
 COMPUTE_SAVESTATE_FRAME_LOOP:
+/*# check if this player advanced the savestate frame during this step
+addi r6, REG_LOOP_IDX, ODB_SAVESTATE_FRAME_SET
+lbzx r4, r6, REG_ODB_ADDRESS
+cmpwi r4, 1
+logf LOG_LEVEL_WARN, "Player %d savestate flag: %d", "mr r5, 21", "mr r6, 4"
+bne CONTINUE_SAVESTATE_FRAME_LOOP*/
+
+# if this player's savestate is less than the lowest frame so far or if this is the first
+# player who set a savestate frame, take this as the new frame.
 mulli r6, REG_LOOP_IDX, 4
 addi r6, r6, ODB_SAVESTATE_FRAMES
 lwzx r4, r6, REG_ODB_ADDRESS
+
+# If we are the first player to bump the savestate frame, do it to set an initial value.
+lwz r5, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
+cmpw r3, r5
+beq SKIP_SAVESTATE_FRAME_CHECK
+
+ # Otherwise only replace it with our frame if we're the new lowest.
 cmpw r4, r3
-bge SKIP_SET_LOWER_SAVESTATE_FRAME
-logf LOG_LEVEL_WARN, "Checking player savestate frame %d", "mr r5, 4"
+bge CONTINUE_SAVESTATE_FRAME_LOOP
 
+SKIP_SAVESTATE_FRAME_CHECK:
 mr r3, r4
+logf LOG_LEVEL_WARN, "Player %d set savestate frame %d", "mr r5, 21", "mr r6, 4"
 
-SKIP_SET_LOWER_SAVESTATE_FRAME:
+CONTINUE_SAVESTATE_FRAME_LOOP:
 addi REG_LOOP_IDX, REG_LOOP_IDX, 1
 cmpwi REG_LOOP_IDX, 3
 blt COMPUTE_SAVESTATE_FRAME_LOOP
