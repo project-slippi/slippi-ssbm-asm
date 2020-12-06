@@ -522,6 +522,13 @@ b VSSceneDecide_UpdateWinnerEnd
 VSSceneDecide_Lost:
 li  r3,0
 VSSceneDecide_UpdateWinnerEnd:
+# if we're port 1, we're the winner for stage select
+lbz r4, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+li r3, ISWINNER_LOST # always random
+cmpwi r4, 0
+beq VSSceneDecide_SetWinner
+li r3, ISWINNER_WON # set flag to winner if we aren't p1 (loser picks stage)
+VSSceneDecide_SetWinner:
 stb r3,OFST_R13_ISWINNER(r13)
 
 # Reset CHOSESTAGE bool
