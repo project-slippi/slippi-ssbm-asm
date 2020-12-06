@@ -135,6 +135,9 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FN_EXITransferBuffer,0x800055f0
 .set FN_GetIsFollower,0x800055f8
 .set FN_ProcessGecko,0x800055fc
+.set FN_MultiplyRWithF,0x800055ec
+.set FN_IntToFloat,0x800055f4
+.set FG_CreateSubtext,0x800056b4
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
@@ -176,6 +179,8 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set JObj_SetFlagsAll, 0x80371D9c # (jobj,flags)
 
 ## Text functions
+.set Text_AllocateMenuTextMemory,0x803A5798
+.set Text_FreeMenuTextMemory,0x80390228 # Not sure about this one, but it has a similar behavior to the Allocate
 .set Text_CreateStruct,0x803a6754
 .set Text_AllocateTextObject,0x803a5acc
 .set Text_CopyPremadeTextDataToStruct,0x803a6368
@@ -296,8 +301,8 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set CONST_SlippiCmdUpdateApp,0xB8
 .set CONST_SlippiCmdGetOnlineStatus,0xB9
 .set CONST_SlippiCmdCleanupConnections,0xBA
+.set CONST_SlippiCmdSendChatMessage,0xBB
 .set CONST_SlippiCmdGetNewSeed,0xBC
-
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
@@ -333,6 +338,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set archiveDataBuffer, -0x4AE8
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
+.set textStructDescriptorBuffer,-0x3D24
 
 ################################################################################
 # Log levels

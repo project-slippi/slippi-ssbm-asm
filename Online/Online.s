@@ -239,7 +239,9 @@ lwz \reg, -0x62A0(\reg)
 .set MSRB_REMOTE_PLAYER_INDEX, MSRB_LOCAL_PLAYER_INDEX + 1 # u8
 .set MSRB_RNG_OFFSET, MSRB_REMOTE_PLAYER_INDEX + 1 # u32
 .set MSRB_DELAY_FRAMES, MSRB_RNG_OFFSET + 4 # u8
-.set MSRB_P1_NAME, MSRB_DELAY_FRAMES + 1 # string (31)
+.set MSRB_USER_CHATMSG_ID, MSRB_DELAY_FRAMES + 1 # u8
+.set MSRB_OPP_CHATMSG_ID, MSRB_USER_CHATMSG_ID + 1 # u8
+.set MSRB_P1_NAME, MSRB_OPP_CHATMSG_ID + 1 # string (31)
 .set MSRB_P2_NAME, MSRB_P1_NAME + 31 # string (31)
 .set MSRB_OPP_NAME, MSRB_P2_NAME + 31 # string (31)
 .set MSRB_ERROR_MSG, MSRB_OPP_NAME + 31 # string (121)
@@ -257,6 +259,14 @@ lwz \reg, -0x62A0(\reg)
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
 .set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear, 3 = random
 .set PSTB_SIZE, PSTB_STAGE_OPT + 1
+
+################################################################################
+# Chat Messages Transfer Buffer
+################################################################################
+
+.set CMTB_CMD, 0 #u8
+.set CMTB_MESSAGE, CMTB_CMD + 1 #u8, 0x01=ggs,0x2=brb,0x4=Last One,0x8=One More, .... See Pad Values on HandleInpuOnCSS.asm for all
+.set CMTB_SIZE, CMTB_MESSAGE + 1
 
 ################################################################################
 # Find Match Transfer Buffer
@@ -278,7 +288,31 @@ lwz \reg, -0x62A0(\reg)
 .set CSSDT_PREV_LOCK_IN_STATE, CSSDT_FRAME_COUNTER + 2 # bool
 .set CSSDT_PREV_CONNECTED_STATE, CSSDT_PREV_LOCK_IN_STATE + 1 # u8
 .set CSSDT_Z_BUTTON_HOLD_TIMER, CSSDT_PREV_CONNECTED_STATE + 1 # u8 amount of frames Z has been hold for
-.set CSSDT_SIZE, CSSDT_Z_BUTTON_HOLD_TIMER + 1
+.set CSSDT_CHAT_WINDOW_OPENED, CSSDT_Z_BUTTON_HOLD_TIMER + 1 # u8
+.set CSSDT_CHAT_LAST_INPUT, CSSDT_CHAT_WINDOW_OPENED + 1 # u8
+.set CSSDT_CHAT_MSG_COUNT, CSSDT_CHAT_LAST_INPUT + 1 # u8
+.set CSSDT_LAST_CHAT_MSG_INDEX, CSSDT_CHAT_MSG_COUNT + 1 # u8
+.set CSSDT_SIZE, CSSDT_LAST_CHAT_MSG_INDEX + 1
+
+################################################################################
+# CSS Chat Message Data Table
+################################################################################
+.set CSSCMDT_TIMER, 0 # u8
+.set CSSCMDT_MSG_ID, CSSCMDT_TIMER + 1 # u8
+.set CSSCMDT_MSG_INDEX, CSSCMDT_MSG_ID + 1 # u8
+.set CSSCMDT_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_INDEX + 1 # u32
+.set CSSCMDT_USER_NAME_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR + 4 # u32
+.set CSSCMDT_CSSDT_ADDR, CSSCMDT_USER_NAME_ADDR + 4 # u32 CSS Data Table Address
+.set CSSCMDT_SIZE, CSSCMDT_CSSDT_ADDR + 4
+
+################################################################################
+# CSS Chat Window Data Table
+################################################################################
+.set CSSCWDT_INPUT, 0 # u8
+.set CSSCWDT_TIMER, CSSCWDT_INPUT + 1 # u8
+.set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
+.set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
+.set CSSCWDT_SIZE, CSSCWDT_TEXT_STRUCT_ADDR + 4
 
 ################################################################################
 # Online status buffer offsets
