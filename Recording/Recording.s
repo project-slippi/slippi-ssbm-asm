@@ -18,7 +18,7 @@
 .set GAME_INFO_PAYLOAD_LENGTH, 420 # byte count
 .set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
-.set GAME_POST_FRAME_PAYLOAD_LENGTH, 72 # byte count
+.set GAME_POST_FRAME_PAYLOAD_LENGTH, 76 # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 42 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
@@ -52,8 +52,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.7.0
-.set CURRENT_VERSION,0x03070000
+# current version: 3.8.0
+.set CURRENT_VERSION,0x03080000
 
 ################################################################################
 # Static Function Locations
