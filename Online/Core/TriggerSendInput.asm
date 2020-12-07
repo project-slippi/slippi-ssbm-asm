@@ -16,6 +16,7 @@
 .set REG_VARIOUS_1, 22
 .set REG_LOOP_IDX, 21
 .set REG_REMOTE_PLAYER_IDX, 20
+.set REG_VARIOUS_2, REG_REMOTE_PLAYER_IDX
 
 #backup registers and sp
 backup
@@ -295,26 +296,47 @@ stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 # Section 8: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
+/*# loop over each remote player
+li REG_LOOP_IDX, 0 # loop index
+
+UPDATE_SAVESTATE_FRAME_LOOP:
+# if this player doesn't have an active savestate flag, update their savestate frame
+# to the current one
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+lbzx r3, r6, REG_ODB_ADDRESS
+cmpwi r3, 1
+beq CONTINUE_UPDATE_SAVESTATE_FRAME_LOOP
+
+mulli r6, REG_LOOP_IDX, 4
+addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
+stwx REG_FRAME_INDEX, r6, REG_ODB_ADDRESS
+
+CONTINUE_UPDATE_SAVESTATE_FRAME_LOOP:
+addi REG_LOOP_IDX, REG_LOOP_IDX, 1
+cmpwi REG_LOOP_IDX, 3
+blt UPDATE_SAVESTATE_FRAME_LOOP*/
+
 lbz r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi r3, 0
-beq LOAD_OPPONENT_INPUTS
+bne CHECK_OLD_INPUTS_LOOP
 
+li r3, 0
+stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x1(REG_ODB_ADDRESS)
+stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x2(REG_ODB_ADDRESS)
+
+b LOAD_OPPONENT_INPUTS
+
+CHECK_OLD_INPUTS_LOOP:
 # loop over each remote player
 li REG_LOOP_IDX, 0 # loop index
 
-# store current savestate frame in temporary per-player savestate frames
-lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-stw r4, ODB_SAVESTATE_FRAMES+0x0(REG_ODB_ADDRESS)
-stw r4, ODB_SAVESTATE_FRAMES+0x4(REG_ODB_ADDRESS)
-stw r4, ODB_SAVESTATE_FRAMES+0x8(REG_ODB_ADDRESS)
-
-# store whether each player increments the savestate frame during this step
-li r4, 0
-stb r4, ODB_SAVESTATE_FRAME_SET+0x0(REG_ODB_ADDRESS)
-stb r4, ODB_SAVESTATE_FRAME_SET+0x1(REG_ODB_ADDRESS)
-stb r4, ODB_SAVESTATE_FRAME_SET+0x2(REG_ODB_ADDRESS)
-
 CHECK_WHETHER_TO_ROLL_BACK:
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+lbzx r3, r6, REG_ODB_ADDRESS
+cmpwi r3, 1
+bne CONTINUE_ROLLBACK_CHECK_LOOP
+
 # Look up the frame number for this remote player and store it in r3
 mulli r6, REG_LOOP_IDX, 4
 addi r6, r6, RXB_OPNT_FRAME_NUMS
@@ -323,9 +345,12 @@ lwzx r3, r6, REG_RXB_ADDRESS
 # If receivedFrame < savestateFrame, we still dont have the inputs we need to
 # rollback, in this case, we can continue loading the same stale inputs to
 # continue on into prediction land
+# Check how many new inputs at or ahead of the savestate frame we have for this
+# player, so that we know how many old frames to look through and compare the
+# predicted inputs to the real inputs that we have now.
 # lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 mulli r6, REG_LOOP_IDX, 4
-addi r6, r6, ODB_SAVESTATE_FRAMES
+addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
 lwzx r4, r6, REG_ODB_ADDRESS
 # lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 sub. r3, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
@@ -335,6 +360,15 @@ HAVE_PLAYER_INPUTS:
 # If we get here, we have a savestate ready and we have received the inputs
 # required to handle the savestate, so let's check the inputs to see if we need
 # to roll back
+
+# Check if this player's inputs have caught up to the prediction
+mr REG_VARIOUS_1, r3
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
+lbzx r4, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Player %d[%d] r/w indexes when reading next input: %d/%d", "mr r5, 21", "mr r6, 22", "mr r7, 3", "mr r8, 4"
+mr r3, REG_VARIOUS_1
 
 # r3 = 2, current frame for B is 4, savestate frame is 2, 4-2
 mulli r3, r3, PAD_REPORT_SIZE # r3 = 24
@@ -347,6 +381,26 @@ mulli r4, r4, PAD_REPORT_SIZE # compute offset within predicted input buffer # 1
 addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs # r4 = addr of predicted input buffer + 12 +  84
 mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is r5 = 1 * 84
 add r4, r4, r5
+
+/*# increment read index
+mr REG_VARIOUS_1, r3
+mr REG_REMOTE_PLAYER_IDX, r4
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS # load this player's read idx
+addi r3, r3, 1
+cmpwi r3, ROLLBACK_MAX_FRAME_COUNT
+blt SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST
+subi r3, r3, ROLLBACK_MAX_FRAME_COUNT
+SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST:
+stbx r3, r6, REG_ODB_ADDRESS
+
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
+lbzx r4, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Player %d r/w indexes after updating read idx: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
+mr r3, REG_VARIOUS_1
+mr r4, REG_REMOTE_PLAYER_IDX*/
 
 # r4 = predicted input for frame 3
 # r3 = actual input for frame 2 
@@ -399,15 +453,10 @@ INPUTS_MATCH:
 # Here inputs are the same as what we predicted, increment the read idx and the
 # savestate frame and continue, we will no longer need to roll back to that frame
 mulli r6, REG_LOOP_IDX, 4
-addi r6, r6, ODB_SAVESTATE_FRAMES
+addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
 lwzx r3, r6, REG_ODB_ADDRESS # get our player-specific savestate frame
 addi r3, r3, 1
 stwx r3, r6, REG_ODB_ADDRESS
-
-# Set the flag indicating this player has advanced the savestate frame.
-addi r3, REG_LOOP_IDX, ODB_SAVESTATE_FRAME_SET
-li r4, 1
-stbx r4, r3, REG_ODB_ADDRESS
 
 # increment read index
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
@@ -420,15 +469,33 @@ subi r3, r3, ROLLBACK_MAX_FRAME_COUNT
 SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST:
 stbx r3, r6, REG_ODB_ADDRESS
 
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
+lbzx r4, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Player %d r/w indexes after reading: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
+
 # Check if we have caught up to the prediction
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS
 cmpw r4, r3
 bne CHECK_WHETHER_TO_ROLL_BACK # Not caught up, try loop again with next frame
 
+/*# If we made it here, we have caught up to this player's predictions, clear its savestate flag
+li r3, 1
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE # compute offset of savestate flag for this player
+stbx r3, r6, REG_ODB_ADDRESS*/
+
 b CONTINUE_ROLLBACK_CHECK_LOOP
 
 TRIGGER_ROLLBACK:
+mulli r6, REG_LOOP_IDX, 4
+addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
+lwzx r3, r6, REG_ODB_ADDRESS # get our player-specific savestate frame
+logf LOG_LEVEL_WARN, "Triggering rollback from player %d input on past frame %d", "mr r5, 21", "mr r6, 3"
+
 # Set the is rollback active flag to indicate to the engine to continue
 # processing inputs until we have completed the rollback process
 li r3, 1
@@ -453,34 +520,44 @@ blt CHECK_WHETHER_TO_ROLL_BACK
 li REG_LOOP_IDX, 0 # loop index, use p[0] as starting value
 lwz r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS) # stores end savestate frame to use
 
+mr REG_VARIOUS_1, r3
 logf LOG_LEVEL_WARN, "Attempting to advance savestate frame past %d", "mr r5, 3"
+mr r3, REG_VARIOUS_1
 
+li REG_VARIOUS_2, 0
 COMPUTE_SAVESTATE_FRAME_LOOP:
-# check if this player advanced the savestate frame during this step
-addi r6, REG_LOOP_IDX, ODB_SAVESTATE_FRAME_SET
+# if this player doesn't have missing inputs, ignore them
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+lbzx r4, r6, REG_ODB_ADDRESS
+mr REG_VARIOUS_1, r3
+logf LOG_LEVEL_WARN, "Player %d savestate flag: %d", "mr r5, 21", "mr r6, 4"
+mr r3, REG_VARIOUS_1
+
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
 lbzx r4, r6, REG_ODB_ADDRESS
 cmpwi r4, 1
-logf LOG_LEVEL_WARN, "Player %d savestate flag: %d", "mr r5, 21", "mr r6, 4"
 bne CONTINUE_SAVESTATE_FRAME_LOOP
 
 # if this player's savestate is less than the lowest frame so far or if this is the first
-# player who set a savestate frame, take this as the new frame.
+# player we've seen who set a savestate frame, take this as the new frame.
 mulli r6, REG_LOOP_IDX, 4
-addi r6, r6, ODB_SAVESTATE_FRAMES
+addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
 lwzx r4, r6, REG_ODB_ADDRESS
 
 # If we are the first player to bump the savestate frame, do it to set an initial value.
-lwz r5, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-cmpw r3, r5
+cmpwi REG_VARIOUS_2, 0 
 beq SKIP_SAVESTATE_FRAME_CHECK
 
 # Otherwise only replace it with our frame if we're the new lowest.
-cmpw r4, r3
+cmpw r4, r3 # r4 = this player's savestate frame, r3 = lowest frame seen so far
 bge CONTINUE_SAVESTATE_FRAME_LOOP
 
 SKIP_SAVESTATE_FRAME_CHECK:
 mr r3, r4
+mr REG_VARIOUS_1, r3
 logf LOG_LEVEL_WARN, "Player %d set savestate frame %d", "mr r5, 21", "mr r6, 4"
+mr r3, REG_VARIOUS_1
+li REG_VARIOUS_2, 1
 
 CONTINUE_SAVESTATE_FRAME_LOOP:
 addi REG_LOOP_IDX, REG_LOOP_IDX, 1
@@ -495,23 +572,56 @@ logf LOG_LEVEL_WARN, "Set savestate frame to %d, game frame: %d", "mr r5, 3", "l
 li REG_LOOP_IDX, 0 # loop index
 
 CHECK_RESET_SAVESTATE_LOOP:
+# Don't bother checking read/write index match for players without an active savestate.
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+lbzx r4, r6, REG_ODB_ADDRESS
+cmpwi r4, 1
+bne CONTINUE_CHECK_RESET_SAVESTATE_LOOP
+
 # Check if this player's inputs have caught up to the prediction
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Player %d r/w indexes during reset: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
 
-# if any remote player isn't caught up, skip to the next section
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
+lbzx r4, r6, REG_ODB_ADDRESS
+
+# if we're caught up to the prediction, set this player's savestate flag back to 0
 cmpw r4, r3
-bne LOAD_OPPONENT_INPUTS
+bne CONTINUE_CHECK_RESET_SAVESTATE_LOOP
 
+li r3, 0
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+stbx r3, r6, REG_ODB_ADDRESS
+
+CONTINUE_CHECK_RESET_SAVESTATE_LOOP:
 addi REG_LOOP_IDX, REG_LOOP_IDX, 1
 cmpwi REG_LOOP_IDX, 3
 blt CHECK_RESET_SAVESTATE_LOOP
 
-# If we made it here, we have caught up to the prediction, clear the savestate flag
+# if any players still have a savestate active, skip resetting the global flag
+li REG_LOOP_IDX, 0
+CHECK_GLOBAL_SAVESTATE_LOOP:
+# Don't bother checking read/write index match for players without an active savestate.
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+lbzx r4, r6, REG_ODB_ADDRESS
+cmpwi r4, 1
+beq LOAD_OPPONENT_INPUTS
+
+CONTINUE_CHECK_GLOBAL_SAVESTATE_LOOP:
+addi REG_LOOP_IDX, REG_LOOP_IDX, 1
+cmpwi REG_LOOP_IDX, 3
+blt CHECK_GLOBAL_SAVESTATE_LOOP
+
+# If we made it here, we have caught up to the prediction, clear the savestate flags for everyone
 li r3, 0
 stb r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+
+logf LOG_LEVEL_WARN, "Reset savestate flags to 0"
 
 ################################################################################
 # Section 9: Try to read opponent's input for this frame
@@ -569,10 +679,12 @@ add r3, r3, r5
 
 # copy predicted pad data to predicted input buffer for later comparison
 # in order to decide whether to roll back
+mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
+add r6, RXB_OPNT_INPUTS, r6
 add r3, REG_ODB_ADDRESS, r3 # destination
-addi r4, REG_RXB_ADDRESS, RXB_OPNT_INPUTS # source
+add r4, REG_RXB_ADDRESS, r6 # source
 li r5, PAD_REPORT_SIZE
-branchl r12, memcpy
+branchl r12, memcpy # memcpy(r3, r4, r5)
 
 # increment write index
 addi r3, REG_PREDICTED_WRITE_IDX, 1
@@ -585,23 +697,60 @@ addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset
 stbx r3, r6, REG_ODB_ADDRESS # store updated write index
 # stb r3, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS(REG_ODB_ADDRESS)
 
-# in the case where we don't have the opponent inputs but already have a
-# savestate, just keep the old savestate location
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
+lbzx r4, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Player %d r/w indexes after write update: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
+
+# in the case where we don't have this opponent's inputs but already have a
+# savestate location for them, just keep the old savestate location
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE # compute offset of savestate flag for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+cmpwi r3, 1
+beq LOAD_STALE_INPUTS
+
+# Store the current frame in this player's savestate frame counter
+mulli r6, REG_LOOP_IDX, 4
+addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
+stwx REG_FRAME_INDEX, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Setting savestate frame for player %d to %d", "mr r5, 21", "mr r6, 26"
+
+# Indicate we have prepared for a rollback because of this player's missing input
+li r3, 1
+addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+stbx r3, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Setting savestate flag to 1 for player %d", "mr r5, 21"
+
+# Store read idx for predicted inputs
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+stbx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS
+
+# in the case where we don't have this player's inputs but already have a
+# savestate because of another player's missing inputs, don't touch the global savestate frame counter
 lbz r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi r3, 1
 beq LOAD_STALE_INPUTS
 
-# Store the rollback frame
+# Store the rollback frame in the global savestate frame counter
 stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
+logf LOG_LEVEL_WARN, "Setting global savestate frame to %d", "mr r5, 26"
 
 # Indicate that we have prepared for a rollback
 li r3, 1
 stb r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+logf LOG_LEVEL_WARN, "Setting global savestate flag to 1"
 
-# Store read idx for predicted inputs
+/*# Store read idx for predicted inputs
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-lbzx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS
+stbx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS*/
 # stb REG_PREDICTED_WRITE_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS(REG_ODB_ADDRESS)
+
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
+lbzx r3, r6, REG_ODB_ADDRESS
+addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
+lbzx r4, r6, REG_ODB_ADDRESS
+logf LOG_LEVEL_WARN, "Player %d r/w indexes after savestate init: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
 
 LOAD_STALE_INPUTS:
 li r3, 0 # use input at index zero (the most recent received)
