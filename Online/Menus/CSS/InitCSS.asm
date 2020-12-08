@@ -144,7 +144,11 @@ blrl
 .long 0xFF0000FF
 .set TPO_COLOR_CHAT, TPO_COLOR_RED + 4
 .long 0xFFFFFFFF # white
-.set TPO_COLOR_CHAT_BG, TPO_COLOR_CHAT + 4
+.set TPO_COLOR_CHAT_P1, TPO_COLOR_CHAT + 4
+.long 0xD4D4D4FF
+.set TPO_COLOR_CHAT_P2, TPO_COLOR_CHAT_P1 + 4
+.long 0x72d07fFF
+.set TPO_COLOR_CHAT_BG, TPO_COLOR_CHAT_P2 + 4
 .long 0x00000000 # black
 
 
@@ -1274,10 +1278,26 @@ fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_X_POS, f1 # store current position to reuse them
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
+# Setup message colors based on player
 
+# load CSSDT_MSRB_ADDR data table needed to check player names
+loadwz r3, CSSDT_BUF_ADDR
+lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(r3)
+
+# Compare if the current player name matches P1 or P2
+addi r3, REG_MSRB_ADDR, MSRB_P1_NAME
+cmpw r3, REG_CHATMSG_USER_NAME_ADDR
+bne CSS_ONLINE_CHAT_SET_COLOR_P2
+CSS_ONLINE_CHAT_SET_COLOR_P1:
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_P1 # text color
+b CSS_ONLINE_CHAT_SET_COLOR_END
+
+CSS_ONLINE_CHAT_SET_COLOR_P2:
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_P2 # text color
+
+CSS_ONLINE_CHAT_SET_COLOR_END:
 # Create Outlined subtext
 mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR # text struct pointer
-addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT # text color
 li r5, 1 # outline text
 addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_BG # color outline
 addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHATMSG_FORMAT # concatenate user name with message "User: Message"
