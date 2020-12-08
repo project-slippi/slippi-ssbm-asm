@@ -30,7 +30,7 @@ CheckForTeams:
   lbz	r3,0x18(r3)
 #Check If Teams is On or Off
   cmpwi	r3,0x1
-  beq	Doubles
+  b	Doubles
 
 Singles:
 #Flip FoD Bit On in Random Stage Bitflag (FoD is bit #26)
