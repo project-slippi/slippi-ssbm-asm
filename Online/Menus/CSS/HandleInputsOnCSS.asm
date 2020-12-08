@@ -230,6 +230,14 @@ lbz r3, -0x49A9(r13)
 cmpwi r3, 0
 beq CHECK_SHOULD_START_MATCH
 
+# Sometimes when returning to the CSS, previously held buttons will stay held,
+# including start. This prevents the start input from locking people in
+# immediately... Doesn't feel like this should be necessary, and if it is,
+# this doesn't feel like the right place for this logic
+loadGlobalFrame r3
+cmpwi r3, 0
+beq CHECK_SHOULD_START_MATCH # Don't lock-in on the very first fram
+
 # Check which mode we are playing.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
