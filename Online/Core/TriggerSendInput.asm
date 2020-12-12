@@ -368,18 +368,84 @@ lbzx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS
 logf LOG_LEVEL_WARN, "Player %d[%d] r/w indexes when reading next input: %d/%d", "mr r5, 21", "mr r6, 22", "mr r7, 3", "mr r8, 4"
+
+.set REG_LOG_LOOP_IDX, REG_VARIOUS_2
+.set REG_LOG_INNER_LOOP_IDX, 19
+
+li REG_LOG_LOOP_IDX, 0
+LOG_INPUTS_LOOP:
+
+li REG_LOG_INNER_LOOP_IDX, 0
+LOG_INPUTS_INNER_LOOP:
+
+mulli r3, REG_LOG_INNER_LOOP_IDX, PAD_REPORT_SIZE # r3 = j * 12
+addi r3, r3, RXB_OPNT_INPUTS # RXB_OPNT_INPUTS + j * 12
+mulli r6, REG_LOG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # RXB_OPNT_INPUTS + (j * 12) + (i * PLAYER_MAX_INPUT_SIZE)
+add r3, r3, r6
+
+add r18, REG_RXB_ADDRESS, r3
+lbz r7, 0(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte0[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 1(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte1[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 2(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte2[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 3(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte3[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 4(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte4[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 5(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte5[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 6(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte6[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 7(r18)
+logf LOG_LEVEL_WARN, "Player %d actual input, byte7[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+
+mulli r3, REG_LOG_INNER_LOOP_IDX, PAD_REPORT_SIZE # r3 = j * 12
+addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS # ODB_ROLLBACK_PREDICTED_INPUTS + j * 12
+mulli r6, REG_LOG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # ODB_ROLLBACK_PREDICTED_INPUTS + (j * 12) + (i * PLAYER_MAX_INPUT_SIZE)
+add r3, r3, r6
+
+add r18, REG_ODB_ADDRESS, r3
+lbz r7, 0(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte0[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 1(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte1[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 2(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte2[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 3(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte3[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 4(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte4[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 5(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte5[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 6(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte6[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+lbz r7, 7(r18)
+logf LOG_LEVEL_WARN, "Player %d predicted input, byte7[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
+
+addi REG_LOG_INNER_LOOP_IDX, REG_LOG_INNER_LOOP_IDX, 1
+cmpwi REG_LOG_INNER_LOOP_IDX, 7
+blt LOG_INPUTS_INNER_LOOP
+
+addi REG_LOG_LOOP_IDX, REG_LOG_LOOP_IDX, 1
+cmpwi REG_LOG_LOOP_IDX, 3
+blt LOG_INPUTS_LOOP
+
 mr r3, REG_VARIOUS_1
 
 # r3 = 2, current frame for B is 4, savestate frame is 2, 4-2
-mulli r3, r3, PAD_REPORT_SIZE # r3 = 24
-addi r3, r3, RXB_OPNT_INPUTS # RXB_OPNT_INPUTS+24
+mulli r3, r3, PAD_REPORT_SIZE # r3 = 1 * 12
+addi r3, r3, RXB_OPNT_INPUTS #
+mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
+add r3, r3, r6
 
 # Get inputs that were predicted for this frame
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-lbzx r4, r6, REG_ODB_ADDRESS # load this player's read idx # r4 = read idx = 1
-mulli r4, r4, PAD_REPORT_SIZE # compute offset within predicted input buffer # 1 * 12
-addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs # r4 = addr of predicted input buffer + 12 +  84
-mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is r5 = 1 * 84
+lbzx r4, r6, REG_ODB_ADDRESS # load this player's read idx # r4 = read idx = 0
+mulli r4, r4, PAD_REPORT_SIZE # compute offset within predicted input buffer # 0 * 12
+addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs # r4 = addr of predicted input buffer + 0
+mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is r5 = 0 * 84
 add r4, r4, r5
 
 /*# increment read index
@@ -677,14 +743,58 @@ addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS # offset from REG_ODB_ADDRESS where t
 mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is
 add r3, r3, r5
 
+/*# mr r3, REG_VARIOUS_1
+# Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
+# Slippi should have told us to wait
+mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
+addi r5, r6, RXB_OPNT_INPUTS
+
+add r18, REG_RXB_ADDRESS, r5
+mr r19, r3
+lbz r7, 0(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte0[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 1(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte1[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 2(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte2[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 3(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte3[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 4(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte4[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 5(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte5[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 6(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte6[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+lbz r7, 7(r18)
+logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte7[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
+mr r3, r19*/
+
 # copy predicted pad data to predicted input buffer for later comparison
 # in order to decide whether to roll back
 mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
-add r6, RXB_OPNT_INPUTS, r6
+addi r6, r6, RXB_OPNT_INPUTS
 add r3, REG_ODB_ADDRESS, r3 # destination
 add r4, REG_RXB_ADDRESS, r6 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy # memcpy(r3, r4, r5)
+
+/*# Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
+# Slippi should have told us to wait
+mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
+addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
+mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
+add r5, r5, r6
+
+# get offset from sp of online player's pad data
+# lbz r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS) # online player index
+mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
+addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
+
+# copy opponent pad data to stack
+add r3, sp, r3 # destination
+add r4, REG_RXB_ADDRESS, r5 # source
+li r5, PAD_REPORT_SIZE
+branchl r12, memcpy*/
 
 # increment write index
 addi r3, REG_PREDICTED_WRITE_IDX, 1
@@ -756,6 +866,8 @@ LOAD_STALE_INPUTS:
 li r3, 0 # use input at index zero (the most recent received)
 
 CALC_OPNT_PAD_OFFSET:
+mr REG_VARIOUS_1, r3
+
 # Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
 # Slippi should have told us to wait
 mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
@@ -773,6 +885,41 @@ add r3, sp, r3 # destination
 add r4, REG_RXB_ADDRESS, r5 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
+
+mr r3, REG_VARIOUS_1
+# Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
+# Slippi should have told us to wait
+mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
+addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
+mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
+add r5, r5, r6
+
+add r18, REG_RXB_ADDRESS, r5 # source
+logf LOG_LEVEL_WARN, "RXB_ADDR = %x, source = %x, dest = %x", "mr r5, 24", "mr r6, 4", "mr r7, 3"
+lbz r5, 0(r18)
+lbz r6, 1(r18)
+lbz r7, 2(r18)
+lbz r8, 3(r18)
+logf LOG_LEVEL_WARN, "byte0-3: %d, %d, %d, %d", "mr r5, 5", "mr r6, 6", "mr r7, 7", "mr r8, 8"
+
+lbz r5, 4(r18)
+lbz r6, 5(r18)
+lbz r7, 6(r18)
+lbz r8, 7(r18)
+logf LOG_LEVEL_WARN, "byte4-7: %d, %d, %d, %d", "mr r5, 5", "mr r6, 6", "mr r7, 7", "mr r8, 8"
+/*logf LOG_LEVEL_WARN, "byte1: %d", "mr r5, 5"
+lbz r5, 2(r18)
+logf LOG_LEVEL_WARN, "byte2: %d", "mr r5, 5"
+lbz r5, 3(r18)
+logf LOG_LEVEL_WARN, "byte3: %d", "mr r5, 5"
+/*lbz r5, 4(r18)
+logf LOG_LEVEL_WARN, "byte4: %d", "mr r5, 5"
+lbz r5, 5(r18)
+logf LOG_LEVEL_WARN, "byte5: %d", "mr r5, 5"
+lbz r5, 6(r18)
+logf LOG_LEVEL_WARN, "byte6: %d", "mr r5, 5"
+lbz r5, 7(r18)
+logf LOG_LEVEL_WARN, "byte7: %d", "mr r5, 5"*/
 
 addi REG_LOOP_IDX, REG_LOOP_IDX, 1
 addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
