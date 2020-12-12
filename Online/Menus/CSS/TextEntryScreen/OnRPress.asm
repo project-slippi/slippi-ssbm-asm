@@ -101,7 +101,13 @@ restore
 
 # Revert cur index to within bounds and re-retrieve data
 subi REG_CODE_INDEX, REG_CODE_INDEX, 1
+cmpwi REG_CODE_INDEX, 0x00
+bge POST_ZERO_CHECK
+li REG_CODE_INDEX, 0x00
+li REG_RUN_ONCE, 0x011
+b EXIT
 
+POST_ZERO_CHECK:
 # Raise flag, so success sound isn't played when we reload previous direct code.
 li REG_PREV_ERROR, 0x1
 
