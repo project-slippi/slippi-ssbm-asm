@@ -296,26 +296,9 @@ stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 # Section 8: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
-/*# loop over each remote player
-li REG_LOOP_IDX, 0 # loop index
-
-UPDATE_SAVESTATE_FRAME_LOOP:
-# if this player doesn't have an active savestate flag, update their savestate frame
-# to the current one
-addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE
-lbzx r3, r6, REG_ODB_ADDRESS
-cmpwi r3, 1
-beq CONTINUE_UPDATE_SAVESTATE_FRAME_LOOP
-
-mulli r6, REG_LOOP_IDX, 4
-addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
-stwx REG_FRAME_INDEX, r6, REG_ODB_ADDRESS
-
-CONTINUE_UPDATE_SAVESTATE_FRAME_LOOP:
-addi REG_LOOP_IDX, REG_LOOP_IDX, 1
-cmpwi REG_LOOP_IDX, 3
-blt UPDATE_SAVESTATE_FRAME_LOOP*/
-
+# If ODB_SAVESTATE_IS_ACTIVE is 0, we either don't have a savestate created
+# or we're in a rollback, so set the per-played savestate flags to 0 and skip
+# to section 9.
 lbz r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne CHECK_OLD_INPUTS_LOOP
@@ -327,6 +310,9 @@ stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x2(REG_ODB_ADDRESS)
 
 b LOAD_OPPONENT_INPUTS
 
+# If we were missing past inputs for one or more players, check and see
+# if we've received any new inputs that would allow us to compare those to
+# past predictions to potentially trigger a rollback.
 CHECK_OLD_INPUTS_LOOP:
 # loop over each remote player
 li REG_LOOP_IDX, 0 # loop index
@@ -344,15 +330,13 @@ lwzx r3, r6, REG_RXB_ADDRESS
 
 # If receivedFrame < savestateFrame, we still dont have the inputs we need to
 # rollback, in this case, we can continue loading the same stale inputs to
-# continue on into prediction land
-# Check how many new inputs at or ahead of the savestate frame we have for this
-# player, so that we know how many old frames to look through and compare the
-# predicted inputs to the real inputs that we have now.
-# lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
+# continue on into prediction land.
+# r3 will be (opponent frame - savestate frame), which determines the number
+# of old frames to look through and check actual inputs vs predictions for.
+# if r3 >= 0, we have actual inputs to compare.
 mulli r6, REG_LOOP_IDX, 4
 addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
 lwzx r4, r6, REG_ODB_ADDRESS
-# lwz r4, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 sub. r3, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
 blt CONTINUE_ROLLBACK_CHECK_LOOP
 
@@ -361,115 +345,27 @@ HAVE_PLAYER_INPUTS:
 # required to handle the savestate, so let's check the inputs to see if we need
 # to roll back
 
-# Check if this player's inputs have caught up to the prediction
 mr REG_VARIOUS_1, r3
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS
 logf LOG_LEVEL_WARN, "Player %d[%d] r/w indexes when reading next input: %d/%d", "mr r5, 21", "mr r6, 22", "mr r7, 3", "mr r8, 4"
-
-.set REG_LOG_LOOP_IDX, REG_VARIOUS_2
-.set REG_LOG_INNER_LOOP_IDX, 19
-
-li REG_LOG_LOOP_IDX, 0
-LOG_INPUTS_LOOP:
-
-li REG_LOG_INNER_LOOP_IDX, 0
-LOG_INPUTS_INNER_LOOP:
-
-mulli r3, REG_LOG_INNER_LOOP_IDX, PAD_REPORT_SIZE # r3 = j * 12
-addi r3, r3, RXB_OPNT_INPUTS # RXB_OPNT_INPUTS + j * 12
-mulli r6, REG_LOG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # RXB_OPNT_INPUTS + (j * 12) + (i * PLAYER_MAX_INPUT_SIZE)
-add r3, r3, r6
-
-add r18, REG_RXB_ADDRESS, r3
-lbz r7, 0(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte0[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 1(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte1[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 2(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte2[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 3(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte3[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 4(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte4[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 5(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte5[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 6(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte6[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 7(r18)
-logf LOG_LEVEL_WARN, "Player %d actual input, byte7[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-
-mulli r3, REG_LOG_INNER_LOOP_IDX, PAD_REPORT_SIZE # r3 = j * 12
-addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS # ODB_ROLLBACK_PREDICTED_INPUTS + j * 12
-mulli r6, REG_LOG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # ODB_ROLLBACK_PREDICTED_INPUTS + (j * 12) + (i * PLAYER_MAX_INPUT_SIZE)
-add r3, r3, r6
-
-add r18, REG_ODB_ADDRESS, r3
-lbz r7, 0(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte0[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 1(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte1[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 2(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte2[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 3(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte3[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 4(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte4[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 5(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte5[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 6(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte6[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-lbz r7, 7(r18)
-logf LOG_LEVEL_WARN, "Player %d predicted input, byte7[%d]: %d", "mr r5, 20", "mr r6, 19", "mr r7, 7"
-
-addi REG_LOG_INNER_LOOP_IDX, REG_LOG_INNER_LOOP_IDX, 1
-cmpwi REG_LOG_INNER_LOOP_IDX, 7
-blt LOG_INPUTS_INNER_LOOP
-
-addi REG_LOG_LOOP_IDX, REG_LOG_LOOP_IDX, 1
-cmpwi REG_LOG_LOOP_IDX, 3
-blt LOG_INPUTS_LOOP
-
 mr r3, REG_VARIOUS_1
 
-# r3 = 2, current frame for B is 4, savestate frame is 2, 4-2
-mulli r3, r3, PAD_REPORT_SIZE # r3 = 1 * 12
-addi r3, r3, RXB_OPNT_INPUTS #
+# Compute offset of true inputs for this player on this frame
+mulli r3, r3, PAD_REPORT_SIZE
+addi r3, r3, RXB_OPNT_INPUTS
 mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
 add r3, r3, r6
 
 # Get inputs that were predicted for this frame
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS # load this player's read idx # r4 = read idx = 0
-mulli r4, r4, PAD_REPORT_SIZE # compute offset within predicted input buffer # 0 * 12
-addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs # r4 = addr of predicted input buffer + 0
-mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is r5 = 0 * 84
+mulli r4, r4, PAD_REPORT_SIZE # compute offset within predicted input buffer
+addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs
+mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
 add r4, r4, r5
-
-/*# increment read index
-mr REG_VARIOUS_1, r3
-mr REG_REMOTE_PLAYER_IDX, r4
-addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-lbzx r3, r6, REG_ODB_ADDRESS # load this player's read idx
-addi r3, r3, 1
-cmpwi r3, ROLLBACK_MAX_FRAME_COUNT
-blt SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST
-subi r3, r3, ROLLBACK_MAX_FRAME_COUNT
-SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST:
-stbx r3, r6, REG_ODB_ADDRESS
-
-addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-lbzx r3, r6, REG_ODB_ADDRESS
-addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
-lbzx r4, r6, REG_ODB_ADDRESS
-logf LOG_LEVEL_WARN, "Player %d r/w indexes after updating read idx: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
-mr r3, REG_VARIOUS_1
-mr r4, REG_REMOTE_PLAYER_IDX*/
-
-# r4 = predicted input for frame 3
-# r3 = actual input for frame 2 
 
 add r6, REG_RXB_ADDRESS, r3
 add r7, REG_ODB_ADDRESS, r4
@@ -527,7 +423,6 @@ stwx r3, r6, REG_ODB_ADDRESS
 # increment read index
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS # load this player's read idx
-# lbz r3, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS(REG_ODB_ADDRESS)
 addi r3, r3, 1
 cmpwi r3, ROLLBACK_MAX_FRAME_COUNT
 blt SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST
@@ -548,11 +443,6 @@ addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset
 lbzx r4, r6, REG_ODB_ADDRESS
 cmpw r4, r3
 bne CHECK_WHETHER_TO_ROLL_BACK # Not caught up, try loop again with next frame
-
-/*# If we made it here, we have caught up to this player's predictions, clear its savestate flag
-li r3, 1
-addi r6, REG_LOOP_IDX, ODB_PLAYER_SAVESTATE_IS_ACTIVE # compute offset of savestate flag for this player
-stbx r3, r6, REG_ODB_ADDRESS*/
 
 b CONTINUE_ROLLBACK_CHECK_LOOP
 
@@ -710,7 +600,6 @@ SKIP_INCREMENT_OPP_INDEX:
 mulli r6, REG_LOOP_IDX, 4
 addi r6, r6, RXB_OPNT_FRAME_NUMS
 lwzx r3, r6, REG_RXB_ADDRESS
-# lwz r3, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)
 sub r3, r3, REG_FRAME_INDEX # opponent input index
 
 # make sure that we have the opponent input we need
@@ -743,32 +632,6 @@ addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS # offset from REG_ODB_ADDRESS where t
 mulli r5, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is
 add r3, r3, r5
 
-/*# mr r3, REG_VARIOUS_1
-# Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
-# Slippi should have told us to wait
-mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
-addi r5, r6, RXB_OPNT_INPUTS
-
-add r18, REG_RXB_ADDRESS, r5
-mr r19, r3
-lbz r7, 0(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte0[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 1(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte1[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 2(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte2[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 3(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte3[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 4(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte4[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 5(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte5[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 6(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte6[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-lbz r7, 7(r18)
-logf LOG_LEVEL_WARN, "Writing player %d predicted input, byte7[%d]: %d", "mr r5, 21", "mr r6, 22", "mr r7, 7"
-mr r3, r19*/
-
 # copy predicted pad data to predicted input buffer for later comparison
 # in order to decide whether to roll back
 mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
@@ -777,24 +640,6 @@ add r3, REG_ODB_ADDRESS, r3 # destination
 add r4, REG_RXB_ADDRESS, r6 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy # memcpy(r3, r4, r5)
-
-/*# Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
-# Slippi should have told us to wait
-mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
-addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
-mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
-add r5, r5, r6
-
-# get offset from sp of online player's pad data
-# lbz r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS) # online player index
-mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
-addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
-
-# copy opponent pad data to stack
-add r3, sp, r3 # destination
-add r4, REG_RXB_ADDRESS, r5 # source
-li r5, PAD_REPORT_SIZE
-branchl r12, memcpy*/
 
 # increment write index
 addi r3, REG_PREDICTED_WRITE_IDX, 1
@@ -805,7 +650,6 @@ subi r3, r3, ROLLBACK_MAX_FRAME_COUNT
 SKIP_PREDICTED_INPUTS_WRITE_IDX_ADJUST:
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 stbx r3, r6, REG_ODB_ADDRESS # store updated write index
-# stb r3, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS(REG_ODB_ADDRESS)
 
 addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS
@@ -851,23 +695,10 @@ li r3, 1
 stb r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
 logf LOG_LEVEL_WARN, "Setting global savestate flag to 1"
 
-/*# Store read idx for predicted inputs
-addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-stbx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS*/
-# stb REG_PREDICTED_WRITE_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS(REG_ODB_ADDRESS)
-
-addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-lbzx r3, r6, REG_ODB_ADDRESS
-addi r6, REG_LOOP_IDX, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
-lbzx r4, r6, REG_ODB_ADDRESS
-logf LOG_LEVEL_WARN, "Player %d r/w indexes after savestate init: %d/%d", "mr r5, 21", "mr r6, 3", "mr r7, 4"
-
 LOAD_STALE_INPUTS:
 li r3, 0 # use input at index zero (the most recent received)
 
 CALC_OPNT_PAD_OFFSET:
-mr REG_VARIOUS_1, r3
-
 # Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
 # Slippi should have told us to wait
 mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
@@ -876,7 +707,6 @@ mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
 add r5, r5, r6
 
 # get offset from sp of online player's pad data
-# lbz r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS) # online player index
 mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
 addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
 
@@ -886,40 +716,12 @@ add r4, REG_RXB_ADDRESS, r5 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
-mr r3, REG_VARIOUS_1
 # Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
 # Slippi should have told us to wait
 mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
 addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
 mulli r6, REG_LOOP_IDX, PLAYER_MAX_INPUT_SIZE
 add r5, r5, r6
-
-add r18, REG_RXB_ADDRESS, r5 # source
-logf LOG_LEVEL_WARN, "RXB_ADDR = %x, source = %x, dest = %x", "mr r5, 24", "mr r6, 4", "mr r7, 3"
-lbz r5, 0(r18)
-lbz r6, 1(r18)
-lbz r7, 2(r18)
-lbz r8, 3(r18)
-logf LOG_LEVEL_WARN, "byte0-3: %d, %d, %d, %d", "mr r5, 5", "mr r6, 6", "mr r7, 7", "mr r8, 8"
-
-lbz r5, 4(r18)
-lbz r6, 5(r18)
-lbz r7, 6(r18)
-lbz r8, 7(r18)
-logf LOG_LEVEL_WARN, "byte4-7: %d, %d, %d, %d", "mr r5, 5", "mr r6, 6", "mr r7, 7", "mr r8, 8"
-/*logf LOG_LEVEL_WARN, "byte1: %d", "mr r5, 5"
-lbz r5, 2(r18)
-logf LOG_LEVEL_WARN, "byte2: %d", "mr r5, 5"
-lbz r5, 3(r18)
-logf LOG_LEVEL_WARN, "byte3: %d", "mr r5, 5"
-/*lbz r5, 4(r18)
-logf LOG_LEVEL_WARN, "byte4: %d", "mr r5, 5"
-lbz r5, 5(r18)
-logf LOG_LEVEL_WARN, "byte5: %d", "mr r5, 5"
-lbz r5, 6(r18)
-logf LOG_LEVEL_WARN, "byte6: %d", "mr r5, 5"
-lbz r5, 7(r18)
-logf LOG_LEVEL_WARN, "byte7: %d", "mr r5, 5"*/
 
 addi REG_LOOP_IDX, REG_LOOP_IDX, 1
 addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
