@@ -37,13 +37,13 @@ lbz r6, SSCB_WRITE_INDEX(REG_SSCB_ADDR)
 # This loop will find the savestate we want to load. Currently there really
 # isn't anything useful in the ASM-side savestates but eventually there will be
 FIND_FRAME_LOOP_START:
-subi r6, r6, 1  # r6 = 0
+subi r6, r6, 1
 cmpwi r6, 0
 bge SKIP_IDX_ADJUST
 addi r6, r6, ROLLBACK_MAX_FRAME_COUNT
 SKIP_IDX_ADJUST:
 mulli r3, r6, SSDB_SIZE
-addi r3, r3, SSCB_SSDB_START # r3 = 00000533, REG_FRAME_INDEX = 0000053e, REG_SSDB_ADDR = 80bdd51a
+addi r3, r3, SSCB_SSDB_START
 add REG_SSDB_ADDR, REG_SSCB_ADDR, r3
 lwz r3, SSDB_FRAME(REG_SSDB_ADDR) # Load frame of this save state.
 cmpw r3, REG_FRAME_INDEX

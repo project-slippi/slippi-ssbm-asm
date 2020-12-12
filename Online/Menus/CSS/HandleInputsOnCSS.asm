@@ -162,8 +162,7 @@ bl FN_LOCK_IN_AND_SEARCH # lock in and trigger matchmaking
 b SKIP_START_MATCH
 
 HANDLE_IDLE_DIRECT:
-bl FN_LOCK_IN_AND_SEARCH
-# bl FN_LOAD_CODE_ENTRY # load text code entry
+bl FN_LOAD_CODE_ENTRY # load text code entry
 b SKIP_START_MATCH
 
 ################################################################################
