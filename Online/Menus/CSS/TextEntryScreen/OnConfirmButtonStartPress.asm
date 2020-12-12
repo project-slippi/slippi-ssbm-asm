@@ -16,7 +16,7 @@ cmpwi r3, 7
 bge START
 backup
 li r5, 0
-mulli r3, r3, 2
+mulli r3, r3, 3
 CLEAR_REST_TEXT:
     sthx r5, r30, r3
     addi r3, r3, 2
