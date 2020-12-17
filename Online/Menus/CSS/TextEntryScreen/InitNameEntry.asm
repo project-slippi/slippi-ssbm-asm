@@ -30,16 +30,43 @@ blrl
 .float -71.5
 .set DOFST_TEXT_FONT_SIZE, DOFST_TEXT_OPP_STR_X_POS + 4
 .float 0.35
-
-.set DOFST_TEXT_HIGHLIGHT_COLOR, DOFST_TEXT_FONT_SIZE + 4
+.set DOFST_TEXT_X_POS_LTRIG, DOFST_TEXT_FONT_SIZE + 4
+.float -150
+.set DOFST_TEXT_Y_POS_LTRIG, DOFST_TEXT_X_POS_LTRIG + 4
+.float -127
+.set DOFST_TEXT_X_POS_RTRIG, DOFST_TEXT_Y_POS_LTRIG + 4
+.float 50
+.set DOFST_TEXT_TRIG_FONT_SIZE, DOFST_TEXT_X_POS_RTRIG + 4
+.float 0.50
+.set DOFST_TEXT_X_POS_L_ARROW, DOFST_TEXT_TRIG_FONT_SIZE + 4 
+.float -165
+.set DOFST_TEXT_X_POS_R_ARROW, DOFST_TEXT_X_POS_L_ARROW + 4
+.float 65
+.set DOFST_TEXT_Y_POS_LR_ARROW, DOFST_TEXT_X_POS_R_ARROW + 4
+.float -129
+.set DOFST_TEXT_HIGHLIGHT_COLOR, DOFST_TEXT_Y_POS_LR_ARROW + 4
 .long 0xFFCB00FF
+.set DOFST_TEXT_NOT_SELECTED_COLOR, DOFST_TEXT_HIGHLIGHT_COLOR + 4
+.long 0x8E9196FF 
 
 # Line Text Strings
-.set DOFST_TEXT_STRING_LINE1, DOFST_TEXT_HIGHLIGHT_COLOR + 4
+.set DOFST_TEXT_STRING_LINE1, DOFST_TEXT_NOT_SELECTED_COLOR + 4
 .string "Enter your %s above."
 .set DOFST_TEXT_STRING_LINE2, DOFST_TEXT_STRING_LINE1 + 21
 .string "Your opponent will also need to enter yours"
-.set DOFST_TEXT_STRING_OPP_CONNECT_CODE, DOFST_TEXT_STRING_LINE2 + 44
+.set DOFST_TEXT_STRING_LTRIG, DOFST_TEXT_STRING_LINE2 + 44
+.string "L"
+.set DOFST_TEXT_STRING_ARROW_LEFT, DOFST_TEXT_STRING_LTRIG + 2 
+.short 0x8183 # <
+# .short 0x817c # -
+.byte 0x00
+.set DOFST_TEXT_STRING_RTRIG, DOFST_TEXT_STRING_ARROW_LEFT + 3
+.string "R"
+.set DOFST_TEXT_STRING_ARROW_RIGHT, DOFST_TEXT_STRING_RTRIG + 2
+#.short 0x817c # - 
+.short 0x8184 # > 
+.byte 0x00
+.set DOFST_TEXT_STRING_OPP_CONNECT_CODE, DOFST_TEXT_STRING_ARROW_RIGHT + 3 
 .string "opponent's connect code"
 .align 2
 
@@ -126,7 +153,75 @@ li r4, 2
 addi r5, REG_DATA_ADDR, DOFST_TEXT_HIGHLIGHT_COLOR
 branchl r12, Text_ChangeTextColor
 
+# Initialize LTrig 
+lfs f1, DOFST_TEXT_X_POS_LTRIG(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_Y_POS_LTRIG(REG_DATA_ADDR)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_DATA_ADDR, DOFST_TEXT_STRING_LTRIG
+branchl r12, Text_InitializeSubtext
+
+# Set LTrig text size
+mr r4, r3
+mr r3, REG_TEXT_STRUCT
+lfs f1, DOFST_TEXT_TRIG_FONT_SIZE(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_TRIG_FONT_SIZE(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+# TODO: Finish implementing me.
+# mr r3, REG_TEXT_STRUCT
+# li r4, 3
+# addi r5, REG_DATA_ADDR, DOFST_TEXT_NOT_SELECTED_COLOR
+# branchl r12, Text_ChangeTextColor
+
+# Initialize RTrig 
+lfs f1, DOFST_TEXT_X_POS_RTRIG(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_Y_POS_LTRIG(REG_DATA_ADDR)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_DATA_ADDR, DOFST_TEXT_STRING_RTRIG
+branchl r12, Text_InitializeSubtext
+
+# Set RTrig text size
+mr r4, r3
+mr r3, REG_TEXT_STRUCT
+lfs f1, DOFST_TEXT_TRIG_FONT_SIZE(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_TRIG_FONT_SIZE(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+# Right Arrow init
+lfs f1, DOFST_TEXT_X_POS_R_ARROW(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_Y_POS_LR_ARROW(REG_DATA_ADDR)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_DATA_ADDR, DOFST_TEXT_STRING_ARROW_RIGHT
+branchl r12, Text_InitializeSubtext
+
+# Right arrow size
+mr r4, r3
+mr r3, REG_TEXT_STRUCT
+lfs f1, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+# Left Arrow init
+lfs f1, DOFST_TEXT_X_POS_L_ARROW(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_Y_POS_LR_ARROW(REG_DATA_ADDR)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_DATA_ADDR, DOFST_TEXT_STRING_ARROW_LEFT
+branchl r12, Text_InitializeSubtext
+
+# Left arrow size
+mr r4, r3
+mr r3, REG_TEXT_STRUCT
+lfs f1, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_FONT_SIZE(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
 restore
 
 EXIT:
+
+# Write flag for index into name entry.
+li r3, 1
+addi r4, r13, OFST_R13_SB_ADDR 
+stb r3, -0x10 (r4)
+
 li r3, 0
