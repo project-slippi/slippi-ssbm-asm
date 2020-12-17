@@ -1,11 +1,11 @@
 ################################################################################
-# Address: 0x8023cc98 # 
+# Address: 0x8023ccdc 
 ################################################################################
 
 .include "Common/Common.s"
+.include "Online/Online.s"
 
 backup
-
 # Check if we have have an autocomplete result loaded.
 lbz r4, 0x58 (r28) # Get cursor position/index.
 mulli r4, r4, 0x3 # Multiply by 3 to get data location. 
@@ -21,17 +21,15 @@ branchl r12, SFX_Menu_CommonSound
 # There's text that can be autocompleted. So we load it.
 li r3, 7 
 stb r3, 0x58 (r28) # store position
-#li r0, 57
-#sth r0, 0 (r27)
 
-li r3, 57 # Select the confirm button
-load r4, 0x804a04f2
-sth r3, 0(r4) # Store selection of confirm button
 restore
 
 branchl r12, 0x8023CE4C 
 EXIT:
-branchl r12, 0x8023ce38
+# Return to bottom of NameEntry_Think loop
+# Actually return to rest of loop
+branchl r12, 0x8023cca4
+# branchl r12, 0x8023ccfc
 
 ERROR:
 # Play error sound
