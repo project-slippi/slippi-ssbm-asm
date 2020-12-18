@@ -656,9 +656,9 @@ mr r26, r3 # store chat message id
 
 # if we got an opponent chat message check player index to get correct name
 # multiply the index with player string size to fall under correct name
-# starting from P1 
+# starting from P1
 lbz r3, MSRB_OPP_CHATMSG_PLAYER_IDX(REG_MSRB_ADDR)
-mullw r3, r3, 31
+mulli r3, r3, 31
 addi r3, r3, MSRB_P1_NAME # r3 holds the correct index to MSRB_P{1-4}_NAME
 add r25, REG_MSRB_ADDR, r3 # store player name
 
