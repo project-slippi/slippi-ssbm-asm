@@ -652,7 +652,15 @@ CHECK_OPP_CHAT_MESSAGE:
 lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq SKIP_CHAT_MESSAGES
-addi r25, REG_MSRB_ADDR, MSRB_P2_NAME
+
+# if we got an opponent chat message check player index to get correct name
+lbz r3, MSRB_OPP_CHATMSG_PLAYER_IDX(REG_MSRB_ADDR)
+# multiply the index with player string size to fall under correct name
+# starting from P2 NAME
+mullw r3, r3, 31
+addi r3, r3, MSRB_P2_NAME
+
+add r25, REG_MSRB_ADDR, r3 # r3 holds the correct index to MSRB_P{2-4}_NAME
 mr r26, r3
 
 UPDATE_CHAT_MESSAGES:
