@@ -634,6 +634,22 @@ stb r3,0x8(r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3,0xE(r4)
 
+# make it 2vs2
+li r3, 0x2
+stb r3,0x2(r4)
+stb r3,0x3(r4)
+stb r3,0x4(r4)
+
+lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
+stb r3,0x6(r4)
+lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
+stb r3,0xC(r4)
+
+lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
+stb r3,0x9(r4)
+lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
+stb r3,0xF(r4)
+
 # Preload these fighters
 load r4,0x80432078
 lbz r3, 0x60(REG_VS_SSS_DATA) # load p1 char id
