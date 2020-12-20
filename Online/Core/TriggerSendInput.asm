@@ -641,7 +641,7 @@ addi r6, r6, RXB_OPNT_INPUTS
 add r3, REG_ODB_ADDRESS, r3 # destination
 add r4, REG_RXB_ADDRESS, r6 # source
 li r5, PAD_REPORT_SIZE
-branchl r12, memcpy # memcpy(r3, r4, r5)
+branchl r12, memcpy
 
 # increment write index
 addi r3, REG_PREDICTED_WRITE_IDX, 1
@@ -703,9 +703,9 @@ li r3, 0 # use input at index zero (the most recent received)
 CALC_OPNT_PAD_OFFSET:
 # Index should never be >= ROLLBACK_MAX_FRAME_COUNT, in this case,
 # Slippi should have told us to wait
-mulli r3, r3, PAD_REPORT_SIZE # offset from first opponent input
-addi r5, r3, RXB_OPNT_INPUTS # offset from start of ODB
-mulli r6, REG_COUNT, PLAYER_MAX_INPUT_SIZE
+mulli r3, r3, PAD_REPORT_SIZE # offset for index of input frame to look at
+addi r5, r3, RXB_OPNT_INPUTS # offset from start of RXB
+mulli r6, REG_COUNT, PLAYER_MAX_INPUT_SIZE # offset for index of remote player
 add r5, r5, r6
 
 # get offset from sp of online player's pad data
