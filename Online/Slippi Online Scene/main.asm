@@ -634,6 +634,30 @@ stb r3,0x8(r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3,0xE(r4)
 
+lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
+cmpwi r3, 0 # 0 = no teams
+beq SKIP_TEAMS_SETUP
+
+TEAMS_SETUP:
+# make it 2vs2
+li r3, 0x2
+stb r3,0x2(r4)
+li r3, 0x2
+stb r3,0x3(r4)
+li r3, 0x2
+stb r3,0x4(r4)
+
+lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
+stb r3,0x9(r4)
+lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load p3 color id
+stb r3,0xF(r4)
+
+lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
+stb r3,0x6(r4)
+lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load p4 color id
+stb r3,0xC(r4)
+SKIP_TEAMS_SETUP:
+
 # Preload these fighters
 load r4,0x80432078
 lbz r3, 0x60(REG_VS_SSS_DATA) # load p1 char id

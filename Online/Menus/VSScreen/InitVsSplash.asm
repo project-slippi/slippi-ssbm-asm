@@ -9,6 +9,22 @@
 .set REG_TEXT_STRUCT, 30
 .set REG_MSRB_ADDR, 29
 
+# FN_GET_TEAM_PLAYERS
+.set REG_TEAM_ID, 28
+.set REG_PLAYER_INDEX, 27
+.set REG_PLAYERS_COUNT, 26
+.set REG_PLAYER_1_NAME_STRING, 25
+.set REG_PLAYER_2_NAME_STRING, 24
+.set REG_PLAYER_3_NAME_STRING, 23
+
+# INIT_PLAYER_TEXT:
+.set REG_LABEL_COLOR, 22
+.set REG_CUR_SUBTEXT_IDX, 21
+
+.set REG_POS_X_START, 31
+.set REG_POS_Y_START, 30
+
+
 # Ensure that this is an online CSS
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_VS
@@ -48,7 +64,7 @@ blrl
 
 # Y Positions
 .set TPO_PLAYER_Y_START, TPO_STAGE_X_POS + 4
-.float 60
+.float 65
 .set TPO_STAGE_Y_POS, TPO_PLAYER_Y_START + 4
 .float 440
 
@@ -61,11 +77,17 @@ blrl
 .float 300 # Changing does nothing?
 
 # Position Offsets
-.set TPO_PLAYER_NAME_Y_OFST, TPO_STAGE_UNK2 + 4
+.set TPO_PLAYER_NAME_X_OFST, TPO_STAGE_UNK2 + 4
+.float 22
+.set TPO_PLAYER_NAME_Y_OFST, TPO_PLAYER_NAME_X_OFST + 4
 .float 22
 
 # String Properties
-.set TPO_P1_STRING, TPO_PLAYER_NAME_Y_OFST + 4
+.set TPO_TEAM_1_STRING, TPO_PLAYER_NAME_Y_OFST + 4
+.string "Team 1"
+.set TPO_TEAM_2_STRING, TPO_TEAM_1_STRING + 7
+.string "Team 2"
+.set TPO_P1_STRING, TPO_TEAM_2_STRING + 7
 .string "P1"
 .set TPO_P2_STRING, TPO_P1_STRING + 3
 .string "P2"
@@ -120,20 +142,83 @@ lfs f1, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
-# Initialize P1 Text
+
+bl FN_GET_MATCH_MODE
+# logf LOG_LEVEL_NOTICE, "FN_GET_MATCH_MODE: %d", "mr r5, 3"
+cmpwi r3, 0 # 1vs1
+beq INIT_1v1_PLAYER_TEXT
+cmpwi r3, 1 # 2vs2
+beq INIT_2v2_PLAYER_TEXT
+cmpwi r3, 2 # 3vs1
+beq INIT_3v1_PLAYER_TEXT
+cmpwi r3, 3 # 1vs3
+beq INIT_1v3_PLAYER_TEXT
+
+INIT_1v1_PLAYER_TEXT:
+# Initialize Team 1 Text
 addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
 addi r4, REG_TEXT_PROPERTIES, TPO_P1_STRING
 addi r5, REG_MSRB_ADDR, MSRB_P1_NAME
+li r6, 0
 lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
 
-# Initialize P2 Text
+# Initialize Team 2 Text
 addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
 addi r4, REG_TEXT_PROPERTIES, TPO_P2_STRING
 addi r5, REG_MSRB_ADDR, MSRB_P2_NAME
+li r6, 0
 lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
+b INIT_STAGE_TEXT
 
+INIT_2v2_PLAYER_TEXT:
+INIT_3v1_PLAYER_TEXT:
+lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+# logf LOG_LEVEL_NOTICE, "MSRB_LOCAL_PLAYER_INDEX: %d", "mr r5, 3"
+bl FN_GET_PLAYER_TEAM
+bl FN_GET_TEAM_PLAYERS
+
+# Initialize Team 1 Text
+addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
+addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_1_STRING
+lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+
+lbz r3, MSRB_REMOTE_PLAYER_INDEX(REG_MSRB_ADDR)
+# logf LOG_LEVEL_NOTICE, "MSRB_REMOTE_PLAYER_INDEX: %d", "mr r5, 3"
+bl FN_GET_PLAYER_TEAM
+bl FN_GET_TEAM_PLAYERS
+
+# Initialize Team 2 Text
+addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
+addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_2_STRING
+lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+b INIT_STAGE_TEXT
+
+INIT_1v3_PLAYER_TEXT:
+# Initialize Team 1 Text
+addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
+addi r4, REG_TEXT_PROPERTIES, TPO_P1_STRING
+addi r5, REG_MSRB_ADDR, MSRB_LOCAL_NAME
+li r6, 0
+lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+
+addi r3, REG_MSRB_ADDR, MSRB_REMOTE_PLAYER_INDEX
+bl FN_GET_PLAYER_TEAM
+bl FN_GET_TEAM_PLAYERS
+
+# Initialize Team 2 Text
+addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
+addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_2_STRING
+lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+b INIT_STAGE_TEXT
+
+
+INIT_STAGE_TEXT:
 ################################################################################
 # Pepare text struct for stage
 ################################################################################
@@ -203,25 +288,34 @@ b EXIT
 # r3 - Label Color
 # r4 - Label String
 # r5 - Player Name String
+# r6 - Team Players count
+# r7 - Team Player 1 Name String
+# r8 - Team Player 2 Name String
 # f1 - X Pos
 ################################################################################
-.set SPO_X_POS, 0x80
-
-.set REG_TEXT_PROPERTIES, 31  # From parent function
-.set REG_TEXT_STRUCT, 30  # From parent function
-.set REG_LABEL_COLOR, 29
-.set REG_PLAYER_NAME_STRING, 28
-.set REG_CUR_SUBTEXT_IDX, 27
-
 INIT_PLAYER_TEXT:
 backup
 
-stfs f1, SPO_X_POS(sp)
+fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
-mr REG_PLAYER_NAME_STRING, r5
+mr REG_PLAYER_1_NAME_STRING, r5
+
+mr REG_PLAYERS_COUNT, r6
+mr REG_PLAYER_2_NAME_STRING, r7
+mr REG_PLAYER_3_NAME_STRING, r8
+
+# load initial y position
+lfs REG_POS_Y_START, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
+lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+
+mr r3, REG_PLAYERS_COUNT
+branchl r12, FN_IntToFloat
+fmuls f3, f3, f1
+fsubs REG_POS_Y_START, REG_POS_Y_START, f3
 
 # Init port label text
-lfs f2, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
+fmr f1, REG_POS_X_START
+fmr f2, REG_POS_Y_START
 mr r3, REG_TEXT_STRUCT
 branchl r12, Text_InitializeSubtext
 mr REG_CUR_SUBTEXT_IDX, r3
@@ -240,12 +334,12 @@ mr r5, REG_LABEL_COLOR
 branchl r12, Text_ChangeTextColor
 
 # Init player name text
-lfs f1, SPO_X_POS(sp)
-lfs f2, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
+fmr f1, REG_POS_X_START
+fmr f2, REG_POS_Y_START
 lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
 fadds f2, f2, f3
 mr r3, REG_TEXT_STRUCT
-mr r4, REG_PLAYER_NAME_STRING
+mr r4, REG_PLAYER_1_NAME_STRING
 branchl r12, Text_InitializeSubtext
 
 mr r4, r3
@@ -254,6 +348,168 @@ lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
 
+# if no more players exit
+cmpwi REG_PLAYERS_COUNT, 0
+beq INIT_PLAYER_TEXT_EXIT
+
+# Init team player 1 name text
+fmr f1, REG_POS_X_START
+fmr f2, REG_POS_Y_START
+lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+fadds f2, f2, f3
+fadds f2, f2, f3
+lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
+fadds f1, f1, f3
+mr r3, REG_TEXT_STRUCT
+mr r4, REG_PLAYER_2_NAME_STRING
+branchl r12, Text_InitializeSubtext
+
+mr r4, r3
+mr r3, REG_TEXT_STRUCT
+lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
+lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
+branchl r12, Text_UpdateSubtextSize
+
+# if no more players exit
+cmpwi REG_PLAYERS_COUNT, 1
+beq INIT_PLAYER_TEXT_EXIT
+
+# Init team player name text
+fmr f1, REG_POS_X_START
+fmr f2, REG_POS_Y_START
+lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+fadds f2, f2, f3
+fadds f2, f2, f3
+fadds f2, f2, f3
+lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
+fadds f1, f1, f3
+fadds f1, f1, f3
+mr r3, REG_TEXT_STRUCT
+mr r4, REG_PLAYER_3_NAME_STRING
+branchl r12, Text_InitializeSubtext
+
+mr r4, r3
+mr r3, REG_TEXT_STRUCT
+lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
+lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
+branchl r12, Text_UpdateSubtextSize
+
+INIT_PLAYER_TEXT_EXIT:
+restore
+blr
+
+# returns match mode depending on number of players
+# return r3: 0=1vs1, 1=2vs2, 2=3vs1, 3=1vs3
+FN_GET_MATCH_MODE:
+backup
+# Get match state info
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
+# 0 = no teams, 1 = teams
+
+FN_GET_MATCH_MODE_EXIT:
+restore
+blr
+
+# input r3 = player index
+# returns player's team id on r3
+FN_GET_PLAYER_TEAM:
+backup
+mr REG_PLAYER_INDEX, r3
+# Get match state info
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
+
+li r4, MSRB_GAME_INFO_BLOCK + 0x69
+mulli r3, REG_PLAYER_INDEX, 0x24
+add r4, r4, r3
+add r4, r4, REG_MSRB_ADDR
+lbz r3, 0x0(r4) # team id
+
+# logf LOG_LEVEL_NOTICE, "FN_GET_PLAYER_TEAM ID: %d", "mr r5, 3"
+# lbz r4, MSRB_GAME_INFO_BLOCK + 0x69 + 0x24*i(REG_MSRB_ADDR)
+
+FN_GET_PLAYER_TEAM_EXIT:
+restore
+blr
+
+# input r3: Team ID
+# returns Names on r5,r7,r8 of all players
+# returns player count on r6
+FN_GET_TEAM_PLAYERS:
+backup
+mr REG_TEAM_ID, r3
+
+# logf LOG_LEVEL_NOTICE, "FN_GET_TEAM_PLAYERS REG_TEAM_ID: %d", "mr r5, 3"
+
+# Get match state info
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
+li REG_PLAYER_1_NAME_STRING, 0
+li REG_PLAYER_2_NAME_STRING, 0
+li REG_PLAYER_3_NAME_STRING, 0
+
+li REG_PLAYERS_COUNT, 0
+li REG_PLAYER_INDEX, 0
+
+FN_GET_TEAM_PLAYERS_LOOP_START:
+li r4, MSRB_GAME_INFO_BLOCK + 0x69
+mulli r3, REG_PLAYER_INDEX, 0x24
+add r4, r4, r3
+add r4, r4, REG_MSRB_ADDR
+lbz r3, 0x0(r4) # team id
+
+# if teams do not match continue
+cmpw r3, REG_TEAM_ID
+bne FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
+
+addi REG_PLAYERS_COUNT, REG_PLAYERS_COUNT, 1
+
+# Calculate offset where get player name from
+li r3, MSRB_P1_NAME
+li r4, 31 # player string size
+mullw r4, r4, REG_PLAYER_INDEX
+add r3, r4, r3 # MSRB_P1_NAME + (REG_PLAYER_INDEX*31)
+
+# check which player name is not yet assigned
+cmpwi REG_PLAYER_1_NAME_STRING, 0
+beq FN_GET_TEAM_PLAYERS_SET_PLAYER_1_NAME
+cmpwi REG_PLAYER_2_NAME_STRING, 0
+beq FN_GET_TEAM_PLAYERS_SET_PLAYER_2_NAME
+cmpwi REG_PLAYER_3_NAME_STRING, 0
+beq FN_GET_TEAM_PLAYERS_SET_PLAYER_3_NAME
+
+FN_GET_TEAM_PLAYERS_SET_PLAYER_1_NAME:
+add REG_PLAYER_1_NAME_STRING, REG_MSRB_ADDR, r3
+b FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
+FN_GET_TEAM_PLAYERS_SET_PLAYER_2_NAME:
+add REG_PLAYER_2_NAME_STRING, REG_MSRB_ADDR, r3
+b FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
+FN_GET_TEAM_PLAYERS_SET_PLAYER_3_NAME:
+add REG_PLAYER_3_NAME_STRING, REG_MSRB_ADDR, r3
+b FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
+
+FN_GET_TEAM_PLAYERS_LOOP_CONTINUE:
+addi REG_PLAYER_INDEX, REG_PLAYER_INDEX, 1
+cmpwi REG_PLAYER_INDEX, 4
+blt FN_GET_TEAM_PLAYERS_LOOP_START
+FN_GET_TEAM_PLAYERS_LOOP_END:
+
+# returns Names on r5,r7,r8 of all players
+# returns player count on r6
+mr r5, REG_PLAYER_1_NAME_STRING
+mr r7, REG_PLAYER_2_NAME_STRING
+mr r8, REG_PLAYER_3_NAME_STRING
+mr r6, REG_PLAYERS_COUNT
+
+FN_GET_TEAM_PLAYERS_EXIT:
 restore
 blr
 

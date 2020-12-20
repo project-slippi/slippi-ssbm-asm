@@ -644,16 +644,24 @@ bl FN_UPDATE_TEXT
 lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq CHECK_OPP_CHAT_MESSAGE
-addi r25, REG_MSRB_ADDR, MSRB_P1_NAME
-mr r26, r3
+addi r25, REG_MSRB_ADDR, MSRB_LOCAL_NAME # store player name
+mr r26, r3 # store chat message id
 b UPDATE_CHAT_MESSAGES
 
 CHECK_OPP_CHAT_MESSAGE:
 lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq SKIP_CHAT_MESSAGES
-addi r25, REG_MSRB_ADDR, MSRB_P2_NAME
-mr r26, r3
+mr r26, r3 # store chat message id
+
+# if we got an opponent chat message check player index to get correct name
+# multiply the index with player string size to fall under correct name
+# starting from P1
+lbz r3, MSRB_OPP_CHATMSG_PLAYER_IDX(REG_MSRB_ADDR)
+mulli r3, r3, 31
+addi r3, r3, MSRB_P1_NAME # r3 holds the correct index to MSRB_P{1-4}_NAME
+add r25, REG_MSRB_ADDR, r3 # store player name
+
 
 UPDATE_CHAT_MESSAGES:
 # Start at the top after x messages
