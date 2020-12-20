@@ -64,7 +64,7 @@ blrl
 
 # Y Positions
 .set TPO_PLAYER_Y_START, TPO_STAGE_X_POS + 4
-.float 75
+.float 65
 .set TPO_STAGE_Y_POS, TPO_PLAYER_Y_START + 4
 .float 440
 
@@ -410,7 +410,6 @@ mr REG_MSRB_ADDR, r3
 lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
 # 0 = no teams, 1 = teams
 
-li r3, 1
 FN_GET_MATCH_MODE_EXIT:
 restore
 blr
