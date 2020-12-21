@@ -31,6 +31,10 @@
 # float registers
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
+# float registers
+.set REG_F_0, REG_CHATMSG_TEXT_Y_POS+1
+.set REG_F_1, REG_F_0+1
+
 
  # Chat Messages Pad Mapping
 .set PAD_LEFT, 0x1
@@ -62,8 +66,13 @@ blrl
 .set TPO_BASE_CANVAS_SCALING, TPO_CHATMSG_Z + 4
 .float 0.1
 
+.set TPO_FLOAT_0, TPO_BASE_CANVAS_SCALING + 4
+.float 0.0
+.set TPO_FLOAT_1, TPO_FLOAT_0 + 4
+.float 1.0
+
 # Chat Message Propiertes
-.set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
+.set TPO_CHATMSG_X, TPO_FLOAT_1 + 4
 .float -330
 .set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
 .float -285
@@ -293,6 +302,11 @@ backup
 bl TEXT_PROPERTIES
 mflr REG_TEXT_PROPERTIES
 
+
+################################################################################
+# Initialize Team Button
+################################################################################
+bl FN_LOAD_TEAMS_BUTTON
 ################################################################################
 # Initialize user text
 ################################################################################
@@ -1401,6 +1415,215 @@ branchl r12, Text_UpdateSubtextContents
 mtlr REG_LR
 blr
 
+
+################################################################################
+# Function: Starts THINK Function to show the Team Icon Button
+##############################################################################
+FN_LOAD_TEAMS_BUTTON:
+
+.set REG_CHAT_INPUTS, 14
+.set REG_ICON_GOBJ, 20
+.set REG_ICON_JOBJ, 21
+.set REG_DATA_BUFFER, 23
+
+backup
+
+
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+lfs REG_F_0, TPO_FLOAT_0(REG_TEXT_PROPERTIES)
+lfs REG_F_1, TPO_FLOAT_1(REG_TEXT_PROPERTIES)
+
+# Set default team id
+li r3, 0
+stb r3, CSSDT_TEAM_ID(REG_CSSDT_ADDR)
+
+# Get Memory Buffer for Chat Window Data Table
+li r3, CSSTIDT_SIZE # Teams Icon Buffer Size
+branchl r12, HSD_MemAlloc
+mr REG_DATA_BUFFER, r3
+
+# Zero out CSS data table
+li r4, CSSTIDT_SIZE
+branchl r12, Zero_AreaLength
+
+# Add CSS DataTable Address to Data Buffer
+mr r3, REG_CSSDT_ADDR # store address to CSS Data Table
+stw r3, CSSCWDT_CSSDT_ADDR(REG_DATA_BUFFER)
+
+# create gobj for think function
+li r3, 0x4
+li r4, 0x5
+li r5, 0x80
+branchl r12, GObj_Create
+mr REG_ICON_GOBJ, r3 # save GOBJ pointer
+
+# create jbobj (Team Switch Icon)
+lwz r3, -0x49C8(r13) # = 0x80f454c8 pointer to MenuModel JObj Descriptor
+lwz	r3, 0x0030 (r3)
+lwz r3, 0x08(r3) # move to it's first child
+# Find 8th child
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+# Now get first child which is P1 Switch icon
+lwz r3, 0x08(r3) # move to it's first child
+branchl r12,0x80370e44 #Create Jboj
+mr  REG_ICON_JOBJ,r3
+
+# Move to the correct position
+mr r3, REG_ICON_JOBJ
+load r4, 0xC19C0000 # -19.5
+stw r4, 0x38(r3) # set X position
+load r4, 0xC019999A # -2.4
+stw r4, 0x40(r3) # set Y position
+
+# Setup proper animations
+# find child mat animation joint first
+lwz	r3, -0x49C8 (r13)
+lwz	r3, 0x0038 (r3)
+lwz r3, 0x08(r3) # move to it's first child
+# Find 8th child
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+# Now get first child which is P1 Switch icon
+lwz r5, 0x08(r3) # move to it's first child
+
+# find animation joint
+lwz	r3, -0x49C8 (r13)
+lwz	r3, 0x0034 (r3)
+lwz r3, 0x08(r3) # move to it's first child
+# Find 8th child
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+# Now get first child which is P1 Switch icon
+lwz r4, 0x08(r3) # move to it's first child
+
+# find shape joint
+lwz	r3, -0x49C8 (r13)
+lwz	r3, 0x003C (r3)
+lwz r3, 0x08(r3) # move to it's first child
+# Find 8th child
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x0C(r3) # move to it's sibling
+# Now get first child which is P1 Switch icon
+lwz r6, 0x08(r3) # move to it's first child
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_AddAnimAll
+
+# Add JOBJ To GObj
+mr  r3,REG_ICON_GOBJ
+li r4, 4
+mr  r5,REG_ICON_JOBJ
+branchl r12,0x80390a70 # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
+
+# Add GX Link that draws the background
+mr  r3,REG_ICON_GOBJ
+load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
+li  r5, 2
+li  r6, 128
+branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
+
+# Add User Data to GOBJ ( Our buffer )
+mr r3, REG_ICON_GOBJ
+li r4, 4 # user data kind
+load r5, HSD_Free # destructor
+mr r6, REG_DATA_BUFFER # memory pointer of allocated buffer above
+branchl r12, GObj_Initialize
+
+# Set Think Function that runs every frame
+mr r3, REG_ICON_GOBJ # set r3 to GOBJ pointer
+bl CSS_TEAM_BUTTON_THINK
+mflr r4 # Function to Run
+li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
+branchl r12, GObj_AddProc
+
+
+# Animate to frame 1
+mr r3, REG_ICON_JOBJ
+fmr f1, REG_F_1
+#lfs	f1, -0x35FC (rtoc)
+branchl r12, JObj_ReqAnimAll # (jobj, frames)
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_AnimAll
+
+FN_LOAD_TEAMS_BUTTON_END:
+restore
+blr
+
+
+################################################################################
+# Team Button THINK Function: handles inputs to change teams on Team Icon
+################################################################################
+CSS_TEAM_BUTTON_THINK:
+blrl
+.set REG_ICON_GOBJ, 14
+.set REG_ICON_JOBJ, 15
+backup
+
+# INIT PROPERTIES
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+lfs REG_F_0, TPO_FLOAT_0(REG_TEXT_PROPERTIES) # load 0.0
+lfs REG_F_1, TPO_FLOAT_1(REG_TEXT_PROPERTIES) # load 1.0
+
+mr REG_ICON_GOBJ, r3
+lwz REG_ICON_JOBJ, 0x28(REG_ICON_GOBJ) # Get Jobj
+
+# Always Animate
+mr r3, REG_ICON_JOBJ
+fmr f1, REG_F_1
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_AnimAll
+
+# fmr f1, REG_F_1
+# mr r3, REG_ICON_JOBJ
+# li r4, 6
+# li r5, 0x400
+# load r6, 0x8036410c # HSD_AObjReqAnim(HSD_AObj* aobj, f32 frame)
+# li r7, 1
+# li r8, 4
+# li r9, 1
+# branchl r12, 0x80364c08, #JOBJ_RunAOBJCallback(JOBJ *joint, int unk, u16 flags, void *cb, int argkind, ...) # // flags: 0x400 matanim, 0x20 jointanim, argkind specifies how to pop args off the va_list
+
+# mr r3, REG_ICON_JOBJ
+# branchl r12, JObj_AnimAll
+
+#####
+
+
+CSS_TEAM_BUTTON_THINK_REMOVE_PROC:
+# we should clear the objects here
+
+CSS_TEAM_BUTTON_THINK_EXIT:
+restore
+blr
 
 EXIT:
 lwz	r6, -0x49C8(r13)

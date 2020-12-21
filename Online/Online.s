@@ -313,6 +313,12 @@ lwz \reg, -0x62A0(\reg)
 .set CSSCMDT_SIZE, CSSCMDT_CSSDT_ADDR + 4
 
 ################################################################################
+# CSS Team Icon Button Data Table
+################################################################################
+.set CSSTIDT_CSSDT_ADDR, 0 # u32 CSS Data Table Address
+.set CSSTIDT_SIZE, CSSTIDT_CSSDT_ADDR + 4
+
+################################################################################
 # CSS Chat Window Data Table
 ################################################################################
 .set CSSCWDT_INPUT, 0 # u8

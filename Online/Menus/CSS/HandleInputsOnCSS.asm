@@ -663,7 +663,7 @@ mr  r3,REG_CHAT_GOBJ
 load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
 li  r5, 1
 li  r6, 128
-branchl r12,0x8039069c # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
+branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
 
 # Add User Data to GOBJ ( Our buffer )
 mr r3, REG_CHAT_GOBJ

@@ -174,6 +174,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set JObj_AddAnimAll, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
 .set JObj_ReqAnimAll, 0x8036F8BC #(HSD_JObj* jobj, f32 frame)
 .set JObj_AnimAll, 0x80370928 #(jobj)
+.set JObj_ClearFlags, 0x80371f00 #(jobj,flags)
 .set JObj_ClearFlagsAll, 0x80371F9C #(jobj,flags)
 .set JObj_SetFlags, 0x80371D00 # (jobj,flags)
 .set JObj_SetFlagsAll, 0x80371D9c # (jobj,flags)
