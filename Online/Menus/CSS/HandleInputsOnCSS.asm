@@ -129,7 +129,6 @@ b SKIP_START_MATCH
 HANDLE_IDLE:
 
 # uncomment to debug the chat window
-bl FN_TEAM_BUTTON_ICON
 #bl FN_CHECK_CHAT_INPUTS
 
 # When idle, pressing start will start finding match
@@ -508,72 +507,6 @@ branchl r12, HSD_Free
 restore
 blr
 
-
-################################################################################
-# Function: Check if chat input was pressed and send it to the EXI device
-################################################################################
-# skip my test if pad was not pressed
-FN_TEAM_BUTTON_ICON:
-backup
-
-
-cmpwi REG_INPUTS, PAD_LEFT
-beq FN_TEAM_BUTTON_ICON_PRESSED
-cmpwi REG_INPUTS, PAD_RIGHT
-beq FN_TEAM_BUTTON_ICON_PRESSED
-cmpwi REG_INPUTS, PAD_UP
-beq FN_TEAM_BUTTON_ICON_PRESSED
-cmpwi REG_INPUTS, PAD_DOWN
-beq FN_TEAM_BUTTON_ICON_PRESSED
-
-b FN_TEAM_BUTTON_ICON_EXIT
-FN_TEAM_BUTTON_ICON_PRESSED:
-
-
-# If chat window is already open, skip
-lbz r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR)
-cmpwi r3, 0
-bne FN_TEAM_BUTTON_ICON_EXIT
-
-# Get Char Id
-load r3, 0x803f0a48
-mr r4, r3
-addi r5, r3, 0x03C2
-lbzu	r3, 0x0(r5)
-mulli	r3, r3, 28
-add	r4, r4, r3
-lbz	r3, 0x00DC (r4) # char id
-
-# Get Costume/Team ID, increment and store
-lbz r4, CSSDT_CHAT_LAST_INPUT(REG_CSSDT_ADDR)
-addi r4, r4, 1
-cmpwi r4, 4
-blt FN_TEAM_BUTTON_ICON_SKIP_RESET_COSTUMES
-li r4, 1 # reset to 1 (RED)
-
-FN_TEAM_BUTTON_ICON_SKIP_RESET_COSTUMES:
-
-# Store team/costume selection in game and data table
-lwz	r5, -0x49F0 (r13)
-stb	r4, 0x0073 (r5)
-stb r4, CSSDT_CHAT_LAST_INPUT(REG_CSSDT_ADDR)
-
-# calculate costume offset for a given team
-mulli r4, r4, 30 # offset to costume = Costume Index * 30
-add r4, r3, r4 # costume id =  char id + offset to costume
-li r3, 0 # player index
-li r5, 0 # unk ?
-branchl r12, 0x8025d5ac # CSS_CursorHighlightUpdateCSPInfo Updates Costume Texture
-
-# Play team switch sound
-li	r3, 2
-branchl r12, SFX_Menu_CommonSound
-
-
-FN_TEAM_BUTTON_ICON_EXIT:
-mr r3, REG_INPUTS
-restore
-blr
 
 ################################################################################
 # Function: Check if chat input was pressed and send it to the EXI device
