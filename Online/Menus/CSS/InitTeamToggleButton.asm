@@ -7,7 +7,8 @@
 
 .set REG_PROPERTIES, 31
 .set REG_CSSDT_ADDR, 30
-.set REG_IS_HOVERING, 28
+.set REG_IS_HOVERING, 29
+.set REG_PORT_SELECTIONS_ADDR, 28
 
 # float registers
 .set REG_F_0, 31
@@ -233,9 +234,9 @@ bne TEAM_BUTTON_THINK_EXIT # No changes when locked-in
 # Check if cursor is anywhere on the top bar (and left of BACK button)
 loadwz r4, 0x804A0BC0 # This gets ptr to cursor position on CSS
 
-#lfs f1, 0xC(r4) # Get x cursor pos
-#lfs f2, 0x10(r4) # Get y cursor pos
-#logf LOG_LEVEL_WARN, "X: %f Y: %f"
+lfs f1, 0xC(r4) # Get x cursor pos
+lfs f2, 0x10(r4) # Get y cursor pos
+logf LOG_LEVEL_WARN, "X: %f Y: %f"
 
 # Check if cursor is outside top boundary
 lfs f1, 0xC(r4) # Get x cursor pos
@@ -280,11 +281,19 @@ blr
 ################################################################################
 # skip my test if pad was not pressed
 FN_SWITCH_PLAYER_TEAM:
+.set REG_CHAR_ID, 27
+.set REG_TEAM_IDX, 26
 backup
 
+# Get location from which we can find selected character
+lwz r4, -0x49F0(r13) # base address where css selections are stored
+lbz r3, -0x49B0(r13) # player index
+mulli r3, r3, 0x24
+add REG_PORT_SELECTIONS_ADDR, r4, r3
 # should do some checks or something here maybe?
 
-FN_SWITCH_PLAYER_TEAM_PRESSED:
+mr REG_CHAR_ID, r3
+
 # Get Char Id
 load r3, 0x803f0a48
 mr r4, r3
@@ -293,23 +302,36 @@ lbzu	r3, 0x0(r5)
 mulli	r3, r3, 28
 add	r4, r4, r3
 lbz	r3, 0x00DC (r4) # char id
+mr REG_CHAR_ID, r3
 
-# Get Costume/Team ID, increment and store
-lbz r4, CSSDT_CHAT_LAST_INPUT(REG_CSSDT_ADDR)
+
+# Get Costume Index increment and store
+lwz	r4, -0x49F0 (r13)
+lbz r4, 0x73 (r4)
 addi r4, r4, 1
 cmpwi r4, 4
-blt FN_SWITCH_PLAYER_TEAM_SKIP_RESET_COSTUMES
+blt FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM
 li r4, 1 # reset to 1 (RED)
 
-FN_SWITCH_PLAYER_TEAM_SKIP_RESET_COSTUMES:
+FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
+
+mr REG_TEAM_IDX, r4
+
+backupall
+mr r3, REG_TEAM_IDX
+bl FN_CHANGE_PORTRAIT_BG
+restoreall
+
+# store costume index
+lwz	r5, -0x49AB (r13)
+stb REG_TEAM_IDX, 0(r5)
 
 # Store team/costume selection in game and data table
 lwz	r5, -0x49F0 (r13)
-stb	r4, 0x0073 (r5)
-stb r4, CSSDT_CHAT_LAST_INPUT(REG_CSSDT_ADDR)
+stb	REG_TEAM_IDX, 0x73 (r5)
 
 # calculate costume offset for a given team
-mulli r4, r4, 30 # offset to costume = Costume Index * 30
+mulli r4, REG_TEAM_IDX, 30 # offset to costume = Costume Index * 30
 add r4, r3, r4 # costume id =  char id + offset to costume
 li r3, 0 # player index
 li r5, 0 # unk ?
@@ -323,17 +345,6 @@ li r5, 0x29 # index of portrait bg
 li r6, -1
 branchl r12, JObj_GetJObjChild
 
-# get first dobj
-lwz r3, JOBJ_CHILD_OFFSET(sp)
-branchl r12, 0x80371BEC # HSD_JObjGetDObj(HSD_JObj* jobj)
-
-
-lwz r3, 0x08(r3) # get first mobj
-li r4, 0
-li r5, 0xFF
-li r6, 0
-branchl r12, 0x80363C10 # HSD_MObjSetDiffuseColor(HSD_MObj* mobj, u8 r, u8 g, u8 b)
-
 
 # Play team switch sound
 li	r3, 2
@@ -341,6 +352,47 @@ branchl r12, SFX_Menu_CommonSound
 
 
 FN_SWITCH_PLAYER_TEAM_EXIT:
+restore
+blr
+
+FN_CHANGE_PORTRAIT_BG:
+.set REG_TEAM_ID, 31
+backup
+mr REG_TEAM_ID, r3
+
+
+logf LOG_LEVEL_NOTICE, "FN_CHANGE_PORTRAIT_BG r3: %d", "mr r5, 31"
+
+cmpwi REG_TEAM_ID, 3
+beq FN_CHANGE_PORTRAIT_BG_GREEN
+cmpwi REG_TEAM_ID, 2
+beq FN_CHANGE_PORTRAIT_BG_BLUE
+cmpwi REG_TEAM_ID, 1
+beq FN_CHANGE_PORTRAIT_BG_RED
+
+FN_CHANGE_PORTRAIT_BG_BLUE:
+li REG_TEAM_ID, 0
+b FN_CHANGE_PORTRAIT_BG_SKIP_COLOR
+FN_CHANGE_PORTRAIT_BG_GREEN:
+li REG_TEAM_ID, 1
+b FN_CHANGE_PORTRAIT_BG_SKIP_COLOR
+FN_CHANGE_PORTRAIT_BG_RED:
+li REG_TEAM_ID, 2
+b FN_CHANGE_PORTRAIT_BG_SKIP_COLOR
+
+FN_CHANGE_PORTRAIT_BG_SKIP_COLOR:
+
+logf LOG_LEVEL_NOTICE, "FN_CHANGE_PORTRAIT_BG after r3: %d", "mr r5, 31"
+
+# Store team id on r13 offset that stores port
+#mr r4, r3
+subi	r3, r13, 26056
+mr r4, REG_TEAM_ID
+stb r4, 0x0(r3)
+li r3, 0
+branchl r12, 0x8025db34 # CSS_CursorHighlightUpdateCSPInfo
+
+FN_CHANGE_PORTRAIT_BG_EXIT:
 restore
 blr
 
