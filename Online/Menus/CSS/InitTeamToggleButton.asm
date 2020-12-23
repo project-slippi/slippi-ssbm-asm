@@ -203,6 +203,7 @@ b EXIT
 # Function for updating online status graphics every frame
 ################################################################################
 TEAM_BUTTON_THINK:
+.set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
 blrl
 
 backup
@@ -312,7 +313,27 @@ mulli r4, r4, 30 # offset to costume = Costume Index * 30
 add r4, r3, r4 # costume id =  char id + offset to costume
 li r3, 0 # player index
 li r5, 0 # unk ?
-branchl r12, 0x8025d5ac # CSS_CursorHighlightUpdateCSPInfo Updates Costume Texture
+branchl r12, 0x8025d5ac # UpdateCharTexture Updates Costume Texture
+
+
+# Color the portrait to the desired color
+lwz r3, -0x49E0 (r13) # root live jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x29 # index of portrait bg
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# get first dobj
+lwz r3, JOBJ_CHILD_OFFSET(sp)
+branchl r12, 0x80371BEC # HSD_JObjGetDObj(HSD_JObj* jobj)
+
+
+lwz r3, 0x08(r3) # get first mobj
+li r4, 0
+li r5, 0xFF
+li r6, 0
+branchl r12, 0x80363C10 # HSD_MObjSetDiffuseColor(HSD_MObj* mobj, u8 r, u8 g, u8 b)
+
 
 # Play team switch sound
 li	r3, 2
