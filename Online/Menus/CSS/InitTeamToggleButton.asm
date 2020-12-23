@@ -209,8 +209,8 @@ cmpwi r3, 0
 bne FN_TEAM_BUTTON_THINK_EXIT
 
 # Ensure we are not locked in
-loadwz r3, CSSDT_BUF_ADDR # Load where buf is stored
-lwz r3, CSSDT_MSRB_ADDR(r3)
+loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR # Load where buf is stored
+lwz r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
 cmpwi r3, 0
 bne FN_TEAM_BUTTON_THINK_EXIT # No changes when locked-in
@@ -290,19 +290,19 @@ lbz	r3, 0x00DC (r4) # char id
 mr REG_EXTERNAL_CHAR_ID, r3
 
 # Get Custom Team Index increment and store
-lbz r4, CSSDT_LOCAL_PLAYER_TEAM_INDEX(REG_CSSDT_ADDR)
+lbz r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 addi r4, r4, 1
 cmpwi r4, 4
 blt FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM
 li r4, 1 # reset to 1 (RED)
 
-FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
+FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM: # 0x80197660
 
 # Store Custom Team selection in data table
-stb r4, CSSDT_LOCAL_PLAYER_TEAM_INDEX(REG_CSSDT_ADDR)
+stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 mr REG_TEAM_IDX, r4
 
-# Kind of hacky I know :) things get messed up so I just back everyting up :D
+# Kind of hacky I know :) things get messed up so I just back everything up :D
 backupall
 mr r3, REG_TEAM_IDX
 bl FN_CHANGE_PORTRAIT_BG
@@ -315,8 +315,11 @@ mr REG_COSTUME_IDX, r3
 # logf LOG_LEVEL_NOTICE, "Costume Id for Team %d Char %d is %d", "mr r5, 26", "mr r6, 27", "mr r7, 3"
 
 # Store costume index selection in game
-lwz	r5, -0x49F0 (r13)
+lwz	r5, -0x49F0 (r13) # P1 Players Selections
 stb	r3, 0x73 (r5)
+load r5, 0x803F0E09 # P1 Char Menu Data
+stb r3, 0x0(r5)
+stb r3, CSSDT_TEAM_COSTUME_IDX(REG_CSSDT_ADDR)
 
 # Calculate Costume ID from costume Index
 mulli	r4, REG_COSTUME_IDX, 30
@@ -358,9 +361,6 @@ cmpwi REG_TEAM_IDX, 2
 beq FN_GET_TEAM_COSTUME_IDX_BLUE
 cmpwi REG_TEAM_IDX, 1
 beq FN_GET_TEAM_COSTUME_IDX_RED
-
-# YL on green should be 0
-# DR Mario on Green should be 3
 
 FN_GET_TEAM_COSTUME_IDX_BLUE:
 branchl r12, 0x801692bc # CSS_GetCharBlueCostumeIndex
