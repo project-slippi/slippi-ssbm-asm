@@ -303,6 +303,7 @@ FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
 stb r4, CSSDT_LOCAL_PLAYER_TEAM_INDEX(REG_CSSDT_ADDR)
 mr REG_TEAM_IDX, r4
 
+# Kind of hacky I know :) things get messed up so I just back everyting up :D
 backupall
 mr r3, REG_TEAM_IDX
 bl FN_CHANGE_PORTRAIT_BG
@@ -324,7 +325,7 @@ add	r4, REG_CHAR_ID, r4
 
 li r3, 0 # player index
 li	r5, 0
-branchl r12, 0x8025D5AC
+branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
 
 
 # Play team switch sound
