@@ -9,9 +9,10 @@
 .set REG_CSSDT_ADDR, 30
 .set REG_IS_HOVERING, 29
 .set REG_PORT_SELECTIONS_ADDR, 28
-.set REG_CHAR_ID, 27
-.set REG_TEAM_IDX, 26
-.set REG_COSTUME_IDX, 25
+.set REG_INTERNAL_CHAR_ID, 27
+.set REG_EXTERNAL_CHAR_ID, 26
+.set REG_TEAM_IDX, 25
+.set REG_COSTUME_IDX, 24
 
 # float registers
 .set REG_F_0, 31
@@ -275,10 +276,8 @@ lbz r3, -0x49B0(r13) # player index
 mulli r3, r3, 0x24
 add REG_PORT_SELECTIONS_ADDR, r4, r3
 
-# This does not work to get the chat ID for some reason, some chars are fine
-# and some are not
-# lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
-# mr REG_CHAR_ID, r3
+lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
+mr REG_INTERNAL_CHAR_ID, r3
 
 # Get Char Id
 load r3, 0x803f0a48
@@ -288,7 +287,7 @@ lbzu	r3, 0x0(r5)
 mulli	r3, r3, 28
 add	r4, r4, r3
 lbz	r3, 0x00DC (r4) # char id
-mr REG_CHAR_ID, r3
+mr REG_EXTERNAL_CHAR_ID, r3
 
 # Get Custom Team Index increment and store
 lbz r4, CSSDT_LOCAL_PLAYER_TEAM_INDEX(REG_CSSDT_ADDR)
@@ -310,8 +309,8 @@ bl FN_CHANGE_PORTRAIT_BG
 restoreall
 
 mr r3, REG_TEAM_IDX
-mr r4, REG_CHAR_ID
-bl FN_GET_TEAM_COSTUME_ID
+mr r4, REG_INTERNAL_CHAR_ID
+bl FN_GET_TEAM_COSTUME_IDX
 mr REG_COSTUME_IDX, r3
 # logf LOG_LEVEL_NOTICE, "Costume Id for Team %d Char %d is %d", "mr r5, 26", "mr r6, 27", "mr r7, 3"
 
@@ -321,7 +320,7 @@ stb	r3, 0x73 (r5)
 
 # Calculate Costume ID from costume Index
 mulli	r4, REG_COSTUME_IDX, 30
-add	r4, REG_CHAR_ID, r4
+add	r4, REG_EXTERNAL_CHAR_ID, r4
 
 li r3, 0 # player index
 li	r5, 0
@@ -342,34 +341,37 @@ blr
 ################################################################################
 # Inputs:
 # r3: Team IDX
-# r4: Char ID (fighter ext id)
+# r4: Internal Char ID (fighter ext id)
 ################################################################################
 # Returns
 # r3: Costume Index
 ################################################################################
-FN_GET_TEAM_COSTUME_ID:
+FN_GET_TEAM_COSTUME_IDX:
 backup
 mr REG_TEAM_IDX, r3
-mr REG_CHAR_ID, r4
+mr REG_EXTERNAL_CHAR_ID, r4
 
-mr r3, REG_CHAR_ID
+mr r3, REG_EXTERNAL_CHAR_ID
 cmpwi REG_TEAM_IDX, 3
-beq FN_GET_TEAM_COSTUME_ID_BLUE
+beq FN_GET_TEAM_COSTUME_IDX_GREEN
 cmpwi REG_TEAM_IDX, 2
-beq FN_GET_TEAM_COSTUME_ID_GREEN
+beq FN_GET_TEAM_COSTUME_IDX_BLUE
 cmpwi REG_TEAM_IDX, 1
-beq FN_GET_TEAM_COSTUME_ID_RED
+beq FN_GET_TEAM_COSTUME_IDX_RED
 
-FN_GET_TEAM_COSTUME_ID_BLUE:
-branchl r12, 0x80169290
-b FN_GET_TEAM_COSTUME_ID_EXIT
-FN_GET_TEAM_COSTUME_ID_GREEN:
-branchl r12, 0x801692bc
-b FN_GET_TEAM_COSTUME_ID_EXIT
-FN_GET_TEAM_COSTUME_ID_RED:
-branchl r12, 0x80169264
+# YL on green should be 0
+# DR Mario on Green should be 3
 
-FN_GET_TEAM_COSTUME_ID_EXIT:
+FN_GET_TEAM_COSTUME_IDX_BLUE:
+branchl r12, 0x801692bc # CSS_GetCharBlueCostumeIndex
+b FN_GET_TEAM_COSTUME_IDX_EXIT
+FN_GET_TEAM_COSTUME_IDX_GREEN:
+branchl r12, 0x80169290 # CSS_GetCharGreenCostumeIndex
+b FN_GET_TEAM_COSTUME_IDX_EXIT
+FN_GET_TEAM_COSTUME_IDX_RED:
+branchl r12, 0x80169264 # CSS_GetCharRedCostumeIndex
+
+FN_GET_TEAM_COSTUME_IDX_EXIT:
 restore
 blr
 
