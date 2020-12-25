@@ -407,9 +407,11 @@ FN_CHANGE_PORTRAIT_BG_SKIP_COLOR:
 
 # logf LOG_LEVEL_NOTICE, "FN_CHANGE_PORTRAIT_BG after r3: %d", "mr r5, 31"
 
-# Store team idx on r13 offset that stores port
-subi	r3, r13, 26056
-stb r4, 0x0(r3)
+# Store team idx on r13 offset that stores port for P1-4
+lbz r5, -0x49B0(r13) # player index
+subi r3, r13, 26056 # 0x801977c4
+add r3, r3, r5 # Add player index offset
+stb r4, 0(r3)
 
 # Call game method to trigger the bg change
 li r3, 0
