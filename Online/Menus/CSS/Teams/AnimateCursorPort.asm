@@ -34,28 +34,6 @@ cmpwi REG_TEAM_IDX, 0
 beq EXIT
 
 
-# Map to proper player port
-lbz r6, -0x49B0(r13) # player index
-cmpwi r6, 0
-beq SKIP_PORT_CALC
-cmpwi r6, 1
-beq ADD_PORT_1_OFFSET
-cmpwi r6, 2
-beq ADD_PORT_2_OFFSET
-cmpwi r6, 3
-beq ADD_PORT_3_OFFSET
-
-
-ADD_PORT_1_OFFSET:
-li r6, 4
-b SKIP_PORT_CALC
-ADD_PORT_2_OFFSET:
-li r6, 8
-b SKIP_PORT_CALC
-ADD_PORT_3_OFFSET:
-li r6, 12
-b SKIP_PORT_CALC
-
 SKIP_PORT_CALC:
 
 # if is green, leave as is, else substract 1
@@ -65,6 +43,9 @@ beq SKIP_COLOR_MAP
 subi REG_TEAM_IDX, REG_TEAM_IDX, 1
 SKIP_COLOR_MAP:
 
+# Map to proper player port (4*PlayerPort)+Index
+lbz r6, -0x49B0(r13) # player index
+mulli r6, r6, 0x4
 add REG_TEAM_IDX, REG_TEAM_IDX, r6
 
 mr r3, REG_TEAM_IDX
