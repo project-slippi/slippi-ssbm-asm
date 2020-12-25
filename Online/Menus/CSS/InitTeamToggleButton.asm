@@ -407,7 +407,7 @@ FN_CHANGE_PORTRAIT_BG_SKIP_COLOR:
 
 # logf LOG_LEVEL_NOTICE, "FN_CHANGE_PORTRAIT_BG after r3: %d", "mr r5, 31"
 
-# Store team id on r13 offset that stores port
+# Store team idx on r13 offset that stores port
 subi	r3, r13, 26056
 stb r4, 0x0(r3)
 
