@@ -13,12 +13,15 @@
 .set CMD_GAME_END, 0x39
 .set COMMAND_COUNT, 10 # number of possible commands
 
+.set BONE_BYTES, 4 * 9 # float for each R/S/T, X/Y/Z
+.set BONE_MAX, 118 # Zelda has the most bones at 118
+
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 420 # byte count
 .set GAME_INITIAL_RNG_PAYLOAD_LENGTH, 8 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
-.set GAME_POST_FRAME_PAYLOAD_LENGTH, 72 # byte count
+.set GAME_POST_FRAME_PAYLOAD_LENGTH, 78 + (BONE_MAX * BONE_BYTES) # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 42 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
