@@ -19,6 +19,7 @@
 .set REG_F_1, REG_F_0-1
 
 .set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
+.set ICON_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -53,7 +54,6 @@ blrl
 # Creates and initializes Button and queues it's THINK function
 ################################################################################
 INIT_BUTTON:
-.set REG_CHAT_INPUTS, 14
 .set REG_ICON_GOBJ, 20
 .set REG_ICON_JOBJ, 21
 .set REG_DATA_BUFFER, 23
@@ -120,50 +120,31 @@ stw r4, 0x40(r3) # set Y position
 # find child mat animation joint first
 lwz	r3, -0x49C8 (r13)
 lwz	r3, 0x0038 (r3)
-lwz r3, 0x08(r3) # move to it's first child
-# Find 8th child
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-# Now get first child which is P1 Switch icon
-lwz r5, 0x08(r3) # move to it's first child
+lwz r3, 0x00(r3) # move to it's first child
 
-# find animation joint
-lwz	r3, -0x49C8 (r13)
-lwz	r3, 0x0034 (r3)
-lwz r3, 0x08(r3) # move to it's first child
 # Find 8th child
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
+lwz r3, 0x04(r3) # move to it's sibling
 # Now get first child which is P1 Switch icon
-lwz r4, 0x08(r3) # move to it's first child
-
-# find shape joint
-lwz	r3, -0x49C8 (r13)
-lwz	r3, 0x003C (r3)
-lwz r3, 0x08(r3) # move to it's first child
-# Find 8th child
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-# Now get first child which is P1 Switch icon
-lwz r6, 0x08(r3) # move to it's first child
+lwz r5, 0x00(r3) # move to it's first child
 
 mr r3, REG_ICON_JOBJ
+li r4, 0
+li r6, 0
 branchl r12, JObj_AddAnimAll
+
+# Animate the icon to RED first
+mr r3, REG_ICON_JOBJ
+fmr f1, REG_F_0
+branchl r12, JObj_ReqAnimAll # (jobj, frames)
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_AnimAll
 
 # Add JOBJ To GObj
 mr  r3,REG_ICON_GOBJ
@@ -208,12 +189,6 @@ li r5, 0x29 # index of jboj child we want
 li r6, -1
 branchl r12, JObj_GetJObjChild
 
-# Lets debug by hiding what we "find"
-#lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
-#li r4, 0x10
-#branchl r12, JObj_SetFlagsAll # 0x80371D9c
-
-
 # Get first Dobj
 lwz r3, JOBJ_CHILD_OFFSET(sp) # portrait jobj
 branchl r12, 0x80371BEC # HSD_JObjGetDObj
@@ -236,6 +211,9 @@ FN_TEAM_BUTTON_THINK:
 blrl
 
 backup
+
+mr REG_ICON_GOBJ, r3
+lwz REG_ICON_JOBJ, ICON_JOBJ_OFFSET(REG_ICON_GOBJ) # Get Jobj
 
 # Ensure we are not in name entry screen
 lbz r3, -0x49AA(r13)
@@ -336,6 +314,11 @@ FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM: # 0x80197660
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 mr REG_TEAM_IDX, r4
 
+# Animate the team icon based on team index
+mr r3, REG_TEAM_IDX
+mr r4, REG_ICON_JOBJ
+bl FN_CHANGE_ICON_COLOR
+
 # Kind of hacky I know :) things get messed up so I just back everything up :D
 backupall
 mr r3, REG_TEAM_IDX
@@ -370,6 +353,47 @@ branchl r12, SFX_Menu_CommonSound
 
 
 FN_SWITCH_PLAYER_TEAM_EXIT:
+restore
+blr
+
+################################################################################
+# Function: Animates icon to desired Team color based on team index
+################################################################################
+# Inputs:
+# r3: Team IDX
+# r4: ICON JOBJ
+################################################################################
+FN_CHANGE_ICON_COLOR:
+backup
+mr REG_TEAM_IDX, r3
+mr REG_ICON_JOBJ, r4
+
+cmpwi REG_TEAM_IDX, 3
+beq FN_CHANGE_ICON_COLOR_G
+#cmpwi REG_TEAM_IDX, 2
+#beq FN_CHANGE_ICON_COLOR_B
+cmpwi REG_TEAM_IDX, 1
+ble FN_CHANGE_ICON_COLOR_R
+
+FN_CHANGE_ICON_COLOR_B:
+li r3, 0
+b FN_CHANGE_ICON_COLOR_SKIP
+FN_CHANGE_ICON_COLOR_G:
+li r3, 1
+b FN_CHANGE_ICON_COLOR_SKIP
+FN_CHANGE_ICON_COLOR_R:
+li r3, 2
+
+FN_CHANGE_ICON_COLOR_SKIP:
+branchl r12, FN_IntToFloat
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_ReqAnimAll # (jobj, frames)
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_AnimAll
+
+FN_CHANGE_ICON_COLOR_EXIT:
 restore
 blr
 
