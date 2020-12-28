@@ -18,6 +18,8 @@
 .set REG_F_0, 31
 .set REG_F_1, REG_F_0-1
 
+.set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
+
 # Ensure that this is an online CSS
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_CSS
@@ -190,15 +192,47 @@ mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
+b HIDE_PORTRAIT_PORT
+
+
+################################################################################
+# Hides Port from the portrait bg
+################################################################################
+HIDE_PORTRAIT_PORT:
+
+
+# Get Portrait Parent Jobj
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x29 # index of jboj child we want
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# Lets debug by hiding what we "find"
+#lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
+#li r4, 0x10
+#branchl r12, JObj_SetFlagsAll # 0x80371D9c
+
+
+# Get first Dobj
+lwz r3, JOBJ_CHILD_OFFSET(sp) # portrait jobj
+branchl r12, 0x80371BEC # HSD_JObjGetDObj
+
+# Move to Dobj's sibling and then its mobj
+lwz r3, 0x04(r3) # offset to next dobj sibling
+lwz r3, 0x08(r3) # offset to Dobj's mobj
+
+# r3 here is mobj's address (hopefully)
+fmr f1, REG_F_0 # float 0.0
+branchl r12, 0x80363C2C # HSD_MObjSetAlpha(mobj, float alpha)
+
+
 restore
 b EXIT
-
-
 ################################################################################
 # Function: Handles per frame updates of Custom Team Button
 ################################################################################
 FN_TEAM_BUTTON_THINK:
-.set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
 blrl
 
 backup
