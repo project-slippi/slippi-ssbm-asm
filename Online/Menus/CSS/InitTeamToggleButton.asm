@@ -113,8 +113,10 @@ mr  REG_ICON_JOBJ,r3
 mr r3, REG_ICON_JOBJ
 load r4, 0xC19C0000 # -19.5
 stw r4, 0x38(r3) # set X position
-load r4, 0xC019999A # -2.4
-stw r4, 0x40(r3) # set Y position
+load r4, 0xC0400000 # -3
+stw r4, 0x3C(r3) # set Y position
+load r4, 0x3DCCCCCD # 0.1
+stw r4, 0x40(r3) # set Z position
 
 # Setup proper animations
 # find child mat animation joint first
