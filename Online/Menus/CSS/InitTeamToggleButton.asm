@@ -175,19 +175,28 @@ mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
-b HIDE_PORTRAIT_PORT
-
+b CONFIG_PORTRAIT_PORT
 
 ################################################################################
-# Hides Port from the portrait bg
+# Hides Port from the portrait bg and moves franchise icon up
 ################################################################################
-HIDE_PORTRAIT_PORT:
+CONFIG_PORTRAIT_PORT:
 
+# Get Franchise icon
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x2B # index of jboj child we want (franchise icon)
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # Franchise Icon
+load r4, 0xC0400000 # -3
+stw r4, 0x3C(r3) # set Y position
 
 # Get Portrait Parent Jobj
 lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
 addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
-li r5, 0x29 # index of jboj child we want
+li r5, 0x29 # index of jboj child we want (portrait)
 li r6, -1
 branchl r12, JObj_GetJObjChild
 
