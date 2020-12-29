@@ -397,6 +397,12 @@ stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 
+# Calc/Set Team ID
+loadwz r3, CSSDT_BUF_ADDR
+lbz r3, CSSDT_TEAM_IDX(r3)
+subi r3, r3, 1
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+
 # Handle stage
 cmpwi REG_SB, -2
 beq FN_TX_LOCK_IN_STAGE_RAND

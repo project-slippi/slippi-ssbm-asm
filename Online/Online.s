@@ -260,7 +260,8 @@ lwz \reg, -0x62A0(\reg)
 # Player Selections Transfer Buffer
 ################################################################################
 .set PSTB_CMD, 0 # u8
-.set PSTB_CHAR_ID, PSTB_CMD + 1 # u8
+.set PSTB_TEAM_ID, PSTB_CMD + 1 # u8
+.set PSTB_CHAR_ID, PSTB_TEAM_ID + 1 # u8
 .set PSTB_CHAR_COLOR, PSTB_CHAR_ID + 1 # u8
 .set PSTB_CHAR_OPT, PSTB_CHAR_COLOR + 1 # u8, 0 = unset, 1 = merge, 2 = clear
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
