@@ -48,7 +48,7 @@ addi r5, r3, 0x03C2
 lbzu	r3, 0x0(r5)
 mulli	r3, r3, 28
 add	r4, r4, r3
-lbz	r3, 0x00DC (r4) # char id
+lbz	r3, 0x00DD (r4) # char id
 mr REG_EXTERNAL_CHAR_ID, r3
 
 mr r3, REG_TEAM_IDX
