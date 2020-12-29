@@ -316,15 +316,35 @@ li r4, 1 # reset to 1 (RED)
 
 FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
 
-
 # Store Custom Team selection in data table
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 mr REG_TEAM_IDX, r4
 
 # Animate the team icon based on team index
-mr r3, REG_TEAM_IDX
-mr r4, REG_ICON_JOBJ
-bl FN_CHANGE_ICON_COLOR
+cmpwi REG_TEAM_IDX, 3
+beq FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_G
+cmpwi REG_TEAM_IDX, 2
+beq FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_B
+cmpwi REG_TEAM_IDX, 1
+ble FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_R
+
+FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_B:
+li r3, 0
+b FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_SKIP
+FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_G:
+li r3, 1
+b FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_SKIP
+FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_R:
+li r3, 2
+
+FN_SWITCH_PLAYER_TEAM_CHANGE_ICON_COLOR_SKIP:
+branchl r12, FN_IntToFloat
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_ReqAnimAll # (jobj, frames)
+
+mr r3, REG_ICON_JOBJ
+branchl r12, JObj_AnimAll
 
 # Kind of hacky I know :) things get messed up so I just back everything up :D
 backupall
@@ -336,6 +356,11 @@ mr r3, REG_TEAM_IDX
 mr r4, REG_INTERNAL_CHAR_ID
 bl FN_GET_TEAM_COSTUME_IDX
 mr REG_COSTUME_IDX, r3
+
+# Check if character has been selected, if not, do nothing
+lbz r3, -0x49A9(r13)
+cmpwi r3, 0
+beq FN_SWITCH_PLAYER_TEAM_EXIT
 
 # Store costume index selection in game
 lwz	r5, -0x49F0 (r13) # P1 Players Selections
@@ -356,51 +381,10 @@ branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
 li	r3, 2
 branchl r12, SFX_Menu_CommonSound
 
-
 FN_SWITCH_PLAYER_TEAM_EXIT:
 restore
 blr
 
-################################################################################
-# Function: Animates icon to desired Team color based on team index
-################################################################################
-# Inputs:
-# r3: Team IDX
-# r4: ICON JOBJ
-################################################################################
-FN_CHANGE_ICON_COLOR:
-backup
-mr REG_TEAM_IDX, r3
-mr REG_ICON_JOBJ, r4
-
-cmpwi REG_TEAM_IDX, 3
-beq FN_CHANGE_ICON_COLOR_G
-#cmpwi REG_TEAM_IDX, 2
-#beq FN_CHANGE_ICON_COLOR_B
-cmpwi REG_TEAM_IDX, 1
-ble FN_CHANGE_ICON_COLOR_R
-
-FN_CHANGE_ICON_COLOR_B:
-li r3, 0
-b FN_CHANGE_ICON_COLOR_SKIP
-FN_CHANGE_ICON_COLOR_G:
-li r3, 1
-b FN_CHANGE_ICON_COLOR_SKIP
-FN_CHANGE_ICON_COLOR_R:
-li r3, 2
-
-FN_CHANGE_ICON_COLOR_SKIP:
-branchl r12, FN_IntToFloat
-
-mr r3, REG_ICON_JOBJ
-branchl r12, JObj_ReqAnimAll # (jobj, frames)
-
-mr r3, REG_ICON_JOBJ
-branchl r12, JObj_AnimAll
-
-FN_CHANGE_ICON_COLOR_EXIT:
-restore
-blr
 
 ################################################################################
 # Function: Returns Proper Costume Index for a give custom team index and char
