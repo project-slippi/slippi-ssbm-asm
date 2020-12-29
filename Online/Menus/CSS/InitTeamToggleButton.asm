@@ -364,10 +364,10 @@ beq FN_SWITCH_PLAYER_TEAM_EXIT
 
 # Store costume index selection in game
 lwz	r5, -0x49F0 (r13) # P1 Players Selections
-stb	r3, 0x73 (r5)
+stb	REG_COSTUME_IDX, 0x73 (r5)
 load r5, 0x803F0E09 # P1 Char Menu Data
-stb r3, 0x0(r5)
-stb r3, CSSDT_TEAM_COSTUME_IDX(REG_CSSDT_ADDR)
+stb REG_COSTUME_IDX, 0x0(r5)
+stb REG_COSTUME_IDX, CSSDT_TEAM_COSTUME_IDX(REG_CSSDT_ADDR)
 
 # Calculate Costume ID from costume Index
 mulli	r4, REG_COSTUME_IDX, 30
