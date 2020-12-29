@@ -156,7 +156,7 @@ branchl r12,GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object
 
 # Add GX Link that draws the background
 mr  r3,REG_ICON_GOBJ
-load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
+load r4,0x80391070
 li  r5, 2
 li  r6, 128
 branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
@@ -175,7 +175,7 @@ mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
-b CONFIG_PORTRAIT_PORT
+bl FN_SWITCH_PLAYER_TEAM
 
 ################################################################################
 # Hides Port from the portrait bg and moves franchise icon up
@@ -238,17 +238,12 @@ lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
 cmpwi r3, 0
 bne FN_TEAM_BUTTON_THINK_EXIT # No changes when locked-in
 
-
 # Get text properties address
 bl PROPERTIES
 mflr REG_PROPERTIES
 
 li REG_IS_HOVERING, 0 # Initialize hover state as false
 loadwz r4, 0x804A0BC0 # This gets ptr to cursor position on CSS
-
-#lfs f1, 0xC(r4) # Get x cursor pos
-#lfs f2, 0x10(r4) # Get y cursor pos
-# logf LOG_LEVEL_WARN, "X: %f Y: %f"
 
 # Check if cursor is outside top boundary
 lfs f1, 0xC(r4) # Get x cursor pos
@@ -319,7 +314,8 @@ cmpwi r4, 4
 blt FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM
 li r4, 1 # reset to 1 (RED)
 
-FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM: # 0x80197660
+FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
+
 
 # Store Custom Team selection in data table
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
@@ -340,7 +336,6 @@ mr r3, REG_TEAM_IDX
 mr r4, REG_INTERNAL_CHAR_ID
 bl FN_GET_TEAM_COSTUME_IDX
 mr REG_COSTUME_IDX, r3
-# logf LOG_LEVEL_NOTICE, "Costume Id for Team %d Char %d is %d", "mr r5, 26", "mr r6, 27", "mr r7, 3"
 
 # Store costume index selection in game
 lwz	r5, -0x49F0 (r13) # P1 Players Selections
@@ -356,7 +351,6 @@ add	r4, REG_EXTERNAL_CHAR_ID, r4
 li r3, 0 # player index
 li	r5, 0
 branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
-
 
 # Play team switch sound
 li	r3, 2
@@ -453,7 +447,6 @@ blr
 FN_CHANGE_PORTRAIT_BG:
 backup
 mr REG_TEAM_IDX, r3
-# logf LOG_LEVEL_NOTICE, "FN_CHANGE_PORTRAIT_BG r3: %d", "mr r5, 31"
 
 cmpwi REG_TEAM_IDX, 3
 beq FN_CHANGE_PORTRAIT_BG_GREEN
@@ -474,11 +467,9 @@ b FN_CHANGE_PORTRAIT_BG_SKIP_COLOR
 
 FN_CHANGE_PORTRAIT_BG_SKIP_COLOR:
 
-# logf LOG_LEVEL_NOTICE, "FN_CHANGE_PORTRAIT_BG after r3: %d", "mr r5, 31"
-
 # Store team idx on r13 offset that stores port for P1-4
 lbz r5, -0x49B0(r13) # player index
-subi r3, r13, 26056 # 0x801977c4
+subi r3, r13, 26056
 add r3, r3, r5 # Add player index offset
 stb r4, 0(r3)
 
