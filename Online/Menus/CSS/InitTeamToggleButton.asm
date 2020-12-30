@@ -362,7 +362,7 @@ restoreall
 
 mr r3, REG_TEAM_IDX
 mr r4, REG_INTERNAL_CHAR_ID
-bl FN_GET_TEAM_COSTUME_IDX
+branchl r12, FN_GetTeamCostumeIndex
 mr REG_COSTUME_IDX, r3
 
 # Check if character has been selected, if not, do nothing
@@ -393,42 +393,6 @@ FN_SWITCH_PLAYER_TEAM_EXIT:
 restore
 blr
 
-
-################################################################################
-# Function: Returns Proper Costume Index for a give custom team index and char
-################################################################################
-# Inputs:
-# r3: Team IDX
-# r4: Internal Char ID (fighter ext id)
-################################################################################
-# Returns
-# r3: Costume Index
-################################################################################
-FN_GET_TEAM_COSTUME_IDX:
-backup
-mr REG_TEAM_IDX, r3
-mr REG_EXTERNAL_CHAR_ID, r4
-
-mr r3, REG_EXTERNAL_CHAR_ID
-cmpwi REG_TEAM_IDX, 3
-beq FN_GET_TEAM_COSTUME_IDX_GREEN
-cmpwi REG_TEAM_IDX, 2
-beq FN_GET_TEAM_COSTUME_IDX_BLUE
-cmpwi REG_TEAM_IDX, 1
-beq FN_GET_TEAM_COSTUME_IDX_RED
-
-FN_GET_TEAM_COSTUME_IDX_BLUE:
-branchl r12, 0x801692bc # CSS_GetCharBlueCostumeIndex
-b FN_GET_TEAM_COSTUME_IDX_EXIT
-FN_GET_TEAM_COSTUME_IDX_GREEN:
-branchl r12, 0x80169290 # CSS_GetCharGreenCostumeIndex
-b FN_GET_TEAM_COSTUME_IDX_EXIT
-FN_GET_TEAM_COSTUME_IDX_RED:
-branchl r12, 0x80169264 # CSS_GetCharRedCostumeIndex
-
-FN_GET_TEAM_COSTUME_IDX_EXIT:
-restore
-blr
 
 ################################################################################
 # Function: Changes the portrait bg of the player based on custom team index

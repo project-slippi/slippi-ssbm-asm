@@ -8,7 +8,6 @@
 # Do not override 29, we need its value
 .set REG_CSSDT_ADDR, 28
 .set REG_TEAM_IDX, REG_CSSDT_ADDR-1
-.set REG_ORIG_VALUE, REG_TEAM_IDX-1
 
 backup
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
