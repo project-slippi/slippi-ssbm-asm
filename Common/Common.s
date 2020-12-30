@@ -138,6 +138,11 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FN_MultiplyRWithF,0x800055ec
 .set FN_IntToFloat,0x800055f4
 .set FG_CreateSubtext,0x800056b4
+.set FN_LoadChatMessageProperties,0x800056ac
+.set FN_GetTeamCostumeIndex,0x800056b0
+# available addresses for static functions
+# 0x800056b8
+# 0x800056bc
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
@@ -174,6 +179,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set JObj_AddAnimAll, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
 .set JObj_ReqAnimAll, 0x8036F8BC #(HSD_JObj* jobj, f32 frame)
 .set JObj_AnimAll, 0x80370928 #(jobj)
+.set JObj_ClearFlags, 0x80371f00 #(jobj,flags)
 .set JObj_ClearFlagsAll, 0x80371F9C #(jobj,flags)
 .set JObj_SetFlags, 0x80371D00 # (jobj,flags)
 .set JObj_SetFlagsAll, 0x80371D9c # (jobj,flags)

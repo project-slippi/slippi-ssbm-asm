@@ -260,7 +260,8 @@ lwz \reg, -0x62A0(\reg)
 # Player Selections Transfer Buffer
 ################################################################################
 .set PSTB_CMD, 0 # u8
-.set PSTB_CHAR_ID, PSTB_CMD + 1 # u8
+.set PSTB_TEAM_ID, PSTB_CMD + 1 # u8
+.set PSTB_CHAR_ID, PSTB_TEAM_ID + 1 # u8
 .set PSTB_CHAR_COLOR, PSTB_CHAR_ID + 1 # u8
 .set PSTB_CHAR_OPT, PSTB_CHAR_COLOR + 1 # u8, 0 = unset, 1 = merge, 2 = clear
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
@@ -299,7 +300,9 @@ lwz \reg, -0x62A0(\reg)
 .set CSSDT_CHAT_LAST_INPUT, CSSDT_CHAT_WINDOW_OPENED + 1 # u8
 .set CSSDT_CHAT_MSG_COUNT, CSSDT_CHAT_LAST_INPUT + 1 # u8
 .set CSSDT_LAST_CHAT_MSG_INDEX, CSSDT_CHAT_MSG_COUNT + 1 # u8
-.set CSSDT_SIZE, CSSDT_LAST_CHAT_MSG_INDEX + 1
+.set CSSDT_TEAM_IDX, CSSDT_LAST_CHAT_MSG_INDEX + 1 # u8
+.set CSSDT_TEAM_COSTUME_IDX, CSSDT_TEAM_IDX + 1 #8
+.set CSSDT_SIZE, CSSDT_TEAM_COSTUME_IDX + 1
 
 ################################################################################
 # CSS Chat Message Data Table
@@ -311,6 +314,12 @@ lwz \reg, -0x62A0(\reg)
 .set CSSCMDT_USER_NAME_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR + 4 # u32
 .set CSSCMDT_CSSDT_ADDR, CSSCMDT_USER_NAME_ADDR + 4 # u32 CSS Data Table Address
 .set CSSCMDT_SIZE, CSSCMDT_CSSDT_ADDR + 4
+
+################################################################################
+# CSS Team Icon Button Data Table
+################################################################################
+.set CSSTIDT_CSSDT_ADDR, 0 # u32 CSS Data Table Address
+.set CSSTIDT_SIZE, CSSTIDT_CSSDT_ADDR + 4
 
 ################################################################################
 # CSS Chat Window Data Table
