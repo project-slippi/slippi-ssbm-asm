@@ -52,7 +52,6 @@ b LOAD_START
 ################################################################################
 # Properties
 ################################################################################
-.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
 TEXT_PROPERTIES:
 blrl
 # Base Properties
@@ -221,61 +220,6 @@ blrl
 .short 0x817C # －
 .byte 0x00
 .align 2
-
-################################################################################
-# Chat Message Properties
-# Hack: CAP TO SAME LENGTH to ensure pointers are always reached
-# TODO: Find a way to reuse this between HandleInputOnCSS.asm and this file.
-################################################################################
-.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
-UP_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "ggs                   "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "one more              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "brb                   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "good luck             "
-.align 2
-
-LEFT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "well played           "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "that was fun          "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "thanks                "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "too good              "
-.align 2
-
-RIGHT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "oof                   "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "my b                  "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "lol                   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "wow                   "
-.align 2
-
-DOWN_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "okay                  "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "thinking              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "let's play again later"
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "bad connection        "
-.align 2
-
 
 ################################################################################
 # User text config
@@ -1207,71 +1151,25 @@ stfs f1, 0x24(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 stfs f1, 0x28(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # INIT MSG Properties based on input button (lowest bit)
-mr r3, REG_CHATMSG_MSG_ID
+
+# Extract message input (highest bit)
+mr r5, REG_CHATMSG_MSG_ID
 li r4, 4
-srw r3, r3, r4
+srw r5, r5, r4 # shift right = 0x0N
+slw r5, r5, r4 # shift left = 0xN0
+sub r4, REG_CHATMSG_MSG_ID, r5
 
-cmpwi r3, PAD_UP
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES
-cmpwi r3, PAD_DOWN
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES
-cmpwi r3, PAD_RIGHT
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES
-cmpwi r3, PAD_LEFT
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES
-
-
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES:
-bl UP_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES:
-bl DOWN_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES:
-bl RIGHT_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES:
-bl LEFT_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END:
-
-# get message input (highest bit)
+# Extract Category ID
 mr r3, REG_CHATMSG_MSG_ID
-li r4, 4
-srw r3, r3, r4 # shift right = 0x0N
-slw r3, r3, r4 # shift left = 0xN0
-sub r3, REG_CHATMSG_MSG_ID, r3
+li r5, 4
+srw r3, r3, r5
 
-# calculate address of label
-cmpwi r3, PAD_UP # up
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR
-cmpwi r3, PAD_LEFT # left
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR
-cmpwi r3, PAD_RIGHT # right
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR
-cmpwi r3, PAD_DOWN # down
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
-
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_UP # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_LEFT # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_RIGHT # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_DOWN # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_EMPTY_STRING # set empty string by default
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END:
-
+# INIT MSG Properties based on input button (r3)
+# r3 = category id
+# r4 = chosen message
+branchl r12, FN_LoadChatMessageProperties
+mr REG_CHAT_TEXT_PROPERTIES, r3
+# r4 has adress to message
 
 SET_CHATMSG_TEXT_HEADER:
 mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
