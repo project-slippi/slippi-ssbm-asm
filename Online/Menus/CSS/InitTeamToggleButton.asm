@@ -44,9 +44,13 @@ blrl
 
 .set TPO_FLOAT_0, TPO_BOUNDS_ICON_RIGHT + 4
 .float 0.0
-.set TPO_FLOAT_1, TPO_FLOAT_0 + 4
-.float 1.0
 
+.set TPO_ICON_POS_X, TPO_FLOAT_0 + 4
+.float -19.5
+.set TPO_ICON_POS_Y, TPO_ICON_POS_X + 4
+.float -3
+.set TPO_ICON_POS_Z, TPO_ICON_POS_Y + 4
+.float 0.1
 
 .align 2
 
@@ -66,7 +70,6 @@ bl PROPERTIES
 mflr REG_PROPERTIES
 
 lfs REG_F_0, TPO_FLOAT_0(REG_PROPERTIES)
-lfs REG_F_1, TPO_FLOAT_1(REG_PROPERTIES)
 
 # Set default team id
 li r3, 0
@@ -97,25 +100,23 @@ lwz r3, -0x49C8(r13) # = 0x80f454c8 pointer to MenuModel JObj Descriptor
 lwz	r3, 0x0030 (r3)
 lwz r3, 0x08(r3) # move to it's first child
 # Find 8th child
+li r4, 0
+MV_TO_SIBLING:
 lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
-lwz r3, 0x0C(r3) # move to it's sibling
+addi r4, r4, 1
+cmpwi r4, 7
+blt MV_TO_SIBLING
 # Now get first child which is P1 Switch icon
 lwz r3, 0x08(r3) # move to it's first child
 branchl r12,JObj_LoadJoint #Create Jboj
 mr  REG_ICON_JOBJ,r3
-
 # Move to the correct position
 mr r3, REG_ICON_JOBJ
-load r4, 0xC19C0000 # -19.5
+lwz r4, TPO_ICON_POS_X(REG_PROPERTIES)
 stw r4, 0x38(r3) # set X position
-load r4, 0xC0400000 # -3
+lwz r4, TPO_ICON_POS_Y(REG_PROPERTIES)
 stw r4, 0x3C(r3) # set Y position
-load r4, 0x3DCCCCCD # 0.1
+lwz r4, TPO_ICON_POS_Z(REG_PROPERTIES)
 stw r4, 0x40(r3) # set Z position
 
 # Setup proper animations
@@ -125,13 +126,12 @@ lwz	r3, 0x0038 (r3)
 lwz r3, 0x00(r3) # move to it's first child
 
 # Find 8th child
+li r4, 0
+MV_TO_ANIM_SIBLING:
 lwz r3, 0x04(r3) # move to it's sibling
-lwz r3, 0x04(r3) # move to it's sibling
-lwz r3, 0x04(r3) # move to it's sibling
-lwz r3, 0x04(r3) # move to it's sibling
-lwz r3, 0x04(r3) # move to it's sibling
-lwz r3, 0x04(r3) # move to it's sibling
-lwz r3, 0x04(r3) # move to it's sibling
+addi r4, r4, 1
+cmpwi r4, 7
+blt MV_TO_ANIM_SIBLING
 # Now get first child which is P1 Switch icon
 lwz r5, 0x00(r3) # move to it's first child
 
