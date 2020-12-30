@@ -71,10 +71,6 @@ mflr REG_PROPERTIES
 
 lfs REG_F_0, TPO_FLOAT_0(REG_PROPERTIES)
 
-# Set default team id
-li r3, 0
-stb r3, CSSDT_TEAM_ID(REG_CSSDT_ADDR)
-
 # Get Memory Buffer for Chat Window Data Table
 li r3, CSSTIDT_SIZE # Teams Icon Buffer Size
 branchl r12, HSD_MemAlloc
@@ -175,7 +171,15 @@ mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
+subi r3, r13, 0x77BC
+lbz r14, 0x0(r3) # load team index stored on heap
+li r15, 0 # start loop index
+
+SWITCH_TEAM:
 bl FN_SWITCH_PLAYER_TEAM
+addi r15, r15, 1
+cmpw r15, r14
+blt SWITCH_TEAM
 
 ################################################################################
 # Hides Port from the portrait bg and moves franchise icon up
@@ -318,7 +322,11 @@ FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
 
 # Store Custom Team selection in data table
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
+subi r3, r13, 0x77BC # Store team selection on free space on heap?
+stb r4, 0x0(r3)
+
 mr REG_TEAM_IDX, r4
+# logf LOG_LEVEL_NOTICE, "TEAM INDEX %d", "mr r5, 25"
 
 # Animate the team icon based on team index
 cmpwi REG_TEAM_IDX, 3

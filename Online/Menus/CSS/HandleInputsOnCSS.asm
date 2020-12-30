@@ -454,6 +454,9 @@ blrl
 FN_LOCK_IN_AND_SEARCH:
 backup
 
+lbz r20, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
+# logf LOG_LEVEL_NOTICE, "TEAM INDEX AFTER %d", "mr r5, 20"
+
 bl FN_TX_LOCK_IN # Lock in character selection
 bl FN_TX_FIND_MATCH # Trigger matchmaking
 
