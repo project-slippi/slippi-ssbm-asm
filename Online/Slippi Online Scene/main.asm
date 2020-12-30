@@ -524,6 +524,26 @@ li  r3,0
 VSSceneDecide_UpdateWinnerEnd:
 stb r3,OFST_R13_ISWINNER(r13)
 
+# Trick gold winner text into working by modifying the values used in calculation
+load r4, 0x80479da4
+cmpwi r3, 0
+beq HACK_GOLD_TEXT_LOSER
+
+HACK_GOLD_TEXT_WINNER:
+li r3, 1
+stb r3, 0x0(r4) # Trick logic into thinking P2 LRAS'd
+li r3, 0
+stb r3, 0x5D(r4) # Trick logic into thinking player won
+b HACK_GOLD_TEXT_END
+
+HACK_GOLD_TEXT_LOSER:
+li r3, 0
+stb r3, 0x0(r4) # Trick logic into thinking this player LRAS'd
+li r3, 1
+stb r3, 0x5D(r4) # Trick logic into thinking player lost
+
+HACK_GOLD_TEXT_END:
+
 # Reset CHOSESTAGE bool
 li  r3,0
 stb r3, OFST_R13_CHOSESTAGE (r13)
