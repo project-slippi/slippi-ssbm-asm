@@ -19,6 +19,7 @@
 
 # INIT_PLAYER_TEXT:
 .set REG_LABEL_COLOR, 22
+.set REG_LABEL_STRING, 20
 .set REG_CUR_SUBTEXT_IDX, 21
 
 .set REG_POS_X_START, 31
@@ -53,9 +54,11 @@ blrl
 .long 0xF15959FF
 .set TPO_P2_LABEL_COLOR, TPO_P1_LABEL_COLOR + 4
 .long 0x6565FEFF
+.set TPO_COLOR_WHITE, TPO_P2_LABEL_COLOR + 4
+.long 0xFFFFFFFF
 
 # X Positions
-.set TPO_P1_X_POS, TPO_P2_LABEL_COLOR + 4
+.set TPO_P1_X_POS, TPO_COLOR_WHITE + 4
 .float 60
 .set TPO_P2_X_POS, TPO_P1_X_POS + 4
 .float 400
@@ -269,6 +272,7 @@ backup
 
 fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
+mr REG_LABEL_STRING, r4
 mr REG_PLAYER_1_NAME_STRING, r5
 
 mr REG_PLAYERS_COUNT, r6
@@ -284,86 +288,74 @@ branchl r12, FN_IntToFloat
 fmuls f3, f3, f1
 fsubs REG_POS_Y_START, REG_POS_Y_START, f3
 
-# Init port label text
-fmr f1, REG_POS_X_START
-fmr f2, REG_POS_Y_START
-mr r3, REG_TEXT_STRUCT
-branchl r12, Text_InitializeSubtext
-mr REG_CUR_SUBTEXT_IDX, r3
 
-# Set port label font size
+# Init label text
 mr r3, REG_TEXT_STRUCT
-mr r4, REG_CUR_SUBTEXT_IDX
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+mr r4, REG_LABEL_COLOR
+li r5, 0
+mr r7, REG_LABEL_STRING
 lfs f1, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+fmr f3, REG_POS_X_START
+fmr f4, REG_POS_Y_START
+branchl r12, FG_CreateSubtext
 
-# Set port label color
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_CUR_SUBTEXT_IDX
-mr r5, REG_LABEL_COLOR
-branchl r12, Text_ChangeTextColor
+lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+fadds REG_POS_Y_START, REG_POS_Y_START, f4
 
-# Init player name text
-fmr f1, REG_POS_X_START
-fmr f2, REG_POS_Y_START
-lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
-fadds f2, f2, f3
+# Init player  name text
 mr r3, REG_TEXT_STRUCT
-mr r4, REG_PLAYER_1_NAME_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r4, r3
-mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+li r5, 0
+mr r7, REG_PLAYER_1_NAME_STRING
 lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+fmr f3, REG_POS_X_START
+fmr f4, REG_POS_Y_START
+branchl r12, FG_CreateSubtext
 
 # if no more players exit
 cmpwi REG_PLAYERS_COUNT, 1
-beq INIT_PLAYER_TEXT_EXIT
+ble INIT_PLAYER_TEXT_EXIT
 
 # Init team player 1 name text
-fmr f1, REG_POS_X_START
-fmr f2, REG_POS_Y_START
-lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
-fadds f2, f2, f3
-fadds f2, f2, f3
 lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
-fadds f1, f1, f3
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_PLAYER_2_NAME_STRING
-branchl r12, Text_InitializeSubtext
+fadds REG_POS_X_START, REG_POS_X_START, f3
 
-mr r4, r3
+lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+fadds REG_POS_Y_START, REG_POS_Y_START, f4
+
 mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+li r5, 0
+mr r7, REG_PLAYER_2_NAME_STRING
 lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+fmr f3, REG_POS_X_START
+fmr f4, REG_POS_Y_START
+branchl r12, FG_CreateSubtext
 
 # if no more players exit
 cmpwi REG_PLAYERS_COUNT, 2
 beq INIT_PLAYER_TEXT_EXIT
 
-# Init team player name text
-fmr f1, REG_POS_X_START
-fmr f2, REG_POS_Y_START
-lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
-fadds f2, f2, f3
-fadds f2, f2, f3
-fadds f2, f2, f3
+# Init team player 2 name text
 lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
-fadds f1, f1, f3
-fadds f1, f1, f3
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_PLAYER_3_NAME_STRING
-branchl r12, Text_InitializeSubtext
+fadds REG_POS_X_START, REG_POS_X_START, f3
 
-mr r4, r3
+lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+fadds REG_POS_Y_START, REG_POS_Y_START, f4
+
 mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+li r5, 0
+mr r7, REG_PLAYER_3_NAME_STRING
 lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+fmr f3, REG_POS_X_START
+fmr f4, REG_POS_Y_START
+branchl r12, FG_CreateSubtext
 
 INIT_PLAYER_TEXT_EXIT:
 restore
