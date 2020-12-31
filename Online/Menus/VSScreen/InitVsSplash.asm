@@ -142,17 +142,9 @@ lfs f1, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
-
-bl FN_GET_MATCH_MODE
-# logf LOG_LEVEL_NOTICE, "FN_GET_MATCH_MODE: %d", "mr r5, 3"
-cmpwi r3, 0 # 1vs1
-beq INIT_1v1_PLAYER_TEXT
-cmpwi r3, 1 # 2vs2
-beq INIT_2v2_PLAYER_TEXT
-cmpwi r3, 2 # 3vs1
-beq INIT_3v1_PLAYER_TEXT
-cmpwi r3, 3 # 1vs3
-beq INIT_1v3_PLAYER_TEXT
+lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
+cmpwi r3, 1 # TEAMS
+beq INIT_TEAMS_PLAYER_TEXT
 
 INIT_1v1_PLAYER_TEXT:
 # Initialize Team 1 Text
@@ -172,11 +164,10 @@ lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
 b INIT_STAGE_TEXT
 
-INIT_2v2_PLAYER_TEXT:
-INIT_3v1_PLAYER_TEXT:
-lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-# logf LOG_LEVEL_NOTICE, "MSRB_LOCAL_PLAYER_INDEX: %d", "mr r5, 3"
-bl FN_GET_PLAYER_TEAM
+INIT_TEAMS_PLAYER_TEXT:
+
+# Get player names for the left side
+lwz r3, MSRB_VS_LEFT_PLAYERS(REG_MSRB_ADDR)
 bl FN_GET_TEAM_PLAYERS
 
 # Initialize Team 1 Text
@@ -185,9 +176,8 @@ addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_1_STRING
 lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
 
-lbz r3, MSRB_REMOTE_PLAYER_INDEX(REG_MSRB_ADDR)
-# logf LOG_LEVEL_NOTICE, "MSRB_REMOTE_PLAYER_INDEX: %d", "mr r5, 3"
-bl FN_GET_PLAYER_TEAM
+# Get player names for the right side
+lwz r3, MSRB_VS_RIGHT_PLAYERS(REG_MSRB_ADDR)
 bl FN_GET_TEAM_PLAYERS
 
 # Initialize Team 2 Text
@@ -197,25 +187,6 @@ lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
 b INIT_STAGE_TEXT
 
-INIT_1v3_PLAYER_TEXT:
-# Initialize Team 1 Text
-addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
-addi r4, REG_TEXT_PROPERTIES, TPO_P1_STRING
-addi r5, REG_MSRB_ADDR, MSRB_LOCAL_NAME
-li r6, 0
-lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
-bl INIT_PLAYER_TEXT
-
-addi r3, REG_MSRB_ADDR, MSRB_REMOTE_PLAYER_INDEX
-bl FN_GET_PLAYER_TEAM
-bl FN_GET_TEAM_PLAYERS
-
-# Initialize Team 2 Text
-addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
-addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_2_STRING
-lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
-bl INIT_PLAYER_TEXT
-b INIT_STAGE_TEXT
 
 
 INIT_STAGE_TEXT:
@@ -349,7 +320,7 @@ lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
 
 # if no more players exit
-cmpwi REG_PLAYERS_COUNT, 0
+cmpwi REG_PLAYERS_COUNT, 1
 beq INIT_PLAYER_TEXT_EXIT
 
 # Init team player 1 name text
@@ -371,7 +342,7 @@ lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 branchl r12, Text_UpdateSubtextSize
 
 # if no more players exit
-cmpwi REG_PLAYERS_COUNT, 1
+cmpwi REG_PLAYERS_COUNT, 2
 beq INIT_PLAYER_TEXT_EXIT
 
 # Init team player name text
@@ -398,116 +369,73 @@ INIT_PLAYER_TEXT_EXIT:
 restore
 blr
 
-# returns match mode depending on number of players
-# return r3: 0=1vs1, 1=2vs2, 2=3vs1, 3=1vs3
-FN_GET_MATCH_MODE:
+
+# input r3: word with player ports and player counts
+# returns Names on r5,r7,r8 of all players and player count
+# r5 - Player Name String
+# r6 - Team Players count
+# r7 - Team Player 1 Name String
+# r8 - Team Player 2 Name String
+FN_GET_TEAM_PLAYERS: # at 0x80199584
 backup
-# Get match state info
-li r3, 0
-branchl r12, FN_LoadMatchState
-mr REG_MSRB_ADDR, r3
-
-lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
-# 0 = no teams, 1 = teams
-
-FN_GET_MATCH_MODE_EXIT:
-restore
-blr
-
-# input r3 = player index
-# returns player's team id on r3
-FN_GET_PLAYER_TEAM:
-backup
-mr REG_PLAYER_INDEX, r3
-# Get match state info
-li r3, 0
-branchl r12, FN_LoadMatchState
-mr REG_MSRB_ADDR, r3
+ # stack pointer is free at
+ # 0x8
+ # 0xC
+ # 0x10
+ # 0x14
+ # 0x18
 
 
-li r4, MSRB_GAME_INFO_BLOCK + 0x69
-mulli r3, REG_PLAYER_INDEX, 0x24
-add r4, r4, r3
-add r4, r4, REG_MSRB_ADDR
-lbz r3, 0x0(r4) # team id
+#0x03020103
+# 03 Local Player Port
+# 02 Team Player 1 Port
+# 01 Team Player 2 Port
+# 03 Count
 
-# logf LOG_LEVEL_NOTICE, "FN_GET_PLAYER_TEAM ID: %d", "mr r5, 3"
-# lbz r4, MSRB_GAME_INFO_BLOCK + 0x69 + 0x24*i(REG_MSRB_ADDR)
+li r5, 0x8 # bits to shift
+li r6, 0xFF # AND anchor
 
-FN_GET_PLAYER_TEAM_EXIT:
-restore
-blr
+#0x03020103
+# get player count
+and. REG_PLAYERS_COUNT, r3, r6
+srw r3, r3, r5 #0x030201
 
-# input r3: Team ID
-# returns Names on r5,r7,r8 of all players
-# returns player count on r6
-FN_GET_TEAM_PLAYERS:
-backup
-mr REG_TEAM_ID, r3
+# TODO: loop through this and store on SP, then take them out
 
-# logf LOG_LEVEL_NOTICE, "FN_GET_TEAM_PLAYERS REG_TEAM_ID: %d", "mr r5, 3"
+# get P3 Name
+and. r4, r3, r6 # port number
+mulli r4, r4, 31 # multiply to get proper offset
+addi r4, r4, MSRB_P1_NAME # starting offset
+add REG_PLAYER_3_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
+srw r3, r3, r5 # #0x0302
 
-# Get match state info
-li r3, 0
-branchl r12, FN_LoadMatchState
-mr REG_MSRB_ADDR, r3
 
-li REG_PLAYER_1_NAME_STRING, 0
-li REG_PLAYER_2_NAME_STRING, 0
-li REG_PLAYER_3_NAME_STRING, 0
+# get P3 Name
+and. r4, r3, r6 # port number
+mulli r4, r4, 31 # multiply to get proper offset
+addi r4, r4, MSRB_P1_NAME # starting offset
+add REG_PLAYER_3_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
+srw r3, r3, r5 # #0x0302
 
-li REG_PLAYERS_COUNT, 0
-li REG_PLAYER_INDEX, 0
 
-FN_GET_TEAM_PLAYERS_LOOP_START:
-li r4, MSRB_GAME_INFO_BLOCK + 0x69
-mulli r3, REG_PLAYER_INDEX, 0x24
-add r4, r4, r3
-add r4, r4, REG_MSRB_ADDR
-lbz r3, 0x0(r4) # team id
+# get P2 Name
+and. r4, r3, r6 # port number
+mulli r4, r4, 31 # multiply to get proper offset
+addi r4, r4, MSRB_P1_NAME # starting offset
+add REG_PLAYER_2_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
+srw r3, r3, r5 # #0x03
 
-# if teams do not match continue
-cmpw r3, REG_TEAM_ID
-bne FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
+#0x03
+# get P1 Name
+and. r4, r3, r6 # port number
+mulli r4, r4, 31 # multiply to get proper offset
+addi r4, r4, MSRB_P1_NAME # starting offset
+add REG_PLAYER_1_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
 
-addi REG_PLAYERS_COUNT, REG_PLAYERS_COUNT, 1
-
-# Calculate offset where get player name from
-li r3, MSRB_P1_NAME
-li r4, 31 # player string size
-mullw r4, r4, REG_PLAYER_INDEX
-add r3, r4, r3 # MSRB_P1_NAME + (REG_PLAYER_INDEX*31)
-
-# check which player name is not yet assigned
-cmpwi REG_PLAYER_1_NAME_STRING, 0
-beq FN_GET_TEAM_PLAYERS_SET_PLAYER_1_NAME
-cmpwi REG_PLAYER_2_NAME_STRING, 0
-beq FN_GET_TEAM_PLAYERS_SET_PLAYER_2_NAME
-cmpwi REG_PLAYER_3_NAME_STRING, 0
-beq FN_GET_TEAM_PLAYERS_SET_PLAYER_3_NAME
-
-FN_GET_TEAM_PLAYERS_SET_PLAYER_1_NAME:
-add REG_PLAYER_1_NAME_STRING, REG_MSRB_ADDR, r3
-b FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
-FN_GET_TEAM_PLAYERS_SET_PLAYER_2_NAME:
-add REG_PLAYER_2_NAME_STRING, REG_MSRB_ADDR, r3
-b FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
-FN_GET_TEAM_PLAYERS_SET_PLAYER_3_NAME:
-add REG_PLAYER_3_NAME_STRING, REG_MSRB_ADDR, r3
-b FN_GET_TEAM_PLAYERS_LOOP_CONTINUE
-
-FN_GET_TEAM_PLAYERS_LOOP_CONTINUE:
-addi REG_PLAYER_INDEX, REG_PLAYER_INDEX, 1
-cmpwi REG_PLAYER_INDEX, 4
-blt FN_GET_TEAM_PLAYERS_LOOP_START
-FN_GET_TEAM_PLAYERS_LOOP_END:
-
-# returns Names on r5,r7,r8 of all players
-# returns player count on r6
 mr r5, REG_PLAYER_1_NAME_STRING
+mr r6, REG_PLAYERS_COUNT
 mr r7, REG_PLAYER_2_NAME_STRING
 mr r8, REG_PLAYER_3_NAME_STRING
-mr r6, REG_PLAYERS_COUNT
 
 FN_GET_TEAM_PLAYERS_EXIT:
 restore
