@@ -279,6 +279,11 @@ mr REG_PLAYERS_COUNT, r6
 mr REG_PLAYER_2_NAME_STRING, r7
 mr REG_PLAYER_3_NAME_STRING, r8
 
+# store names at SP
+stw REG_PLAYER_1_NAME_STRING, 0x8+(0x4*0)(sp)
+stw REG_PLAYER_2_NAME_STRING, 0x8+(0x4*1)(sp)
+stw REG_PLAYER_3_NAME_STRING, 0x8+(0x4*2)(sp)
+
 # load initial y position
 lfs REG_POS_Y_START, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
 lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
@@ -301,48 +306,18 @@ fmr f3, REG_POS_X_START
 fmr f4, REG_POS_Y_START
 branchl r12, FG_CreateSubtext
 
-lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
-fadds REG_POS_Y_START, REG_POS_Y_START, f4
+li r14, 0x8 # first empty address on Stack offset
+li r15, 0 # Loop 3 times
+INIT_PLAYER_NAME_LOOP_START:
+add r3, r14, sp # move to sp offset where to get Player Name From
+lwz r7, 0x0(r3)
 
-# Init player  name text
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
-li r5, 0
-mr r7, REG_PLAYER_1_NAME_STRING
-lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-fmr f3, REG_POS_X_START
-fmr f4, REG_POS_Y_START
-branchl r12, FG_CreateSubtext
-
-# if no more players exit
-cmpwi REG_PLAYERS_COUNT, 1
-ble INIT_PLAYER_TEXT_EXIT
-
-# Init team player 1 name text
-lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
-fadds REG_POS_X_START, REG_POS_X_START, f3
-
-lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
-fadds REG_POS_Y_START, REG_POS_Y_START, f4
-
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
-li r5, 0
-mr r7, REG_PLAYER_2_NAME_STRING
-lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-fmr f3, REG_POS_X_START
-fmr f4, REG_POS_Y_START
-branchl r12, FG_CreateSubtext
-
-# if no more players exit
-cmpwi REG_PLAYERS_COUNT, 2
-beq INIT_PLAYER_TEXT_EXIT
-
+cmpwi r15, 0
+beq SKIP_POS_X_OFFSET # skip X offset if first player name
 # Init team player 2 name text
 lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
 fadds REG_POS_X_START, REG_POS_X_START, f3
+SKIP_POS_X_OFFSET:
 
 lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
 fadds REG_POS_Y_START, REG_POS_Y_START, f4
@@ -350,12 +325,17 @@ fadds REG_POS_Y_START, REG_POS_Y_START, f4
 mr r3, REG_TEXT_STRUCT
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 li r5, 0
-mr r7, REG_PLAYER_3_NAME_STRING
 lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 fmr f3, REG_POS_X_START
 fmr f4, REG_POS_Y_START
 branchl r12, FG_CreateSubtext
+
+addi r14, r14, 0x4 # move to next player name address at SP offset
+addi r15, r15, 0x1
+cmpw r15, REG_PLAYERS_COUNT
+blt INIT_PLAYER_NAME_LOOP_START
+
 
 INIT_PLAYER_TEXT_EXIT:
 restore
@@ -370,24 +350,12 @@ blr
 # r8 - Team Player 2 Name String
 FN_GET_TEAM_PLAYERS: # at 0x80199584
 backup
- # stack pointer is free at
- # 0x8
- # 0xC
- # 0x10
- # 0x14
- # 0x18
-
-
-#0x03020103
-# 03 Local Player Port
-# 02 Team Player 1 Port
-# 01 Team Player 2 Port
-# 03 Count
+# stack pointer is free at # 0x8 # 0xC # 0x10 # 0x14 # 0x18
 
 li r5, 0x8 # bits to shift
 li r6, 0xFF # AND anchor
 
-#0x03020103
+#i.e of what's happening: 0x03020103
 # get player count
 and. REG_PLAYERS_COUNT, r3, r6
 srw r3, r3, r5 #0x030201
@@ -409,7 +377,6 @@ addi r7, r7, 0x4 # move to next empty space
 addi r9, r9, 0x1
 cmpwi r9, 3
 blt PNAME_LOOP_START
-
 
 mr r6, REG_PLAYERS_COUNT
 
