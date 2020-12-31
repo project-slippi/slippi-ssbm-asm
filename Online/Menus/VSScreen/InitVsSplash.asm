@@ -400,42 +400,31 @@ li r6, 0xFF # AND anchor
 and. REG_PLAYERS_COUNT, r3, r6
 srw r3, r3, r5 #0x030201
 
-# TODO: loop through this and store on SP, then take them out
-
-# get P3 Name
+li r7, 0x8 # first empty address on Stack offset
+li r9, 0 # Loop 3 times
+PNAME_LOOP_START:
 and. r4, r3, r6 # port number
 mulli r4, r4, 31 # multiply to get proper offset
 addi r4, r4, MSRB_P1_NAME # starting offset
-add REG_PLAYER_3_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
-srw r3, r3, r5 # #0x0302
+add r4, r4, REG_MSRB_ADDR # offset to actual msrb address
+
+add r8, r7, sp # move to sp offset where to store PN NAME
+stw r4, 0x0(r8)
+
+srw r3, r3, r5 # shift 1 byte to the right
+
+addi r7, r7, 0x4 # move to next empty space
+addi r9, r9, 0x1
+cmpwi r9, 3
+blt PNAME_LOOP_START
 
 
-# get P3 Name
-and. r4, r3, r6 # port number
-mulli r4, r4, 31 # multiply to get proper offset
-addi r4, r4, MSRB_P1_NAME # starting offset
-add REG_PLAYER_3_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
-srw r3, r3, r5 # #0x0302
-
-
-# get P2 Name
-and. r4, r3, r6 # port number
-mulli r4, r4, 31 # multiply to get proper offset
-addi r4, r4, MSRB_P1_NAME # starting offset
-add REG_PLAYER_2_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
-srw r3, r3, r5 # #0x03
-
-#0x03
-# get P1 Name
-and. r4, r3, r6 # port number
-mulli r4, r4, 31 # multiply to get proper offset
-addi r4, r4, MSRB_P1_NAME # starting offset
-add REG_PLAYER_1_NAME_STRING, r4, REG_MSRB_ADDR # use actual msrb address
-
-mr r5, REG_PLAYER_1_NAME_STRING
 mr r6, REG_PLAYERS_COUNT
-mr r7, REG_PLAYER_2_NAME_STRING
-mr r8, REG_PLAYER_3_NAME_STRING
+
+# Restore address values stored in SP offsets in reverse order
+lwz r5, 0x8+(0x4*2)(sp)
+lwz r7, 0x8+(0x4*1)(sp)
+lwz r8, 0x8+(0x4*0)(sp)
 
 FN_GET_TEAM_PLAYERS_EXIT:
 restore
