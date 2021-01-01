@@ -610,9 +610,15 @@ blrl
 .long 0xFF2121EE
 .long 0x0000EE00
 SplashScenePrep:
-.set REG_VS_SSS_DATA,31
+.set REG_VS_SSS_DATA, 31
+.set REG_MSRB_ADDR, 30
 
 backup
+
+# Load match state
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
 
 lwz	REG_VS_SSS_DATA, -0x77C0 (r13)
 addi	REG_VS_SSS_DATA, REG_VS_SSS_DATA, 1424 + 0x8   # adding 0x8 to skip past some unk stuff
@@ -639,23 +645,113 @@ cmpwi r3, 0 # 0 = no teams
 beq SKIP_TEAMS_SETUP
 
 TEAMS_SETUP:
-# make it 2vs2
+.set REG_COUNT, 29
+.set REG_TEAM_PLAYER_COUNT, 28
+.set REG_TEAM_1_ID, 27
+
+# load local player's team id for team 1
+lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+mulli r3, r3, 0x24
+addi r3, r3, MSRB_GAME_INFO_BLOCK+0x69
+lbzx REG_TEAM_1_ID, REG_MSRB_ADDR, r3
+
+# make it 2vs2 by default
 li r3, 0x2
 stb r3,0x2(r4)
-li r3, 0x2
-stb r3,0x3(r4)
-li r3, 0x2
-stb r3,0x4(r4)
 
-lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
-stb r3,0x9(r4)
-lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load p3 color id
-stb r3,0xF(r4)
-
-lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
+# Initialize bytes for extra players on each team in case of 1v3
+# The 1v3 case requires a char id/color to be set for 3 players on each team,
+# even if some are unused.
+li r3, 1
 stb r3,0x6(r4)
-lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load p4 color id
+stb r3,0x7(r4)
+stb r3,0x9(r4)
+stb r3,0xA(r4)
 stb r3,0xC(r4)
+stb r3,0xD(r4)
+stb r3,0xF(r4)
+stb r3,0x10(r4)
+
+# Set up left side team
+li REG_COUNT, 0
+li REG_TEAM_PLAYER_COUNT, 0
+
+TEAMS_SETUP_LEFT_SIDE_LOOP:
+# get team id
+mulli r3, REG_COUNT, 0x24
+addi r3, r3, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3
+
+# If this player is on team 1, add their character to the left side display
+cmpw r3, REG_TEAM_1_ID
+bne CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP
+
+# Load char id
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x60
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0x5
+stbx r5, r6, r4
+
+# Load char color
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x63
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0xB
+stbx r5, r6, r4
+
+addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+
+CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP:
+addi REG_COUNT, REG_COUNT, 1
+cmpwi REG_COUNT, 4
+blt TEAMS_SETUP_LEFT_SIDE_LOOP
+
+# Set the player count for team 1
+stb REG_TEAM_PLAYER_COUNT, 0x3(r4)
+
+# Set up right side team
+li REG_COUNT, 0
+li REG_TEAM_PLAYER_COUNT, 0
+
+TEAMS_SETUP_RIGHT_SIDE_LOOP:
+# get team id
+mulli r3, REG_COUNT, 0x24
+addi r3, r3, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3
+
+# If this player isn't on team 1, add their character to the right side display
+cmpw r3, REG_TEAM_1_ID
+beq CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP
+
+# Load char id
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x60
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0x8
+stbx r5, r6, r4
+
+# Load char color
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x63
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0xE
+stbx r5, r6, r4
+
+addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+
+CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP:
+addi REG_COUNT, REG_COUNT, 1
+cmpwi REG_COUNT, 4
+blt TEAMS_SETUP_RIGHT_SIDE_LOOP
+
+# Set the player count for team 2
+stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
+
 SKIP_TEAMS_SETUP:
 
 # Preload these fighters
