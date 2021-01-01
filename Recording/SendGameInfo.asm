@@ -40,7 +40,7 @@ backup
   branchl r12, Zero_AreaLength
 
 #Create TX buffer
-  li  r3,FULL_FRAME_DATA_BUF_LENGTH
+  load r3, FULL_FRAME_DATA_BUF_LENGTH
   branchl r12,HSD_MemAlloc
   mr  REG_Buffer,r3
   stw REG_Buffer,RDB_TXB_ADDRESS(REG_RDB)

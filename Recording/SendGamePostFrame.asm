@@ -158,7 +158,7 @@ backup
   bl JOBJ_ExtractBones
 
   # Store bone count
-  stw r3, 0x4D(REG_Buffer)
+  sth r3, 0x4D(REG_Buffer)
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
@@ -190,11 +190,11 @@ mr REG_Count,r4
 mr REG_BufAddr,r5
 
 # output all jobj values
-lwz r3, 0x20(REG_JObj)
+lwz r3, 0x44(REG_JObj)
 stw r3, 0x0(REG_BufAddr) # RX
-lwz r3, 0x24(REG_JObj)
+lwz r3, 0x54(REG_JObj)
 stw r3, 0x4(REG_BufAddr) # RY
-lwz r3, 0x28(REG_JObj)
+lwz r3, 0x64(REG_JObj)
 stw r3, 0x8(REG_BufAddr) # RZ
 lwz r3, 0x2C(REG_JObj)
 stw r3, 0xC(REG_BufAddr) # SX
