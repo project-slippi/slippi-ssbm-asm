@@ -49,8 +49,10 @@ blrl
 
 .set TPO_FLOAT_0, TPO_BOUNDS_ICON_RIGHT + 4
 .float 0.0
+.set TPO_FLOAT_1, TPO_FLOAT_0 + 4
+.float 1.0
 
-.set TPO_ICON_POS_X, TPO_FLOAT_0 + 4
+.set TPO_ICON_POS_X, TPO_FLOAT_1 + 4
 .float -19.5
 .set TPO_ICON_POS_Y, TPO_ICON_POS_X + 4
 .float -3
@@ -75,6 +77,8 @@ bl PROPERTIES
 mflr REG_PROPERTIES
 
 lfs REG_F_0, TPO_FLOAT_0(REG_PROPERTIES)
+lfs REG_F_1, TPO_FLOAT_1(REG_PROPERTIES)
+
 
 # Get Memory Buffer for Chat Window Data Table
 li r3, CSSTIDT_SIZE # Teams Icon Buffer Size
@@ -221,6 +225,52 @@ lwz r3, 0x08(r3) # offset to Dobj's mobj
 fmr f1, REG_F_0 # float 0.0
 branchl r12, 0x80363C2C # HSD_MObjSetAlpha(mobj, float alpha)
 
+# Config Title
+
+# Get Title at top left corner
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x24 # index to Title
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+# First DObj is title in the center of CSS so let's swap them
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, 0x80371BEC # HSD_JObjGetDObj(HSD_JObj* jobj)
+lwz r4, 0x4(r3) # get sibling
+# dobj = jobj->dobj->next
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+stw r4, 0x18(r3) # set address of second dobj
+#jobj->u.dobj = dobj
+
+li r3, 0
+stw r3, 0x4(r4)
+# dobj->next = NULL
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_RemoveAnimAll
+
+# Setup VS Mode Animation for this object
+# find child mat animation joint first
+lwz	r3, -0x49C8 (r13)
+lwz	r3, 0x0038 (r3)
+lwz r3, 0x00(r3) # move to it's first child
+
+# Find 4th child
+li r4, 0
+MV_TO_TITLE_ANIM_SIBLING:
+lwz r3, 0x04(r3) # move to it's sibling
+addi r4, r4, 1
+cmpwi r4, 3
+blt MV_TO_TITLE_ANIM_SIBLING
+# Now get first child which is the title
+lwz r5, 0x00(r3) # move to it's first child
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+li r4, 0
+li r6, 0
+branchl r12, JObj_AddAnimAll
 
 restore
 b EXIT
@@ -250,6 +300,20 @@ bne FN_TEAM_BUTTON_THINK_EXIT # No changes when locked-in
 # Get text properties address
 bl PROPERTIES
 mflr REG_PROPERTIES
+
+# Animate Top Left Text
+# Get Title at top left corner
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x24 # index to Title
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+lfs f1, TPO_FLOAT_1(REG_PROPERTIES)
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
 
 li REG_IS_HOVERING, 0 # Initialize hover state as false
 loadwz r4, 0x804A0BC0 # This gets ptr to cursor position on CSS
