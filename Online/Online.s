@@ -51,6 +51,17 @@ lwz \reg, -0x62A0(\reg)
 .set ONLINE_MODE_RANKED, 0
 .set ONLINE_MODE_UNRANKED, 1
 .set ONLINE_MODE_DIRECT, 2
+.set ONLINE_MODE_TEAMS, 3
+
+.set OPTION_RANKED_IDX, 0
+.set OPTION_UNRANKED_IDX, 1
+.set OPTION_DIRECT_IDX, 2
+.set OPTION_TEAMS_IDX, 3
+.set OPTION_LOGIN_IDX, 4
+.set OPTION_LOGOUT_IDX, 5
+.set OPTION_UPDATE_IDX, 6
+
+.set ONLINE_SUBMENU_OPTION_COUNT, 7
 
 ################################################################################
 # Online Scenes
