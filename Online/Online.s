@@ -51,6 +51,7 @@ lwz \reg, -0x62A0(\reg)
 .set ONLINE_MODE_RANKED, 0
 .set ONLINE_MODE_UNRANKED, 1
 .set ONLINE_MODE_DIRECT, 2
+.set ONLINE_MODE_TEAMS, 3
 
 ################################################################################
 # Online Scenes

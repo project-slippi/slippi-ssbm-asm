@@ -301,6 +301,8 @@ cmpwi r0, 4 # Check if Log-out
 beq FN_OnlineSubmenuThink_HANDLE_LOGOUT
 cmpwi r0, 5 # Check if update
 beq FN_OnlineSubmenuThink_HANDLE_UPDATE
+cmpwi r0, 6 # Check if Teams
+beq FN_OnlineSubmenuThink_HANDLE_TEAMS
 b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
 ################################################################################
@@ -317,6 +319,12 @@ b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_DIRECT:
 li r3, ONLINE_MODE_DIRECT
+# TODO: Comment this line to stop debugging Teams mode when the option is added
+li r3, ONLINE_MODE_TEAMS 
+b FN_OnlineSubmenuThink_GO_TO_CSS
+
+FN_OnlineSubmenuThink_HANDLE_TEAMS:
+li r3, ONLINE_MODE_TEAMS
 b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_LOGIN:

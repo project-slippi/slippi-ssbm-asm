@@ -16,6 +16,10 @@ getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_CSS
 bne EXIT # If not online CSS, continue as normal
 
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+bne EXIT # exit if not on TEAMS mode
+
 # Ensure we are not locked in
 lwz r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)

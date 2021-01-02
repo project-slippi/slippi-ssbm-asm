@@ -25,6 +25,11 @@
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_CSS
 bne EXIT # If not online CSS, continue as normal
+
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+bne EXIT # exit if not on TEAMS mode
+
 b INIT_BUTTON
 
 ################################################################################
