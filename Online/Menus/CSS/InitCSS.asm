@@ -42,6 +42,7 @@
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
 .set MAX_CHAT_MESSAGE_LINES, 14
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
+.set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -66,9 +67,13 @@ blrl
 .float 0.0
 .set TPO_FLOAT_1, TPO_FLOAT_0 + 4
 .float 1.0
+.set TPO_FLOAT_15, TPO_FLOAT_1 + 4 # Anim Frame for MELEE
+.float 15.0
+.set TPO_FLOAT_16, TPO_FLOAT_15 + 4 # Anim Frame for Team Match
+.float 16.0
 
 # Chat Message Propiertes
-.set TPO_CHATMSG_X, TPO_FLOAT_1 + 4
+.set TPO_CHATMSG_X, TPO_FLOAT_16 + 4
 .float -330
 .set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
 .float -285
@@ -560,6 +565,9 @@ lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 bgt UPDATE_HEADER_ERROR
 
+# Set MELEE Texture by default
+lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
@@ -585,6 +593,7 @@ addi r6, REG_TEXT_PROPERTIES, TPO_STRING_RANKED
 b UPDATE_HEADER
 
 UPDATE_HEADER_TEAMS:
+lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES) # set Team MATCH Texture
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_TEAMS
 b UPDATE_HEADER
 
@@ -596,6 +605,18 @@ UPDATE_HEADER:
 li r4, STIDX_HEADER
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
 bl FN_UPDATE_TEXT
+
+# Animate Top Left Text
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x24 # # Get Title at top left corner
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
 
 ################################################################################
 # Manage Chat Messages: If there's a new message, then initialize a
