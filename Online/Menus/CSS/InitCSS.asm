@@ -252,6 +252,10 @@ backup
 bl TEXT_PROPERTIES
 mflr REG_TEXT_PROPERTIES
 
+# Reset Portrait BG Colors
+load r3, 0x804d50d8
+load r4, 0x02000801
+stw r4, 0x0(r3)
 
 ################################################################################
 # Initialize user text
