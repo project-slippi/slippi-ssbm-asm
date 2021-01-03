@@ -1,6 +1,6 @@
 ################################################################################
 # Address: 0x80260b90 # CSS_CursorHighlightUpdateCSPInfo... Before invoking
-# CSS_UpdateCostumeTexture
+# CSS_CursorHighlightUpdateCSPInfo
 ################################################################################
 
 .include "Common/Common.s"
