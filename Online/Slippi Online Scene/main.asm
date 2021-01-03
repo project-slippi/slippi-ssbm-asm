@@ -668,6 +668,7 @@ stb r3,0x2(r4)
 # The 1v3 case requires a char id/color to be set for 3 players on each team,
 # even if some are unused.
 li r3, 1
+stb r3,-0x5(r4) # make announcer say "teams" with value 1
 stb r3,0x6(r4)
 stb r3,0x7(r4)
 stb r3,0x9(r4)
