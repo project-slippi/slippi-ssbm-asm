@@ -153,7 +153,7 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beq HANDLE_IDLE_DIRECT
+bge HANDLE_IDLE_DIRECT
 b 0x0
 
 HANDLE_IDLE_UNRANKED:
@@ -214,8 +214,8 @@ bne HANDLE_CONNECTED_ADVANCE
 
 # Check if direct mode && loser && already chose stage
 lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
-bne CHECK_SHOULD_START_MATCH
+cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct/teams mode
+blt CHECK_SHOULD_START_MATCH
 lbz r3, OFST_R13_ISWINNER (r13)
 cmpwi r3,ISWINNER_LOST              # Check if this is the loser
 bne CHECK_SHOULD_START_MATCH
@@ -243,7 +243,7 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_CONNECTED_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beq HANDLE_CONNECTED_DIRECT
+bge HANDLE_CONNECTED_DIRECT
 b 0x0                           # stall if neither
 
 # Branch to this mode's behavior

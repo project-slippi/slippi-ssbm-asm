@@ -797,7 +797,9 @@ branchl r12, JObj_AnimAll
 
 FN_LogoutDialogThink_CheckInputs:
 # Check input and switch option if left or right
-li r3, 0
+li r14, 0
+FN_LogoutDialogThink_CheckInputs_AfterPort:
+mr r3, r14
 branchl r12, 0x801A36A0 # Inputs_GetPlayerInstantInputs
 
 # Exit function if no input # 0x8019796c
@@ -809,6 +811,10 @@ cmpwi r3, PAD_A
 beq FN_LogoutDialogThink_DoLogout
 cmpwi r3, PAD_B
 beq FN_LogoutDialogThink_CloseDialog
+
+addi r14, r14, 1
+cmpwi r14, 4 # check all 4 ports
+blt FN_LogoutDialogThink_CheckInputs_AfterPort
 b FN_LogoutDialogThink_Exit
 
 
