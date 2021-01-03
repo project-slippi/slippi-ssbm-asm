@@ -29,10 +29,6 @@ bne EXIT # No changes when locked-in
 
 lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 
-# no changes if team is not set
-cmpwi REG_TEAM_IDX, 0
-beq EXIT
-
 cmpwi REG_TEAM_IDX, 3
 beq SKIP_COLOR_MAP
 
