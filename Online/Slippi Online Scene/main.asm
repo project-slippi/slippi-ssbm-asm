@@ -640,6 +640,11 @@ stb r3,0x8(r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3,0xE(r4)
 
+# Make sure to clear out any special stages setup
+li r3, 0
+stb r3,-0x1(r4)
+stb r3,-0x5(r4)
+
 lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
 cmpwi r3, 0 # 0 = no teams
 beq SKIP_TEAMS_SETUP
