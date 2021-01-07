@@ -397,12 +397,22 @@ stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 
+# Send a blank team ID if this isn't teams mode.
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+beq SEND_TEAM_ID
+li r3, 0
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+b SKIP_SEND_TEAM_ID
+
+SEND_TEAM_ID:
 # Calc/Set Team ID
 loadwz r3, CSSDT_BUF_ADDR
 lbz r3, CSSDT_TEAM_IDX(r3)
 subi r3, r3, 1
 stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
 
+SKIP_SEND_TEAM_ID:
 # Handle stage
 cmpwi REG_SB, -2
 beq FN_TX_LOCK_IN_STAGE_RAND
