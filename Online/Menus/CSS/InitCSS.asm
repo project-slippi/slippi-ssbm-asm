@@ -563,14 +563,36 @@ cmpwi r5, 18
 blt WRITE_OPP_CODE_LOOP_START
 
 ################################################################################
+# Manage CSS Jobj Title Frame
+################################################################################
+
+# Set MELEE Texture frame by default
+lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_TEAMS_TITLE
+lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES) # set Team MATCH Texture
+
+SKIP_TEAMS_TITLE:
+# Animate Top Left Text
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x24 # # Get Title at top left corner
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
+
+################################################################################
 # Manage header text
 ################################################################################
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 bgt UPDATE_HEADER_ERROR
 
-# Set MELEE Texture by default
-lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
 # preset default text variables
 li r4, STIDX_HEADER # set substring header index
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
@@ -600,7 +622,6 @@ addi r6, REG_TEXT_PROPERTIES, TPO_STRING_RANKED
 b UPDATE_HEADER
 
 UPDATE_HEADER_TEAMS:
-lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES) # set Team MATCH Texture
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_TEAMS
 b UPDATE_HEADER
 
@@ -610,18 +631,6 @@ addi r5, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
 
 UPDATE_HEADER:
 bl FN_UPDATE_TEXT
-
-# Animate Top Left Text
-lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
-addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
-li r5, 0x24 # # Get Title at top left corner
-li r6, -1
-branchl r12, JObj_GetJObjChild
-
-lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
-branchl r12, JObj_ReqAnimAll# (jobj, frames)
-lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
-branchl r12, JObj_AnimAll
 
 ################################################################################
 # Manage Chat Messages: If there's a new message, then initialize a
