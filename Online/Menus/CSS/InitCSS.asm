@@ -58,22 +58,17 @@ blrl
 # Base Properties
 .set TPO_BASE_Z, 0
 .float 0
-.set TPO_CHATMSG_Z, TPO_BASE_Z + 4
-.float 0
-.set TPO_BASE_CANVAS_SCALING, TPO_CHATMSG_Z + 4
+.set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
 .float 0.1
 
-.set TPO_FLOAT_0, TPO_BASE_CANVAS_SCALING + 4
-.float 0.0
-.set TPO_FLOAT_1, TPO_FLOAT_0 + 4
-.float 1.0
-.set TPO_FLOAT_15, TPO_FLOAT_1 + 4 # Anim Frame for MELEE
-.float 15.0
-.set TPO_FLOAT_16, TPO_FLOAT_15 + 4 # Anim Frame for Team Match
-.float 16.0
+# Uncomment and use these instead of rtoc offsets if TOP LEFT Title breaks
+#.set TPO_FLOAT_15, TPO_BASE_CANVAS_SCALING + 4 # Anim Frame for MELEE
+#.float 15.0
+#.set TPO_FLOAT_16, TPO_FLOAT_15 + 4 # Anim Frame for Team Match
+#.float 16.0
 
 # Chat Message Propiertes
-.set TPO_CHATMSG_X, TPO_FLOAT_16 + 4
+.set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
 .float -330
 .set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
 .float -285
@@ -567,11 +562,12 @@ blt WRITE_OPP_CODE_LOOP_START
 ################################################################################
 
 # Set MELEE Texture frame by default
-lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+lfs f1, -0x50FC(rtoc) # 15.0f used to be -> # lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
 bne SKIP_TEAMS_TITLE
-lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES) # set Team MATCH Texture
+# set "TEAM MATCH" Texture Frame
+lfs f1, -0x52BC(rtoc) # 16.0f used to be -> #lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES)
 
 SKIP_TEAMS_TITLE:
 # Animate Top Left Text
@@ -1188,7 +1184,7 @@ li r4, 0x0
 stb r4, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # Store Base Z Offset
-lfs f1, TPO_CHATMSG_Z(REG_TEXT_PROPERTIES) #Z offset
+lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) #Z offset
 stfs f1, 0x8(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # Scale Canvas Down
