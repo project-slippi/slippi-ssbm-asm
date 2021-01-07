@@ -645,7 +645,7 @@ li r3, 0
 stb r3,-0x1(r4)
 stb r3,-0x5(r4)
 
-lbz r3, MSRB_GAME_INFO_BLOCK + 0xD(REG_MSRB_ADDR)
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
 cmpwi r3, 0 # 0 = no teams
 beq SKIP_TEAMS_SETUP
 
@@ -770,6 +770,11 @@ lbz r3, 0x60 + 0x24(REG_VS_SSS_DATA) # load p2 char id
 stw r3, 0x1C (r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3, 0x20 (r4)
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
+cmpwi r3, 0 # 0 = no teams
+beq SKIP_TEAMS_PRELOAD
+
 lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
 stw r3, 0x24 (r4)
 lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load char color
@@ -778,6 +783,8 @@ lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
 stw r3, 0x2C (r4)
 lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load char color
 stb r3, 0x30 (r4)
+
+SKIP_TEAMS_PRELOAD:
 # Preload the stage
 lhz r3, 0xE (REG_VS_SSS_DATA)
 stw r3, 0xC (r4)
