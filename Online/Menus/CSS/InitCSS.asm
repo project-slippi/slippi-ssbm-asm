@@ -571,6 +571,9 @@ bgt UPDATE_HEADER_ERROR
 
 # Set MELEE Texture by default
 lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+# preset default text variables
+li r4, STIDX_HEADER # set substring header index
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
 
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -602,12 +605,10 @@ addi r6, REG_TEXT_PROPERTIES, TPO_STRING_TEAMS
 b UPDATE_HEADER
 
 UPDATE_HEADER_ERROR:
-addi r6, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
-b UPDATE_HEADER
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
+# b UPDATE_HEADER # commented out just to save gecko space no need to jump since it's the next instruction
 
 UPDATE_HEADER:
-li r4, STIDX_HEADER
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
 bl FN_UPDATE_TEXT
 
 # Animate Top Left Text
