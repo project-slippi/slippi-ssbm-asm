@@ -1,6 +1,6 @@
 ################################################################################
-# Address: 0x80260c28 # CSS_BigFunc... Before invoking
-# CSS_CursorHighlightUpdateCSPInfo when hovering over a char
+# Address: 0x80260b90 # CSS_CursorHighlightUpdateCSPInfo... Before invoking
+# CSS_CursorHighlightUpdateCSPInfo
 ################################################################################
 
 .include "Common/Common.s"
@@ -25,8 +25,6 @@ lbz r4, OFST_R13_ONLINE_MODE(r13)
 cmpwi r4, ONLINE_MODE_TEAMS
 bne EXIT # exit if not on TEAMS mode
 
-lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
-
 lwz r4, -0x49F0(r13) # base address where css selections are stored
 lbz r3, -0x49B0(r13) # player index
 mulli r3, r3, 0x24
@@ -35,29 +33,31 @@ add REG_PORT_SELECTIONS_ADDR, r4, r3
 lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
 mr REG_INTERNAL_CHAR_ID, r3
 
-# Get Char Id
-load r3, 0x803f0a48
-mr r4, r3
-addi r5, r3, 0x03C2
-lbzu	r3, 0x0(r5)
-mulli	r3, r3, 28
-add	r4, r4, r3
-lbz	r3, 0x00DD (r4) # char id
-mr REG_EXTERNAL_CHAR_ID, r3
+lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 
 mr r3, REG_TEAM_IDX
-mr r4, REG_EXTERNAL_CHAR_ID
+mr r4, REG_INTERNAL_CHAR_ID
 branchl r12, FN_GetTeamCostumeIndex
 mr REG_COSTUME_IDX, r3
 
 # Store costume index selection in game
 lwz	r5, -0x49F0 (r13) # P1 Players Selections
-stb	REG_COSTUME_IDX, 0x73 (r5)
+stb	REG_COSTUME_IDX, 0x73 (REG_PORT_SELECTIONS_ADDR)
 load r5, 0x803F0E09 # P1 Char Menu Data
 stb REG_COSTUME_IDX, 0x0(r5)
+lbz r3, 0x1(r5)
+stb r3, 0x2(r5)
+
+# Calculate Costume ID from costume Index
+mulli	r4, REG_COSTUME_IDX, 30
+add	r4, REG_INTERNAL_CHAR_ID, r4
+
+li r3, 0 # player index
+li	r5, 0
+branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
 
 b EXIT
 
 EXIT:
 restore
-stbu r20, 0x03C2(r24)
+li r0, 0

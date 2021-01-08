@@ -29,10 +29,6 @@ bne EXIT # No changes when locked-in
 lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 
 
-cmpwi REG_TEAM_IDX, 0
-beq EXIT
-
-
 SKIP_PORT_CALC:
 
 # if is green, leave as is, else substract 1

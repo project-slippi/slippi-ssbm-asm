@@ -42,6 +42,7 @@
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
 .set MAX_CHAT_MESSAGE_LINES, 14
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
+.set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -57,18 +58,17 @@ blrl
 # Base Properties
 .set TPO_BASE_Z, 0
 .float 0
-.set TPO_CHATMSG_Z, TPO_BASE_Z + 4
-.float 0
-.set TPO_BASE_CANVAS_SCALING, TPO_CHATMSG_Z + 4
+.set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
 .float 0.1
 
-.set TPO_FLOAT_0, TPO_BASE_CANVAS_SCALING + 4
-.float 0.0
-.set TPO_FLOAT_1, TPO_FLOAT_0 + 4
-.float 1.0
+# Uncomment and use these instead of rtoc offsets if TOP LEFT Title breaks
+#.set TPO_FLOAT_15, TPO_BASE_CANVAS_SCALING + 4 # Anim Frame for MELEE
+#.float 15.0
+#.set TPO_FLOAT_16, TPO_FLOAT_15 + 4 # Anim Frame for Team Match
+#.float 16.0
 
 # Chat Message Propiertes
-.set TPO_CHATMSG_X, TPO_FLOAT_1 + 4
+.set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
 .float -330
 .set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
 .float -285
@@ -247,6 +247,10 @@ backup
 bl TEXT_PROPERTIES
 mflr REG_TEXT_PROPERTIES
 
+# Reset Portrait BG Colors
+load r3, 0x804d50d8
+load r4, 0x02000801
+stw r4, 0x0(r3)
 
 ################################################################################
 # Initialize user text
@@ -554,11 +558,40 @@ cmpwi r5, 18
 blt WRITE_OPP_CODE_LOOP_START
 
 ################################################################################
+# Manage CSS Jobj Title Frame
+################################################################################
+
+# Set MELEE Texture frame by default
+lfs f1, -0x50FC(rtoc) # 15.0f used to be -> # lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_TEAMS_TITLE
+# set "TEAM MATCH" Texture Frame
+lfs f1, -0x52BC(rtoc) # 16.0f used to be -> #lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES)
+
+SKIP_TEAMS_TITLE:
+# Animate Top Left Text
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x24 # # Get Title at top left corner
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
+
+################################################################################
 # Manage header text
 ################################################################################
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 bgt UPDATE_HEADER_ERROR
+
+# preset default text variables
+li r4, STIDX_HEADER # set substring header index
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
 
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -589,12 +622,10 @@ addi r6, REG_TEXT_PROPERTIES, TPO_STRING_TEAMS
 b UPDATE_HEADER
 
 UPDATE_HEADER_ERROR:
-addi r6, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
-b UPDATE_HEADER
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
+# b UPDATE_HEADER # commented out just to save gecko space no need to jump since it's the next instruction
 
 UPDATE_HEADER:
-li r4, STIDX_HEADER
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
 bl FN_UPDATE_TEXT
 
 ################################################################################
@@ -1153,7 +1184,7 @@ li r4, 0x0
 stb r4, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # Store Base Z Offset
-lfs f1, TPO_CHATMSG_Z(REG_TEXT_PROPERTIES) #Z offset
+lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) #Z offset
 stfs f1, 0x8(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # Scale Canvas Down
