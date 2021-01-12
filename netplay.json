@@ -236,7 +236,8 @@
         "Fizzi",
         "Achilles",
         "UnclePunch",
-        "Nikki"
+        "Nikki",
+        "jmlee337"
       ],
       "description": [
         "Saves replays, Slippi device must be in Slot B.",
@@ -247,7 +248,7 @@
           "type": "injectFolder",
           "sourceFolder": "Recording",
           "isRecursive": true,
-          "annotation": "Slippi Recording [Fizzi, Achilles, UnclePunch, Nikki]"
+          "annotation": "Slippi Recording [Fizzi, Achilles, UnclePunch, Nikki, jmlee337]"
         },
         {
           "type": "injectFolder",
