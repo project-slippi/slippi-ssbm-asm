@@ -16,7 +16,8 @@
 
 .set REG_Buffer,30
 .set REG_BufferOffset,29
-.set REG_RDB,28
+.set REG_GeckoListSize, 28
+.set REG_RDB,27
 
 backup
 
@@ -345,73 +346,145 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 
 #------------- SEND Display Names ------------
 .set DisplayNameStart, (MinorMajorStart + MinorMajorLength)
-.set DisplayNameLength, 0x7C
+.set DisplayNameLength,0x7C
 # Offsets
-.set PlayerDataStart, 96       #player data starts in match struct
-.set PlayerDataLength, 36      #length of each player's data
-.set PlayerStatus, 0x1         #offset of players in-game status
+.set PlayerDataStart,96       # player data starts in match struct
+.set PlayerDataLength,36      # length of each player's data
+.set PlayerStatus,0x1         # offset of players in-game status
 # Constants
-.set BytesToCopy, 31               # 2 bytes per char + 1 byte for null terminator = 31 bytes
+.set DisplayNameBytesToCopy,31  # 2 bytes per char + 1 byte for null terminator = 31 bytes
 # Registers
-.set REG_LoopCount, 20
-.set REG_PlayerDataStart, 21
-.set REG_CurrentPlayerData, 22
-.set REG_BufferDisplayNameStart, 23
-.set REG_BufferCurrentDisplayName, 24
-.set REG_MSRB_ADDR, 25
+.set REG_LoopCount,19
+.set REG_ReadCount,20  # Only two player display names are available in MSRB, so we need to keep track of how many times we read.
+                       # If MSRB is updated to contain 4 display names, this reg can be removed.
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferDisplayNameStart,23
+.set REG_BufferCurrentDisplayName,24
+.set REG_MSRB,25
+.set REG_MSRB_DisplayNameStart,26
 
 # Get MSRB address
-  li r3, 0
-  branchl r12, FN_LoadMatchState
-  mr REG_MSRB_ADDR, r3
-
-# Move to offset of the first name
-  addi r4, REG_MSRB_ADDR, MSRB_P1_NAME
+  li r3,0
+  branchl r12,FN_LoadMatchState
+  mr REG_MSRB,r3
   
 # Init loop
-  li  REG_LoopCount, 0                                               # init loop count
-  addi REG_PlayerDataStart, r31, PlayerDataStart                     # player data start in match struct
-  addi REG_BufferDisplayNameStart, REG_Buffer, DisplayNameStart      # Start of nametag data in buffer
+  li REG_LoopCount,0
+  li REG_ReadCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                 # player data start in match struct
+  addi REG_BufferDisplayNameStart,REG_Buffer,DisplayNameStart  # Start of write buffer
+  addi REG_MSRB_DisplayNameStart,REG_MSRB,MSRB_P1_NAME         # Start of read buffer
+
   DISPLAY_NAME_LOOP:
-  #Check if player exists
-  mulli REG_CurrentPlayerData, REG_LoopCount, PlayerDataLength
-  add REG_CurrentPlayerData, REG_CurrentPlayerData, REG_PlayerDataStart
-  lbz r3, PlayerStatus(REG_CurrentPlayerData)
-  cmpwi r3, 0
+#Next write position
+  mulli r3,REG_LoopCount,DisplayNameBytesToCopy
+  add REG_BufferCurrentDisplayName,r3,REG_BufferDisplayNameStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
   bne SEND_DISPLAY_NAME_NO_NAME
 
-#Get display name data in buffer in REG_BufferCurrentDisplayName
-  mulli r3, REG_LoopCount, BytesToCopy                                # calculate the offset of the start of the next name
-  add REG_BufferCurrentDisplayName, r3, REG_BufferDisplayNameStart    # add the offset and start of the display names in the buffer to get the current display name address
-
-# INCREASE THIS ONCE WE ADD MORE THAN 2 PLAYERS FOR ONLINE PLAY
-  cmpwi REG_LoopCount, 2
+#If MSRB is updated to contain >2 display names, this can be updated accordingly.
+#If MSRB is updated to contain 4 display names, remove this block.
+  cmpwi REG_ReadCount,2
   bge SEND_DISPLAY_NAME_NO_NAME
 
-#Get display name address and copy first 15 characters to nametag to buffer
-  add r4, REG_MSRB_ADDR, r3            # add the offset to MSRB address to get start of the next display name
-  mr  r3, REG_BufferCurrentDisplayName
-  li r5, BytesToCopy
-  branchl r12, memcpy                   # dest: REG_BufferCurrentDisplayName, source: MSRB_ADDR + offset, size: BytesToCopy
+#Next read offset
+#If MSRB is updated to contain 4 display names, change REG_ReadCount to REG_LoopCount.
+  mulli r3,REG_ReadCount,DisplayNameBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_DisplayNameStart  # src (MSRB_DisplayNameStart + offset)
+  mr r3,REG_BufferCurrentDisplayName   # dest
+  li r5,DisplayNameBytesToCopy         # length
+  branchl r12,memcpy
+  addi REG_ReadCount,REG_ReadCount,1
   b DISPLAY_NAME_INC_LOOP
 
   SEND_DISPLAY_NAME_NO_NAME:
 # Fill with zeroes
-  mr r3, REG_BufferCurrentDisplayName
-  li r4, BytesToCopy
-  branchl r12, Zero_AreaLength
+  mr r3,REG_BufferCurrentDisplayName
+  li r4,DisplayNameBytesToCopy
+  branchl r12,Zero_AreaLength
 
   DISPLAY_NAME_INC_LOOP:
-  addi REG_LoopCount, REG_LoopCount, 1
-  cmpwi REG_LoopCount, 4
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
   blt DISPLAY_NAME_LOOP
 
-# Free MSRB
-  mr r3, REG_MSRB_ADDR
-  branchl r12, HSD_Free
-
 #------------- SEND Connect Codes ------------
-# TODO
+.set ConnectCodeStart, (DisplayNameStart + DisplayNameLength)
+.set ConnectCodeLength,0x28
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+# Constants
+.set ConnectCodeBytesToCopy,10  # 1 bytes per char + 2 bytes for hashtag + 1 byte for null terminator = 10 bytes
+# Registers
+.set REG_LoopCount,19
+.set REG_ReadCount,20  # Only two player connect codes are available in MSRB, so we need to keep track of how many times we read.
+                       # If MSRB is updated to contain 4 connect codes, this reg can be removed.
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferConnectCodeStart,23
+.set REG_BufferCurrentConnectCode,24
+.set REG_MSRB_ConnectCodeStart,26
+  
+# Init loop
+  li REG_LoopCount,0         
+  li REG_ReadCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                  # player data start in match struct
+  addi REG_BufferConnectCodeStart,REG_Buffer,ConnectCodeStart   # Start of write buffer
+  addi REG_MSRB_ConnectCodeStart,REG_MSRB,MSRB_P1_CONNECT_CODE  # Start of read buffer
+
+  CONNECT_CODE_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,ConnectCodeBytesToCopy
+  add REG_BufferCurrentConnectCode,r3,REG_BufferConnectCodeStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_CONNECT_CODE_NO_CODE
+
+#If MSRB is updated to contain >2 connect codes, this can be updated accordingly.
+#If MSRB is updated to contain 4 connect codes, remove this block.
+  cmpwi REG_ReadCount,2
+  bge SEND_CONNECT_CODE_NO_CODE
+
+#Next read offset
+#If MSRB is updated to contain 4 connect codes, change REG_ReadCount to REG_LoopCount.
+  mulli r3,REG_ReadCount,ConnectCodeBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_ConnectCodeStart  # src (MSRB_ConnectCodeStart + offset)
+  mr r3,REG_BufferCurrentConnectCode   # dest
+  li r5,ConnectCodeBytesToCopy         # length
+  branchl r12,memcpy
+  addi REG_ReadCount,REG_ReadCount,1
+  b CONNECT_CODE_INC_LOOP
+
+  SEND_CONNECT_CODE_NO_CODE:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentConnectCode
+  li r4,ConnectCodeBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  CONNECT_CODE_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt CONNECT_CODE_LOOP
+
+# Free MSRB
+  mr r3,REG_MSRB
+  branchl r12,HSD_Free
 
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
@@ -420,7 +493,6 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   branchl r12,FN_EXITransferBuffer
 
 #-------------- Transfer Gecko List ---------------
-.set REG_GeckoListSize,20
 .set REG_GeckoCopyBuffer,21
 .set REG_GeckoCopyPos,22
 # Create copy buffer
