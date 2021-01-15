@@ -4,6 +4,7 @@
 # read from.
 # This is supposed patch the original function to read r6 and r7 to determine if
 # we should read from dolphin or continue as is
+# OFST_R13_USE_PREMADE_TEXT must be set to 1 before calling this method
 # r6 must be set to an specific constant maybe 0x01020304
 # r7 is the actual id of the text we want to read, a map on dolphin like
 # 0x1 = "<KERN><CENTER><COLOR, 170, 170, 170><TEXTBOX, 179, 179><UNK06, 0, 0><FIT>Solo<S>Smash!</FIT></TEXTBOX></COLOR><END>"
@@ -13,17 +14,16 @@
 .include "Online/Online.s"
 
 .set REG_STRING_FORMAT_ADDR, 30
-.set REG_READ_PREMADE_TEXT, REG_STRING_FORMAT_ADDR-1
-.set REG_PREMADE_TEXT_ID, REG_READ_PREMADE_TEXT-1
+.set REG_PREMADE_TEXT_ID, REG_STRING_FORMAT_ADDR-1
 
-mr REG_READ_PREMADE_TEXT, r6
-mr REG_PREMADE_TEXT_ID, r7
 backup
+mr REG_PREMADE_TEXT_ID, r6
 
 # So, what we are going to do here is request a READ from the EXI device which
 # will return the encoded string requested with an ID and then store that into
 # the text data struct
-cmpwi REG_READ_PREMADE_TEXT, CONST_TextDolphin
+lbz r3, OFST_R13_USE_PREMADE_TEXT(r13)
+cmpwi r3, 1
 bne EXIT # get out if this is just the game doing it's thing
 
 #; # Load Premade text id from dolphin
@@ -40,12 +40,10 @@ stw REG_STRING_FORMAT_ADDR, 0x5C(r31)
 
 EXIT:
 restore
-# since we are jumping back r0 gets overwritten so we need to write to r31
-# ourselves
-# stw	r0, 0x005C (r31) # original line
+# stw	r0, 0x005C (r31) # original line before this one
 li	r3, 0 # original line
+stb r3, OFST_R13_USE_PREMADE_TEXT(r13) # clear out r13 offset
 
-AFTER_EXIT:
 #############################
 # Original Func: Text_CopyPremadeTextDataToStruct
 #; 803a6368: mflr	r0
