@@ -140,6 +140,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FG_CreateSubtext,0x800056b4
 .set FN_LoadChatMessageProperties,0x800056ac
 .set FN_GetTeamCostumeIndex,0x800056b0
+.set FN_LoadPremadeText, 0x800056b8
 # available addresses for static functions
 # 0x800056b8
 # 0x800056bc
@@ -189,7 +190,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set Text_FreeMenuTextMemory,0x80390228 # Not sure about this one, but it has a similar behavior to the Allocate
 .set Text_CreateStruct,0x803a6754
 .set Text_AllocateTextObject,0x803a5acc
-.set Text_CopyPremadeTextDataToStruct,0x803a6368
+.set Text_CopyPremadeTextDataToStruct,0x803a6368# (text struct, index on open menu file, cannot be used, jackpot=will change to memory address we want)
 .set Text_InitializeSubtext,0x803a6b98
 .set Text_UpdateSubtextSize,0x803a7548
 .set Text_ChangeTextColor,0x803a74f0
@@ -312,7 +313,10 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
-
+# For Slippi Premade Texts
+.set CONST_SlippiCmdGetPremadeTextLength, 0xE1
+.set CONST_SlippiCmdGetPremadeText, 0xE2
+.set CONST_TextDolphin, 0x765 # Flag identifying that Text_CopyPremadeTextDataToStruct needs to load from dolphin
 .set CONST_FirstFrameIdx, -123
 
 .set GeckoCodeSectionStart,0x801910E8
