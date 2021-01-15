@@ -26,16 +26,10 @@ lbz r3, OFST_R13_USE_PREMADE_TEXT(r13)
 cmpwi r3, 1
 bne EXIT # get out if this is just the game doing it's thing
 
-#; # Load Premade text id from dolphin
-#; li r3, 0 # debug: lets just send anything
-#; #mr r3, REG_PREMADE_TEXT_ID
-#; branchl r12, FN_LoadPremadeText
-#; mr REG_STRING_FORMAT_ADDR, r3
-#; stw REG_STRING_FORMAT_ADDR, 0x5C(r31)
-
-li r3, 0
-branchl r12, FN_LoadMatchState
-addi REG_STRING_FORMAT_ADDR, r3, MSRB_PREMADE_TEXT
+# Load Premade text id from dolphin
+mr r3, REG_PREMADE_TEXT_ID
+branchl r12, FN_LoadPremadeText
+mr REG_STRING_FORMAT_ADDR, r3
 stw REG_STRING_FORMAT_ADDR, 0x5C(r31)
 
 EXIT:

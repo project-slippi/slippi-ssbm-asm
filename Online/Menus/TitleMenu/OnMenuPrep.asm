@@ -748,7 +748,7 @@ lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
 stfs f0, 0x24(r3) # Scale X
 stfs f0, 0x28(r3) # Scale Y
 stb r0, 0x4A(REG_DLG_TEXT_STRUCT_ADDR) # Set text to align center
-li r6, 12
+li r6, 12 # Slippi Text ID
 branchl r12, Text_CopyPremadeTextDataToStruct
 
 # exit to next frame when dialog is first initialized
