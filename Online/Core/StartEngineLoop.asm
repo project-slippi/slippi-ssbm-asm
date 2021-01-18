@@ -77,7 +77,7 @@ beq DISPLAY_DISCONNECT_END # If not disconnected, do nothing
 li r3, 3
 branchl r12, SFX_Menu_CommonSound
 
-# Allow remaining player to pause
+# Allow remaining player to pause if disconnected player paused
 load r3, 0x80479D68 
 stw r0, 0x0(r3)
 
