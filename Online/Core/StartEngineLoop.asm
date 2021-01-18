@@ -78,8 +78,24 @@ li r3, 3
 branchl r12, SFX_Menu_CommonSound
 
 # Allow remaining player to pause if disconnected player paused
+li r4, 0x0
 load r3, 0x80479D68 
 stw r0, 0x0(r3)
+
+# Zoom out camera
+li r4,0
+load r3, 0x80452c6f
+stb r4, 0x0(r3)
+
+# Unpause clientside
+li  r3,0
+stb r3, OFST_R13_ISPAUSE (r13)
+# Show HUD
+branchl r12,0x802f33cc
+# Show Timer
+# Hide Pause UI
+mr  r3,30
+branchl r12,0x801a10fc
 
 ################################################################################
 # Start prepping text display
