@@ -73,6 +73,12 @@
           "sourceFolder": "External/Extended Nametag Box",
           "isRecursive": true,
           "annotation": "Extended Nametag Box"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CostumeBoundCheck",
+          "isRecursive": true,
+          "annotation": "Correct Costume Conflicts [UnclePunch]"
         }
       ]
     },
@@ -244,7 +250,11 @@
     },
     {
       "name": "Optional: Lagless FoD",
-      "authors": ["Achilles", "Myougi", "Dan Salvato"],
+      "authors": [
+        "Achilles",
+        "Myougi",
+        "Dan Salvato"
+      ],
       "description": [
         "Disables particles and reflection on FoD to improve performance"
       ],

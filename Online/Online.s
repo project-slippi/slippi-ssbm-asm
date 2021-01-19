@@ -353,6 +353,20 @@ lwz \reg, -0x62A0(\reg)
 .set OSB_SIZE, OSB_CONNECT_CODE + 10
 
 ################################################################################
+# Define report game buffer offsets and length
+################################################################################
+.set RGPB_IS_ACTIVE, 0 # bool, is player active
+.set RGPB_STOCKS_REMAINING, RGPB_IS_ACTIVE + 1 # byte
+.set RGPB_DAMAGE_DONE, RGPB_STOCKS_REMAINING + 1 # float
+.set RGPB_SIZE, RGPB_DAMAGE_DONE + 4
+
+.set RGB_COMMAND, 0 # byte
+.set RGB_FRAME_LENGTH, RGB_COMMAND + 1 # s32, number of frames in game
+.set RGB_P1_RGPB, RGB_FRAME_LENGTH + 4 # RGPB_SIZE
+.set RGB_P2_RGPB, RGB_P1_RGPB + RGPB_SIZE # RGPB_SIZE
+.set RGB_SIZE, RGB_P2_RGPB + RGPB_SIZE
+
+################################################################################
 # Const Values
 ################################################################################
 .set RESP_NORMAL, 1
