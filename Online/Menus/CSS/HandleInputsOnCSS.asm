@@ -236,7 +236,7 @@ beq CHECK_SHOULD_START_MATCH
 # this doesn't feel like the right place for this logic
 loadGlobalFrame r3
 cmpwi r3, 0
-beq CHECK_SHOULD_START_MATCH # Don't lock-in on the very first fram
+beq CHECK_SHOULD_START_MATCH # Don't lock-in on the very first frame
 
 # Check which mode we are playing.
 lbz r3, OFST_R13_ONLINE_MODE(r13)

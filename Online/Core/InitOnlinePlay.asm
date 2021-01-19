@@ -219,7 +219,12 @@ blr
 FN_HandleGameCompleted:
 blrl
 
-.set REG_ODB_ADDRESS, 4
+.set REG_IDX, 31
+.set REG_RGB_ADDR, 30
+.set REG_RGPB_ADDR, 29
+.set REG_ODB_ADDRESS, 28
+
+backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
@@ -227,7 +232,63 @@ lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 lwz r3, ODB_CF_OPTION_BACKUP(REG_ODB_ADDRESS)
 stw r3, -ControllerFixOptions(rtoc)
 
-# TODO: Write to EXI that game has ended to confirm there was no desync?
+################################################################################
+# Report game results for unranked
+################################################################################
+# Ensure that this is an unranked game
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_UNRANKED
+bne REPORT_GAME_EXIT
+
+# Prepare buffer for EXI transfer
+li r3, RGB_SIZE
+branchl r12, HSD_MemAlloc
+mr REG_RGB_ADDR, r3
+
+# We can just use the receive buffer to send request command
+li r3, CONST_SlippiCmdReportMatch
+stb r3, RGB_COMMAND(REG_RGB_ADDR)
+
+lwz r3, ODB_FRAME(REG_ODB_ADDRESS)
+stw r3, RGB_FRAME_LENGTH(REG_RGB_ADDR) # Store frame length
+
+PLAYER_LOOP_INIT:
+li REG_IDX, 0
+addi REG_RGPB_ADDR, REG_RGB_ADDR, RGB_P1_RGPB
+
+PLAYER_LOOP:
+mr r3, REG_IDX
+branchl r12, 0x80031724
+
+# Store isActive
+li r4, 1
+stb r4, RGPB_IS_ACTIVE(REG_RGPB_ADDR)
+
+# Store stocks remaining
+lbz r4, 0x8E(r3)
+stb r4, RGPB_STOCKS_REMAINING(REG_RGPB_ADDR)
+
+# Store damage done
+lwz r4, 0xC6C+188(r3)
+stw r4, RGPB_DAMAGE_DONE(REG_RGPB_ADDR)
+
+PLAYER_LOOP_INC:
+addi REG_IDX, REG_IDX, 1
+addi REG_RGPB_ADDR, REG_RGPB_ADDR, RGPB_SIZE
+
+PLAYER_LOOP_CHECK:
+cmpwi REG_IDX, 2
+blt PLAYER_LOOP
+
+# Execute match reporting
+mr r3, REG_RGB_ADDR
+li r4, RGB_SIZE
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+REPORT_GAME_EXIT:
+
+restore
 
 blr
 
