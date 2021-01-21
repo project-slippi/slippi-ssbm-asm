@@ -3,6 +3,7 @@
 ################################################################################
 # Inputs:
 # r3 - premade text id
+# r4 - premade text param
 ################################################################################
 # Output:
 # r3 - Address of the Premade Text Data
@@ -15,13 +16,15 @@
 .include "Online/Online.s"
 
 .set REG_PREMADE_TEXT_ID, 31
-.set REG_BUFFER, REG_PREMADE_TEXT_ID-1
+.set REG_PREMADE_TEXT_PARAM_1, REG_PREMADE_TEXT_ID-1
+.set REG_BUFFER, REG_PREMADE_TEXT_PARAM_1-1
 .set REG_BUFFER_SIZE, REG_BUFFER-1
 
 backup
 mr REG_PREMADE_TEXT_ID, r3
+mr REG_PREMADE_TEXT_PARAM_1, r4
 
-li REG_BUFFER_SIZE, 2
+li REG_BUFFER_SIZE, 3
 
 GET_TEXT_SIZE:
 # Create a small buffer for text size
@@ -33,6 +36,7 @@ mr REG_BUFFER, r3
 li r3, CONST_SlippiCmdGetPremadeTextLength
 stb r3, 0(REG_BUFFER) # EXI Command
 stb REG_PREMADE_TEXT_ID, 1(REG_BUFFER) # Text ID
+stb REG_PREMADE_TEXT_PARAM_1, 2(REG_BUFFER) # PARAM 1
 
 bl FN_Exi
 lbz REG_BUFFER_SIZE, 0(r3) # get premade text size
@@ -52,6 +56,7 @@ mr REG_BUFFER, r3
 li r3, CONST_SlippiCmdGetPremadeText
 stb r3, 0(REG_BUFFER) # EXI Command
 stb REG_PREMADE_TEXT_ID, 1(REG_BUFFER) # Text ID
+stb REG_PREMADE_TEXT_PARAM_1, 2(REG_BUFFER) # PARAM 1
 
 bl FN_Exi
 mr r3, REG_BUFFER # set reg buffer as the output

@@ -728,7 +728,7 @@ li r4, 1 # gx_link?
 lfs f0, TPO_DLG_LABEL_UNK0(REG_TEXT_PROPERTIES)
 lfs f1, TPO_DLG_LABEL_X_POS(REG_TEXT_PROPERTIES)
 lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_DLG_LABEL_SCALE_FACTOR(REG_TEXT_PROPERTIES) # Scale Factor
+lfs f3, TPO_DLG_LABEL_Z_POS(REG_TEXT_PROPERTIES) # Scale Factor
 lfs f4, TPO_DLG_LABEL_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
 lfs f5, TPO_DLG_LABEL_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
 branchl r12, Text_AllocateTextObject #0x803a5acc
@@ -744,7 +744,8 @@ stb r0, OFST_R13_USE_PREMADE_TEXT(r13) # use slippi premade text
 
 li r4, 0x13F # Premade Text id "Are you Sure?"
 mr r3, REG_DLG_TEXT_STRUCT_ADDR
-li r6, 0x12 # Slippi Text ID
+li r6, 0x3 # Slippi Text ID
+li r7, 0x2 # Slippi Text ID Param
 lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
 stfs f0, 0x24(r3) # Scale X
 stfs f0, 0x28(r3) # Scale Y
@@ -889,9 +890,9 @@ blrl
 .float -2.8
 .set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
 .float 9
-.set TPO_DLG_LABEL_SCALE_FACTOR,  TPO_DLG_LABEL_UNK0+4
+.set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_UNK0+4
 .float 23
-.set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_SCALE_FACTOR+4
+.set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_Z_POS+4
 .float 250
 .set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
 .float 20

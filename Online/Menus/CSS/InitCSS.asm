@@ -79,10 +79,26 @@ blrl
 .set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
 .float 1
 .set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
-.float 25
+.float 4
+
+# Label properties
+.set TPO_DLG_LABEL_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
+.float -30
+.set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
+.float -25
+.set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
+.float 9
+.set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_UNK0+4
+.float 0
+.set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_Z_POS+4
+.float 250
+.set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
+.float 20
+.set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
+.float 0.1
 
 # Header properties
-.set TPO_HEADER_X, TPO_CHATMSG_SIZE_MARGIN + 4
+.set TPO_HEADER_X, TPO_DLG_LABEL_CANVAS_SCALE + 4
 .float 70
 .set TPO_HEADER_Y, TPO_HEADER_X + 4
 .float 23
@@ -716,6 +732,27 @@ li r5, 0x80
 branchl r12, GObj_Create
 mr r14, r3 # save pointer to GOBJ
 
+
+# create jbobj (custom chat window background)
+lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
+lwz r3, 0x18(r3) # pointer to our custom bg jobj
+branchl r12,0x80370e44 #Create Jboj
+mr  r15,r3
+
+# Add JOBJ To GObj
+mr  r3,r14
+li r4, 4
+mr  r5,r15
+branchl r12,0x80390a70 # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
+
+# Add GX Link that draws the background
+mr  r3,r14
+load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
+li  r5, 1
+li  r6, 128
+branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
+
+
 li r4, 4 # user data kind 0x80195b7c
 load r5, HSD_Free # destructor
 mr r6, r23 # memory pointer of allocated buffer above
@@ -1158,31 +1195,6 @@ bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so
 
 ##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
 
-# Change Text Struct Descriptor to use a higher GX
-lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
-li r4, 3 # gx_link we want
-stb r4, 0xE(r3)
-load r3, 0x80bd5c6c
-
-# Create Text Struct
-li r3, 0
-li r4, 0
-branchl r12, Text_CreateStruct
-mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
-stw REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
-
-# Restore Text Struct descriptor
-lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
-li r4, 1 # original gx_link to restore
-stb r4, 0xE(r3)
-
-# Set text kerning to close
-li r4, 0x1
-stb r4, 0x49(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
-# Set text to align left
-li r4, 0x0
-stb r4, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
-
 # Store Base Z Offset
 lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) #Z offset
 stfs f1, 0x8(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
@@ -1225,47 +1237,40 @@ lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
 fmuls f1, f1, f4 # multiply index by margin
 fmr f3, f1 # store our desired Y offset in f3
 
-# load X+Y Starting position of text
-lfs f1, TPO_CHATMSG_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_CHATMSG_Y(REG_TEXT_PROPERTIES)
+# load Y Starting position of text
+lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
 
 fadds f2, f2, f3 # add the offset
-fmr REG_CHATMSG_TEXT_X_POS, f1 # store current position to reuse them
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
-# Setup message colors based on player
+# Create Text Object
+li r3, 0
+li r4, 0 # gx_link?
+lfs f0, TPO_DLG_LABEL_UNK0(REG_TEXT_PROPERTIES)
+lfs f1, TPO_DLG_LABEL_X_POS(REG_TEXT_PROPERTIES)
+#lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+lfs f3, TPO_DLG_LABEL_Z_POS(REG_TEXT_PROPERTIES) # Scale Factor
+lfs f4, TPO_DLG_LABEL_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
+lfs f5, TPO_DLG_LABEL_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
+branchl r12, Text_AllocateTextObject
+# Save Text Struct Address
+mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
+stw REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
-# load CSSDT_MSRB_ADDR data table needed to check player names
-loadwz r3, CSSDT_BUF_ADDR
-lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(r3)
+# Initialize Struct Stuff
+li r0, 1
+stb r0, OFST_R13_USE_PREMADE_TEXT(r13) # use slippi premade text
 
-# Compare if the current player name matches P1 or P2
-addi r3, REG_MSRB_ADDR, MSRB_P1_NAME
-cmpw r3, REG_CHATMSG_USER_NAME_ADDR
-bne CSS_ONLINE_CHAT_SET_COLOR_P2
-CSS_ONLINE_CHAT_SET_COLOR_P1:
-addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_P1 # text color
-b CSS_ONLINE_CHAT_SET_COLOR_END
-
-CSS_ONLINE_CHAT_SET_COLOR_P2:
-addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_P2 # text color
-
-CSS_ONLINE_CHAT_SET_COLOR_END:
-# Create Outlined subtext
-mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR # text struct pointer
-li r5, 1 # outline text
-addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_CHAT_BG # color outline
-addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHATMSG_FORMAT # concatenate user name with message "User: Message"
-mr r8, REG_CHATMSG_USER_NAME_ADDR # User name
-mr r9, REG_CHATMSG_MSG_STRING_ADDR # Message
-lfs f1, TPO_CHATMSG_SIZE(REG_TEXT_PROPERTIES) # chat message scale
-lfs f2, TPO_CHATMSG_SIZE(REG_TEXT_PROPERTIES) # chat message scale
-fmr f3, REG_CHATMSG_TEXT_X_POS # x pos
-fmr f4, REG_CHATMSG_TEXT_Y_POS # y pos
-lfs f5, TPO_CHATMSG_SIZE_SM(REG_TEXT_PROPERTIES) # chat message scale
-lfs f6, TPO_CHATMSG_OUTLINE_OFFSET(REG_TEXT_PROPERTIES) # chat message scale
-
-branchl r12, FG_CreateSubtext
+mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
+li r4, 0x13F # Premade Text id "Are you Sure?"
+li r6, 0x1 # Slippi Text ID
+li r7, 0x1 # Slippi Text ID Param
+#mr r7, REG_CHATMSG_MSG_ID
+lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
+stfs f0, 0x24(r3) # Scale X
+stfs f0, 0x28(r3) # Scale Y
+stb r0, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR) # Set text to align center
+branchl r12, Text_CopyPremadeTextDataToStruct
 
 ##### END: INITIALIZING CHAT MSG TEXT ###########
 
