@@ -121,6 +121,8 @@ ClientPause_Paused_Disconnect:
 # Play SFX
 li  r3,2
 branchl r12,0x80024030
+# Stop Rumble
+branchl r12, 0x80378330
 # End game
 mr r3, REG_PORT
 li r4, 0x7
