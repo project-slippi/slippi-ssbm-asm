@@ -32,7 +32,26 @@ mr REG_BUFFER, r3
 # Initialize Buffer
 li r3, CONST_SlippiCmdGetPremadeTextLength
 stb r3, 0(REG_BUFFER) # EXI Command
-stb REG_PREMADE_TEXT_ID, 1(REG_BUFFER) # Text ID
+
+li r3, 1
+stb r3, 0x1(REG_BUFFER) # args size
+
+li r3, 4
+stb r3, 0x2(REG_BUFFER) # first str length
+
+li r3, 84
+stb r3, 0x3(REG_BUFFER) # T
+
+li r3, 69
+stb r3, 0x4(REG_BUFFER) # E
+
+li r3, 83
+stb r3, 0x5(REG_BUFFER) # S
+
+li r3, 84
+stb r3, 0x6(REG_BUFFER) # T
+
+stb REG_PREMADE_TEXT_ID, 0x7(REG_BUFFER) # Text ID
 
 bl FN_Exi
 lbz REG_BUFFER_SIZE, 0(r3) # get premade text size
@@ -51,7 +70,26 @@ mr REG_BUFFER, r3
 # Initialize Buffer
 li r3, CONST_SlippiCmdGetPremadeText
 stb r3, 0(REG_BUFFER) # EXI Command
-stb REG_PREMADE_TEXT_ID, 1(REG_BUFFER) # Text ID
+
+li r3, 1
+stb r3, 0x1(REG_BUFFER) # args size
+
+li r3, 4
+stb r3, 0x2(REG_BUFFER) # first str length
+
+li r3, 84
+stb r3, 0x3(REG_BUFFER) # T
+
+li r3, 69
+stb r3, 0x4(REG_BUFFER) # E
+
+li r3, 83
+stb r3, 0x5(REG_BUFFER) # S
+
+li r3, 84
+stb r3, 0x6(REG_BUFFER) # T
+
+stb REG_PREMADE_TEXT_ID, 0x7(REG_BUFFER) # Text ID
 
 bl FN_Exi
 mr r3, REG_BUFFER # set reg buffer as the output
