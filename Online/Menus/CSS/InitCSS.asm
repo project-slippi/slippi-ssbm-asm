@@ -20,7 +20,8 @@
 # Registers to be used in Chat Messagees Think Function
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set REG_CHATMSG_GOBJ, 14
-.set REG_CHATMSG_GOBJ_DATA_ADDR, REG_CHATMSG_GOBJ+1
+.set REG_CHATMSG_JOBJ, REG_CHATMSG_GOBJ+1
+.set REG_CHATMSG_GOBJ_DATA_ADDR, REG_CHATMSG_JOBJ+1
 .set REG_CHATMSG_TIMER, REG_CHATMSG_GOBJ_DATA_ADDR+1
 .set REG_CHATMSG_MSG_ID, REG_CHATMSG_TIMER+1
 .set REG_CHATMSG_MSG_INDEX, REG_CHATMSG_MSG_ID+1
@@ -79,13 +80,21 @@ blrl
 .set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
 .float 1
 .set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
-.float 4
+.float 3
 
 # Label properties
-.set TPO_DLG_LABEL_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
-.float -30
+.set TPO_DLG_BG_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
+.float -23
+.set TPO_DLG_BG_Y_POS, TPO_DLG_BG_X_POS+4
+.float 24
+.set TPO_DLG_BG_X_SCALE, TPO_DLG_BG_Y_POS+4
+.float 0.17
+.set TPO_DLG_BG_Y_SCALE, TPO_DLG_BG_X_SCALE+4
+.float 0.03
+.set TPO_DLG_LABEL_X_POS, TPO_DLG_BG_Y_SCALE+4
+.float -29.5
 .set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
-.float -25
+.float -24.8
 .set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
 .float 9
 .set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_UNK0+4
@@ -95,7 +104,7 @@ blrl
 .set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
 .float 20
 .set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
-.float 0.1
+.float 0.05
 
 # Header properties
 .set TPO_HEADER_X, TPO_DLG_LABEL_CANVAS_SCALE + 4
@@ -739,6 +748,22 @@ lwz r3, 0x18(r3) # pointer to our custom bg jobj
 branchl r12,0x80370e44 #Create Jboj
 mr  r15,r3
 
+li r16, 5
+HIDE_PADS:
+# Hide Interrogation Mark
+mr r3,r15 # jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+mr r5, r16 # index
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
+li r4, 0x10
+branchl r12, JObj_SetFlagsAll # 0x80371D9c
+addi r16, r16, 1
+cmpwi r16, 9
+blt HIDE_PADS
+
 # Add JOBJ To GObj
 mr  r3,r14
 li r4, 4
@@ -1171,6 +1196,7 @@ blr
 # CHAT MSG THINK Function: Looping function to keep on
 # updating the text until timer runs out
 ################################################################################
+.set JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 CSS_ONLINE_CHAT_THINK:
 blrl
 mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
@@ -1189,41 +1215,27 @@ lwz REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_G
 lwz REG_CHATMSG_USER_NAME_ADDR, CSSCMDT_USER_NAME_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
+lwz REG_CHATMSG_JOBJ, JOBJ_OFFSET(REG_CHATMSG_GOBJ) # get address of jobj
+
 # if text is not initialized, do it and move to next frame
 cmpwi REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, 0x00000000
 bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so skip to timer check
 
 ##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
 
-# Store Base Z Offset
-lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) #Z offset
-stfs f1, 0x8(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
-# Scale Canvas Down
-lfs f1, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES)
-stfs f1, 0x24(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
-stfs f1, 0x28(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+# Move bg
 
-# INIT MSG Properties based on input button (lowest bit)
+lfs f1, TPO_DLG_BG_X_POS(REG_TEXT_PROPERTIES)
+lfs f2, TPO_DLG_BG_Y_POS(REG_TEXT_PROPERTIES)
+lfs f3, TPO_DLG_BG_X_SCALE(REG_TEXT_PROPERTIES)
+lfs f4, TPO_DLG_BG_Y_SCALE(REG_TEXT_PROPERTIES)
 
-# Extract message input (highest bit)
-mr r5, REG_CHATMSG_MSG_ID
-li r4, 4
-srw r5, r5, r4 # shift right = 0x0N
-slw r5, r5, r4 # shift left = 0xN0
-sub r4, REG_CHATMSG_MSG_ID, r5
+stfs f1, 0x38(REG_CHATMSG_JOBJ)
+stfs f2, 0x38+4(REG_CHATMSG_JOBJ)
 
-# Extract Category ID
-mr r3, REG_CHATMSG_MSG_ID
-li r5, 4
-srw r3, r3, r5
-
-# INIT MSG Properties based on input button (r3)
-# r3 = category id
-# r4 = chosen message
-branchl r12, FN_LoadChatMessageProperties
-mr REG_CHAT_TEXT_PROPERTIES, r3
-# r4 has adress to message
+stfs f3, 0x2C(REG_CHATMSG_JOBJ)
+stfs f4, 0x2C+4(REG_CHATMSG_JOBJ)
 
 SET_CHATMSG_TEXT_HEADER:
 mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
@@ -1239,6 +1251,11 @@ fmr f3, f1 # store our desired Y offset in f3
 
 # load Y Starting position of text
 lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+
+# add same offset to jobj
+lfs f5, 0x38+4(REG_CHATMSG_JOBJ)
+fsubs f5, f5, f3 # add the offset
+stfs f5, 0x38+4(REG_CHATMSG_JOBJ)
 
 fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
@@ -1263,14 +1280,23 @@ stb r0, OFST_R13_USE_PREMADE_TEXT(r13) # use slippi premade text
 
 mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
 li r4, 0x13F # Premade Text id "Are you Sure?"
-li r6, 0x1 # Slippi Text ID
-li r7, 0x1 # Slippi Text ID Param
-#mr r7, REG_CHATMSG_MSG_ID
+li r6, 0x2 # Slippi Text ID
+mr r7, REG_CHATMSG_MSG_ID
+cmpwi r7, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
+beq MAP_UP_UP
+SKIP_REMAP:
 lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
 stfs f0, 0x24(r3) # Scale X
 stfs f0, 0x28(r3) # Scale Y
 stb r0, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR) # Set text to align center
 branchl r12, Text_CopyPremadeTextDataToStruct
+
+b CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES
+
+MAP_UP_UP:
+li r7, 0x83
+b SKIP_REMAP
+
 
 ##### END: INITIALIZING CHAT MSG TEXT ###########
 
