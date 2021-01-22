@@ -79,8 +79,10 @@ blrl
 .float 0.40
 .set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
 .float 1
-.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
-.float 3
+.set TPO_CHATMSG_BG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
+.float 2.6
+.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_BG_SIZE_MARGIN + 4
+.float 2.7
 
 # Label properties
 .set TPO_DLG_BG_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
@@ -91,20 +93,21 @@ blrl
 .float 0.17
 .set TPO_DLG_BG_Y_SCALE, TPO_DLG_BG_X_SCALE+4
 .float 0.03
+
 .set TPO_DLG_LABEL_X_POS, TPO_DLG_BG_Y_SCALE+4
 .float -29.5
 .set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
-.float -24.8
+.float -24.5
 .set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
 .float 9
 .set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_UNK0+4
 .float 0
 .set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_Z_POS+4
-.float 250
+.float 400
 .set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
 .float 20
 .set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
-.float 0.05
+.float 0.025
 
 # Header properties
 .set TPO_HEADER_X, TPO_DLG_LABEL_CANVAS_SCALE + 4
@@ -741,28 +744,11 @@ li r5, 0x80
 branchl r12, GObj_Create
 mr r14, r3 # save pointer to GOBJ
 
-
 # create jbobj (custom chat window background)
 lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
-lwz r3, 0x18(r3) # pointer to our custom bg jobj
+lwz r3, 0x88(r3) # pointer to our custom bg jobj
 branchl r12,0x80370e44 #Create Jboj
 mr  r15,r3
-
-li r16, 5
-HIDE_PADS:
-# Hide Interrogation Mark
-mr r3,r15 # jobj
-addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
-mr r5, r16 # index
-li r6, -1
-branchl r12, JObj_GetJObjChild
-
-lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
-li r4, 0x10
-branchl r12, JObj_SetFlagsAll # 0x80371D9c
-addi r16, r16, 1
-cmpwi r16, 9
-blt HIDE_PADS
 
 # Add JOBJ To GObj
 mr  r3,r14
@@ -1231,32 +1217,35 @@ lfs f2, TPO_DLG_BG_Y_POS(REG_TEXT_PROPERTIES)
 lfs f3, TPO_DLG_BG_X_SCALE(REG_TEXT_PROPERTIES)
 lfs f4, TPO_DLG_BG_Y_SCALE(REG_TEXT_PROPERTIES)
 
-stfs f1, 0x38(REG_CHATMSG_JOBJ)
+#stfs f1, 0x38(REG_CHATMSG_JOBJ)
 stfs f2, 0x38+4(REG_CHATMSG_JOBJ)
 
-stfs f3, 0x2C(REG_CHATMSG_JOBJ)
-stfs f4, 0x2C+4(REG_CHATMSG_JOBJ)
+#stfs f3, 0x2C(REG_CHATMSG_JOBJ)
+#stfs f4, 0x2C+4(REG_CHATMSG_JOBJ)
 
 SET_CHATMSG_TEXT_HEADER:
 mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
 
 # calculate float locations for message
 mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
-branchl r12, FN_IntToFloat # returns f1
+branchl r12, FN_IntToFloat # returns f1 (message index)
 
-# calculate Y offset based on message index
-lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
-fmuls f1, f1, f4 # multiply index by margin
-fmr f3, f1 # store our desired Y offset in f3
+# calculate Y offsets based on message index
 
-# load Y Starting position of text
-lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+lfs f4, TPO_CHATMSG_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f3, f1, f4 # multiply index by margin
 
-# add same offset to jobj
+# add offset to jobj
 lfs f5, 0x38+4(REG_CHATMSG_JOBJ)
 fsubs f5, f5, f3 # add the offset
 stfs f5, 0x38+4(REG_CHATMSG_JOBJ)
 
+
+lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f3, f1, f4 # multiply index by margin
+
+# load Y Starting position of text
+lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
 fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
