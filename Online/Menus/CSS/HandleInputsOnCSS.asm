@@ -633,11 +633,9 @@ FN_OPEN_CHAT_WINDOW:
 mr REG_CHAT_INPUTS, r3 # Store Controller Input argument
 backup
 
-# Play a sound indicating a new message TODO: move to a function
-li r3, 0xb7
-li r4, 127
-li r5, 64
-branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
+# Play common sound
+li	r3, 2
+branchl r12, SFX_Menu_CommonSound
 
 # Save in memory that we have the chat opened and store the pad input
 mr r3, REG_CHAT_INPUTS # controller input
