@@ -81,9 +81,9 @@ blrl
 .set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
 .float 1
 .set TPO_CHATMSG_BG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
-.float 2.6
+.float 2.3
 .set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_BG_SIZE_MARGIN + 4
-.float 2.7
+.float 2.4
 
 # Label properties
 .set TPO_DLG_BG_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
@@ -725,8 +725,8 @@ branchl r12, Zero_AreaLength
 
 # Set Buffer Initial Data
 # initialize timers
-li r3, CHAT_MESSAGE_DISPLAY_TIMER # max value of byte which is 255, approx 4 seconds 255/60 = 4.25 secs
-li r4, 1 # default status is idle
+li r3, 20
+li r4, 0 # default status is startup
 stb r3, CSSCMDT_TIMER(r23)
 stb r4, CSSCMDT_TIMER_STATUS(r23)
 
@@ -759,7 +759,7 @@ lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
 lwz r3, 0x84(r3) # pointer to our custom bg main jobj
 lwz r16, 0x10(r3) # pointer to our custom bg jobj anim joint
 lwz r3, 0x0C(r3) # pointer to our custom bg jobj
-branchl r12,0x80370e44 #Create Jboj
+branchl r12,JObj_LoadJoint #Create Jboj
 mr  r15,r3
 
 # Add JOBJ To GObj
@@ -1234,11 +1234,6 @@ lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CHATMSG_JOBJ, JOBJ_OFFSET(REG_CHATMSG_GOBJ) # get address of jobj
 
 
-
-#mr r3, REG_CHATMSG_JOBJ # jobj child
-#lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
-#branchl r12, JObj_ReqAnimAll# (jobj, frames)
-
 # Always Animate the dialog
 mr r3, REG_CHATMSG_JOBJ
 branchl r12, JObj_AnimAll
@@ -1247,20 +1242,30 @@ branchl r12, JObj_AnimAll
 cmpwi REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, 0x00000000
 bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so skip to timer check
 
-##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
+# calculate float locations for message
+mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
+branchl r12, FN_IntToFloat # returns f1 (message index)
 
-# Move bg
-
-lfs f1, TPO_DLG_BG_X_POS(REG_TEXT_PROPERTIES)
+# Move Chat Message Background
 lfs f2, TPO_DLG_BG_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_DLG_BG_X_SCALE(REG_TEXT_PROPERTIES)
-lfs f4, TPO_DLG_BG_Y_SCALE(REG_TEXT_PROPERTIES)
-
-#stfs f1, 0x38(REG_CHATMSG_JOBJ)
+lfs f3, TPO_CHATMSG_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f3, f1, f3 # multiply index by margin
+fsubs f2, f2, f3 # add the offset
 stfs f2, 0x38+4(REG_CHATMSG_JOBJ)
 
-#stfs f3, 0x2C(REG_CHATMSG_JOBJ)
-#stfs f4, 0x2C+4(REG_CHATMSG_JOBJ)
+cmpwi REG_CHATMSG_TIMER_STATUS, 0 # if on startup move on to timer logic
+beq CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES
+
+CSS_ONLINE_CHAT_INIT_TEXT:
+##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
+
+# if we got here we are initializing text so set timer again
+li REG_CHATMSG_TIMER, CHAT_MESSAGE_DISPLAY_TIMER # reset timer
+stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+# if we got here we are initializing text so set timer again
+li REG_CHATMSG_TIMER_STATUS, 1 # reset timer
+stb REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 SET_CHATMSG_TEXT_HEADER:
 mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
@@ -1268,23 +1273,10 @@ mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
 # calculate float locations for message
 mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
 branchl r12, FN_IntToFloat # returns f1 (message index)
-
-# calculate Y offsets based on message index
-
-lfs f4, TPO_CHATMSG_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
-fmuls f3, f1, f4 # multiply index by margin
-
-# add offset to jobj
-lfs f5, 0x38+4(REG_CHATMSG_JOBJ)
-fsubs f5, f5, f3 # add the offset
-stfs f5, 0x38+4(REG_CHATMSG_JOBJ)
-
-
-lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
-fmuls f3, f1, f4 # multiply index by margin
-
 # load Y Starting position of text
 lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+lfs f3, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f3, f1, f3 # multiply index by margin
 fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
@@ -1354,8 +1346,10 @@ cmpwi REG_CHATMSG_TIMER, 0
 bne CSS_ONLINE_CHAT_DECREASE_TIMER
 
 # if timer is 0, do next func based on timer status
+cmpwi REG_CHATMSG_TIMER_STATUS, 0
+beq CSS_ONLINE_CHAT_INIT_TEXT
 cmpwi REG_CHATMSG_TIMER_STATUS, 1
-beq CSS_INIT_CLEANUP
+beq CSS_ONLINE_CHAT_INIT_CLEANUP
 cmpwi REG_CHATMSG_TIMER_STATUS, 2
 beq CSS_ONLINE_CHAT_REMOVE_PROC
 
@@ -1366,7 +1360,7 @@ stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 b CSS_ONLINE_CHAT_CHECK_EXIT
 
-CSS_INIT_CLEANUP:
+CSS_ONLINE_CHAT_INIT_CLEANUP:
 
 li REG_CHATMSG_TIMER_STATUS, 2 # set timer status to cleanup
 stb REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
@@ -1383,6 +1377,10 @@ mr r3, REG_CHATMSG_JOBJ
 lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
 branchl r12, JObj_ReqAnimAll# (jobj, frames)
 
+# remove text
+mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
+branchl r12, Text_RemoveText
+
 b CSS_ONLINE_CHAT_CHECK_EXIT
 
 CSS_ONLINE_CHAT_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
@@ -1394,10 +1392,6 @@ branchl r12, GObj_RemoveProc
 # destroy gobj
 mr r3, REG_CHATMSG_GOBJ
 branchl r12, GObj_Destroy
-
-# remove text
-mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
-branchl r12, Text_RemoveText
 
 # Decrease chat message count by 1
 lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
