@@ -29,7 +29,6 @@
 .set REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, REG_CHATMSG_MSG_INDEX+1
 .set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
 .set REG_CHATMSG_PLAYER_INDEX, REG_CHATMSG_MSG_STRING_ADDR+1
-.set REG_CHAT_TEXT_PROPERTIES, REG_CHATMSG_PLAYER_INDEX+1
 # float registers
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
@@ -63,62 +62,40 @@ blrl
 .set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
 .float 0.1
 
-# Uncomment and use these instead of rtoc offsets if TOP LEFT Title breaks
-#.set TPO_FLOAT_15, TPO_BASE_CANVAS_SCALING + 4 # Anim Frame for MELEE
-#.float 15.0
-#.set TPO_FLOAT_16, TPO_FLOAT_15 + 4 # Anim Frame for Team Match
-#.float 16.0
-
 # Chat Message Propiertes
-.set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
-.float -330
-.set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
-.float -285
-.set TPO_CHATMSG_SIZE, TPO_CHATMSG_Y + 4
-.float 0.45
-.set TPO_CHATMSG_SIZE_SM, TPO_CHATMSG_SIZE + 4
-.float 0.40
-.set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
-.float 1
-.set TPO_CHATMSG_BG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
+.set TPO_CHAT_BG_SIZE_MARGIN, TPO_BASE_CANVAS_SCALING + 4
 .float 2.3
-.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_BG_SIZE_MARGIN + 4
+.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHAT_BG_SIZE_MARGIN + 4
 .float 2.4
 
 # Label properties
-.set TPO_DLG_BG_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
-.float -23
-.set TPO_DLG_BG_Y_POS, TPO_DLG_BG_X_POS+4
+.set TPO_CHAT_BG_Y_POS, TPO_CHAT_BG_X_POS+4
 .float 24
-.set TPO_DLG_BG_X_SCALE, TPO_DLG_BG_Y_POS+4
-.float 0.17
-.set TPO_DLG_BG_Y_SCALE, TPO_DLG_BG_X_SCALE+4
-.float 0.03
-.set TPO_DLG_BG_FRAME_START, TPO_DLG_BG_Y_SCALE+4
+.set TPO_CHAT_BG_FRAME_START, TPO_CHAT_BG_Y_SCALE+4
 .float 0
-.set TPO_DLG_BG_FRAME_END, TPO_DLG_BG_FRAME_START+4
+.set TPO_CHAT_BG_FRAME_END, TPO_CHAT_BG_FRAME_START+4
 .float 30
-.set TPO_DLG_BG_FRAME_REWIND, TPO_DLG_BG_FRAME_END+4
+.set TPO_CHAT_BG_FRAME_REWIND, TPO_CHAT_BG_FRAME_END+4
 .float 50
 
 
-.set TPO_DLG_LABEL_X_POS, TPO_DLG_BG_FRAME_REWIND+4
+.set TPO_CHATMSG_X_POS, TPO_CHAT_BG_FRAME_REWIND+4
 .float -29.5
-.set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
+.set TPO_CHATMSG_Y_POS, TPO_CHATMSG_X_POS+4
 .float -24.5
-.set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
+.set TPO_CHATMSG_UNK0, TPO_CHATMSG_Y_POS+4
 .float 9
-.set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_UNK0+4
+.set TPO_CHATMSG_Z_POS,  TPO_CHATMSG_UNK0+4
 .float 0
-.set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_Z_POS+4
+.set TPO_CHATMSG_WIDTH, TPO_CHATMSG_Z_POS+4
 .float 400
-.set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
+.set TPO_CHATMSG_UNK1, TPO_CHATMSG_WIDTH+4
 .float 20
-.set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
+.set TPO_CHATMSG_CANVAS_SCALE, TPO_CHATMSG_UNK1+4
 .float 0.025
 
 # Header properties
-.set TPO_HEADER_X, TPO_DLG_LABEL_CANVAS_SCALE + 4
+.set TPO_HEADER_X, TPO_CHATMSG_CANVAS_SCALE + 4
 .float 70
 .set TPO_HEADER_Y, TPO_HEADER_X + 4
 .float 23
@@ -770,11 +747,11 @@ branchl r12, JObj_AddAnimAll #
 # set end frame of anim
 mr r3, r15 # jobj
 lwz r3, 0x7C(r15) #aobj
-lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
+lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)
 branchl r12, 0x8036532C # AObjSetEndFrame(aobj, frame)
 
 mr r3, r15
-lfs f1, TPO_DLG_BG_FRAME_START(REG_TEXT_PROPERTIES)
+lfs f1, TPO_CHAT_BG_FRAME_START(REG_TEXT_PROPERTIES)
 branchl r12, JObj_ReqAnimAll# (jobj, frames)
 
 # Add GX Link that draws the background
@@ -1238,8 +1215,8 @@ mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
 branchl r12, FN_IntToFloat # returns f1 (message index)
 
 # Move Chat Message Background
-lfs f2, TPO_DLG_BG_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_CHATMSG_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+lfs f2, TPO_CHAT_BG_Y_POS(REG_TEXT_PROPERTIES)
+lfs f3, TPO_CHAT_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
 fmuls f3, f1, f3 # multiply index by margin
 fsubs f2, f2, f3 # add the offset
 stfs f2, 0x38+4(REG_CHATMSG_JOBJ)
@@ -1265,7 +1242,7 @@ mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
 mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
 branchl r12, FN_IntToFloat # returns f1 (message index)
 # load Y Starting position of text
-lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+lfs f2, TPO_CHATMSG_Y_POS(REG_TEXT_PROPERTIES)
 lfs f3, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
 fmuls f3, f1, f3 # multiply index by margin
 fadds f2, f2, f3 # add the offset
@@ -1274,12 +1251,12 @@ fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 # Create Text Object
 li r3, 0
 li r4, 0 # gx_link?
-lfs f0, TPO_DLG_LABEL_UNK0(REG_TEXT_PROPERTIES)
-lfs f1, TPO_DLG_LABEL_X_POS(REG_TEXT_PROPERTIES)
-#lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_DLG_LABEL_Z_POS(REG_TEXT_PROPERTIES) # Scale Factor
-lfs f4, TPO_DLG_LABEL_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
-lfs f5, TPO_DLG_LABEL_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
+lfs f0, TPO_CHATMSG_UNK0(REG_TEXT_PROPERTIES)
+lfs f1, TPO_CHATMSG_X_POS(REG_TEXT_PROPERTIES)
+#lfs f2, TPO_CHATMSG_Y_POS(REG_TEXT_PROPERTIES)
+lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES) # Scale Factor
+lfs f4, TPO_CHATMSG_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
+lfs f5, TPO_CHATMSG_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
 branchl r12, Text_AllocateTextObject
 # Save Text Struct Address
 mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
@@ -1296,7 +1273,7 @@ mr r7, REG_CHATMSG_MSG_ID
 cmpwi r7, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
 beq MAP_UP_UP
 SKIP_REMAP:
-lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
+lfs f0, TPO_CHATMSG_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
 stfs f0, 0x24(r3) # Scale X
 stfs f0, 0x28(r3) # Scale Y
 stb r0, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR) # Set text to align center
@@ -1361,11 +1338,11 @@ stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 mr r3, REG_CHATMSG_JOBJ # jobj
 lwz r3, 0x7C(REG_CHATMSG_JOBJ) #aobj
-lfs f1, TPO_DLG_BG_FRAME_REWIND(REG_TEXT_PROPERTIES)
+lfs f1, TPO_CHAT_BG_FRAME_REWIND(REG_TEXT_PROPERTIES)
 branchl r12, 0x8036532C # AObjSetEndFrame(aobj, frame)
 
 mr r3, REG_CHATMSG_JOBJ
-lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
+lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)
 branchl r12, JObj_ReqAnimAll# (jobj, frames)
 
 # remove text
