@@ -257,10 +257,10 @@ ADJUST_COSTUME_NUMBER_LOOP_INC:
   addi r22,REG_Buffer,UCFToggleStart
 UCF_LOOP:
   mulli r23,r21,8
-  lbzx r3,r21,r20           #Get toggle value
+  li r3, 1 # UCF is always on now
   stwx r3,r22,r23
   addi r23,r23,4            #Next offset
-  stwx r3,r22,r23           #send toggle value again for compatibility with old .slp files
+  stwx r3,r22,r23 # Send twice for.. compatibility reasons I guess? Superfluous
   addi  r21,r21,1
   cmpwi r21,4
   blt UCF_LOOP
