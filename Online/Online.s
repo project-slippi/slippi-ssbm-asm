@@ -330,7 +330,8 @@ lwz \reg, -0x62A0(\reg)
 # CSS Chat Message Data Table
 ################################################################################
 .set CSSCMDT_TIMER, 0 # u8
-.set CSSCMDT_MSG_ID, CSSCMDT_TIMER + 1 # u8
+.set CSSCMDT_TIMER_STATUS, CSSCMDT_TIMER + 1 # u8 0=startup, 1=idle, 2=cleanup
+.set CSSCMDT_MSG_ID, CSSCMDT_TIMER_STATUS + 1 # u8
 .set CSSCMDT_MSG_INDEX, CSSCMDT_MSG_ID + 1 # u8
 .set CSSCMDT_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_INDEX + 1 # u32
 .set CSSCMDT_USER_NAME_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR + 4 # u32

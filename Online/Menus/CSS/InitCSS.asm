@@ -23,7 +23,8 @@
 .set REG_CHATMSG_JOBJ, REG_CHATMSG_GOBJ+1
 .set REG_CHATMSG_GOBJ_DATA_ADDR, REG_CHATMSG_JOBJ+1
 .set REG_CHATMSG_TIMER, REG_CHATMSG_GOBJ_DATA_ADDR+1
-.set REG_CHATMSG_MSG_ID, REG_CHATMSG_TIMER+1
+.set REG_CHATMSG_TIMER_STATUS, REG_CHATMSG_TIMER+1
+.set REG_CHATMSG_MSG_ID, REG_CHATMSG_TIMER_STATUS+1
 .set REG_CHATMSG_MSG_INDEX, REG_CHATMSG_MSG_ID+1
 .set REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, REG_CHATMSG_MSG_INDEX+1
 .set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
@@ -79,8 +80,10 @@ blrl
 .float 0.40
 .set TPO_CHATMSG_OUTLINE_OFFSET, TPO_CHATMSG_SIZE_SM + 4
 .float 1
-.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
-.float 3
+.set TPO_CHATMSG_BG_SIZE_MARGIN, TPO_CHATMSG_OUTLINE_OFFSET + 4
+.float 2.6
+.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHATMSG_BG_SIZE_MARGIN + 4
+.float 2.7
 
 # Label properties
 .set TPO_DLG_BG_X_POS, TPO_CHATMSG_SIZE_MARGIN+4
@@ -91,20 +94,28 @@ blrl
 .float 0.17
 .set TPO_DLG_BG_Y_SCALE, TPO_DLG_BG_X_SCALE+4
 .float 0.03
-.set TPO_DLG_LABEL_X_POS, TPO_DLG_BG_Y_SCALE+4
+.set TPO_DLG_BG_FRAME_START, TPO_DLG_BG_Y_SCALE+4
+.float 0
+.set TPO_DLG_BG_FRAME_END, TPO_DLG_BG_FRAME_START+4
+.float 30
+.set TPO_DLG_BG_FRAME_REWIND, TPO_DLG_BG_FRAME_END+4
+.float 50
+
+
+.set TPO_DLG_LABEL_X_POS, TPO_DLG_BG_FRAME_REWIND+4
 .float -29.5
 .set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
-.float -24.8
+.float -24.5
 .set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
 .float 9
 .set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_UNK0+4
 .float 0
 .set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_Z_POS+4
-.float 250
+.float 400
 .set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
 .float 20
 .set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
-.float 0.05
+.float 0.025
 
 # Header properties
 .set TPO_HEADER_X, TPO_DLG_LABEL_CANVAS_SCALE + 4
@@ -713,9 +724,11 @@ li r4, CSSDT_SIZE
 branchl r12, Zero_AreaLength
 
 # Set Buffer Initial Data
-# initialize timer 0x80195b38
+# initialize timers
 li r3, CHAT_MESSAGE_DISPLAY_TIMER # max value of byte which is 255, approx 4 seconds 255/60 = 4.25 secs
+li r4, 1 # default status is idle
 stb r3, CSSCMDT_TIMER(r23)
+stb r4, CSSCMDT_TIMER_STATUS(r23)
 
 # initialize message id
 mr r3, r26
@@ -741,34 +754,36 @@ li r5, 0x80
 branchl r12, GObj_Create
 mr r14, r3 # save pointer to GOBJ
 
-
 # create jbobj (custom chat window background)
 lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
-lwz r3, 0x18(r3) # pointer to our custom bg jobj
+lwz r3, 0x84(r3) # pointer to our custom bg main jobj
+lwz r16, 0x10(r3) # pointer to our custom bg jobj anim joint
+lwz r3, 0x0C(r3) # pointer to our custom bg jobj
 branchl r12,0x80370e44 #Create Jboj
 mr  r15,r3
-
-li r16, 5
-HIDE_PADS:
-# Hide Interrogation Mark
-mr r3,r15 # jobj
-addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
-mr r5, r16 # index
-li r6, -1
-branchl r12, JObj_GetJObjChild
-
-lwz r3, JOBJ_CHILD_OFFSET(sp) # get return obj
-li r4, 0x10
-branchl r12, JObj_SetFlagsAll # 0x80371D9c
-addi r16, r16, 1
-cmpwi r16, 9
-blt HIDE_PADS
 
 # Add JOBJ To GObj
 mr  r3,r14
 li r4, 4
 mr  r5,r15
 branchl r12,0x80390a70 # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
+
+# Add Animations to JObj
+mr r3, r15 # jobj
+mr r4, r16 # anim joint
+li r5, 0
+li r6, 0
+branchl r12, JObj_AddAnimAll #
+
+# set end frame of anim
+mr r3, r15 # jobj
+lwz r3, 0x7C(r15) #aobj
+lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
+branchl r12, 0x8036532C # AObjSetEndFrame(aobj, frame)
+
+mr r3, r15
+lfs f1, TPO_DLG_BG_FRAME_START(REG_TEXT_PROPERTIES)
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
 
 # Add GX Link that draws the background
 mr  r3,r14
@@ -1209,6 +1224,7 @@ mflr REG_TEXT_PROPERTIES
 # get gobj and get values for each of the data buffer
 lwz REG_CHATMSG_GOBJ_DATA_ADDR, CHAT_ENTITY_DATA_OFFSET(REG_CHATMSG_GOBJ) # get address of data buffer
 lbz REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
+lbz REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
 lbz REG_CHATMSG_MSG_ID, CSSCMDT_MSG_ID(REG_CHATMSG_GOBJ_DATA_ADDR)
 lbz REG_CHATMSG_MSG_INDEX, CSSCMDT_MSG_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
@@ -1217,12 +1233,21 @@ lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 lwz REG_CHATMSG_JOBJ, JOBJ_OFFSET(REG_CHATMSG_GOBJ) # get address of jobj
 
+
+
+#mr r3, REG_CHATMSG_JOBJ # jobj child
+#lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
+#branchl r12, JObj_ReqAnimAll# (jobj, frames)
+
+# Always Animate the dialog
+mr r3, REG_CHATMSG_JOBJ
+branchl r12, JObj_AnimAll
+
 # if text is not initialized, do it and move to next frame
 cmpwi REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, 0x00000000
 bne CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES # already has values means that is set so skip to timer check
 
 ##### BEGIN: INITIALIZING CHAT MSG TEXT ###########
-
 
 # Move bg
 
@@ -1231,32 +1256,35 @@ lfs f2, TPO_DLG_BG_Y_POS(REG_TEXT_PROPERTIES)
 lfs f3, TPO_DLG_BG_X_SCALE(REG_TEXT_PROPERTIES)
 lfs f4, TPO_DLG_BG_Y_SCALE(REG_TEXT_PROPERTIES)
 
-stfs f1, 0x38(REG_CHATMSG_JOBJ)
+#stfs f1, 0x38(REG_CHATMSG_JOBJ)
 stfs f2, 0x38+4(REG_CHATMSG_JOBJ)
 
-stfs f3, 0x2C(REG_CHATMSG_JOBJ)
-stfs f4, 0x2C+4(REG_CHATMSG_JOBJ)
+#stfs f3, 0x2C(REG_CHATMSG_JOBJ)
+#stfs f4, 0x2C+4(REG_CHATMSG_JOBJ)
 
 SET_CHATMSG_TEXT_HEADER:
 mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
 
 # calculate float locations for message
 mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
-branchl r12, FN_IntToFloat # returns f1
+branchl r12, FN_IntToFloat # returns f1 (message index)
 
-# calculate Y offset based on message index
-lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
-fmuls f1, f1, f4 # multiply index by margin
-fmr f3, f1 # store our desired Y offset in f3
+# calculate Y offsets based on message index
 
-# load Y Starting position of text
-lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
+lfs f4, TPO_CHATMSG_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f3, f1, f4 # multiply index by margin
 
-# add same offset to jobj
+# add offset to jobj
 lfs f5, 0x38+4(REG_CHATMSG_JOBJ)
 fsubs f5, f5, f3 # add the offset
 stfs f5, 0x38+4(REG_CHATMSG_JOBJ)
 
+
+lfs f4, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+fmuls f3, f1, f4 # multiply index by margin
+
+# load Y Starting position of text
+lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
 fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
@@ -1323,10 +1351,37 @@ CSS_ONLINE_CHAT_CHECK_TIMER:
 
 # check timer and decrease until is 0
 cmpwi REG_CHATMSG_TIMER, 0
-beq CSS_ONLINE_CHAT_REMOVE_PROC # if timer is 0, then exit and delete think func.
+bne CSS_ONLINE_CHAT_DECREASE_TIMER
 
+# if timer is 0, do next func based on timer status
+cmpwi REG_CHATMSG_TIMER_STATUS, 1
+beq CSS_INIT_CLEANUP
+cmpwi REG_CHATMSG_TIMER_STATUS, 2
+beq CSS_ONLINE_CHAT_REMOVE_PROC
+
+
+CSS_ONLINE_CHAT_DECREASE_TIMER:
 subi REG_CHATMSG_TIMER, REG_CHATMSG_TIMER, 1
 stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+b CSS_ONLINE_CHAT_CHECK_EXIT
+
+CSS_INIT_CLEANUP:
+
+li REG_CHATMSG_TIMER_STATUS, 2 # set timer status to cleanup
+stb REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+li REG_CHATMSG_TIMER, 20 # reset timer
+stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
+
+mr r3, REG_CHATMSG_JOBJ # jobj
+lwz r3, 0x7C(REG_CHATMSG_JOBJ) #aobj
+lfs f1, TPO_DLG_BG_FRAME_REWIND(REG_TEXT_PROPERTIES)
+branchl r12, 0x8036532C # AObjSetEndFrame(aobj, frame)
+
+mr r3, REG_CHATMSG_JOBJ
+lfs f1, TPO_DLG_BG_FRAME_END(REG_TEXT_PROPERTIES)
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
 
 b CSS_ONLINE_CHAT_CHECK_EXIT
 
