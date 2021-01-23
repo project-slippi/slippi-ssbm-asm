@@ -227,6 +227,12 @@
           "sourceFolder": "External/FreezeGlitchFix",
           "isRecursive": true,
           "annotation": "Prevent freeze glitch [tauKhan]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CostumeBoundCheck",
+          "isRecursive": true,
+          "annotation": "Correct Costume Conflicts [UnclePunch]"
         }
       ]
     },

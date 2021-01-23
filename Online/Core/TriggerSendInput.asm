@@ -16,7 +16,6 @@
 .set REG_VARIOUS_1, 22
 .set REG_VARIOUS_2, 21
 .set REG_COUNT, 20
-.set REG_REMOTE_PLAYER_COUNT, 19
 
 #backup registers and sp
 backup
@@ -296,8 +295,6 @@ stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 # Section 8: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
-lbz REG_REMOTE_PLAYER_COUNT, RXB_OPNT_COUNT(REG_RXB_ADDRESS)
-
 # If ODB_SAVESTATE_IS_ACTIVE is 0, we either don't have a savestate created
 # or we're in a rollback, so set the per-player savestate flags to 0 and skip
 # to section 9. If we're missing inputs for the current frame, they'll get reset
@@ -472,7 +469,7 @@ branch r12, 0x80376cec # branch to restore of parent function to skip handling i
 
 CONTINUE_ROLLBACK_CHECK_LOOP:
 addi REG_COUNT, REG_COUNT, 1
-cmpw REG_COUNT, REG_REMOTE_PLAYER_COUNT
+cmpwi REG_COUNT, 3
 blt CHECK_WHETHER_TO_ROLL_BACK_LOOP
 
 # We've checked past predictions against any new inputs and nothing triggered a rollback;
@@ -522,7 +519,7 @@ li REG_SAVESTATE_FRAME_SET, 1
 
 CONTINUE_SAVESTATE_FRAME_LOOP:
 addi REG_COUNT, REG_COUNT, 1
-cmpw REG_COUNT, REG_REMOTE_PLAYER_COUNT
+cmpwi REG_COUNT, 3
 blt COMPUTE_SAVESTATE_FRAME_LOOP
 
 # Set the savestate frame to the minimum value among players with missing inputs
@@ -560,7 +557,7 @@ stbx r3, r6, REG_ODB_ADDRESS
 
 CONTINUE_CHECK_RESET_SAVESTATE_LOOP:
 addi REG_COUNT, REG_COUNT, 1
-cmpw REG_COUNT, REG_REMOTE_PLAYER_COUNT
+cmpwi REG_COUNT, 3
 blt CHECK_RESET_SAVESTATE_LOOP
 
 # If any players still have a savestate active, skip resetting the global flag
@@ -575,7 +572,7 @@ beq LOAD_OPPONENT_INPUTS
 
 CONTINUE_CHECK_GLOBAL_SAVESTATE_LOOP:
 addi REG_COUNT, REG_COUNT, 1
-cmpw REG_COUNT, REG_REMOTE_PLAYER_COUNT
+cmpwi REG_COUNT, 3
 blt CHECK_GLOBAL_SAVESTATE_LOOP
 
 # If we made it here, we have caught up to the prediction, clear the savestate flags for everyone
@@ -723,7 +720,7 @@ branchl r12, memcpy
 
 addi REG_COUNT, REG_COUNT, 1
 addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
-cmpw REG_COUNT, REG_REMOTE_PLAYER_COUNT
+cmpwi REG_COUNT, 3
 blt LOOP_LOAD_OPPONENT_INPUTS
 
 b INCREMENT_AND_EXIT

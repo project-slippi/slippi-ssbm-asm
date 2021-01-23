@@ -28,8 +28,8 @@
 .set REG_CHATMSG_MSG_INDEX, REG_CHATMSG_MSG_ID+1
 .set REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, REG_CHATMSG_MSG_INDEX+1
 .set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
-.set REG_CHATMSG_USER_NAME_ADDR, REG_CHATMSG_MSG_STRING_ADDR+1
-.set REG_CHAT_TEXT_PROPERTIES, REG_CHATMSG_USER_NAME_ADDR+1
+.set REG_CHATMSG_PLAYER_INDEX, REG_CHATMSG_MSG_STRING_ADDR+1
+.set REG_CHAT_TEXT_PROPERTIES, REG_CHATMSG_PLAYER_INDEX+1
 # float registers
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
@@ -683,15 +683,6 @@ cmpwi r3, 0
 beq SKIP_CHAT_MESSAGES
 mr r26, r3 # store chat message id
 
-# if we got an opponent chat message check player index to get correct name
-# multiply the index with player string size to fall under correct name
-# starting from P1
-lbz r3, MSRB_OPP_CHATMSG_PLAYER_IDX(REG_MSRB_ADDR)
-mulli r3, r3, 31
-addi r3, r3, MSRB_P1_NAME # r3 holds the correct index to MSRB_P{1-4}_NAME
-add r25, REG_MSRB_ADDR, r3 # store player name
-
-
 UPDATE_CHAT_MESSAGES:
 # Start at the top after x messages
 lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR)
@@ -741,7 +732,8 @@ addi r3, r3, 1 # increase message index
 stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 
 # Set Username Address
-stw r25, CSSCMDT_USER_NAME_ADDR(r23)
+lbz r3, MSRB_OPP_CHATMSG_PLAYER_INDEX(REG_MSRB_ADDR)
+stb r3, CSSCMDT_PLAYER_INDEX(r23)
 
 # Set CSS DataTable Address
 mr r3, REG_CSSDT_ADDR # store address to CSSDT_DT
@@ -1228,11 +1220,10 @@ lbz REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
 lbz REG_CHATMSG_MSG_ID, CSSCMDT_MSG_ID(REG_CHATMSG_GOBJ_DATA_ADDR)
 lbz REG_CHATMSG_MSG_INDEX, CSSCMDT_MSG_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
-lwz REG_CHATMSG_USER_NAME_ADDR, CSSCMDT_USER_NAME_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
+lwz REG_CHATMSG_PLAYER_INDEX, CSSCMDT_PLAYER_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 lwz REG_CHATMSG_JOBJ, JOBJ_OFFSET(REG_CHATMSG_GOBJ) # get address of jobj
-
 
 # Always Animate the dialog
 mr r3, REG_CHATMSG_JOBJ
@@ -1300,7 +1291,7 @@ stb r0, OFST_R13_USE_PREMADE_TEXT(r13) # use slippi premade text
 
 mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
 li r4, 0x13F # Premade Text id "Are you Sure?"
-li r6, 0x2 # Slippi Text ID
+mr r6, REG_CHATMSG_PLAYER_INDEX
 mr r7, REG_CHATMSG_MSG_ID
 cmpwi r7, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
 beq MAP_UP_UP
