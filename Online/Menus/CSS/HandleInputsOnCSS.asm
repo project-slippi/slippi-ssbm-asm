@@ -136,6 +136,14 @@ HANDLE_IDLE:
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
 beq SKIP_START_MATCH # Exit if start was not pressed
 
+# Sometimes when returning to the CSS, previously held buttons will stay held,
+# including start. This prevents the start input from locking people in
+# immediately... Doesn't feel like this should be necessary, and if it is,
+# this doesn't feel like the right place for this logic
+loadGlobalFrame r3
+cmpwi r3, 0
+beq SKIP_START_MATCH # Don't search on very first frame
+
 # Initialize ISWINNER (first match)
 li  r3, ISWINNER_NULL
 stb r3, OFST_R13_ISWINNER (r13)
