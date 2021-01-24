@@ -9,6 +9,23 @@
 .set REG_TEXT_STRUCT, 30
 .set REG_MSRB_ADDR, 29
 
+# FN_GET_TEAM_PLAYERS
+.set REG_TEAM_ID, 28
+.set REG_PLAYER_INDEX, 27
+.set REG_PLAYERS_COUNT, 26
+.set REG_PLAYER_1_NAME_STRING, 25
+.set REG_PLAYER_2_NAME_STRING, 24
+.set REG_PLAYER_3_NAME_STRING, 23
+
+# INIT_PLAYER_TEXT:
+.set REG_LABEL_COLOR, 22
+.set REG_LABEL_STRING, 20
+.set REG_CUR_SUBTEXT_IDX, 21
+
+.set REG_POS_X_START, 31
+.set REG_POS_Y_START, 30
+
+
 # Ensure that this is an online CSS
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_VS
@@ -37,9 +54,11 @@ blrl
 .long 0xF15959FF
 .set TPO_P2_LABEL_COLOR, TPO_P1_LABEL_COLOR + 4
 .long 0x6565FEFF
+.set TPO_COLOR_WHITE, TPO_P2_LABEL_COLOR + 4
+.long 0xFFFFFFFF
 
 # X Positions
-.set TPO_P1_X_POS, TPO_P2_LABEL_COLOR + 4
+.set TPO_P1_X_POS, TPO_COLOR_WHITE + 4
 .float 60
 .set TPO_P2_X_POS, TPO_P1_X_POS + 4
 .float 400
@@ -48,7 +67,7 @@ blrl
 
 # Y Positions
 .set TPO_PLAYER_Y_START, TPO_STAGE_X_POS + 4
-.float 60
+.float 65
 .set TPO_STAGE_Y_POS, TPO_PLAYER_Y_START + 4
 .float 440
 
@@ -61,11 +80,17 @@ blrl
 .float 300 # Changing does nothing?
 
 # Position Offsets
-.set TPO_PLAYER_NAME_Y_OFST, TPO_STAGE_UNK2 + 4
+.set TPO_PLAYER_NAME_X_OFST, TPO_STAGE_UNK2 + 4
+.float 22
+.set TPO_PLAYER_NAME_Y_OFST, TPO_PLAYER_NAME_X_OFST + 4
 .float 22
 
 # String Properties
-.set TPO_P1_STRING, TPO_PLAYER_NAME_Y_OFST + 4
+.set TPO_TEAM_1_STRING, TPO_PLAYER_NAME_Y_OFST + 4
+.string "Team 1"
+.set TPO_TEAM_2_STRING, TPO_TEAM_1_STRING + 7
+.string "Team 2"
+.set TPO_P1_STRING, TPO_TEAM_2_STRING + 7
 .string "P1"
 .set TPO_P2_STRING, TPO_P1_STRING + 3
 .string "P2"
@@ -120,20 +145,54 @@ lfs f1, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
-# Initialize P1 Text
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
+cmpwi r3, 1 # TEAMS
+beq INIT_TEAMS_PLAYER_TEXT
+
+INIT_1v1_PLAYER_TEXT:
+# Initialize Team 1 Text
 addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
 addi r4, REG_TEXT_PROPERTIES, TPO_P1_STRING
 addi r5, REG_MSRB_ADDR, MSRB_P1_NAME
+li r6, 0
 lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
 
-# Initialize P2 Text
+# Initialize Team 2 Text
 addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
 addi r4, REG_TEXT_PROPERTIES, TPO_P2_STRING
 addi r5, REG_MSRB_ADDR, MSRB_P2_NAME
+li r6, 0
 lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
+b INIT_STAGE_TEXT
 
+INIT_TEAMS_PLAYER_TEXT:
+
+# Get player names for the left side
+lwz r3, MSRB_VS_LEFT_PLAYERS(REG_MSRB_ADDR)
+bl FN_GET_TEAM_PLAYERS
+
+# Initialize Team 1 Text
+addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
+addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_1_STRING
+lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+
+# Get player names for the right side
+lwz r3, MSRB_VS_RIGHT_PLAYERS(REG_MSRB_ADDR)
+bl FN_GET_TEAM_PLAYERS
+
+# Initialize Team 2 Text
+addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
+addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_2_STRING
+lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+b INIT_STAGE_TEXT
+
+
+
+INIT_STAGE_TEXT:
 ################################################################################
 # Pepare text struct for stage
 ################################################################################
@@ -203,57 +262,130 @@ b EXIT
 # r3 - Label Color
 # r4 - Label String
 # r5 - Player Name String
+# r6 - Team Players count
+# r7 - Team Player 1 Name String
+# r8 - Team Player 2 Name String
 # f1 - X Pos
 ################################################################################
-.set SPO_X_POS, 0x80
-
-.set REG_TEXT_PROPERTIES, 31  # From parent function
-.set REG_TEXT_STRUCT, 30  # From parent function
-.set REG_LABEL_COLOR, 29
-.set REG_PLAYER_NAME_STRING, 28
-.set REG_CUR_SUBTEXT_IDX, 27
-
 INIT_PLAYER_TEXT:
 backup
 
-stfs f1, SPO_X_POS(sp)
+fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
-mr REG_PLAYER_NAME_STRING, r5
+mr REG_LABEL_STRING, r4
+mr REG_PLAYER_1_NAME_STRING, r5
 
-# Init port label text
-lfs f2, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
-mr r3, REG_TEXT_STRUCT
-branchl r12, Text_InitializeSubtext
-mr REG_CUR_SUBTEXT_IDX, r3
+mr REG_PLAYERS_COUNT, r6
+mr REG_PLAYER_2_NAME_STRING, r7
+mr REG_PLAYER_3_NAME_STRING, r8
 
-# Set port label font size
+# store names at SP
+stw REG_PLAYER_1_NAME_STRING, 0x8+(0x4*0)(sp)
+stw REG_PLAYER_2_NAME_STRING, 0x8+(0x4*1)(sp)
+stw REG_PLAYER_3_NAME_STRING, 0x8+(0x4*2)(sp)
+
+# load initial y position
+lfs REG_POS_Y_START, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
+lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+
+mr r3, REG_PLAYERS_COUNT
+branchl r12, FN_IntToFloat
+fmuls f3, f3, f1
+fsubs REG_POS_Y_START, REG_POS_Y_START, f3
+
+
+# Init label text
 mr r3, REG_TEXT_STRUCT
-mr r4, REG_CUR_SUBTEXT_IDX
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+mr r4, REG_LABEL_COLOR
+li r5, 0
+mr r7, REG_LABEL_STRING
 lfs f1, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+fmr f3, REG_POS_X_START
+fmr f4, REG_POS_Y_START
+branchl r12, FG_CreateSubtext
 
-# Set port label color
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_CUR_SUBTEXT_IDX
-mr r5, REG_LABEL_COLOR
-branchl r12, Text_ChangeTextColor
+li r14, 0x8 # first empty address on Stack offset
+li r15, 0 # Loop 3 times
+INIT_PLAYER_NAME_LOOP_START:
+add r3, r14, sp # move to sp offset where to get Player Name From
+lwz r7, 0x0(r3)
 
-# Init player name text
-lfs f1, SPO_X_POS(sp)
-lfs f2, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
-lfs f3, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
-fadds f2, f2, f3
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_PLAYER_NAME_STRING
-branchl r12, Text_InitializeSubtext
+cmpwi r15, 0
+beq SKIP_POS_X_OFFSET # skip X offset if first player name
+# Init team player 2 name text
+lfs f3, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
+fadds REG_POS_X_START, REG_POS_X_START, f3
+SKIP_POS_X_OFFSET:
 
-mr r4, r3
+lfs f4, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+fadds REG_POS_Y_START, REG_POS_Y_START, f4
+
 mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
+li r5, 0
 lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+fmr f3, REG_POS_X_START
+fmr f4, REG_POS_Y_START
+branchl r12, FG_CreateSubtext
 
+addi r14, r14, 0x4 # move to next player name address at SP offset
+addi r15, r15, 0x1
+cmpw r15, REG_PLAYERS_COUNT
+blt INIT_PLAYER_NAME_LOOP_START
+
+
+INIT_PLAYER_TEXT_EXIT:
+restore
+blr
+
+
+# input r3: word with player ports and player counts
+# returns Names on r5,r7,r8 of all players and player count
+# r5 - Player Name String
+# r6 - Team Players count
+# r7 - Team Player 1 Name String
+# r8 - Team Player 2 Name String
+FN_GET_TEAM_PLAYERS: # at 0x80199584
+backup
+# stack pointer is free at # 0x8 # 0xC # 0x10 # 0x14 # 0x18
+
+li r5, 0x8 # bits to shift
+li r6, 0xFF # AND anchor
+
+#i.e of what's happening: 0x03020103
+# get player count
+and. REG_PLAYERS_COUNT, r3, r6
+srw r3, r3, r5 #0x030201
+
+li r7, 0x8 # first empty address on Stack offset
+li r9, 0 # Loop 3 times
+PNAME_LOOP_START:
+and. r4, r3, r6 # port number
+mulli r4, r4, 31 # multiply to get proper offset
+addi r4, r4, MSRB_P1_NAME # starting offset
+add r4, r4, REG_MSRB_ADDR # offset to actual msrb address
+
+add r8, r7, sp # move to sp offset where to store PN NAME
+stw r4, 0x0(r8)
+
+srw r3, r3, r5 # shift 1 byte to the right
+
+addi r7, r7, 0x4 # move to next empty space
+addi r9, r9, 0x1
+cmpwi r9, 3
+blt PNAME_LOOP_START
+
+mr r6, REG_PLAYERS_COUNT
+
+# Restore address values stored in SP offsets in reverse order
+lwz r5, 0x8+(0x4*2)(sp)
+lwz r7, 0x8+(0x4*1)(sp)
+lwz r8, 0x8+(0x4*0)(sp)
+
+FN_GET_TEAM_PLAYERS_EXIT:
 restore
 blr
 

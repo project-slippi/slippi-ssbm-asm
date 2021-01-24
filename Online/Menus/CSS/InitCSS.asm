@@ -32,6 +32,7 @@
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
 
+
  # Chat Messages Pad Mapping
 .set PAD_LEFT, 0x1
 .set PAD_RIGHT, 0x2
@@ -41,6 +42,7 @@
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
 .set MAX_CHAT_MESSAGE_LINES, 14
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
+.set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -51,16 +53,19 @@ b LOAD_START
 ################################################################################
 # Properties
 ################################################################################
-.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
 TEXT_PROPERTIES:
 blrl
 # Base Properties
 .set TPO_BASE_Z, 0
 .float 0
-.set TPO_CHATMSG_Z, TPO_BASE_Z + 4
-.float 0
-.set TPO_BASE_CANVAS_SCALING, TPO_CHATMSG_Z + 4
+.set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
 .float 0.1
+
+# Uncomment and use these instead of rtoc offsets if TOP LEFT Title breaks
+#.set TPO_FLOAT_15, TPO_BASE_CANVAS_SCALING + 4 # Anim Frame for MELEE
+#.float 15.0
+#.set TPO_FLOAT_16, TPO_FLOAT_15 + 4 # Anim Frame for Team Match
+#.float 16.0
 
 # Chat Message Propiertes
 .set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
@@ -156,12 +161,16 @@ blrl
 .set TPO_EMPTY_STRING, TPO_COLOR_CHAT_BG + 4
 .string ""
 .set TPO_STRING_UNRANKED, TPO_EMPTY_STRING + 1
-.string "Unranked Mode"
-.set TPO_STRING_DIRECT, TPO_STRING_UNRANKED + 14
-.string "Direct Mode"
-.set TPO_STRING_RANKED, TPO_STRING_DIRECT + 12
-.string "Ranked Mode"
-.set TPO_STRING_SELECT_YOUR_CHARACTER, TPO_STRING_RANKED + 12
+.string "Unranked"
+.set TPO_STRING_DIRECT, TPO_STRING_UNRANKED + 9
+.string "Direct"
+.set TPO_STRING_RANKED, TPO_STRING_DIRECT + 7
+.string "Ranked"
+.set TPO_STRING_TEAMS, TPO_STRING_RANKED + 7
+.string "Teams"
+.set TPO_STRING_MODE_FORMAT, TPO_STRING_TEAMS + 6
+.string "%s Mode"
+.set TPO_STRING_SELECT_YOUR_CHARACTER, TPO_STRING_MODE_FORMAT + 8
 .string "Select your character"
 .set TPO_STRING_CHARACTER_SELECTED, TPO_STRING_SELECT_YOUR_CHARACTER + 22
 .string "Character selected"
@@ -217,61 +226,6 @@ blrl
 .align 2
 
 ################################################################################
-# Chat Message Properties
-# Hack: CAP TO SAME LENGTH to ensure pointers are always reached
-# TODO: Find a way to reuse this between HandleInputOnCSS.asm and this file.
-################################################################################
-.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
-UP_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "ggs                   "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "one more              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "brb                   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "good luck             "
-.align 2
-
-LEFT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "well played           "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "that was fun          "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "thanks                "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "too good              "
-.align 2
-
-RIGHT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "oof                   "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "my b                  "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "lol                   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "wow                   "
-.align 2
-
-DOWN_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_MSG_UP, 0
-.string "okay                  "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "thinking              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "let's play again later"
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "bad connection        "
-.align 2
-
-
-################################################################################
 # User text config
 ################################################################################
 DATA_USER_TEXT_BLRL:
@@ -293,13 +247,18 @@ backup
 bl TEXT_PROPERTIES
 mflr REG_TEXT_PROPERTIES
 
+# Reset Portrait BG Colors
+load r3, 0x804d50d8
+load r4, 0x02000801
+stw r4, 0x0(r3)
+
 ################################################################################
 # Initialize user text
 ################################################################################
 lbz r4, OFST_R13_ONLINE_MODE(r13)
 cmpwi r4, ONLINE_MODE_DIRECT
 li r4, 1
-bne INIT_USER_TEXT
+blt INIT_USER_TEXT
 li r4, 2
 
 INIT_USER_TEXT:
@@ -599,11 +558,40 @@ cmpwi r5, 18
 blt WRITE_OPP_CODE_LOOP_START
 
 ################################################################################
+# Manage CSS Jobj Title Frame
+################################################################################
+
+# Set MELEE Texture frame by default
+lfs f1, -0x50FC(rtoc) # 15.0f used to be -> # lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_TEAMS_TITLE
+# set "TEAM MATCH" Texture Frame
+lfs f1, -0x52BC(rtoc) # 16.0f used to be -> #lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES)
+
+SKIP_TEAMS_TITLE:
+# Animate Top Left Text
+lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
+li r5, 0x24 # # Get Title at top left corner
+li r6, -1
+branchl r12, JObj_GetJObjChild
+
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_ReqAnimAll# (jobj, frames)
+lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
+branchl r12, JObj_AnimAll
+
+################################################################################
 # Manage header text
 ################################################################################
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 bgt UPDATE_HEADER_ERROR
+
+# preset default text variables
+li r4, STIDX_HEADER # set substring header index
+addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
 
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -613,26 +601,31 @@ cmpwi r3, ONLINE_MODE_DIRECT
 beq UPDATE_HEADER_DIRECT
 cmpwi r3, ONLINE_MODE_RANKED
 beq UPDATE_HEADER_RANKED
+cmpwi r3, ONLINE_MODE_TEAMS
+beq UPDATE_HEADER_TEAMS
 b UPDATE_HEADER_ERROR
 
 UPDATE_HEADER_UNRANKED:
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_UNRANKED
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_UNRANKED
 b UPDATE_HEADER
 
 UPDATE_HEADER_DIRECT:
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_DIRECT
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_DIRECT
 b UPDATE_HEADER
 
 UPDATE_HEADER_RANKED:
-addi r5, REG_TEXT_PROPERTIES, TPO_STRING_RANKED
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_RANKED
+b UPDATE_HEADER
+
+UPDATE_HEADER_TEAMS:
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_TEAMS
 b UPDATE_HEADER
 
 UPDATE_HEADER_ERROR:
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
-b UPDATE_HEADER
+# b UPDATE_HEADER # commented out just to save gecko space no need to jump since it's the next instruction
 
 UPDATE_HEADER:
-li r4, STIDX_HEADER
 bl FN_UPDATE_TEXT
 
 ################################################################################
@@ -644,16 +637,24 @@ bl FN_UPDATE_TEXT
 lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq CHECK_OPP_CHAT_MESSAGE
-addi r25, REG_MSRB_ADDR, MSRB_P1_NAME
-mr r26, r3
+addi r25, REG_MSRB_ADDR, MSRB_LOCAL_NAME # store player name
+mr r26, r3 # store chat message id
 b UPDATE_CHAT_MESSAGES
 
 CHECK_OPP_CHAT_MESSAGE:
 lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq SKIP_CHAT_MESSAGES
-addi r25, REG_MSRB_ADDR, MSRB_P2_NAME
-mr r26, r3
+mr r26, r3 # store chat message id
+
+# if we got an opponent chat message check player index to get correct name
+# multiply the index with player string size to fall under correct name
+# starting from P1
+lbz r3, MSRB_OPP_CHATMSG_PLAYER_IDX(REG_MSRB_ADDR)
+mulli r3, r3, 31
+addi r3, r3, MSRB_P1_NAME # r3 holds the correct index to MSRB_P{1-4}_NAME
+add r25, REG_MSRB_ADDR, r3 # store player name
+
 
 UPDATE_CHAT_MESSAGES:
 # Start at the top after x messages
@@ -963,8 +964,8 @@ bne UPDATE_LOCKED_IN
 
 # If direct && loser && not locked in, show press start to select stage
 lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
-bne NOT_SELECT_STAGE
+cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct/teams mode
+blt NOT_SELECT_STAGE
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 bne NOT_SELECT_STAGE
@@ -993,7 +994,7 @@ addi r6, REG_TEXT_PROPERTIES, TPO_STRING_SEARCH
 
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_DIRECT
-bne UPDATE_PRESS_START_TEXT # If not direct, show search text
+blt UPDATE_PRESS_START_TEXT # If not direct/teams, show search text
 
 # Show "enter-code" press start action
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_PRESS_START_TO
@@ -1028,7 +1029,7 @@ lbz r5, OFST_R13_ONLINE_MODE(r13)
 cmpwi r5, ONLINE_MODE_DIRECT
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_SEARCHING_FOR
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_OPPONENT
-bne UPDATE_WAITING
+ble UPDATE_WAITING
 
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_SEARCHING_FOR
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_OPP_CODE
@@ -1040,7 +1041,7 @@ lbz r5, OFST_R13_ONLINE_MODE(r13)
 cmpwi r5, ONLINE_MODE_DIRECT
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CONNECTING_TO
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_OPPONENT
-bne UPDATE_WAITING
+ble UPDATE_WAITING
 
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CONNECTING_TO
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_OPP_CODE
@@ -1183,7 +1184,7 @@ li r4, 0x0
 stb r4, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # Store Base Z Offset
-lfs f1, TPO_CHATMSG_Z(REG_TEXT_PROPERTIES) #Z offset
+lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) #Z offset
 stfs f1, 0x8(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # Scale Canvas Down
@@ -1192,71 +1193,25 @@ stfs f1, 0x24(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 stfs f1, 0x28(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
 
 # INIT MSG Properties based on input button (lowest bit)
-mr r3, REG_CHATMSG_MSG_ID
+
+# Extract message input (highest bit)
+mr r5, REG_CHATMSG_MSG_ID
 li r4, 4
-srw r3, r3, r4
+srw r5, r5, r4 # shift right = 0x0N
+slw r5, r5, r4 # shift left = 0xN0
+sub r4, REG_CHATMSG_MSG_ID, r5
 
-cmpwi r3, PAD_UP
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES
-cmpwi r3, PAD_DOWN
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES
-cmpwi r3, PAD_RIGHT
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES
-cmpwi r3, PAD_LEFT
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES
-
-
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES:
-bl UP_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES:
-bl DOWN_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES:
-bl RIGHT_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES:
-bl LEFT_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END:
-
-# get message input (highest bit)
+# Extract Category ID
 mr r3, REG_CHATMSG_MSG_ID
-li r4, 4
-srw r3, r3, r4 # shift right = 0x0N
-slw r3, r3, r4 # shift left = 0xN0
-sub r3, REG_CHATMSG_MSG_ID, r3
+li r5, 4
+srw r3, r3, r5
 
-# calculate address of label
-cmpwi r3, PAD_UP # up
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR
-cmpwi r3, PAD_LEFT # left
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR
-cmpwi r3, PAD_RIGHT # right
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR
-cmpwi r3, PAD_DOWN # down
-beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
-
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_UP # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_LEFT # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_RIGHT # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR:
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_MSG_DOWN # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
-
-addi r4, REG_CHAT_TEXT_PROPERTIES, TPO_EMPTY_STRING # set empty string by default
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END:
-
+# INIT MSG Properties based on input button (r3)
+# r3 = category id
+# r4 = chosen message
+branchl r12, FN_LoadChatMessageProperties
+mr REG_CHAT_TEXT_PROPERTIES, r3
+# r4 has adress to message
 
 SET_CHATMSG_TEXT_HEADER:
 mr REG_CHATMSG_MSG_STRING_ADDR, r4 # store current string pointer
@@ -1285,7 +1240,7 @@ loadwz r3, CSSDT_BUF_ADDR
 lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(r3)
 
 # Compare if the current player name matches P1 or P2
-addi r3, REG_MSRB_ADDR, MSRB_P1_NAME
+addi r3, REG_MSRB_ADDR, MSRB_LOCAL_NAME
 cmpw r3, REG_CHATMSG_USER_NAME_ADDR
 bne CSS_ONLINE_CHAT_SET_COLOR_P2
 CSS_ONLINE_CHAT_SET_COLOR_P1:
