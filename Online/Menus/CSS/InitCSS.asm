@@ -40,7 +40,7 @@
 .set PAD_UP, 0x8
 
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
-.set MAX_CHAT_MESSAGE_LINES, 14
+.set MAX_CHAT_MESSAGE_LINES, 12
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 .set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
 
@@ -69,9 +69,9 @@ blrl
 
 # Chat Message Propiertes
 .set TPO_CHATMSG_X, TPO_BASE_CANVAS_SCALING + 4
-.float -330
+.float -310
 .set TPO_CHATMSG_Y, TPO_CHATMSG_X + 4
-.float -285
+.float -265
 .set TPO_CHATMSG_SIZE, TPO_CHATMSG_Y + 4
 .float 0.45
 .set TPO_CHATMSG_SIZE_SM, TPO_CHATMSG_SIZE + 4

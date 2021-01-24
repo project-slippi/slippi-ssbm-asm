@@ -641,6 +641,10 @@ FN_OPEN_CHAT_WINDOW:
 mr REG_CHAT_INPUTS, r3 # Store Controller Input argument
 backup
 
+
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
 # Play a sound indicating a new message TODO: move to a function
 li r3, 0xb7
 li r4, 127
@@ -680,6 +684,11 @@ lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
 lwz r3, 0x18(r3) # pointer to our custom bg jobj
 branchl r12,0x80370e44 #Create Jboj
 mr  REG_CHAT_JOBJ,r3
+
+lfs f1, TPO_CHAT_WINDOW_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_CHAT_WINDOW_Y(REG_TEXT_PROPERTIES)
+stfs f1, 0x38(r3) # X POS
+stfs f2, 0x3C(r3) # Y POS
 
 # Add JOBJ To GObj
 mr  r3,REG_CHAT_GOBJ
@@ -939,18 +948,24 @@ blrl
 
 # Chat Labels Propiertes
 .set TPO_CHAT_HEADER_X, TPO_BASE_CANVAS_SCALING + 4
-.float -330
+.float -300
 .set TPO_CHAT_LABEL_X, TPO_CHAT_HEADER_X + 4
-.float -315
+.float -285
 .set TPO_CHAT_LABEL_Y, TPO_CHAT_LABEL_X + 4
-.float 105
+.float 79
 .set TPO_CHAT_LABEL_SIZE, TPO_CHAT_LABEL_Y + 4
 .float 0.45
 .set TPO_CHAT_LABEL_MARGIN, TPO_CHAT_LABEL_SIZE + 4
 .float 25
 
+# Chat Window Properties
+.set TPO_CHAT_WINDOW_X, TPO_CHAT_LABEL_MARGIN + 4
+.float -20
+.set TPO_CHAT_WINDOW_Y, TPO_CHAT_WINDOW_X + 4
+.float -16.5
+
 # Text colors
-.set TPO_COLOR_WHITE, TPO_CHAT_LABEL_MARGIN + 4
+.set TPO_COLOR_WHITE, TPO_CHAT_WINDOW_Y + 4
 .long 0xFFFFFFFF # white
 .set TPO_COLOR_YELLOW, TPO_COLOR_WHITE + 4
 .long 0xffea2fFF
