@@ -17,8 +17,8 @@
 .set REG_PREMADE_TEXT_PARAM_1, REG_PREMADE_TEXT_ID-1
 
 backup
-mr REG_PREMADE_TEXT_ID, r6
-mr REG_PREMADE_TEXT_PARAM_1, r7
+mr REG_PREMADE_TEXT_ID, r4
+mr REG_PREMADE_TEXT_PARAM_1, r6
 
 # So, what we are going to do here is request a READ from the EXI device which
 # will return the encoded string requested with an ID and then store that into

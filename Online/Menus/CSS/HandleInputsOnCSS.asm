@@ -19,16 +19,6 @@
 .set PAD_DOWN, 0x04
 .set PAD_UP, 0x08
 
-.set L_PAD_LEFT, 0x40+PAD_LEFT
-.set L_PAD_RIGHT, 0x40+PAD_RIGHT
-.set L_PAD_DOWN, 0x40+PAD_DOWN
-.set L_PAD_UP, 0x40+PAD_UP
-
-.set R_PAD_LEFT, 0x20+PAD_LEFT
-.set R_PAD_RIGHT, 0x20+PAD_RIGHT
-.set R_PAD_DOWN, 0x20+PAD_DOWN
-.set R_PAD_UP, 0x20+PAD_UP
-
 # Deal with replaced codeline
 beq+ START
 branch r12, 0x80263334
@@ -98,12 +88,13 @@ b SOUND_PLAY_END
 PLAY_BACK_SOUND_ON_RESET:
 # Play "back" sound
 li	r3, 0
-branchl r12, SFX_Menu_CommonSound
-b SOUND_PLAY_END
+b PLAY_SOUND
 
 PLAY_ERROR_SOUND_ON_ERROR:
 # Play "error" sound
 li	r3, 3
+
+PLAY_SOUND:
 branchl r12, SFX_Menu_CommonSound
 
 SOUND_PLAY_END:
@@ -545,24 +536,6 @@ beq HANDLE_CHAT_INPUT_PRESSED
 cmpwi REG_INPUTS, PAD_UP
 beq HANDLE_CHAT_INPUT_PRESSED
 cmpwi REG_INPUTS, PAD_DOWN
-beq HANDLE_CHAT_INPUT_PRESSED
-
-cmpwi REG_INPUTS, L_PAD_LEFT
-beq HANDLE_CHAT_INPUT_PRESSED
-cmpwi REG_INPUTS, L_PAD_RIGHT
-beq HANDLE_CHAT_INPUT_PRESSED
-cmpwi REG_INPUTS, L_PAD_UP
-beq HANDLE_CHAT_INPUT_PRESSED
-cmpwi REG_INPUTS, L_PAD_DOWN
-beq HANDLE_CHAT_INPUT_PRESSED
-
-cmpwi REG_INPUTS, R_PAD_LEFT
-beq HANDLE_CHAT_INPUT_PRESSED
-cmpwi REG_INPUTS, R_PAD_RIGHT
-beq HANDLE_CHAT_INPUT_PRESSED
-cmpwi REG_INPUTS, R_PAD_UP
-beq HANDLE_CHAT_INPUT_PRESSED
-cmpwi REG_INPUTS, R_PAD_DOWN
 bnel HANDLE_SKIP_CHAT_INPUT
 
 HANDLE_CHAT_INPUT_PRESSED:
@@ -763,15 +736,22 @@ branchl r12, FN_LoadChatMessageProperties
 mr REG_CHAT_TEXT_PROPERTIES, r3
 
 # Create Text Struct
+li r3, 0
+li r4, 0
+branchl r12, Text_CreateStruct
+# Save Text Struct Address
+mr REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, r3
+stw REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+
 li r3, 0x1 # Text kerning to close
 li r4, 0x0 # Align Left
 lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) # Z offset
 lfs f2, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES) # Scale
-bl FN_CREATE_TEXT_STRUCT # 801954ec
-
-# Save Text Struct Address
-mr REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, r3
-stw REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+stb r3, 0x49(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # Set text kerning
+stb r4, 0x4A(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # Set text alignment
+stfs f1, 0x8(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # set z offset
+stfs f2, 0x24(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # set scale
+stfs f2, 0x28(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # set scale
 
 # Create Subtext: Header
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
@@ -781,9 +761,8 @@ addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
 addi r8, REG_CHAT_TEXT_PROPERTIES, 0x4 # String pointer (header starts at 0x4)
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f3, TPO_CHAT_HEADER_X(REG_TEXT_PROPERTIES) # X POS
-lfs f4, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
+lfs f2, TPO_CHAT_HEADER_X(REG_TEXT_PROPERTIES) # X POS
+lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
 branchl r12, FG_CreateSubtext
 mr r4, r3 # sub text index for next function call
 
@@ -797,7 +776,7 @@ addi r3, r11, CHAT_WINDOW_HEADER_MARGIN_LINES
 lfs f2, TPO_CHAT_LABEL_MARGIN(REG_TEXT_PROPERTIES) # margin between labels
 branchl r12, FN_MultiplyRWithF
 lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
-fadds f4, f3, f1
+fadds f3, f3, f1
 #fmr f3, f1 # 0x80195588
 
 # calculate address of label
@@ -836,8 +815,7 @@ li r5, 0 # No outlines
 addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 # r7 message String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f3, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
 branchl r12, FG_CreateSubtext
 mr r11, r3 # save subtext index
 
@@ -898,10 +876,6 @@ CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC: # TODO: is this the proper way to dele
 li r3, 0
 stb r3, CSSDT_CHAT_WINDOW_OPENED(REG_CHAT_WINDOW_CSSDT_ADDR)
 
-# remove proc
-mr r3, REG_CHAT_WINDOW_GOBJ
-branchl r12, GObj_RemoveProc
-
 # destroy gobj
 mr r3, REG_CHAT_WINDOW_GOBJ
 branchl r12, GObj_Destroy
@@ -946,68 +920,9 @@ blrl
 .long 0xffea2fFF
 
 # String Properties
-.set TPO_EMPTY_STRING, TPO_COLOR_YELLOW + 4
-.string ""
-.set TPO_STRING_CHAT_SHORTCUTS, TPO_EMPTY_STRING + 1
+.set TPO_STRING_CHAT_SHORTCUTS, TPO_COLOR_YELLOW + 4
 .string "Chat: %s"
-.set TPO_STRING_CHAT_LABEL_FORMAT, TPO_STRING_CHAT_SHORTCUTS + 9
-.string "%s: %s"
-.set TPO_STRING_GAME, TPO_STRING_CHAT_LABEL_FORMAT + 7
-.string "Game"
-.set TPO_STRING_UP, TPO_STRING_GAME + 5
-.string "U"
-.set TPO_STRING_LEFT, TPO_STRING_UP + 2
-.string "L"
-.set TPO_STRING_RIGHT, TPO_STRING_LEFT + 2
-.string "R"
-.set TPO_STRING_DOWN, TPO_STRING_RIGHT + 2
-.string "D"
-.set TPO_STRING_PLUS, TPO_STRING_DOWN + 2
-.short 0x817B # ＋
-.byte 0x00
 .align 2
-
-################################################################################
-# Function: Initializes Text struct
-# r3 = kerning, r4 = alignment, f1 = z offset, f2 = scaling
-################################################################################
-FN_CREATE_TEXT_STRUCT:
-# gp registers
-.set REG_KERNING, 22
-.set REG_ALIGNMENT, REG_KERNING+1
-.set REG_TEXT_STRUCT_ADDR, REG_ALIGNMENT+1
-# float registers
-.set REG_Z_OFFSET, REG_KERNING
-.set REG_SCALING, REG_Z_OFFSET+1
-
-# Save arguments
-mr REG_KERNING, r3
-mr REG_ALIGNMENT, r4
-
-fmr REG_Z_OFFSET, f1
-fmr REG_SCALING, f2
-backup
-
-# Create Text Struct
-li r3, 0 # 0x8019563C
-li r4, 0
-branchl r12, Text_CreateStruct
-mr REG_TEXT_STRUCT_ADDR, r3
-
-# Set text kerning
-stb REG_KERNING, 0x49(REG_TEXT_STRUCT_ADDR)
-# Set text alignment
-stb REG_ALIGNMENT, 0x4A(REG_TEXT_STRUCT_ADDR)
-# set z offset
-stfs REG_Z_OFFSET, 0x8(REG_TEXT_STRUCT_ADDR)
-# set scale
-stfs REG_SCALING, 0x24(REG_TEXT_STRUCT_ADDR)
-stfs REG_SCALING, 0x28(REG_TEXT_STRUCT_ADDR)
-
-# Return text struct Pointer in r3
-mr r3, REG_TEXT_STRUCT_ADDR
-restore
-blr
 
 ################################################################################
 # Skip starting match

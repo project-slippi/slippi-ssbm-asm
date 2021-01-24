@@ -33,13 +33,6 @@
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
 
-
- # Chat Messages Pad Mapping
-.set PAD_LEFT, 0x1
-.set PAD_RIGHT, 0x2
-.set PAD_DOWN, 0x4
-.set PAD_UP, 0x8
-
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
 .set MAX_CHAT_MESSAGE_LINES, 14
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
@@ -69,29 +62,22 @@ blrl
 .float 2.4
 
 # Label properties
-.set TPO_CHAT_BG_Y_POS, TPO_CHAT_BG_X_POS+4
+.set TPO_CHAT_BG_Y_POS, TPO_CHATMSG_SIZE_MARGIN+4
 .float 24
-.set TPO_CHAT_BG_FRAME_START, TPO_CHAT_BG_Y_SCALE+4
+.set TPO_CHAT_BG_FRAME_START, TPO_CHAT_BG_Y_POS+4
 .float 0
 .set TPO_CHAT_BG_FRAME_END, TPO_CHAT_BG_FRAME_START+4
 .float 30
 .set TPO_CHAT_BG_FRAME_REWIND, TPO_CHAT_BG_FRAME_END+4
 .float 50
 
-
 .set TPO_CHATMSG_X_POS, TPO_CHAT_BG_FRAME_REWIND+4
 .float -29.5
 .set TPO_CHATMSG_Y_POS, TPO_CHATMSG_X_POS+4
 .float -24.5
-.set TPO_CHATMSG_UNK0, TPO_CHATMSG_Y_POS+4
-.float 9
-.set TPO_CHATMSG_Z_POS,  TPO_CHATMSG_UNK0+4
+.set TPO_CHATMSG_Z_POS,  TPO_CHATMSG_Y_POS+4
 .float 0
-.set TPO_CHATMSG_WIDTH, TPO_CHATMSG_Z_POS+4
-.float 400
-.set TPO_CHATMSG_UNK1, TPO_CHATMSG_WIDTH+4
-.float 20
-.set TPO_CHATMSG_CANVAS_SCALE, TPO_CHATMSG_UNK1+4
+.set TPO_CHATMSG_CANVAS_SCALE, TPO_CHATMSG_Z_POS+4
 .float 0.025
 
 # Header properties
@@ -129,18 +115,8 @@ blrl
 .set TPO_PRESS_D_Y, TPO_PRESS_Z_Y + 4
 .float 152.5
 
-# User Chat Label Properties
-# This is supposed to set the chat message cheat on top of
-# the original user display
-.set TPO_USER_Y, TPO_PRESS_D_Y + 4
-.float 40 # Y Pos of User Display, 0x4
-.set TPO_USER_X, TPO_USER_Y + 4
-.float -112 # X Pos of User Display, 0x0
-.set TPO_USER_SIZE, TPO_USER_X + 4
-.float 0.5 # Scaling, 0xC
-
 # Player Label Properties
-.set TPO_PLAYING_Y, TPO_USER_SIZE + 4
+.set TPO_PLAYING_Y, TPO_PRESS_D_Y + 4
 .float -246
 .set TPO_PLAYING_LABEL_X, TPO_PLAYING_Y + 4
 .float -130
@@ -158,20 +134,13 @@ blrl
 # Text colors
 .set TPO_COLOR_GRAY, TPO_SPINNER_WAITING_COLOR + 4
 .long 0x8E9196FF
-.set TPO_COLOR_RED, TPO_COLOR_GRAY + 4
+.set TPO_COLOR_WHITE, TPO_COLOR_GRAY + 4
+.long 0xFFFFFFFF
+.set TPO_COLOR_RED, TPO_COLOR_WHITE + 4
 .long 0xFF0000FF
-.set TPO_COLOR_CHAT, TPO_COLOR_RED + 4
-.long 0xFFFFFFFF # white
-.set TPO_COLOR_CHAT_P1, TPO_COLOR_CHAT + 4
-.long 0xD4D4D4FF
-.set TPO_COLOR_CHAT_P2, TPO_COLOR_CHAT_P1 + 4
-.long 0x33FF2FFF
-.set TPO_COLOR_CHAT_BG, TPO_COLOR_CHAT_P2 + 4
-.long 0x00000000 # black
-
 
 # String Properties
-.set TPO_EMPTY_STRING, TPO_COLOR_CHAT_BG + 4
+.set TPO_EMPTY_STRING, TPO_COLOR_RED + 4
 .string ""
 .set TPO_STRING_UNRANKED, TPO_EMPTY_STRING + 1
 .string "Unranked"
@@ -225,9 +194,7 @@ blrl
 .string "cancel"
 .set TPO_STRING_CLEAR_ERROR, TPO_STRING_CANCEL + 7
 .string "clear error"
-.set TPO_STRING_CHATMSG_FORMAT, TPO_STRING_CLEAR_ERROR + 12
-.string "%s: %s"
-.set TPO_STRING_SPINNER_1, TPO_STRING_CHATMSG_FORMAT + 7
+.set TPO_STRING_SPINNER_1, TPO_STRING_CLEAR_ERROR + 12
 .short 0x817B # ＋
 .byte 0x00
 .set TPO_STRING_SPINNER_2, TPO_STRING_SPINNER_1 + 3
@@ -343,107 +310,76 @@ stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
 # Initialize header
-lfs f1, TPO_HEADER_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_HEADER_Y(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-# Set header text size
-mr r4, r3 # stidx = 0
-mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE
+li r5, 0
 lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
+lfs f3, TPO_HEADER_Y(REG_TEXT_PROPERTIES)
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 # Initialize lines
-lfs f2, TPO_LINE1_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_LINE1_Y(REG_TEXT_PROPERTIES)
 bl INIT_LINE_SUBTEXT
 
-lfs f2, TPO_LINE2_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_LINE2_Y(REG_TEXT_PROPERTIES)
 bl INIT_LINE_SUBTEXT
 
-lfs f2, TPO_LINE3_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_LINE3_Y(REG_TEXT_PROPERTIES)
 bl INIT_LINE_SUBTEXT
 
 # Initialize Press Z text
-lfs f1, TPO_HEADER_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PRESS_Z_Y(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PRESS_Z # stidx = 1
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
+li r5, 0
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PRESS_Z
-addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
-branchl r12, Text_ChangeTextColor
+lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
+lfs f3, TPO_PRESS_Z_Y(REG_TEXT_PROPERTIES)
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 # Initialize Use D-PAD to Chat
-lfs f1, TPO_HEADER_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PRESS_D_Y(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PRESS_D # stidx = 1
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
+li r5, 0
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PRESS_D
-addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
-branchl r12, Text_ChangeTextColor
+lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
+lfs f3, TPO_PRESS_D_Y(REG_TEXT_PROPERTIES)
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 # Initialize Playing Label
-lfs f1, TPO_PLAYING_LABEL_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_LABEL
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
+li r5, 0
 lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_LABEL
-addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
-branchl r12, Text_ChangeTextColor
+lfs f2, TPO_PLAYING_LABEL_X(REG_TEXT_PROPERTIES)
+lfs f3, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 # Initialize Opponent text
-lfs f1, TPO_PLAYING_VALUE_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
-branchl r12, Text_InitializeSubtext
-
-mr r3, REG_TEXT_STRUCT
-li r4, STIDX_PLAYING_OPP
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_GRAY
+li r5, 0
 lfs f1, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_HEADER_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+lfs f2, TPO_PLAYING_VALUE_X(REG_TEXT_PROPERTIES)
+lfs f3, TPO_PLAYING_Y(REG_TEXT_PROPERTIES)
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 # Initialize error lines
-lfs f2, TPO_ERR_LINE1_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_ERR_LINE1_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
 
-lfs f2, TPO_ERR_LINE2_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_ERR_LINE2_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
 
-lfs f2, TPO_ERR_LINE3_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_ERR_LINE3_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
 
-lfs f2, TPO_ERR_LINE4_Y(REG_TEXT_PROPERTIES)
+lfs f3, TPO_ERR_LINE4_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
 
 restore
@@ -451,67 +387,53 @@ b EXIT
 
 ################################################################################
 # Function for initializing line subtext.
-# Expects f2 to be set to y position of line
+# Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
 mflr REG_LR # Single depth helper function. Non-standard
 
-fmr f3, f2
+fmr f13, f3
 
 # Init line text
-lfs f1, TPO_LINES_X(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING # change to empty string
-branchl r12, Text_InitializeSubtext
-
-mr r4, r3
-mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE
+li r5, 0
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+lfs f2, TPO_LINES_X(REG_TEXT_PROPERTIES)
+# f3 = y pos set by caller
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 # Init spinner
-lfs f1, TPO_HEADER_X(REG_TEXT_PROPERTIES)
-fmr f2, f3
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING # change to empty string
-branchl r12, Text_InitializeSubtext
-
-mr r4, r3
-mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE
+li r5, 0
 lfs f1, TPO_SPINNER_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_SPINNER_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
+lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
+fmr f3, f13
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
 
 mtlr REG_LR
 blr
 
 ################################################################################
 # Function for initializing error line subtext
-# Expects f2 to be set to y position of line
+# Expects f3 to be set to y position of line
 ################################################################################
 INIT_ERROR_LINE_SUBTEXT:
 backup
 
 # Init line text
-lfs f1, TPO_HEADER_X(REG_TEXT_PROPERTIES)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING # change to empty string
-branchl r12, Text_InitializeSubtext
-mr REG_SUBTEXT_IDX, r3
-
-# Set line font size
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_SUBTEXT_IDX
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_RED
+li r5, 0
 lfs f1, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_LINES_SIZE(REG_TEXT_PROPERTIES)
-branchl r12, Text_UpdateSubtextSize
-
-# Set line font color
-mr r3, REG_TEXT_STRUCT
-mr r4, REG_SUBTEXT_IDX
-addi r5, REG_TEXT_PROPERTIES, TPO_COLOR_RED
-branchl r12, Text_ChangeTextColor
+lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
+# f3 = y pos set by caller
+addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
+branchl r12, FG_CreateSubtext
+mr REG_SUBTEXT_IDX, r3
 
 restore
 blr
@@ -708,8 +630,8 @@ stb r3, CSSCMDT_MSG_INDEX(r23) # set index in the new buffer
 addi r3, r3, 1 # increase message index
 stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 
-# Set Username Address
-lbz r3, MSRB_OPP_CHATMSG_PLAYER_INDEX(REG_MSRB_ADDR)
+# Set player index
+lbz r3, MSRB_CHATMSG_PLAYER_INDEX(REG_MSRB_ADDR)
 stb r3, CSSCMDT_PLAYER_INDEX(r23)
 
 # Set CSS DataTable Address
@@ -1197,7 +1119,7 @@ lbz REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
 lbz REG_CHATMSG_MSG_ID, CSSCMDT_MSG_ID(REG_CHATMSG_GOBJ_DATA_ADDR)
 lbz REG_CHATMSG_MSG_INDEX, CSSCMDT_MSG_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
-lwz REG_CHATMSG_PLAYER_INDEX, CSSCMDT_PLAYER_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
+lbz REG_CHATMSG_PLAYER_INDEX, CSSCMDT_PLAYER_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 lwz REG_CHATMSG_JOBJ, JOBJ_OFFSET(REG_CHATMSG_GOBJ) # get address of jobj
@@ -1249,40 +1171,26 @@ fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
 # Create Text Object
-li r3, 0
-li r4, 0 # gx_link?
-lfs f0, TPO_CHATMSG_UNK0(REG_TEXT_PROPERTIES)
-lfs f1, TPO_CHATMSG_X_POS(REG_TEXT_PROPERTIES)
-#lfs f2, TPO_CHATMSG_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES) # Scale Factor
-lfs f4, TPO_CHATMSG_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
-lfs f5, TPO_CHATMSG_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
-branchl r12, Text_AllocateTextObject
-# Save Text Struct Address
-mr REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, r3
-stw REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
-
-# Initialize Struct Stuff
-li r0, 1
-stb r0, OFST_R13_USE_PREMADE_TEXT(r13) # use slippi premade text
-
-mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
-li r4, 0x13F # Premade Text id "Are you Sure?"
-mr r6, REG_CHATMSG_PLAYER_INDEX
-mr r7, REG_CHATMSG_MSG_ID
-cmpwi r7, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
+addi r3, REG_CHATMSG_PLAYER_INDEX, 1
+mr r4, REG_CHATMSG_MSG_ID
+cmpwi r4, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
 beq MAP_UP_UP
 SKIP_REMAP:
-lfs f0, TPO_CHATMSG_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
-stfs f0, 0x24(r3) # Scale X
-stfs f0, 0x28(r3) # Scale Y
-stb r0, 0x4A(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR) # Set text to align center
-branchl r12, Text_CopyPremadeTextDataToStruct
+li r5, 2 # use premade text fn
+li r6, 0 # gx_link
+lfs f1, TPO_CHATMSG_X_POS(REG_TEXT_PROPERTIES)
+# f2 = Y POS is set up above
+lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES)
+lfs f4, TPO_CHATMSG_CANVAS_SCALE(REG_TEXT_PROPERTIES)
+branchl r12, FG_CreateSubtext
+
+# Save Text Struct Address
+stw r3, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 b CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES
 
 MAP_UP_UP:
-li r7, 0x83
+li r4, 0x83
 b SKIP_REMAP
 
 
@@ -1352,10 +1260,6 @@ branchl r12, Text_RemoveText
 b CSS_ONLINE_CHAT_CHECK_EXIT
 
 CSS_ONLINE_CHAT_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
-
-# remove proc
-mr r3, REG_CHATMSG_GOBJ
-branchl r12, GObj_RemoveProc
 
 # destroy gobj
 mr r3, REG_CHATMSG_GOBJ
