@@ -1258,6 +1258,10 @@ mr r3, REG_CHATMSG_JOBJ
 lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)
 branchl r12, JObj_ReqAnimAll# (jobj, frames)
 
+# free up custom slippi text id data
+lwz r3, 0x5C(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
+branchl r12, HSD_Free
+
 # remove text
 mr r3, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR
 branchl r12, Text_RemoveText
