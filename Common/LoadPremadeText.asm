@@ -39,7 +39,7 @@ stb REG_PREMADE_TEXT_ID, 1(REG_BUFFER) # Text ID
 stb REG_PREMADE_TEXT_PARAM_1, 2(REG_BUFFER) # PARAM 1
 
 bl FN_Exi
-lbz REG_BUFFER_SIZE, 0(r3) # get premade text size
+lhz REG_BUFFER_SIZE, 0(r3) # get premade text size
 # This should print 23 bytes = 0x17
 
 # Free previous allocated memory
