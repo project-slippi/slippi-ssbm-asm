@@ -237,7 +237,7 @@ mflr REG_TEXT_PROPERTIES
 
 # Create Text Object
 li r3, 0
-mr r4, REG_GX_LINK # gx_link?
+mr r4, REG_GX_LINK # gx_link/priority?
 lfs f0, TPO_UNK0(REG_TEXT_PROPERTIES)
 fmr f1, REG_X
 fmr f2, REG_Y

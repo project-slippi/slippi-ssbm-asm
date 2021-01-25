@@ -679,7 +679,7 @@ branchl r12, JObj_ReqAnimAll# (jobj, frames)
 # Add GX Link that draws the background
 mr  r3,r14
 load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
-li  r5, 1
+li  r5, 3
 li  r6, 128
 branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
 
@@ -1170,6 +1170,11 @@ fmuls f3, f1, f3 # multiply index by margin
 fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
 
+# Change Text Struct Descriptor to use a higher GX
+lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
+li r4, 3 # gx_link we want
+stb r4, 0xE(r3)
+
 # Create Text Object
 addi r3, REG_CHATMSG_PLAYER_INDEX, 1
 mr r4, REG_CHATMSG_MSG_ID
@@ -1177,7 +1182,7 @@ cmpwi r4, 0x88 # for some reason if I send 0x88 the premade text data comes back
 beq MAP_UP_UP
 SKIP_REMAP:
 li r5, 2 # use premade text fn
-li r6, 0 # gx_link
+li r6, 0 # gx_link/pri?
 lfs f1, TPO_CHATMSG_X_POS(REG_TEXT_PROPERTIES)
 # f2 = Y POS is set up above
 lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES)
