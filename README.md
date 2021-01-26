@@ -7,7 +7,7 @@ This project is home to the series of ASM mods that are applied to Melee in orde
 
 ## Build Instructions
 1. In order to build this project you will need to [download](https://github.com/JLaferri/gecko/releases) the `gecko` program and add it to your PATH env variable.
-2. On windows you can then simply run the `build.bat` file to build all the different configurations. On mac/linux you can run the makefile.
+2. On windows you can then simply run the `build.bat` file to build all the different configurations. On mac/linux you can run the makefile or run `build.sh`.
 
 ## Output
 ### Console
