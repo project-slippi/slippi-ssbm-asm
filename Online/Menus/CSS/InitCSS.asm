@@ -34,7 +34,7 @@
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
 
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
-.set MAX_CHAT_MESSAGE_LINES, 14
+.set MAX_CHAT_MESSAGE_LINES, 12
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 .set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
 
