@@ -264,10 +264,12 @@ lwz \reg, -0x62A0(\reg)
 .set MSRB_P2_NAME, MSRB_P1_NAME + 31 # string (31)
 .set MSRB_P3_NAME, MSRB_P2_NAME + 31 # string (31)
 .set MSRB_P4_NAME, MSRB_P3_NAME + 31 # string (31)
-.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (31)
+.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (63)
 .set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 63 # string (10) hashtag is shift-jis
 .set MSRB_P2_CONNECT_CODE, MSRB_P1_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
-.set MSRB_ERROR_MSG, MSRB_P2_CONNECT_CODE + 10 # string (241)
+.set MSRB_P3_CONNECT_CODE, MSRB_P2_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
+.set MSRB_P4_CONNECT_CODE, MSRB_P3_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
+.set MSRB_ERROR_MSG, MSRB_P4_CONNECT_CODE + 10 # string (241)
 .set ERROR_MESSAGE_LEN, 241
 .set MSRB_GAME_INFO_BLOCK, MSRB_ERROR_MSG + ERROR_MESSAGE_LEN # MATCH_STRUCT_LEN
 .set MSRB_SIZE, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN

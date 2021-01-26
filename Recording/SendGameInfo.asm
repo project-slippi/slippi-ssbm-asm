@@ -354,9 +354,7 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 # Constants
 .set DisplayNameBytesToCopy,31  # 2 bytes per char + 1 byte for null terminator = 31 bytes
 # Registers
-.set REG_LoopCount,19
-.set REG_ReadCount,20  # Only two player display names are available in MSRB, so we need to keep track of how many times we read.
-                       # If MSRB is updated to contain 4 display names, this reg can be removed.
+.set REG_LoopCount,20
 .set REG_PlayerDataStart,21
 .set REG_CurrentPlayerData,22
 .set REG_BufferDisplayNameStart,23
@@ -371,7 +369,6 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   
 # Init loop
   li REG_LoopCount,0
-  li REG_ReadCount,0
   addi REG_PlayerDataStart,r31,PlayerDataStart                 # player data start in match struct
   addi REG_BufferDisplayNameStart,REG_Buffer,DisplayNameStart  # Start of write buffer
   addi REG_MSRB_DisplayNameStart,REG_MSRB,MSRB_P1_NAME         # Start of read buffer
@@ -388,21 +385,14 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   cmpwi r3,0
   bne SEND_DISPLAY_NAME_NO_NAME
 
-#If MSRB is updated to contain >2 display names, this can be updated accordingly.
-#If MSRB is updated to contain 4 display names, remove this block.
-  cmpwi REG_ReadCount,2
-  bge SEND_DISPLAY_NAME_NO_NAME
-
 #Next read offset
-#If MSRB is updated to contain 4 display names, change REG_ReadCount to REG_LoopCount.
-  mulli r3,REG_ReadCount,DisplayNameBytesToCopy
+  mulli r3,REG_LoopCount,DisplayNameBytesToCopy
 
 #Copy from read position to write position
   add r4,r3,REG_MSRB_DisplayNameStart  # src (MSRB_DisplayNameStart + offset)
   mr r3,REG_BufferCurrentDisplayName   # dest
   li r5,DisplayNameBytesToCopy         # length
   branchl r12,memcpy
-  addi REG_ReadCount,REG_ReadCount,1
   b DISPLAY_NAME_INC_LOOP
 
   SEND_DISPLAY_NAME_NO_NAME:
@@ -426,9 +416,7 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 # Constants
 .set ConnectCodeBytesToCopy,10  # 1 bytes per char + 2 bytes for hashtag + 1 byte for null terminator = 10 bytes
 # Registers
-.set REG_LoopCount,19
-.set REG_ReadCount,20  # Only two player connect codes are available in MSRB, so we need to keep track of how many times we read.
-                       # If MSRB is updated to contain 4 connect codes, this reg can be removed.
+.set REG_LoopCount,20
 .set REG_PlayerDataStart,21
 .set REG_CurrentPlayerData,22
 .set REG_BufferConnectCodeStart,23
@@ -436,8 +424,7 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 .set REG_MSRB_ConnectCodeStart,26
   
 # Init loop
-  li REG_LoopCount,0         
-  li REG_ReadCount,0
+  li REG_LoopCount,0
   addi REG_PlayerDataStart,r31,PlayerDataStart                  # player data start in match struct
   addi REG_BufferConnectCodeStart,REG_Buffer,ConnectCodeStart   # Start of write buffer
   addi REG_MSRB_ConnectCodeStart,REG_MSRB,MSRB_P1_CONNECT_CODE  # Start of read buffer
@@ -454,21 +441,14 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   cmpwi r3,0
   bne SEND_CONNECT_CODE_NO_CODE
 
-#If MSRB is updated to contain >2 connect codes, this can be updated accordingly.
-#If MSRB is updated to contain 4 connect codes, remove this block.
-  cmpwi REG_ReadCount,2
-  bge SEND_CONNECT_CODE_NO_CODE
-
 #Next read offset
-#If MSRB is updated to contain 4 connect codes, change REG_ReadCount to REG_LoopCount.
-  mulli r3,REG_ReadCount,ConnectCodeBytesToCopy
+  mulli r3,REG_LoopCount,ConnectCodeBytesToCopy
 
 #Copy from read position to write position
   add r4,r3,REG_MSRB_ConnectCodeStart  # src (MSRB_ConnectCodeStart + offset)
   mr r3,REG_BufferCurrentConnectCode   # dest
   li r5,ConnectCodeBytesToCopy         # length
   branchl r12,memcpy
-  addi REG_ReadCount,REG_ReadCount,1
   b CONNECT_CODE_INC_LOOP
 
   SEND_CONNECT_CODE_NO_CODE:
