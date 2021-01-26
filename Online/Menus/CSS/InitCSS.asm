@@ -56,13 +56,11 @@ blrl
 .float 0.1
 
 # Chat Message Propiertes
-.set TPO_CHAT_BG_SIZE_MARGIN, TPO_BASE_CANVAS_SCALING + 4
+.set TPO_CHAT_MSG_MARGIN, TPO_BASE_CANVAS_SCALING + 4
 .float 2.3
-.set TPO_CHATMSG_SIZE_MARGIN, TPO_CHAT_BG_SIZE_MARGIN + 4
-.float 2.4
 
 # Label properties
-.set TPO_CHAT_BG_Y_POS, TPO_CHATMSG_SIZE_MARGIN+4
+.set TPO_CHAT_BG_Y_POS, TPO_CHAT_MSG_MARGIN+4
 .float 24
 .set TPO_CHAT_BG_FRAME_START, TPO_CHAT_BG_Y_POS+4
 .float 0
@@ -74,9 +72,9 @@ blrl
 .set TPO_CHATMSG_X_POS, TPO_CHAT_BG_FRAME_REWIND+4
 .float -29.5
 .set TPO_CHATMSG_Y_POS, TPO_CHATMSG_X_POS+4
-.float -24.5
+.float -23.5
 .set TPO_CHATMSG_Z_POS,  TPO_CHATMSG_Y_POS+4
-.float 0
+.float 5
 .set TPO_CHATMSG_CANVAS_SCALE, TPO_CHATMSG_Z_POS+4
 .float 0.025
 
@@ -1138,7 +1136,7 @@ branchl r12, FN_IntToFloat # returns f1 (message index)
 
 # Move Chat Message Background
 lfs f2, TPO_CHAT_BG_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_CHAT_BG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+lfs f3, TPO_CHAT_MSG_MARGIN(REG_TEXT_PROPERTIES) # distance between message
 fmuls f3, f1, f3 # multiply index by margin
 fsubs f2, f2, f3 # add the offset
 stfs f2, 0x38+4(REG_CHATMSG_JOBJ)
@@ -1165,7 +1163,7 @@ mr r3,REG_CHATMSG_MSG_INDEX # convert message index to float
 branchl r12, FN_IntToFloat # returns f1 (message index)
 # load Y Starting position of text
 lfs f2, TPO_CHATMSG_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_CHATMSG_SIZE_MARGIN(REG_TEXT_PROPERTIES) # distance between message
+lfs f3, TPO_CHAT_MSG_MARGIN(REG_TEXT_PROPERTIES) # distance between message
 fmuls f3, f1, f3 # multiply index by margin
 fadds f2, f2, f3 # add the offset
 fmr REG_CHATMSG_TEXT_Y_POS, f2 # store current position to reuse them
