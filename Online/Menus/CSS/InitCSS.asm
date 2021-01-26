@@ -1194,7 +1194,7 @@ stw r3, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 b CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES
 
-MAP_UP_UP:
+MAP_UP_UP: # TODO: figure out why if this is not done GGs does not appear
 li r4, 0x83
 b SKIP_REMAP
 
@@ -1268,7 +1268,7 @@ branchl r12, Text_RemoveText
 
 b CSS_ONLINE_CHAT_CHECK_EXIT
 
-CSS_ONLINE_CHAT_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
+CSS_ONLINE_CHAT_REMOVE_PROC:
 
 # destroy gobj
 mr r3, REG_CHATMSG_GOBJ
