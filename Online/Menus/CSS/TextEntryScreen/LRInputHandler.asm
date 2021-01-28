@@ -28,15 +28,36 @@ li REG_RUN_ONCE, 0x0
 
 INIT_CHECK:
 cmpwi REG_RUN_ONCE, 0x0
-bgt START 
+bgt BOUNDS_CHECK
+li REG_CODE_INDEX, 0 # Assume Left was pressed.
+cmpwi r3, 0x01
+beq BOUNDS_CHECK
+# Otherwise, set initial index to -1 and adjust flag.
 li REG_CODE_INDEX, -1
 li REG_RUN_ONCE, 0x01
 
+BOUNDS_CHECK:
+# Only decrement while index is > 0
+cmpwi r3, 0x01
+beq START
+cmpwi REG_CODE_INDEX, 0x0
+bgt START  
+
+# Play failure noise
+li r3, 3
+branchl r12, SFX_Menu_CommonSound
+
+b EXIT
+
 START:
-addi REG_CODE_INDEX, REG_CODE_INDEX, 1
 
 # Stop all pending sounds
 branchl r12, SFX_StopSFXInstance
+
+addi REG_CODE_INDEX, REG_CODE_INDEX, 1 # Assume R was pressed.
+cmpwi r3, 0x01
+bne START_TRANSFER 
+subi REG_CODE_INDEX, REG_CODE_INDEX, 2 # If L was pressed, adjust index accordingly.
 
 START_TRANSFER:
 backup
