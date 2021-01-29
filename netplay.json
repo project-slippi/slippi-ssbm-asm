@@ -16,7 +16,6 @@
         "$Required: Slippi Recording",
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
-        "$Recommended: Polling drift fix + VB",
         "",
         "[Gecko]"
       ]
@@ -37,7 +36,6 @@
         "$Required: Slippi Recording",
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
-        "$Recommended: Polling drift fix + VB",
         "",
         "[Gecko]"
       ]
@@ -329,6 +327,11 @@
           "sourceFolder": "Online/Logging",
           "isRecursive": true,
           "annotation": "Log injections [Fizzi]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD+VB.bin",
+          "annotation": "Polling Drift Fix + VB [tauKhan]"
         }
       ]
     },
@@ -344,23 +347,6 @@
         {
           "type": "binary",
           "sourceFile": "Binary/NormalLagReduction.bin"
-        }
-      ]
-    },
-    {
-      "name": "Recommended: Polling drift fix + VB",
-      "authors": [
-        "Dan Salvato",
-        "tauKhan"
-      ],
-      "description": [
-        "Synchronizes polling rate with FPS."
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/LagReduction/PD+VB.bin",
-          "annotation": "Polling Drift Fix + VB [tauKhan]"
         }
       ]
     },
