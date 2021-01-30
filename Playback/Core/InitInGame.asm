@@ -5,11 +5,6 @@
 .include "Common/Common.s"
 .include "Playback/Playback.s"
 
-# Ensure doing playback
-#getMinorMajor r3
-#cmpwi r3, SCENE_ONLINE_IN_GAME
-#bne EXIT # If not doing playback
-
 b CODE_START
 
 DATA_BLRL:
