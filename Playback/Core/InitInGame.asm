@@ -3,34 +3,19 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s"
+.include "Playback/Playback.s"
 
-# Ensure that this is an online in-game
-getMinorMajor r3
-cmpwi r3, SCENE_ONLINE_IN_GAME
-bne EXIT # If not online in game
+# Ensure doing playback
+#getMinorMajor r3
+#cmpwi r3, SCENE_ONLINE_IN_GAME
+#bne EXIT # If not doing playback
 
 b CODE_START
 
-.set STRING_BUF_LEN, 14
-
 DATA_BLRL:
 blrl
-.set DOFST_TEXT_BASE_Z, 0
-.float 0
-.set DOFST_TEXT_BASE_CANVAS_SCALING, DOFST_TEXT_BASE_Z + 4
-.float 0.1
-
-# delay values
-.set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 270
-.set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float 207
-.set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 0.33
-
 # BG values
-.set DOFST_PLAYERBG_OPA, DOFST_TEXT_SIZE + 4
+.set DOFST_PLAYERBG_OPA, 0
 .float 0.33
 .set DOFST_PLAYERBG_COLOR, DOFST_PLAYERBG_OPA + 4
 .byte 0,0,0,255
@@ -59,11 +44,6 @@ blrl
 
 .set DOFST_FLOAT_ZERO, DOFST_PLAYERTEXT_SIZE + 4
 .float 0
-
-# strings
-.set DOFST_TEXT_DELAYSTRING, DOFST_FLOAT_ZERO + 4
-.string "Delay: %df"
-.align 2
 
 #########################################
 COBJ_CB:
@@ -150,63 +130,16 @@ li  r10, COBJ_GXPRI
 branchl r12, 0x803a611c
 mr  REG_Canvas, r3
 
-
-.set REG_ODB_ADDRESS, 30
 .set REG_TEXT_STRUCT, 29
 .set REG_DATA_ADDR, 28
 .set REG_STRING_BUF, 27
-.set REG_MSRB_ADDR,26
-
-lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
-
-# Write HUD canvas to ODB
-stw REG_Canvas, ODB_HUD_CANVAS(REG_ODB_ADDRESS)
+.set REG_PDB_ADDR, 26
 
 bl DATA_BLRL
 mflr REG_DATA_ADDR
 
-# Get player names
-li r3, 0
-branchl r12, FN_LoadMatchState
-mr REG_MSRB_ADDR, r3
-
-# Start prepping text struct
-li r3, 2
-mr  r4,REG_Canvas
-branchl r12, Text_CreateStruct
-mr REG_TEXT_STRUCT, r3
-
-# Set text kerning to close
-li r4, 0x1
-stb r4, 0x49(REG_TEXT_STRUCT)
-# Set text to align right
-li r4, 0x2
-stb r4, 0x4A(REG_TEXT_STRUCT)
-
-# Store Base Z Offset
-lfs f1, DOFST_TEXT_BASE_Z(REG_DATA_ADDR) #Z offset
-stfs f1, 0x8(REG_TEXT_STRUCT)
-
-# Scale Canvas Down
-lfs f1, DOFST_TEXT_BASE_CANVAS_SCALING(REG_DATA_ADDR)
-stfs f1, 0x24(REG_TEXT_STRUCT)
-stfs f1, 0x28(REG_TEXT_STRUCT)
-
-# Initialize header
-lfs f1, DOFST_TEXT_X_POS(REG_DATA_ADDR)
-lfs f2, DOFST_TEXT_Y_POS(REG_DATA_ADDR)
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_DATA_ADDR, DOFST_TEXT_DELAYSTRING
-lbz r5, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
-branchl r12, Text_InitializeSubtext
-
-# Set header text size
-mr r3, REG_TEXT_STRUCT
-li r4, 0
-# Scale text X based on Aspect Ratio
-lfs f1, DOFST_TEXT_SIZE(REG_DATA_ADDR)
-lfs f2, DOFST_TEXT_SIZE(REG_DATA_ADDR)
-branchl r12, Text_UpdateSubtextSize
+# get PDB
+lwz REG_PDB_ADDR, primaryDataBuffer(r13)
 
 ##########################
 ## Display Player Names ##
@@ -278,7 +211,7 @@ crset 6 # Dunno if this does anything?
 lfs f1, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
 lfs f2, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_MSRB_ADDR, MSRB_P1_NAME
+addi r4, REG_PDB_ADDR, PDB_DISPLAY_NAMES
 mulli r5, REG_COUNT, 31
 add r4, r4, r5
 branchl r12, Text_InitializeSubtext
@@ -448,10 +381,6 @@ DISPLAY_NAME_INC_LOOP:
 addi REG_COUNT, REG_COUNT, 1
 cmpwi REG_COUNT, 6
 blt DISPLAY_NAME_LOOP
-
-# Free buffer
-mr  r3,REG_MSRB_ADDR
-branchl r12,HSD_Free
 
 CODE_END:
 restore

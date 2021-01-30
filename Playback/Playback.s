@@ -63,8 +63,8 @@ lwz \reg, -0x62A0(\reg)
 .set PDB_SFXDB_START, PDB_RESTORE_C2_BRANCH + 4 # SFXDB_SIZE
 .set PDB_LATEST_FRAME, PDB_SFXDB_START + SFXDB_SIZE # u32, must follow SFXDB as it is preserved
 .set PDB_SHOULD_RESYNC, PDB_LATEST_FRAME + 4 # bool
-
-.set PDB_SIZE, PDB_SHOULD_RESYNC + 1
+.set PDB_DISPLAY_NAMES, PDB_SHOULD_RESYNC + 1 # string (31)[4]
+.set PDB_SIZE, PDB_DISPLAY_NAMES + 124
 
 ################################################################################
 # Buffer Offsets
