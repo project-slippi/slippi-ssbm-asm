@@ -127,16 +127,16 @@ lwz \reg, -0x62A0(\reg)
     .set PALBool_Length,0x1
   .set PSPreloadBool,0x19E
     .set PSPreloadBool_Length,0x1
-  .set PSPreloadBool,0x19E
-    .set PSPreloadBool_Length,0x1
   .set FrozenPSBool,0x19F
     .set FrozenPSBool_Length,0x1
   .set ShouldResyncBool,0x1A0
     .set ShouldResyncBool_Length,0x1
-  .set GeckoListSize,0x1A1
+  .set DisplayNameData,0x1A1
+    .set DisplayNameData_Length,0x7C
+  .set GeckoListSize,0x21D
     .set GeckoListSize_Length,0x4
 
-  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + GeckoListSize_Length
+  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + DisplayNameData_Length + GeckoListSize_Length
 
   .if GameInfoLength > Buffer_Length
     .set EXIBufferLength, GameInfoLength
