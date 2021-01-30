@@ -147,12 +147,10 @@ lwz REG_PDB_ADDR, primaryDataBuffer(r13)
 
 # Display all player names
 .set REG_COUNT, 20
-.set REG_TAG_BUFFER, 21
-.set REG_TAG_SIZE, 22
-.set REG_TAG_ALLOC, 23
 .set REG_HUDPOS, 21
 .set REG_BG_JOBJ, 22
 .set REG_BG_GOBJ, 23
+.set REG_DISPLAY_NAME, 24
 li  REG_COUNT, 0
 load REG_HUDPOS, 0x804a0ff0
 DISPLAY_NAME_LOOP:
@@ -162,6 +160,15 @@ branchl r12, 0x8003241c
 cmpwi r3, 3
 beq DISPLAY_NAME_INC_LOOP
 
+#Check if player display name exists
+addi r3, REG_PDB_ADDR, PDB_DISPLAY_NAMES
+mulli r4, REG_COUNT, 31
+add REG_DISPLAY_NAME, r3, r4
+mr r3, REG_DISPLAY_NAME
+branchl r12,strlen
+cmpwi r4, 0
+beq DISPLAY_NAME_INC_LOOP
+
 # Calculate X Position
 #Get HUD Position
 mr  r3,REG_COUNT
@@ -169,7 +176,6 @@ branchl r12,0x802f3424
 # HUD X
 lfs f1, 0x0(r3)
 stfs f1, 0x70 (sp)
-
 
 # Start prepping player text struct
 li r3, 2
@@ -211,9 +217,7 @@ crset 6 # Dunno if this does anything?
 lfs f1, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
 lfs f2, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
 mr r3, REG_TEXT_STRUCT
-addi r4, REG_PDB_ADDR, PDB_DISPLAY_NAMES
-mulli r5, REG_COUNT, 31
-add r4, r4, r5
+mr r4, REG_DISPLAY_NAME
 branchl r12, Text_InitializeSubtext
 
 # Set header text size
