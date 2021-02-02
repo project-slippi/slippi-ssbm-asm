@@ -314,6 +314,8 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
+.set CONST_SlippiCmdGctLength, 0xD3
+.set CONST_SlippiCmdGctLoad, 0xD4
 
 .set CONST_FirstFrameIdx, -123
 
