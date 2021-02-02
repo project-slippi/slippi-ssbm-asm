@@ -339,6 +339,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FSToggleAddr, RtocAddress + FSToggle
 .set HideWaitingForGameAddress, RtocAddress + HideWaitingForGame
 .set CFOptionsAddress, RtocAddress - ControllerFixOptions
+.set GeckoHeapPtr, 0x80005600
 
 ################################################################################
 # Offsets from r13

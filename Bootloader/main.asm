@@ -90,6 +90,11 @@ backup
 
   stw	REG_HeapLo, -0x3FE8 (r13)   # store new heap low
 
+# Save pointer to gecko codes
+  load r3,GeckoHeapPtr
+  stw REG_Buffer, 0 (r3)
+
+
 Exit:
   restore
 

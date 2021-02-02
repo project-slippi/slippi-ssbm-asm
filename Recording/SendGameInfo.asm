@@ -49,7 +49,8 @@ backup
   stw r3,bufferOffset(r13)
 
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
-  load r3, GeckoCodeSectionStart # Gecko code list start
+  load r3,GeckoHeapPtr
+  lwz r3, 0 (r3)   # Gecko code list start
   li r4, 0 # No callback
   branchl r12, FN_ProcessGecko
   mr REG_GeckoListSize, r3
