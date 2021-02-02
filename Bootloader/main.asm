@@ -92,3 +92,7 @@ backup
 
 Exit:
   restore
+
+# overwrite r31 which stores the low bound. A few upcoming instructions rely
+# on this to initialize the heap
+  lwz r31, -0x3FE8(r13)
