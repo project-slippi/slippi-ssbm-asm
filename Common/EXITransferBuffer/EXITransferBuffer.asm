@@ -91,12 +91,13 @@ InitializeEXI:
   li r3, STG_EXIIndex # Load input param for slot
   branchl r12, EXIDetach
 
+  li r3,0
 FLUSH_READ_LOOP:
   cmpwi REG_TransferBehavior,CONST_ExiRead     # Check if writing or reading
   bne Exit
   dcbi 0, r3
   addi r3, r3, 32
-  cmpw r3, r4
+  cmpw r3, REG_BufferLength
   blt+ FLUSH_READ_LOOP
   sync
   isync

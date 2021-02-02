@@ -62,6 +62,7 @@ backup
   rlwinm	REG_FileSize, REG_FileSize, 0, 0, 26
 #Create heap of this size
   add r4,REG_HeapLo,REG_FileSize     #heap hi = start + filesize
+  addi r4,r4, 32                     #heap hi, 32 bytes padding?
   mr  r3,REG_HeapLo                  #heap lo = start
   mr  REG_HeapLo,r4                  #new start = heap hi
   branchl r12,0x803440e8
