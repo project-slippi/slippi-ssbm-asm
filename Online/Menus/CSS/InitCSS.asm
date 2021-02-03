@@ -34,7 +34,7 @@
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
 
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
-.set MAX_CHAT_MESSAGE_LINES, 12
+.set MAX_CHAT_MESSAGE_LINES, 9
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 .set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
 
@@ -57,10 +57,14 @@ blrl
 
 # Chat Message Propiertes
 .set TPO_CHAT_MSG_MARGIN, TPO_BASE_CANVAS_SCALING + 4
-.float 2.3
+.float 3.20
 
 # Label properties
-.set TPO_CHAT_BG_Y_POS, TPO_CHAT_MSG_MARGIN+4
+.set TPO_CHAT_BG_SCALE_X, TPO_CHAT_MSG_MARGIN+4
+.float 11.8
+.set TPO_CHAT_BG_SCALE_Y, TPO_CHAT_BG_SCALE_X+4
+.float 0.8
+.set TPO_CHAT_BG_Y_POS, TPO_CHAT_BG_SCALE_Y+4
 .float 24
 .set TPO_CHAT_BG_FRAME_START, TPO_CHAT_BG_Y_POS+4
 .float 0
@@ -72,11 +76,11 @@ blrl
 .set TPO_CHATMSG_X_POS, TPO_CHAT_BG_FRAME_REWIND+4
 .float -29.5
 .set TPO_CHATMSG_Y_POS, TPO_CHATMSG_X_POS+4
-.float -23.5
+.float -23.25
 .set TPO_CHATMSG_Z_POS,  TPO_CHATMSG_Y_POS+4
 .float 5
 .set TPO_CHATMSG_CANVAS_SCALE, TPO_CHATMSG_Z_POS+4
-.float 0.025
+.float 0.04
 
 # Header properties
 .set TPO_HEADER_X, TPO_CHATMSG_CANVAS_SCALE + 4
@@ -572,6 +576,12 @@ cmpwi r3, 0
 beq CHECK_OPP_CHAT_MESSAGE
 addi r25, REG_MSRB_ADDR, MSRB_LOCAL_NAME # store player name
 mr r26, r3 # store chat message id
+
+# Store Increased local Message Count
+lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR)
+addi r3, r3, 1
+stb r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR)
+
 b UPDATE_CHAT_MESSAGES
 
 CHECK_OPP_CHAT_MESSAGE:
@@ -650,6 +660,13 @@ lwz r16, 0x10(r3) # pointer to our custom bg jobj anim joint
 lwz r3, 0x0C(r3) # pointer to our custom bg jobj
 branchl r12,JObj_LoadJoint #Create Jboj
 mr  r15,r3
+
+# scale up the jobj
+# TODO: remove this and scale on diff file instead
+lfs f1, TPO_CHAT_BG_SCALE_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_CHAT_BG_SCALE_Y(REG_TEXT_PROPERTIES)
+stfs f1, 0x2C(r15)
+stfs f2, 0x2C+4(r15)
 
 # Add JOBJ To GObj
 mr  r3,r14
@@ -1271,6 +1288,18 @@ CSS_ONLINE_CHAT_REMOVE_PROC:
 # destroy gobj
 mr r3, REG_CHATMSG_GOBJ
 branchl r12, GObj_Destroy
+
+# decrease local message count if this message is local
+lwz r4, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
+lbz r4, MSRB_LOCAL_PLAYER_INDEX(r4)
+
+cmpw REG_CHATMSG_PLAYER_INDEX,r4
+bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT
+# Decrease local chat message count by 1
+lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
+subi r3, r3, 1
+stb r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR) # store the new message count
+SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT:
 
 # Decrease chat message count by 1
 lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # chat message index

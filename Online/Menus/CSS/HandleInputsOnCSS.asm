@@ -714,8 +714,8 @@ blrl
 .set CHAT_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 .set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
 .set CHAT_WINDOW_IDLE_TIMER_TIME, 0x90 # initial idle timer before window disappears
-.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x0A # initial delay before allowing to send messages
-.set CHAT_WINDOW_MAX_MESSAGES, 0x04 # Max messages allowed before blocking new ones
+.set CHAT_WINDOW_IDLE_TIMER_DELAY, 0x06 # initial delay before allowing to send messages
+.set CHAT_WINDOW_MAX_MESSAGES, 0x03 # Max messages allowed before blocking new ones
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
 mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
@@ -845,10 +845,17 @@ bne CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_START
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT # just initialize on first loop
 
 CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_INPUT: # 0x8019562C
+
+# If theres is no chat messages skip timer check
+lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
+cmpwi r3, 0
+beq SKIP_CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+
 # prevent spam: Only allow input if a few frames have passed
 lbz r3, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
 cmpwi r3, CHAT_WINDOW_IDLE_TIMER_TIME-CHAT_WINDOW_IDLE_TIMER_DELAY
 bgt CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+SKIP_CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER:
 
 # load last input from the CSS Data table
 # if there's any input, Send Message
@@ -856,9 +863,9 @@ cmpwi REG_CHAT_WINDOW_SECOND_INPUT, 0
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
 
 # if current message count is X, do not allow to send another
-lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
+lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
 cmpwi r3, CHAT_WINDOW_MAX_MESSAGES
-bge CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
+bge CSS_ONLINE_CHAT_WINDOW_THINK_BLOCK_MESSAGE
 
 # Clear Timer
 li r3, 0
@@ -875,6 +882,11 @@ add r3, r3, r4 # add second input to highest byte
 bl FN_SEND_CHAT_COMMAND
 
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
+
+CSS_ONLINE_CHAT_WINDOW_THINK_BLOCK_MESSAGE:
+# Play SFX
+li  r3,3
+branchl r12,SFX_Menu_CommonSound
 
 CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER:
 # check timer and decrease until is 0
