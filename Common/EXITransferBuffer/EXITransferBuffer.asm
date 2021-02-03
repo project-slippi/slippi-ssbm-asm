@@ -36,20 +36,21 @@ ExiTransferBuffer:
   branchl r12, OSDisableInterrupts
   mr REG_InterruptIdx, r3
 
-# Start flush loop to write the data in buf through to RAM.
-# Cache blocks are 32 bytes in length and the buffer obtained from malloc
-# should be guaranteed to be aligned at the start of a cache block.
-  mr r3, REG_BufferPointer
-  add r4,REG_BufferPointer,REG_BufferLength
-  cmpwi REG_TransferBehavior,CONST_ExiRead     # Check if writing or reading
-  beq InitializeEXI
+  cmpwi REG_TransferBehavior,CONST_ExiRead
+  beq FLUSH_WRITE_LOOP_END # Only flush before write when writing
+
+  # Start flush loop to write the data in buf through to RAM.
+  # Cache blocks are 32 bytes in length and the buffer obtained from malloc
+  # should be guaranteed to be aligned at the start of a cache block.
+  li r3, 0
 FLUSH_WRITE_LOOP:
-  dcbf 0, r3
+  dcbf REG_BufferPointer, r3
   addi r3, r3, 32
-  cmpw r3, r4
+  cmpw r3, REG_BufferLength
   blt+ FLUSH_WRITE_LOOP
   sync
   isync
+FLUSH_WRITE_LOOP_END:
 
 InitializeEXI:
 # Step 1 - Prepare slot
@@ -91,15 +92,20 @@ InitializeEXI:
   li r3, STG_EXIIndex # Load input param for slot
   branchl r12, EXIDetach
 
-FLUSH_READ_LOOP:
-  cmpwi REG_TransferBehavior,CONST_ExiRead     # Check if writing or reading
-  bne Exit
-  dcbi 0, r3
+  cmpwi REG_TransferBehavior,CONST_ExiRead
+  bne INVALIDATE_READ_LOOP_END # Only invalidate cache when doing a read
+
+  # Invalidate cache for the values we just read from EXI. This was actually
+  # broken forever and stuff still worked so it might not be needed
+  li r3, 0
+INVALIDATE_READ_LOOP:
+  dcbi REG_BufferPointer, r3
   addi r3, r3, 32
-  cmpw r3, r4
-  blt+ FLUSH_READ_LOOP
+  cmpw r3, REG_BufferLength
+  blt+ INVALIDATE_READ_LOOP
   sync
   isync
+INVALIDATE_READ_LOOP_END:
 
 Exit:
   mr r3, REG_InterruptIdx

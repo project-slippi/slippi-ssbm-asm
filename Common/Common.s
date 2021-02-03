@@ -315,10 +315,14 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
+.set CONST_SlippiCmdGctLength, 0xD3
+.set CONST_SlippiCmdGctLoad, 0xD4
+
 # For Slippi Premade Texts
 .set CONST_SlippiCmdGetPremadeTextLength, 0xE1
 .set CONST_SlippiCmdGetPremadeText, 0xE2
 .set CONST_TextDolphin, 0x765 # Flag identifying that Text_CopyPremadeTextDataToStruct needs to load from dolphin
+
 .set CONST_FirstFrameIdx, -123
 
 .set GeckoCodeSectionStart,0x801910E8
@@ -341,6 +345,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FSToggleAddr, RtocAddress + FSToggle
 .set HideWaitingForGameAddress, RtocAddress + HideWaitingForGame
 .set CFOptionsAddress, RtocAddress - ControllerFixOptions
+.set GeckoHeapPtr, 0x80005600
 
 ################################################################################
 # Offsets from r13
