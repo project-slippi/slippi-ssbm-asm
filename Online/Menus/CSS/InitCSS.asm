@@ -1207,6 +1207,11 @@ branchl r12, FG_CreateSubtext
 # Save Text Struct Address
 stw r3, CSSCMDT_MSG_TEXT_STRUCT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
+# restore text struct descriptor
+lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
+li r4, 1 # gx_link to restore
+stb r4, 0xE(r3)
+
 b CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES
 
 MAP_UP_UP: # TODO: figure out why if this is not done GGs does not appear
