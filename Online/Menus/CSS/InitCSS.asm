@@ -1304,12 +1304,14 @@ bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT
 lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
 subi r3, r3, 1
 stb r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR) # store the new message count
+#logf LOG_LEVEL_WARN, "local msg count: %d", "mr r5, r3"
 SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT:
 
 # Decrease chat message count by 1
 lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
 subi r3, r3, 1
 stb r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # store the new message count
+#logf LOG_LEVEL_WARN, "msg count: %d", "mr r5, r3"
 
 # If This is the last message being removed, reset the Last MSG Index to 0
 lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index
