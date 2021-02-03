@@ -862,9 +862,14 @@ SKIP_CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER:
 cmpwi REG_CHAT_WINDOW_SECOND_INPUT, 0
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_IDLE_TIMER
 
-# if current message count is X, do not allow to send another
+# if current local message count is X, do not allow to send another
 lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
 cmpwi r3, CHAT_WINDOW_MAX_MESSAGES
+bge CSS_ONLINE_CHAT_WINDOW_THINK_BLOCK_MESSAGE
+
+# if current message count is X+2, do not allow to send another
+lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CHAT_WINDOW_CSSDT_ADDR)
+cmpwi r3, CHAT_WINDOW_MAX_MESSAGES+2
 bge CSS_ONLINE_CHAT_WINDOW_THINK_BLOCK_MESSAGE
 
 # Clear Timer
