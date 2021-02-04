@@ -15,8 +15,7 @@
 # Check to see if we've just entered name entry.
 # And if we have, we'll reset the index into our list of direct codes.
 backup
-addi r4, r13, OFST_R13_SB_ADDR 
-lbz r3, -0x10 (r4)
+lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
 cmpwi r3, 0x01
 bne RESTORE 
 # Clear flag in scene buffer.

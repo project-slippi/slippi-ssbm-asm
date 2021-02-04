@@ -23,6 +23,7 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_ISPAUSE,-0x5038 # byte, client paused bool (originally used for tournament mode @ 8019b8e4)
 .set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
 .set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
+.set OFST_R13_NAME_ENTRY_INDEX_FLAG,-0x5035 # byte, set to 1 if just entered name entry. Rsts direct code index.
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
