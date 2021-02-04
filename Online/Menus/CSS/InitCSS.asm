@@ -1210,7 +1210,6 @@ SKIP_SET_CHAT_MSG_POS_X:
 
 # Create Text Object
 addi r3, REG_CHATMSG_PLAYER_INDEX, 1
-li r3, 2
 mr r4, REG_CHATMSG_MSG_ID
 cmpwi r4, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
 beq MAP_UP_UP
