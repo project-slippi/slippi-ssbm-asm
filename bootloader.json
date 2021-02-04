@@ -19,6 +19,36 @@
           "annotation": "EXI Transfer Buffer"
         }
       ]
+    },
+    {
+      "name": "Early Load Codes, Must Run Before Bootloader",
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/StockMode.bin",
+          "annotation": "Stock Mode [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/4Stocks.bin",
+          "annotation": "4 Stocks [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/8Minutes.bin",
+          "annotation": "8 Minutes [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/NoItems.bin",
+          "annotation": "No Items [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/SinglesStages.bin",
+          "annotation": "Singles Stages [Magus]"
+        }
+      ]
     }
   ]
 }
