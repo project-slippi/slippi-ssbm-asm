@@ -107,11 +107,6 @@
           "annotation": "Disable Trophy Messages [Achilles]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/UnlockAllTrophies.bin",
-          "annotation": "Unlock All 293 Trophies [Datel]"
-        },
-        {
           "type": "injectFolder",
           "sourceFolder": "External/Salty Runback",
           "annotation": "Hold A+B For Salty Runback 2.0 [Dan Salvato, UnclePunch]"
