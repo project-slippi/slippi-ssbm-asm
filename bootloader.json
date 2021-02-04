@@ -17,6 +17,11 @@
           "type": "injectFolder",
           "sourceFolder": "Common/EXITransferBuffer",
           "annotation": "EXI Transfer Buffer"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Gecko",
+          "annotation": "Static function to process Gecko codes [Fizzi]"
         }
       ]
     },
