@@ -289,17 +289,19 @@ FN_OnlineSubmenuThink_A_PRESS_UPDATE_PLAYER_PORT:
 branchl r12, 0x801677E8 # CSS_StoreSinglePlayerPortNumber
 
 lhz r0, 0x0002 (r29) # Load selected option index
-cmpwi r0, 0 # Check if Ranked
+cmpwi r0, OPTION_RANKED_IDX # Check if Ranked
 beq FN_OnlineSubmenuThink_HANDLE_RANKED
-cmpwi r0, 1 # Check if Unranked
+cmpwi r0, OPTION_UNRANKED_IDX # Check if Unranked
 beq FN_OnlineSubmenuThink_HANDLE_UNRANKED
-cmpwi r0, 2 # Check if Direct
+cmpwi r0, OPTION_DIRECT_IDX # Check if Direct
 beq FN_OnlineSubmenuThink_HANDLE_DIRECT
-cmpwi r0, 3 # Check if Log-in
+cmpwi r0, OPTION_TEAMS_IDX # Check if teams
+beq FN_OnlineSubmenuThink_HANDLE_TEAMS
+cmpwi r0, OPTION_LOGIN_IDX # Check if Log-in
 beq FN_OnlineSubmenuThink_HANDLE_LOGIN
-cmpwi r0, 4 # Check if Log-out
+cmpwi r0, OPTION_LOGOUT_IDX # Check if Log-out
 beq FN_OnlineSubmenuThink_HANDLE_LOGOUT
-cmpwi r0, 5 # Check if update
+cmpwi r0, OPTION_UPDATE_IDX # Check if update
 beq FN_OnlineSubmenuThink_HANDLE_UPDATE
 b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
@@ -317,6 +319,10 @@ b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_DIRECT:
 li r3, ONLINE_MODE_DIRECT
+b FN_OnlineSubmenuThink_GO_TO_CSS
+
+FN_OnlineSubmenuThink_HANDLE_TEAMS:
+li r3, ONLINE_MODE_TEAMS
 b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_LOGIN:
@@ -420,7 +426,7 @@ beq- FN_OnlineSubmenuThink_STICK_UP_HANDLER_END
 FN_OnlineSubmenuThink_STICK_UP_HANDLER:
 li r3, 2
 branchl r12, SFX_Menu_CommonSound
-li r31, 5 # Bottom index
+li r31, ONLINE_SUBMENU_OPTION_COUNT - 1 # Bottom index
 addi r28, r29, 2
 FN_OnlineSubmenuThink_STICK_UP_INDEX_ADJUST_START:
 lhz r3, 0(r28) # Load current index
@@ -453,7 +459,7 @@ branchl r12, SFX_Menu_CommonSound
 addi r28, r29, 2
 FN_OnlineSubmenuThink_STICK_DOWN_INDEX_ADJUST_START:
 lhz r3, 0(r28) # Load current index
-cmplwi r3, 5 # Check if at bottom
+cmplwi r3, ONLINE_SUBMENU_OPTION_COUNT - 1 # Check if at bottom
 beq- FN_OnlineSubmenuThink_WRAP_TO_TOP
 addi r0, r3, 1
 sth r0, 0(r28)
@@ -503,16 +509,18 @@ blrl
 .long 0x803eb57c # Ptr to preview animation frame values (stolen from reg match)
 .float 140 # Frame index pointing at the option text images
 .long 0x803eb684 # Ptr to description text. Will be overwritten
-.long 0x06000000 # First byte is the number of options
+.long 0x07000000 # First byte is the number of options
 
 Data_OnlineSubmenuDescriptions:
 blrl
-.short 0x0645
-.short 0x0646
-.short 0x0647
-.short 0x0648
-.short 0x0649
-.short 0x064A
+.short 0x0645 # Ranked
+.short 0x0646 # Unranked
+.short 0x0647 # Direct
+.short 0x064B # Teams
+.short 0x0648 # Log-in
+.short 0x0649 # Log-out
+.short 0x064A # Update
+.short 0x0000
 
 FN_CREATE_DIALOG:
 
@@ -789,7 +797,9 @@ branchl r12, JObj_AnimAll
 
 FN_LogoutDialogThink_CheckInputs:
 # Check input and switch option if left or right
-li r3, 0
+li r14, 0
+FN_LogoutDialogThink_CheckInputs_AfterPort:
+mr r3, r14
 branchl r12, 0x801A36A0 # Inputs_GetPlayerInstantInputs
 
 # Exit function if no input # 0x8019796c
@@ -801,6 +811,10 @@ cmpwi r3, PAD_A
 beq FN_LogoutDialogThink_DoLogout
 cmpwi r3, PAD_B
 beq FN_LogoutDialogThink_CloseDialog
+
+addi r14, r14, 1
+cmpwi r14, 4 # check all 4 ports
+blt FN_LogoutDialogThink_CheckInputs_AfterPort
 b FN_LogoutDialogThink_Exit
 
 

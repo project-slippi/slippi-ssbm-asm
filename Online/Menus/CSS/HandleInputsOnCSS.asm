@@ -129,18 +129,26 @@ b SKIP_START_MATCH
 HANDLE_IDLE:
 
 # uncomment to debug the chat window
-# bl FN_CHECK_CHAT_INPUTS
+#bl FN_CHECK_CHAT_INPUTS
 
 # When idle, pressing start will start finding match
 # Check if start was pressed
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
 beq SKIP_START_MATCH # Exit if start was not pressed
 
+# Sometimes when returning to the CSS, previously held buttons will stay held,
+# including start. This prevents the start input from locking people in
+# immediately... Doesn't feel like this should be necessary, and if it is,
+# this doesn't feel like the right place for this logic
+loadGlobalFrame r3
+cmpwi r3, 0
+beq SKIP_START_MATCH # Don't search on very first frame
+
 # Initialize ISWINNER (first match)
 li  r3, ISWINNER_NULL
 stb r3, OFST_R13_ISWINNER (r13)
 # Init CHOSESTAGE bool
-li  r3,0
+li r3,  0
 stb r3, OFST_R13_CHOSESTAGE (r13)
 
 # Check if character has been selected, if not, do nothing
@@ -153,7 +161,7 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beq HANDLE_IDLE_DIRECT
+bge HANDLE_IDLE_DIRECT
 b 0x0
 
 HANDLE_IDLE_UNRANKED:
@@ -214,8 +222,8 @@ bne HANDLE_CONNECTED_ADVANCE
 
 # Check if direct mode && loser && already chose stage
 lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
-bne CHECK_SHOULD_START_MATCH
+cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct/teams mode
+blt CHECK_SHOULD_START_MATCH
 lbz r3, OFST_R13_ISWINNER (r13)
 cmpwi r3,ISWINNER_LOST              # Check if this is the loser
 bne CHECK_SHOULD_START_MATCH
@@ -236,14 +244,14 @@ beq CHECK_SHOULD_START_MATCH
 # this doesn't feel like the right place for this logic
 loadGlobalFrame r3
 cmpwi r3, 0
-beq CHECK_SHOULD_START_MATCH # Don't lock-in on the very first fram
+beq CHECK_SHOULD_START_MATCH # Don't lock-in on the very first frame
 
 # Check which mode we are playing.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_CONNECTED_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beq HANDLE_CONNECTED_DIRECT
+bge HANDLE_CONNECTED_DIRECT
 b 0x0                           # stall if neither
 
 # Branch to this mode's behavior
@@ -397,6 +405,22 @@ stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 
+# Send a blank team ID if this isn't teams mode.
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+beq SEND_TEAM_ID
+li r3, 0
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+b SKIP_SEND_TEAM_ID
+
+SEND_TEAM_ID:
+# Calc/Set Team ID
+loadwz r3, CSSDT_BUF_ADDR
+lbz r3, CSSDT_TEAM_IDX(r3)
+subi r3, r3, 1
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+
+SKIP_SEND_TEAM_ID:
 # Handle stage
 cmpwi REG_SB, -2
 beq FN_TX_LOCK_IN_STAGE_RAND
@@ -447,6 +471,9 @@ FN_LOCK_IN_AND_SEARCH_BLRL:
 blrl
 FN_LOCK_IN_AND_SEARCH:
 backup
+
+lbz r20, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
+# logf LOG_LEVEL_NOTICE, "TEAM INDEX AFTER %d", "mr r5, 20"
 
 bl FN_TX_LOCK_IN # Lock in character selection
 bl FN_TX_FIND_MATCH # Trigger matchmaking
@@ -506,6 +533,7 @@ branchl r12, HSD_Free
 
 restore
 blr
+
 
 ################################################################################
 # Function: Check if chat input was pressed and send it to the EXI device
@@ -595,6 +623,7 @@ li r4, 127
 li r5, 64
 branchl r12, 0x800237a8 # SFX_PlaySoundAtFullVolume
 
+mr r3, REG_INPUTS
 restore
 blr
 
@@ -611,6 +640,10 @@ FN_OPEN_CHAT_WINDOW:
 
 mr REG_CHAT_INPUTS, r3 # Store Controller Input argument
 backup
+
+
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
 
 # Play a sound indicating a new message TODO: move to a function
 li r3, 0xb7
@@ -652,6 +685,11 @@ lwz r3, 0x18(r3) # pointer to our custom bg jobj
 branchl r12,0x80370e44 #Create Jboj
 mr  REG_CHAT_JOBJ,r3
 
+lfs f1, TPO_CHAT_WINDOW_X(REG_TEXT_PROPERTIES)
+lfs f2, TPO_CHAT_WINDOW_Y(REG_TEXT_PROPERTIES)
+stfs f1, 0x38(r3) # X POS
+stfs f2, 0x3C(r3) # Y POS
+
 # Add JOBJ To GObj
 mr  r3,REG_CHAT_GOBJ
 li r4, 4
@@ -663,7 +701,7 @@ mr  r3,REG_CHAT_GOBJ
 load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
 li  r5, 1
 li  r6, 128
-branchl r12,0x8039069c # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
+branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
 
 # Add User Data to GOBJ ( Our buffer )
 mr r3, REG_CHAT_GOBJ
@@ -739,32 +777,9 @@ bl TEXT_PROPERTIES
 mflr REG_TEXT_PROPERTIES
 
 # INIT MSG Properties based on input button
-cmpwi REG_CHAT_WINDOW_INPUT, PAD_UP
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES
-cmpwi REG_CHAT_WINDOW_INPUT, PAD_DOWN
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES
-cmpwi REG_CHAT_WINDOW_INPUT, PAD_RIGHT
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES
-cmpwi REG_CHAT_WINDOW_INPUT, PAD_LEFT
-beq CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES
-
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_UP_CHAT_TEXT_PROPERTIES:
-bl UP_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_DOWN_CHAT_TEXT_PROPERTIES:
-bl DOWN_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_RIGHT_CHAT_TEXT_PROPERTIES:
-bl RIGHT_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_LEFT_CHAT_TEXT_PROPERTIES:
-bl LEFT_CHAT_TEXT_PROPERTIES
-mflr REG_CHAT_TEXT_PROPERTIES
-b CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END
-CSS_ONLINE_CHAT_WINDOW_THINK_INIT_CHAT_TEXT_PROPERTIES_END:
+mr r3, REG_CHAT_WINDOW_INPUT
+branchl r12, FN_LoadChatMessageProperties
+mr REG_CHAT_TEXT_PROPERTIES, r3
 
 # Create Text Struct
 li r3, 0x1 # Text kerning to close
@@ -783,7 +798,7 @@ addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_YELLOW # Text Color
 li r5, 0 # no outline
 addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
-addi r8, REG_CHAT_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUT_NAME # String pointer
+addi r8, REG_CHAT_TEXT_PROPERTIES, 0x4 # String pointer (header starts at 0x4)
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f3, TPO_CHAT_HEADER_X(REG_TEXT_PROPERTIES) # X POS
@@ -815,31 +830,30 @@ cmpwi r11, 0x3
 beq CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR
 
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_UP_LABEL_ADDR:
-addi r8, REG_TEXT_PROPERTIES, TPO_STRING_UP # label String pointer
+li r4, PAD_UP
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_DOWN_LABEL_ADDR:
-addi r8, REG_TEXT_PROPERTIES, TPO_STRING_DOWN # label String pointer
+li r4, PAD_DOWN
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_RIGHT_LABEL_ADDR:
-addi r8, REG_TEXT_PROPERTIES, TPO_STRING_RIGHT # label String pointer
+li r4, PAD_RIGHT
 b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_SET_LEFT_LABEL_ADDR:
-addi r8, REG_TEXT_PROPERTIES, TPO_STRING_LEFT # label String pointer
-b CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END
+li r4, PAD_LEFT
 CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_LABEL_ADDR_END:
 
-CSS_ONLINE_CHAT_WINDOW_THINK_CREATE_LABELS_LOOP_CALC_MSG_ADDR:
 # calculate address of message
-mr r3, r11
-addi r3, r3, 1
-mulli r9, r3, CHAT_TEXT_STRING_LENGTH
+# INIT MSG Properties based on input button
+mr r3, REG_CHAT_WINDOW_INPUT
+# r4 is selected input
+branchl r12, FN_LoadChatMessageProperties
+mr r7, r4 # message String pointer
 
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 li r5, 0 # No outlines
 addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
-#addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_LABEL_FORMAT # String Format pointer
-add r7, REG_CHAT_TEXT_PROPERTIES, r9 # message String pointer
+# r7 message String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f2, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
 lfs f3, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
@@ -934,18 +948,24 @@ blrl
 
 # Chat Labels Propiertes
 .set TPO_CHAT_HEADER_X, TPO_BASE_CANVAS_SCALING + 4
-.float -330
+.float -300
 .set TPO_CHAT_LABEL_X, TPO_CHAT_HEADER_X + 4
-.float -315
+.float -285
 .set TPO_CHAT_LABEL_Y, TPO_CHAT_LABEL_X + 4
-.float 105
+.float 79
 .set TPO_CHAT_LABEL_SIZE, TPO_CHAT_LABEL_Y + 4
 .float 0.45
 .set TPO_CHAT_LABEL_MARGIN, TPO_CHAT_LABEL_SIZE + 4
 .float 25
 
+# Chat Window Properties
+.set TPO_CHAT_WINDOW_X, TPO_CHAT_LABEL_MARGIN + 4
+.float -20
+.set TPO_CHAT_WINDOW_Y, TPO_CHAT_WINDOW_X + 4
+.float -16.5
+
 # Text colors
-.set TPO_COLOR_WHITE, TPO_CHAT_LABEL_MARGIN + 4
+.set TPO_COLOR_WHITE, TPO_CHAT_WINDOW_Y + 4
 .long 0xFFFFFFFF # white
 .set TPO_COLOR_YELLOW, TPO_COLOR_WHITE + 4
 .long 0xffea2fFF
@@ -970,67 +990,6 @@ blrl
 .set TPO_STRING_PLUS, TPO_STRING_DOWN + 2
 .short 0x817B # ＋
 .byte 0x00
-.align 2
-
-################################################################################
-# Chat Message Properties
-# Hack: CAP TO SAME LENGTH to ensure pointers are always reached
-################################################################################
-.set CHAT_TEXT_STRING_LENGTH, 22 +1  # +1 is string ending char
-UP_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "Common                "
-.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME + CHAT_TEXT_STRING_LENGTH
-.string "ggs                   "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "one more              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "brb                   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "good luck             "
-.align 2
-
-LEFT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "Compliments           "
-.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "well played           "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "that was fun          "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "thanks                "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "too good              "
-.align 2
-
-RIGHT_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "Reactions             "
-.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "oof                   "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "my b                  "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "lol                   "
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "wow                   "
-.align 2
-
-DOWN_CHAT_TEXT_PROPERTIES:
-blrl
-.set TPO_STRING_CHAT_SHORTCUT_NAME, 0
-.string "Misc                  "
-.set TPO_STRING_MSG_UP, TPO_STRING_CHAT_SHORTCUT_NAME+CHAT_TEXT_STRING_LENGTH
-.string "okay                  "
-.set TPO_STRING_MSG_LEFT, TPO_STRING_MSG_UP + CHAT_TEXT_STRING_LENGTH
-.string "thinking              "
-.set TPO_STRING_MSG_RIGHT, TPO_STRING_MSG_LEFT + CHAT_TEXT_STRING_LENGTH
-.string "let's play again later"
-.set TPO_STRING_MSG_DOWN, TPO_STRING_MSG_RIGHT + CHAT_TEXT_STRING_LENGTH
-.string "bad connection        "
 .align 2
 
 ################################################################################

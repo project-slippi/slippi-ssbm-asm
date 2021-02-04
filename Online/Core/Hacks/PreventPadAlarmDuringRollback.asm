@@ -35,7 +35,7 @@ cmpwi r3, 0
 beq EXIT
 
 # Here we have gotten a VI retrace callback while executing a rollback
-logf LOG_LEVEL_NOTICE, "VI retrace CB during rollback..."
+# logf LOG_LEVEL_NOTICE, "VI retrace CB during rollback..."
 li r3, 1
 stb r3, ODB_SHOULD_FORCE_PAD_RENEW(r5)
 

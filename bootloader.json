@@ -1,0 +1,24 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Bootloader/bootloader.gct"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Slippi Bootloader",
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Bootloader",
+          "annotation": "Slippi Bootloader [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/EXITransferBuffer",
+          "annotation": "EXI Transfer Buffer"
+        }
+      ]
+    }
+  ]
+}
