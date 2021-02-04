@@ -64,7 +64,9 @@ blrl
 .float 11.8
 .set TPO_CHAT_BG_SCALE_Y, TPO_CHAT_BG_SCALE_X+4
 .float 0.8
-.set TPO_CHAT_BG_Y_POS, TPO_CHAT_BG_SCALE_Y+4
+.set TPO_CHAT_BG_X_POS_WIDESCREEN, TPO_CHAT_BG_SCALE_Y+4
+.float -15
+.set TPO_CHAT_BG_Y_POS, TPO_CHAT_BG_X_POS_WIDESCREEN+4
 .float 24
 .set TPO_CHAT_BG_FRAME_START, TPO_CHAT_BG_Y_POS+4
 .float 0
@@ -73,7 +75,9 @@ blrl
 .set TPO_CHAT_BG_FRAME_REWIND, TPO_CHAT_BG_FRAME_END+4
 .float 50
 
-.set TPO_CHATMSG_X_POS, TPO_CHAT_BG_FRAME_REWIND+4
+.set TPO_CHATMSG_X_POS_WIDESCREEN, TPO_CHAT_BG_FRAME_REWIND+4
+.float -44.5
+.set TPO_CHATMSG_X_POS, TPO_CHATMSG_X_POS_WIDESCREEN+4
 .float -29.5
 .set TPO_CHATMSG_Y_POS, TPO_CHATMSG_X_POS+4
 .float -23.25
@@ -660,13 +664,16 @@ lwz r16, 0x10(r3) # pointer to our custom bg jobj anim joint
 lwz r3, 0x0C(r3) # pointer to our custom bg jobj
 branchl r12,JObj_LoadJoint #Create Jboj
 mr  r15,r3
+lwz r17, 0x10(r15) # jobj to animate
 
-# scale up the jobj
-# TODO: remove this and scale on diff file instead
-lfs f1, TPO_CHAT_BG_SCALE_X(REG_TEXT_PROPERTIES)
-lfs f2, TPO_CHAT_BG_SCALE_Y(REG_TEXT_PROPERTIES)
-stfs f1, 0x2C(r15)
-stfs f2, 0x2C+4(r15)
+# Move to the left if widescreen is enabled
+lbz r3, OFST_R13_ISWIDESCREEN(r13)
+cmpwi r3, 0
+beq SKIP_SET_CHAT_BG_POS_X
+
+lfs f1, TPO_CHAT_BG_X_POS_WIDESCREEN(REG_TEXT_PROPERTIES)
+stfs f1, 0x38(r15)
+SKIP_SET_CHAT_BG_POS_X:
 
 # Add JOBJ To GObj
 mr  r3,r14
@@ -675,17 +682,16 @@ mr  r5,r15
 branchl r12,0x80390a70 # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
 
 # Add Animations to JObj
-mr r3, r15 # jobj
+mr r3, r17 # jobj
 mr r4, r16 # anim joint
 li r5, 0
 li r6, 0
 branchl r12, JObj_AddAnimAll #
 
 # set end frame of anim
-mr r3, r15 # jobj
-lwz r3, 0x7C(r15) #aobj
+lwz r3, 0x7C(r17) #aobj
 lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)
-branchl r12, 0x8036532C # AObjSetEndFrame(aobj, frame)
+branchl r12, AObj_SetEndFrame
 
 mr r3, r15
 lfs f1, TPO_CHAT_BG_FRAME_START(REG_TEXT_PROPERTIES)
@@ -1138,8 +1144,9 @@ lbz REG_CHATMSG_PLAYER_INDEX, CSSCMDT_PLAYER_INDEX(REG_CHATMSG_GOBJ_DATA_ADDR)
 lwz REG_CSSDT_ADDR, CSSCMDT_CSSDT_ADDR(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 lwz REG_CHATMSG_JOBJ, JOBJ_OFFSET(REG_CHATMSG_GOBJ) # get address of jobj
+lwz REG_CHATMSG_JOBJ, 0x10(REG_CHATMSG_JOBJ) # get address of child jobj (bg)
 
-# Always Animate the dialog
+# Always Animate the bg
 mr r3, REG_CHATMSG_JOBJ
 branchl r12, JObj_AnimAll
 
@@ -1190,15 +1197,28 @@ lwz	r3, textStructDescriptorBuffer(r13) # Text Struct Descriptor
 li r4, 3 # gx_link we want
 stb r4, 0xE(r3)
 
+lfs f1, TPO_CHATMSG_X_POS(REG_TEXT_PROPERTIES)
+
+# Move to the left if widescreen is enabled
+lbz r3, OFST_R13_ISWIDESCREEN(r13)
+cmpwi r3, 0
+beq SKIP_SET_CHAT_MSG_POS_X
+
+lfs f1, TPO_CHATMSG_X_POS_WIDESCREEN(REG_TEXT_PROPERTIES)
+SKIP_SET_CHAT_MSG_POS_X:
+
+
 # Create Text Object
 addi r3, REG_CHATMSG_PLAYER_INDEX, 1
+li r3, 2
 mr r4, REG_CHATMSG_MSG_ID
 cmpwi r4, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
 beq MAP_UP_UP
 SKIP_REMAP:
 li r5, 2 # use premade text fn
 li r6, 0 # gx_link/pri?
-lfs f1, TPO_CHATMSG_X_POS(REG_TEXT_PROPERTIES)
+
+# f1 = X POS is set up above
 # f2 = Y POS is set up above
 lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES)
 lfs f4, TPO_CHATMSG_CANVAS_SCALE(REG_TEXT_PROPERTIES)
@@ -1269,10 +1289,9 @@ stb REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
 li REG_CHATMSG_TIMER, 20 # reset timer
 stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
 
-mr r3, REG_CHATMSG_JOBJ # jobj
 lwz r3, 0x7C(REG_CHATMSG_JOBJ) #aobj
 lfs f1, TPO_CHAT_BG_FRAME_REWIND(REG_TEXT_PROPERTIES)
-branchl r12, 0x8036532C # AObjSetEndFrame(aobj, frame)
+branchl r12, AObj_SetEndFrame
 
 mr r3, REG_CHATMSG_JOBJ
 lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)

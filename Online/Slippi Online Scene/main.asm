@@ -42,6 +42,8 @@
   li r3, 0
   stb r3, OFST_R13_NAME_ENTRY_MODE(r13)
   stb r3, OFST_R13_ISPAUSE(r13)
+  stb r3, OFST_R13_USE_PREMADE_TEXT(r13)
+  stb r3, isWidescreen(r13)
 
 ################################################################################
 # Set up Slippi major scene

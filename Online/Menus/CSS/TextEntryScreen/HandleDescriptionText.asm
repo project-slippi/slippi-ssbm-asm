@@ -16,7 +16,7 @@ lbz r5, OFST_R13_ONLINE_MODE(r13)
 cmpwi r5, ONLINE_MODE_TEAMS
 bne EXIT # exit if not on TEAMS mode
 
-# IF of our premade text for doubles
+# ID of our premade text for doubles
 li r4, 88
 b EXIT
 

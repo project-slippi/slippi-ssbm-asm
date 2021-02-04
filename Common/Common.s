@@ -172,13 +172,18 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set GObj_AddToObj,0x80390A70 #(gboj,obj_kind,obj_ptr)
 .set GObj_SetupGXLink, 0x8039069c #(gobj,function,gx_link,priority)
 
+## AObj Functions
+.set AObj_SetEndFrame, 0x8036532C #(aobj, frame)
+
 ## JObj Functions
 .set JObj_GetJObjChild,0x80011e24
 .set JObj_RemoveAnimAll,0x8036f6b4
 .set JObj_LoadJoint, 0x80370E44 #(jobj_desc_ptr)
 .set JObj_AddAnim, 0x8036FA10 # (jobj,an_joint,mat_joint,sh_joint)
 .set JObj_AddAnimAll, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
+.set JObj_ReqAnim, 0x8036F934 #(HSD_JObj* jobj, f32 frame)
 .set JObj_ReqAnimAll, 0x8036F8BC #(HSD_JObj* jobj, f32 frame)
+.set JObj_Anim, 0x80370780 #(jobj)
 .set JObj_AnimAll, 0x80370928 #(jobj)
 .set JObj_ClearFlags, 0x80371f00 #(jobj,flags)
 .set JObj_ClearFlagsAll, 0x80371F9C #(jobj,flags)
@@ -356,6 +361,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
 .set textStructDescriptorBuffer,-0x3D24
+.set isWidescreen,-0x5020
 
 ################################################################################
 # Log levels
