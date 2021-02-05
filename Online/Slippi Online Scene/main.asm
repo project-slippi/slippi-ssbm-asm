@@ -830,9 +830,6 @@ branchl r12,0x80018c2c
 li  r3,4
 branchl r12,0x80017700
 
-
-branchl r12,0x8021b2d8
-
 # Clear ssm queue
 li	r3, 28
 branchl	r12, 0x80026F2C
