@@ -150,9 +150,20 @@ stb r3, 0x6(r4)
 ################################################################################
 # Set up Zelda to select Sheik as default
 ################################################################################
-li r3, 0x13
-load r4, 0x803f0cc8
-stb r3, 0x1(r4)
+
+# get CSS icon data
+branchl r12,FN_GetCSSIconData
+mr r4,r3
+# get zelda icon ID's external ID
+li r3, 15
+mulli	r3, r3, 28
+add	r4, r3, r4
+# store sheik's ID
+li r3,0x13
+stb	r3, 0x00DD (r4) # char id
+
+#load r4, 0x803f0cc8
+#stb r3, 0x1(r4)
 
 restore
 blr
@@ -820,40 +831,42 @@ li  r3,4
 branchl r12,0x80017700
 
 
+branchl r12,0x8021b2d8
+
+# Clear ssm queue
+li	r3, 28
+branchl	r12, 0x80026F2C
+
 # Load fighters' ssm files
 .set REG_COUNT,20
-.set REG_SSMBIT1,21
-.set REG_SSMBIT2,22
-.set REG_CURR,23
+.set REG_CURR,21
 li	REG_COUNT, 0
 mulli	r0, REG_COUNT, 36
 mr REG_CURR, REG_VS_SSS_DATA
 add	REG_CURR, REG_CURR, r0
-li	REG_SSMBIT1, 0
-li	REG_SSMBIT2, 0
 CSSSceneDecide_SSMLoop:
+# Get fighter's external ID
 lbz	r3, 0x0060 (REG_CURR)
 extsb	r3, r3
-branchl r12,0x80026E84
+cmpwi r3,33
+beq CSSSceneDecide_SSMIncLoop
+# Get fighter's ssm ID
+load r4,0x803bb3c0
+mulli r3,r3,0x10
+lbzx r3,r3,r4
+branchl r12,FN_RequestSSM   # queue it
+CSSSceneDecide_SSMIncLoop:
 addi	REG_COUNT, REG_COUNT, 1
 cmpwi	REG_COUNT, 6
-or	REG_SSMBIT2, REG_SSMBIT2, r4
-or	REG_SSMBIT1, REG_SSMBIT1, r3
 addi	REG_CURR, REG_CURR, 36
 blt+	 CSSSceneDecide_SSMLoop
-# Load stage's ssm file
+# Get stage's ssm file index
 lhz r3, 0xE (REG_VS_SSS_DATA)
-branchl	r12, 0x80026EBC
-or	REG_SSMBIT1, r3, REG_SSMBIT1
-or	REG_SSMBIT2, r4, REG_SSMBIT2
-# Clear ssm queue
-li	r3, 28
-branchl	r12, 0x80026F2C
-# Queue ssms
-addi	r6, REG_SSMBIT2, 0
-addi	r5, REG_SSMBIT1, 0
-li	r3, 12
-branchl r12, 0x8002702C
+branchl r12,0x8022519c  # get internal ID
+load r4,0x803bb6b0
+mulli r3,r3,0x3
+lbzx r3,r3,r4
+branchl r12,FN_RequestSSM   # queue it
 # set to load
 branchl r12, 0x80027168
 

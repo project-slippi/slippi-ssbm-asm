@@ -140,9 +140,11 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FG_CreateSubtext,0x800056b4
 .set FN_LoadChatMessageProperties,0x800056ac
 .set FN_GetTeamCostumeIndex,0x800056b0
+.set FN_GetCSSIconData,0x800056b8
+.set FN_CSSUpdateCSP,0x800056bc
+.set FN_RequestSSM,0x800056a8
 # available addresses for static functions
-# 0x800056b8
-# 0x800056bc
+# 0x800056a4
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608

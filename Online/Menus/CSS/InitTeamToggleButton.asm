@@ -309,15 +309,19 @@ add REG_PORT_SELECTIONS_ADDR, r4, r3
 lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
 mr REG_INTERNAL_CHAR_ID, r3
 
-# Get Char Id
-load r3, 0x803f0a48
-mr r4, r3
-addi r5, r3, 0x03C2
-lbzu	r3, 0x0(r5)
+# get CSS icon data
+branchl r12,FN_GetCSSIconData
+mr r5,r3
+# get port's icon ID
+li r3,0       # port index
+mulli r3,r3,36
+load r4,0x803f0a48
+add r4,r3,r4
+lbz	r3, 0x03C2(r4)
+# get icon ID's external ID
 mulli	r3, r3, 28
-add	r4, r4, r3
-lbz	r3, 0x00DC (r4) # char id
-mr REG_EXTERNAL_CHAR_ID, r3
+add	r4, r3, r5
+lbz	REG_EXTERNAL_CHAR_ID, 0x00DD (r4) # char id
 
 # Get Custom Team Index increment and store
 lbz r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
@@ -385,13 +389,12 @@ load r5, 0x803F0E09 # P1 Char Menu Data
 stb REG_COSTUME_IDX, 0x0(r5)
 stb REG_COSTUME_IDX, CSSDT_TEAM_COSTUME_IDX(REG_CSSDT_ADDR)
 
-# Calculate Costume ID from costume Index
-mulli	r4, REG_COSTUME_IDX, 30
-add	r4, REG_EXTERNAL_CHAR_ID, r4
-
+# Update costume CSP
 li r3, 0 # player index
-li	r5, 0
-branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
+mr r4,REG_EXTERNAL_CHAR_ID
+mr r5,REG_COSTUME_IDX
+li	r6, 0
+branchl r12,FN_CSSUpdateCSP
 
 # Play team switch sound
 li	r3, 2

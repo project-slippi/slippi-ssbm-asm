@@ -35,15 +35,19 @@ add REG_PORT_SELECTIONS_ADDR, r4, r3
 lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
 mr REG_INTERNAL_CHAR_ID, r3
 
-# Get Char Id
-load r3, 0x803f0a48
-mr r4, r3
-addi r5, r3, 0x03C2
-lbzu	r3, 0x0(r5)
+# get CSS icon data
+branchl r12,FN_GetCSSIconData
+mr r5,r3
+# get port's icon ID
+li r3,0       # port index
+mulli r3,r3,36
+load r4,0x803f0a48
+add r4,r3,r4
+lbz	r3, 0x03C2(r4)
+# get icon ID's external ID
 mulli	r3, r3, 28
-add	r4, r4, r3
-lbz	r3, 0x00DD (r4) # char id
-mr REG_EXTERNAL_CHAR_ID, r3
+add	r4, r3, r5
+lbz	REG_EXTERNAL_CHAR_ID, 0x00DD (r4) # char id
 
 mr r3, REG_TEAM_IDX
 mr r4, REG_EXTERNAL_CHAR_ID

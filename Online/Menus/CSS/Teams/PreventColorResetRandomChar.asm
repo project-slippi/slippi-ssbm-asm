@@ -48,13 +48,12 @@ stb REG_COSTUME_IDX, 0x0(r5)
 lbz r3, 0x1(r5)
 stb r3, 0x2(r5)
 
-# Calculate Costume ID from costume Index
-mulli	r4, REG_COSTUME_IDX, 30
-add	r4, REG_INTERNAL_CHAR_ID, r4
-
+# Update costume CSP
 li r3, 0 # player index
-li	r5, 0
-branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
+mr r4,REG_INTERNAL_CHAR_ID
+mr r5,REG_COSTUME_IDX
+li	r6, 0
+branchl r12,FN_CSSUpdateCSP
 
 b EXIT
 
