@@ -1,10 +1,15 @@
 ################################################################################
-# Address: 0x8023cc14 # Executed after check to see if tag is empty
+# Address: 0x8023cc14 
+# Executed after check to see if tag is empty or there are remaining autocomplete 
+# suggestions.
+# 
+# OnConfirmButtonAPress may branch to this address, and if it does, r3 will be set to 1. 
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
 
+mr r23, r3  # Copy potentially passed arg.
 lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
 cmpwi r3, 0
 beq EXIT
@@ -36,7 +41,15 @@ mtctr r12
 bctrl
 
 # Skip the regular stuff that would run on success (saving the nametag)
+mr r3, r23
+cmpwi r3, 1 # Determine if user confirmed with A button press.
+beq CONFIRM_A
 branch r12, 0x8023cc80
+b EXIT
+
+CONFIRM_A: 
+branch r12, 0x8023cabc 
 
 EXIT:
+mr r3, r23  # Restore r3 val.
 li r0, 0
