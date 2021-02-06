@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 803753b0
+# Address: 80375380
 ################################################################################
 
 ################################################################################
@@ -21,7 +21,7 @@
 .set  REG_Buffer,25
 
 # Original codeline
-  stw	r31, -0x3FE8 (r13)
+  branchl r12,0x803444e0
 
 backup
 
@@ -94,6 +94,92 @@ backup
   load r3,GeckoHeapPtr
   stw REG_Buffer, 0 (r3)
 
+# Process gecko codes
+  addi r3, REG_Buffer, 8 # Gecko code list start
+  bl Callback_ProcessGeckoCode # Callback function to process codes
+  mflr r4
+  branchl r12, FN_ProcessGecko
+
+  b Exit
+
+Callback_ProcessGeckoCode:
+blrl
+
+.set REG_CodeAddress, 30
+.set REG_TargetDataPtr, 29
+.set REG_SourceDataPtr, 28
+.set REG_ReplaceSize, 27
+
+  # r5 is input to this function, it contains the size of the replaced data
+  cmpwi r5, 0 # If size is 0, either we don't support this codetype or theres nothing to replace
+  beq Callback_ProcessGeckoCode_End
+
+  backup # TODO: Consider being more efficient about backup and restore?
+
+  mr REG_CodeAddress, r4
+  mr REG_ReplaceSize, r5
+
+  lwz r5, 0(REG_CodeAddress)
+  rlwinm r5, r5, 0, 0x01FFFFFF
+  oris REG_TargetDataPtr, r5, 0x8000 # Injection Address
+
+  # r3 contains the codetype, do a switch statement on it to prepare for memcpys
+  cmpwi r3, 0x04
+  beq HANDLE_04
+
+  cmpwi r3, 0x06
+  beq HANDLE_06
+
+  cmpwi r3, 0xC2
+  beq HANDLE_C2
+
+  # TODO: Assert? It should not be possible to get here. Obviously we could skip
+  # TODO: one of the above compares but I'd rather do an assert or something
+  # TODO: here to make sure that we haven't made a code error
+
+HANDLE_04:
+  addi REG_SourceDataPtr, REG_CodeAddress, 4
+  b EXEC_COPY
+
+HANDLE_06:
+  addi REG_SourceDataPtr, REG_CodeAddress, 8
+  b EXEC_COPY
+
+HANDLE_C2:
+  # C2 Step 1: Copy the branch instruction that will overwrite data to buffer.
+  addi r4, REG_CodeAddress, 0x8
+  sub r3, r4, REG_TargetDataPtr
+  rlwinm r3, r3, 0, 6, 29
+  oris r3, r3, 0x4800
+  stw r3, BKP_FREE_SPACE_OFFSET(sp)
+  addi REG_SourceDataPtr, sp, BKP_FREE_SPACE_OFFSET
+
+  # C2 Step 2: Replace branch instruction in gecko code to return to correct loc
+  lwz r3, 0x4(REG_CodeAddress)
+  mulli r3, r3, 0x8
+  add r4, r3, REG_CodeAddress            # get branch back site
+  addi r3, REG_TargetDataPtr, 0x4        # get branch back destination
+  sub r3, r3, r4
+  rlwinm r3, r3, 0, 6, 29                # extract bits for offset
+  oris r3, r3, 0x4800                    # Create branch instruction from it
+  subi r3, r3, 0x4                       # subtract 4 i guess
+  stw r3, 0x4(r4)                        # place branch instruction
+
+EXEC_COPY:
+  # Replace data
+  mr r3, REG_TargetDataPtr # destination
+  mr r4, REG_SourceDataPtr # source
+  mr r5, REG_ReplaceSize
+  branchl r12, memcpy
+
+  mr r3, REG_TargetDataPtr
+  mr r4, REG_ReplaceSize
+  branchl r12, TRK_flush_cache
+
+  restore
+
+Callback_ProcessGeckoCode_End:
+  blr
 
 Exit:
   restore

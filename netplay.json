@@ -107,11 +107,6 @@
           "annotation": "Disable Trophy Messages [Achilles]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/UnlockAllTrophies.bin",
-          "annotation": "Unlock All 293 Trophies [Datel]"
-        },
-        {
           "type": "injectFolder",
           "sourceFolder": "External/Salty Runback",
           "annotation": "Hold A+B For Salty Runback 2.0 [Dan Salvato, UnclePunch]"
@@ -281,11 +276,6 @@
           "type": "injectFolder",
           "sourceFolder": "Common/CSS KO Stars",
           "annotation": "Asign KO Stars Upon Exiting Dairantou [UnclePunch]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/Gecko",
-          "annotation": "Static function to process Gecko codes [Fizzi]"
         }
       ]
     },

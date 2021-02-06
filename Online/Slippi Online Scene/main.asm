@@ -152,9 +152,20 @@ stb r3, 0x6(r4)
 ################################################################################
 # Set up Zelda to select Sheik as default
 ################################################################################
-li r3, 0x13
-load r4, 0x803f0cc8
-stb r3, 0x1(r4)
+
+# get CSS icon data
+branchl r12,FN_GetCSSIconData
+mr r4,r3
+# get zelda icon ID's external ID
+li r3, 15
+mulli	r3, r3, 28
+add	r4, r3, r4
+# store sheik's ID
+li r3,0x13
+stb	r3, 0x00DD (r4) # char id
+
+#load r4, 0x803f0cc8
+#stb r3, 0x1(r4)
 
 restore
 blr
@@ -346,7 +357,9 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq CSSSceneDecide_Adv_IsUnranked
 cmpwi r3, ONLINE_MODE_DIRECT
-bge CSSSceneDecide_Adv_IsDirect
+beq CSSSceneDecide_Adv_IsDirect
+cmpwi r3, ONLINE_MODE_TEAMS
+beq CSSSceneDecide_Adv_IsDirect
 cmpwi r3, ONLINE_MODE_RANKED
 beq CSSSceneDecide_Adv_IsRanked
 
@@ -481,6 +494,7 @@ blr
 VSSceneDecide:
 .set REG_MSRB_ADDR, 31
 .set REG_TXB_ADDR, 30
+.set REG_SHOULD_PICK_STAGE, 29
 
 backup
 
@@ -493,6 +507,29 @@ branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
 VSSceneDecide_UpdateWinner:
+
+#Update ISWINNER static bool
+lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+bl  CheckIfWonLastGame
+stb r3,OFST_R13_ISWINNER(r13)
+
+# Handle case where there's a draw and both players are "winners"
+SELECTOR_OVERWRITE:
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SELECTOR_OVERWRITE_NON_TEAMS
+
+# If teams, just overwrite it so that P1 always picks
+lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+li r4, 1
+cmpwi r3, 0
+bne SELECTOR_OVERWRITE_TEAMS_EXEC
+li r4, 0
+SELECTOR_OVERWRITE_TEAMS_EXEC:
+stb r4,OFST_R13_ISWINNER(r13) # 1 for all non-0 players
+b SELECTOR_OVERWRITE_END
+
+SELECTOR_OVERWRITE_NON_TEAMS:
 .set  REG_Count,20
 .set  REG_Winners,21
 # todo: add check for teams (if that ever gets added)
@@ -511,50 +548,47 @@ cmpwi REG_Count,4
 blt VSSceneDecide_UpdateWinner_Loop
 # ensure game only had 1 winner
 cmpwi REG_Winners,1
-bne VSSceneDecide_Lost
+beq SELECTOR_OVERWRITE_END # If only one winner, don't overwrite
 
-#Update ISWINNER static bool
-lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-bl  CheckIfWonLastGame
-cmpwi r3,0
-beq VSSceneDecide_Lost
-VSSceneDecide_Won:
-li  r3,1
-b VSSceneDecide_UpdateWinnerEnd
-VSSceneDecide_Lost:
-li  r3,0
-VSSceneDecide_UpdateWinnerEnd:
-# if we're port 1, we're the winner for stage select
-lbz r4, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-li r3, ISWINNER_LOST # always random
-cmpwi r4, 0
-beq VSSceneDecide_SetWinner
-li r3, ISWINNER_WON # set flag to winner if we aren't p1 (loser picks stage)
-VSSceneDecide_SetWinner:
+# Overwrite to loser to force stage pick from both
+li r3,0
 stb r3,OFST_R13_ISWINNER(r13)
+SELECTOR_OVERWRITE_END:
+
+.set REG_MATCH_END_STRUCT, 20
 
 # Trick gold winner text into working by modifying the values used in calculation
-load r4, 0x80479da4
+load REG_MATCH_END_STRUCT, 0x80479da4
+# Check if this player won and decide how to trick gold text
+lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+bl  CheckIfWonLastGame
 cmpwi r3, 0
 beq HACK_GOLD_TEXT_LOSER
 
 HACK_GOLD_TEXT_WINNER:
 li r3, 1
-stb r3, 0x0(r4) # Trick logic into thinking P2 LRAS'd
+stb r3, 0x0(REG_MATCH_END_STRUCT) # Trick logic into thinking P2 LRAS'd
 li r3, 0
-stb r3, 0x5D(r4) # Trick logic into thinking player won
-b HACK_GOLD_TEXT_END
+stb r3, 0x5D(REG_MATCH_END_STRUCT) # Trick logic into thinking player won
+b HACK_GOLD_TEXT_LOSER_END
 
 HACK_GOLD_TEXT_LOSER:
 li r3, 0
-stb r3, 0x0(r4) # Trick logic into thinking this player LRAS'd
+stb r3, 0x0(REG_MATCH_END_STRUCT) # Trick logic into thinking this player LRAS'd
 li r3, 1
-stb r3, 0x5D(r4) # Trick logic into thinking player lost
+stb r3, 0x5D(REG_MATCH_END_STRUCT) # Trick logic into thinking player lost
+HACK_GOLD_TEXT_LOSER_END:
 
+# For teams, trick the text into never turning gold (Doesn't work for both LRAS and wins easily)
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne HACK_GOLD_TEXT_END
+li r3, 0
+stb r3, 0x4(REG_MATCH_END_STRUCT)
 HACK_GOLD_TEXT_END:
 
 # Reset CHOSESTAGE bool
-li  r3,0
+li  r3, 0
 stb r3, OFST_R13_CHOSESTAGE (r13)
 
 # Prepare to reset RNG seed. This fixes the issue where both clients would
@@ -798,41 +832,40 @@ branchl r12,0x80018c2c
 li  r3,4
 branchl r12,0x80017700
 
+# Clear ssm queue
+li	r3, 28
+branchl	r12, 0x80026F2C
 
 # Load fighters' ssm files
 .set REG_COUNT,20
-.set REG_SSMBIT1,21
-.set REG_SSMBIT2,22
-.set REG_CURR,23
+.set REG_CURR,21
 li	REG_COUNT, 0
 mulli	r0, REG_COUNT, 36
 mr REG_CURR, REG_VS_SSS_DATA
 add	REG_CURR, REG_CURR, r0
-li	REG_SSMBIT1, 0
-li	REG_SSMBIT2, 0
 CSSSceneDecide_SSMLoop:
+# Get fighter's external ID
 lbz	r3, 0x0060 (REG_CURR)
 extsb	r3, r3
-branchl r12,0x80026E84
+cmpwi r3,33
+beq CSSSceneDecide_SSMIncLoop
+# Get fighter's ssm ID
+load r4,0x803bb3c0
+mulli r3,r3,0x10
+lbzx r3,r3,r4
+branchl r12,FN_RequestSSM   # queue it
+CSSSceneDecide_SSMIncLoop:
 addi	REG_COUNT, REG_COUNT, 1
 cmpwi	REG_COUNT, 6
-or	REG_SSMBIT2, REG_SSMBIT2, r4
-or	REG_SSMBIT1, REG_SSMBIT1, r3
 addi	REG_CURR, REG_CURR, 36
 blt+	 CSSSceneDecide_SSMLoop
-# Load stage's ssm file
+# Get stage's ssm file index
 lhz r3, 0xE (REG_VS_SSS_DATA)
-branchl	r12, 0x80026EBC
-or	REG_SSMBIT1, r3, REG_SSMBIT1
-or	REG_SSMBIT2, r4, REG_SSMBIT2
-# Clear ssm queue
-li	r3, 28
-branchl	r12, 0x80026F2C
-# Queue ssms
-addi	r6, REG_SSMBIT2, 0
-addi	r5, REG_SSMBIT1, 0
-li	r3, 12
-branchl r12, 0x8002702C
+branchl r12,0x8022519c  # get internal ID
+load r4,0x803bb6b0
+mulli r3,r3,0x3
+lbzx r3,r3,r4
+branchl r12,FN_RequestSSM   # queue it
 # set to load
 branchl r12, 0x80027168
 
