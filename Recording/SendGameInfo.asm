@@ -50,6 +50,7 @@ backup
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
   load r3,GeckoHeapPtr
   lwz r3, 0 (r3)   # Gecko code list start
+  addi r3, r3, 8 # skip past d0c0de d0c0de
   li r4, 0 # No callback
   branchl r12, FN_ProcessGecko
   mr REG_GeckoListSize, r3
@@ -476,10 +477,16 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 #-------------- Transfer Gecko List ---------------
 .set REG_GeckoCopyBuffer,21
 .set REG_GeckoCopyPos,22
+.set REG_GeckoSectionStart,23
 # Create copy buffer
   li r3, SPLIT_MESSAGE_BUF_LEN
   branchl r12, HSD_MemAlloc
   mr REG_GeckoCopyBuffer, r3
+
+# Load gecko code section start
+  load r3, GeckoHeapPtr
+  lwz r3, 0 (r3)   # Gecko code list start
+  addi REG_GeckoSectionStart, r3, 8 # skip past d0c0de d0c0de
 
   li r3, CMD_SPLIT_MESSAGE
   stb r3, SPLIT_MESSAGE_OFST_COMMAND(REG_GeckoCopyBuffer)
@@ -513,7 +520,7 @@ CODE_LIST_LOOP_START:
 CODE_LIST_COPY_BLOCK:
   # Copy next gecko list section
   addi r3, REG_GeckoCopyBuffer, SPLIT_MESSAGE_OFST_DATA # destination
-  load r4, GeckoCodeSectionStart
+  mr r4, REG_GeckoSectionStart
   add r4, r4, REG_GeckoCopyPos
   lhz r5, SPLIT_MESSAGE_OFST_SIZE(REG_GeckoCopyBuffer)
   branchl r12, memcpy

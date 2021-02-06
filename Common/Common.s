@@ -321,8 +321,6 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 
 .set CONST_FirstFrameIdx, -123
 
-.set GeckoCodeSectionStart,0x801910E8
-
 .set RtocAddress, 0x804df9e0
 
 .set ControllerFixOptions,0xDD8 # Each byte at offset is a player's setting
