@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 0x8023c588
+# Address: 0x8023c588 # NOTE: THIS CODE HAS BEEN ADJUSTED TO NEVER CHANGE CURSOR POSITION
 ################################################################################
 
 .include "Common/Common.s"
@@ -27,6 +27,13 @@ LOOP_END:
 lbz r4, 0x58(r28) # get current position
 cmpw r3, r4
 beq EXIT
+
+########################################
+# DON'T UPDATE CURSOR POSITION OR TEXT.
+########################################
+# cmpwi r19, 0x0
+# bne EXIT
+b EXIT
 
 # Here position is different, update text and update position
 stb r3, 0x58(r28) # store position

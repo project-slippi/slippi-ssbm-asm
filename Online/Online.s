@@ -23,6 +23,7 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_ISPAUSE,-0x5038 # byte, client paused bool (originally used for tournament mode @ 8019b8e4)
 .set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
 .set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
+.set OFST_R13_NAME_ENTRY_INDEX_FLAG,-0x5035 # byte, set to 1 if just entered name entry. Rsts direct code index.
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
@@ -347,6 +348,20 @@ lwz \reg, -0x62A0(\reg)
 .set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
 .set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
 .set CSSCWDT_SIZE, CSSCWDT_TEXT_STRUCT_ADDR + 4
+
+################################################################################
+# Name Entry Direct Code Buffer
+###############################################################################
+.set NEDC_CMD, 0 # u8
+.set NEDC_NAME_ENTRY_INDEX, NEDC_CMD + 1 # u8
+.set NEDC_SIZE, NEDC_NAME_ENTRY_INDEX + 1
+
+################################################################################
+# Name Entry Auto Complete 
+###############################################################################
+.set NEAC_CMD, 0 # u8
+.set NEAC_CURRENT_TEXT, NEAC_CMD + 1
+.set NEAC_SIZE, NEAC_CURRENT_TEXT + 24
 
 ################################################################################
 # Online status buffer offsets
