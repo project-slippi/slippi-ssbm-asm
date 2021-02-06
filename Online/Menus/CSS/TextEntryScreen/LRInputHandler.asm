@@ -14,14 +14,13 @@
 
 # Check to see if we've just entered name entry.
 # And if we have, we'll reset the index into our list of direct codes.
-backup
-lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
-cmpwi r3, 0x01
-bne RESTORE 
+lbz r4, OFST_R13_NAME_ENTRY_INDEX_FLAG(r13)
+cmpwi r4, 0x01
+bne INIT_CHECK 
 # Clear flag in scene buffer.
-li r3, 0x0
-stb r3, -0x10 (r4) 
-restore
+li r4, 0x0
+stb r4, OFST_R13_NAME_ENTRY_INDEX_FLAG(r13) 
+
 # Rest run once flag. 
 li REG_RUN_ONCE, 0x0
 
@@ -37,8 +36,9 @@ li REG_RUN_ONCE, 0x01
 
 BOUNDS_CHECK:
 # Only decrement while index is > 0
+mr r26, r3
 cmpwi r3, 0x01
-beq START
+bne START
 cmpwi REG_CODE_INDEX, 0x0
 bgt START  
 
@@ -49,10 +49,11 @@ branchl r12, SFX_Menu_CommonSound
 b EXIT
 
 START:
-
+mr r18, r3
 # Stop all pending sounds
 branchl r12, SFX_StopSFXInstance
 
+mr r3, r18
 addi REG_CODE_INDEX, REG_CODE_INDEX, 1 # Assume R was pressed.
 cmpwi r3, 0x01
 bne START_TRANSFER 
@@ -66,8 +67,8 @@ li r3, 0
 stb r3, 0x58 (r28) # store position
 
 # Debugging trigger outputs
-    # mr r5, REG_CODE_INDEX
-    # logf LOG_LEVEL_NOTICE, "Pressed R. Current Index: %d" 
+#    mr r5, REG_CODE_INDEX
+#    logf LOG_LEVEL_NOTICE, "Pressed R. Current Index: %d" 
 
 # Prep data to be written over DMA.
 li r3, CONST_SlippiCmdSendNameEntryIndex
@@ -140,7 +141,3 @@ li REG_PREV_ERROR, 0x0
 EXIT:
 
 branchl r12, 0x8023ce38
-
-RESTORE:
-restore
-b INIT_CHECK
