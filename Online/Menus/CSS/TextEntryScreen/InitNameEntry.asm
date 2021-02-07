@@ -89,11 +89,9 @@ NAME_ENTRY_RECENT_CONNECT_CODE_THINK:
 blrl
 backup
 
-CHECK_BTN_PRESSED: # must check for all ports
-li r14, 0
-CHECK_BTN_PRESSED_LOOP_START:
-
-mr r3, r14
+# tried using this offset UP recommended (-0x4DE0) but doesn't work on name entry screen 
+# -0x49B0 did though, which is the same one used to setup teams stuff
+lbz r3, -0x49B0(r13) # get input of player that opened the menu
 branchl	r12, Inputs_GetPlayerInstantInputs
 
 cmpwi r4, BTN_LEFT_TRIGGER
@@ -102,10 +100,6 @@ cmpwi r4, BTN_RIGHT_TRIGGER
 beq R_PRESSED
 cmpwi r4, BTN_Z
 beq Z_PRESSED
-
-addi r14, r14, 1
-cmpwi r14, 4 # check if loop ended
-blt CHECK_BTN_PRESSED_LOOP_START
 
 b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
 
