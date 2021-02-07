@@ -271,7 +271,7 @@ addi	r28, r30, 0
 stb	r31, 0x0011 (r29)
 FN_OnlineSubmenuThink_A_PRESS_CHECK_PORT_INPUTS:
 rlwinm	r3, r28, 0, 24, 31
-branchl r12, 0x801A36A0 # Inputs_GetPlayerInstantInputs
+branchl r12, Inputs_GetPlayerInstantInputs 
 and	r0, r3, r31
 and	r4, r4, r30
 xor	r3, r4, r30
@@ -800,7 +800,7 @@ FN_LogoutDialogThink_CheckInputs:
 li r14, 0
 FN_LogoutDialogThink_CheckInputs_AfterPort:
 mr r3, r14
-branchl r12, 0x801A36A0 # Inputs_GetPlayerInstantInputs
+branchl r12, Inputs_GetPlayerInstantInputs 
 
 # Exit function if no input # 0x8019796c
 cmpwi r3, PAD_LEFT

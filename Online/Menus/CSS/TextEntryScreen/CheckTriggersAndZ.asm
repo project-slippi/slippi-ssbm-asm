@@ -24,7 +24,7 @@ mr r26, r4
 # Manually retrieve inputs - Best I can tell, the function 
 # "MainMenu_GetAllControllerInstantButtons" doesn't include check for Z.
 # TODO: It might be worth having the above function handle this. 
-branchl	r12, 0x801A36A0
+branchl	r12, Inputs_GetPlayerInstantInputs
 
 # Determine if Z was pressed.
 rlwinm.	r0, r4, 0, 27, 27

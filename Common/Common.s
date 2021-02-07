@@ -273,6 +273,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set SinglePlayerModeCheck,0x8016b41c
 .set CheckIfGameEnginePaused,0x801a45e8
 .set Inputs_GetPlayerHeldInputs,0x801a3680
+.set Inputs_GetPlayerInstantInputs,0x801A36A0
 .set Rumble_StoreRumbleFlag,0x8015ed4c
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set DiscError_ResumeGame,0x80024f6c
