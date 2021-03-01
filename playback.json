@@ -15,6 +15,7 @@
         "$Required: General Codes",
         "$Required: Slippi Playback",
         "$Recommended: Normal Lag Reduction",
+        "$Optional: Show Player Names",
         "",
         "[Gecko]"
       ]
@@ -34,6 +35,7 @@
         "$Required: General Codes",
         "$Required: Slippi Playback",
         "$Recommended: Normal Lag Reduction",
+        "$Optional: Show Player Names",
         "",
         "[Gecko]"
       ]
@@ -134,6 +136,26 @@
         {
           "type": "binary",
           "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Show Player Names",
+      "authors": [
+        "Fizzi",
+        "UnclePunch",
+        "Enzyme",
+        "jmlee337"
+      ],
+      "description": [
+        "Show players' Slippi Online display names as HUD elements when available"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Playback/Show Player Names",
+          "isRecursive": true,
+          "annotation": "Show Player Names"
         }
       ]
     },
