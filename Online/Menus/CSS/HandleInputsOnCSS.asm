@@ -121,7 +121,7 @@ b SKIP_START_MATCH
 HANDLE_IDLE:
 
 # uncomment to debug the chat window
-# bl FN_CHECK_CHAT_INPUTS
+ bl FN_CHECK_CHAT_INPUTS
 
 # When idle, pressing start will start finding match
 # Check if start was pressed
@@ -665,7 +665,15 @@ lwz r3, 0x18(r3) # pointer to our custom bg jobj
 branchl r12,0x80370e44 #Create Jboj
 mr  REG_CHAT_JOBJ,r3
 
-lfs f1, TPO_CHAT_WINDOW_X(REG_TEXT_PROPERTIES)
+# Move to the left if widescreen is enabled
+lfs f1, TPO_CHAT_WINDOW_X(REG_TEXT_PROPERTIES) # X POS
+lbz r4, OFST_R13_ISWIDESCREEN(r13)
+cmpwi r4, 0
+beq END_SET_CHAT_WINDOW_POS_X
+lfs f1, TPO_CHAT_WINDOW_X_WIDESCREEN(REG_TEXT_PROPERTIES) # X POS Widescreen
+
+END_SET_CHAT_WINDOW_POS_X:
+lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
 lfs f2, TPO_CHAT_WINDOW_Y(REG_TEXT_PROPERTIES)
 stfs f1, 0x38(r3) # X POS
 stfs f2, 0x3C(r3) # Y POS
@@ -784,6 +792,14 @@ stfs f2, 0x24(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # set scale
 stfs f2, 0x28(REG_CHAT_WINDOW_TEXT_STRUCT_ADDR) # set scale
 
 # Create Subtext: Header
+# Move to the left if widescreen is enabled
+lfs f2, TPO_CHAT_HEADER_X(REG_TEXT_PROPERTIES) # X POS
+lbz r3, OFST_R13_ISWIDESCREEN(r13)
+cmpwi r3, 0
+beq END_SET_CHAT_HEADER_POS_X
+lfs f2, TPO_CHAT_HEADER_X_WIDESCREEN(REG_TEXT_PROPERTIES) # X POS Widescreen
+
+END_SET_CHAT_HEADER_POS_X:
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_YELLOW # Text Color
 li r5, 0 # no outline
@@ -791,7 +807,6 @@ addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
 addi r8, REG_CHAT_TEXT_PROPERTIES, 0x4 # String pointer (header starts at 0x4)
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f2, TPO_CHAT_HEADER_X(REG_TEXT_PROPERTIES) # X POS
 lfs f3, TPO_CHAT_LABEL_Y(REG_TEXT_PROPERTIES) # Y POS
 branchl r12, FG_CreateSubtext
 mr r4, r3 # sub text index for next function call
@@ -839,13 +854,22 @@ mr r3, REG_CHAT_WINDOW_INPUT
 branchl r12, FN_LoadChatMessageProperties
 mr r7, r4 # message String pointer
 
+# Move to the left if widescreen is enabled
+lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+lbz r3, OFST_R13_ISWIDESCREEN(r13)
+cmpwi r3, 0
+beq END_SET_CHAT_LABEL_POS_X
+lfs f2, TPO_CHAT_LABEL_X_WIDESCREEN(REG_TEXT_PROPERTIES) # X POS Widescreen
+
+END_SET_CHAT_LABEL_POS_X:
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 li r5, 0 # No outlines
 addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 # r7 message String pointer
 lfs f1, TPO_CHAT_LABEL_SIZE(REG_TEXT_PROPERTIES) # Text Size
-lfs f2, TPO_CHAT_LABEL_X(REG_TEXT_PROPERTIES) # X POS
+
+
 branchl r12, FG_CreateSubtext
 mr r11, r3 # save subtext index
 
@@ -964,9 +988,13 @@ blrl
 # Chat Labels Propiertes
 .set TPO_CHAT_HEADER_X, TPO_BASE_CANVAS_SCALING + 4
 .float -300
-.set TPO_CHAT_LABEL_X, TPO_CHAT_HEADER_X + 4
+.set TPO_CHAT_HEADER_X_WIDESCREEN, TPO_CHAT_HEADER_X + 4
+.float -480
+.set TPO_CHAT_LABEL_X, TPO_CHAT_HEADER_X_WIDESCREEN + 4
 .float -285
-.set TPO_CHAT_LABEL_Y, TPO_CHAT_LABEL_X + 4
+.set TPO_CHAT_LABEL_X_WIDESCREEN, TPO_CHAT_LABEL_X + 4
+.float -465
+.set TPO_CHAT_LABEL_Y, TPO_CHAT_LABEL_X_WIDESCREEN + 4
 .float 79
 .set TPO_CHAT_LABEL_SIZE, TPO_CHAT_LABEL_Y + 4
 .float 0.45
@@ -976,7 +1004,9 @@ blrl
 # Chat Window Properties
 .set TPO_CHAT_WINDOW_X, TPO_CHAT_LABEL_MARGIN + 4
 .float -20
-.set TPO_CHAT_WINDOW_Y, TPO_CHAT_WINDOW_X + 4
+.set TPO_CHAT_WINDOW_X_WIDESCREEN, TPO_CHAT_WINDOW_X + 4
+.float -38
+.set TPO_CHAT_WINDOW_Y, TPO_CHAT_WINDOW_X_WIDESCREEN + 4
 .float -16.5
 
 # Text colors
