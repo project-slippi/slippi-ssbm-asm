@@ -64,11 +64,12 @@ LOOP_MINOR_INIT:
 li r4, 0 # index
 LOOP_MINOR_START:
 mulli r5, r4, 0x18
-lbzx r6, r3, r5 # Get minor ID of the current entry
+add r5, r3, r5 # Get address for current table entry
+lbz r6, 0x0(r5) # Get minor ID of the current entry
 cmpw r6, REG_MINOR_ID
 bne LOOP_MINOR_CONTINUE
 # Here we have found the proper MINOR ID, load the address of the minor table
-lwz r3, 0x10(r5) # Load pointer to minor scene table
+lwz r3, 0xC(r5) # Load pointer to minor scene table
 b LOOP_MINOR_EXIT
 LOOP_MINOR_CONTINUE:
 addi r4, r4, 1
