@@ -143,6 +143,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FN_GetCSSIconData,0x800056b8
 .set FN_CSSUpdateCSP,0x800056bc
 .set FN_RequestSSM,0x800056a8
+.set FN_GetCommonMinorID,0x8000561c
 # available addresses for static functions
 # 0x800056a4
 
