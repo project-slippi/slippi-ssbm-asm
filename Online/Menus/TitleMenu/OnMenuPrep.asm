@@ -722,31 +722,16 @@ bne FN_LogoutDialogThink_ConfigureUI
 
 FN_LogoutDialogThink_InitText:
 
-# Create Text Object
-li r3, 0
-li r4, 1 # gx_link?
-lfs f0, TPO_DLG_LABEL_UNK0(REG_TEXT_PROPERTIES)
+li r3, 0x13F #  Text ID
+li r4, 0 # Use Slippi ID = false
+li r5, 2 # use premade text fn
+li r6, 1 # gx_link?
 lfs f1, TPO_DLG_LABEL_X_POS(REG_TEXT_PROPERTIES)
 lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_DLG_LABEL_SCALE_FACTOR(REG_TEXT_PROPERTIES) # Scale Factor
-lfs f4, TPO_DLG_LABEL_WIDTH(REG_TEXT_PROPERTIES) # Width after scaled
-lfs f5, TPO_DLG_LABEL_UNK1(REG_TEXT_PROPERTIES) # Unk, 300
-branchl r12, Text_AllocateTextObject #0x803a5acc
-mr REG_DLG_TEXT_STRUCT_ADDR, r3
-
-# Save Text Struct Address
-mr REG_DLG_TEXT_STRUCT_ADDR, r3
-stw REG_DLG_TEXT_STRUCT_ADDR, DLG_DT_TEXT_STRUCT_ADDR(REG_DLG_USER_DATA_ADDR)
-
-# Initialize Struct Stuff
-li r0, 1
-li r4, 0x13F # Premade Text id "Are you Sure?"
-mr r3, REG_DLG_TEXT_STRUCT_ADDR
-lfs f0, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES) # Unk, 0.05
-stfs f0, 0x24(r3) # Scale X
-stfs f0, 0x28(r3) # Scale Y
-stb r0, 0x4A(REG_DLG_TEXT_STRUCT_ADDR) # Set text to align center
-branchl r12, Text_CopyPremadeTextDataToStruct
+lfs f3, TPO_DLG_LABEL_Z_POS(REG_TEXT_PROPERTIES)
+lfs f4, TPO_DLG_LABEL_CANVAS_SCALE(REG_TEXT_PROPERTIES)
+branchl r12, FG_CreateSubtext
+stw r3, DLG_DT_TEXT_STRUCT_ADDR(REG_DLG_USER_DATA_ADDR) # Save Text Struct Address
 
 # exit to next frame when dialog is first initialized
 b FN_LogoutDialogThink_Exit
@@ -847,14 +832,6 @@ FN_LogoutDialogThink_CloseDialog:
 li	r3, 0
 branchl r12, SFX_Menu_CommonSound
 
-# remove all anims
-mr r3, REG_DLG_JOBJ
-branchl r12, 0x8036F6B4 # HSD_JObjRemoveAnimAll
-
-# remove proc
-mr r3, REG_DLG_GOBJ
-branchl r12, GObj_RemoveProc
-
 # destroy gobj
 mr r3, REG_DLG_GOBJ
 branchl r12, GObj_Destroy
@@ -884,16 +861,10 @@ blrl
 .float -5.5
 .set TPO_DLG_LABEL_Y_POS, TPO_DLG_LABEL_X_POS+4
 .float -2.8
-.set TPO_DLG_LABEL_UNK0, TPO_DLG_LABEL_Y_POS+4
-.float 9
-.set TPO_DLG_LABEL_SCALE_FACTOR,  TPO_DLG_LABEL_UNK0+4
+.set TPO_DLG_LABEL_Z_POS,  TPO_DLG_LABEL_Y_POS+4
 .float 23
-.set TPO_DLG_LABEL_WIDTH, TPO_DLG_LABEL_SCALE_FACTOR+4
-.float 250
-.set TPO_DLG_LABEL_UNK1, TPO_DLG_LABEL_WIDTH+4
-.float 20
-.set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_UNK1+4
-.float 0.05
+.set TPO_DLG_LABEL_CANVAS_SCALE, TPO_DLG_LABEL_Z_POS+4
+.float 0.045
 
 .set TPO_FLOAT_0, TPO_DLG_LABEL_CANVAS_SCALE+4
 .float 0.0

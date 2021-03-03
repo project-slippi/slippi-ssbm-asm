@@ -301,9 +301,8 @@ mr r4, REG_LABEL_COLOR
 li r5, 0
 mr r7, REG_LABEL_STRING
 lfs f1, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
-fmr f3, REG_POS_X_START
-fmr f4, REG_POS_Y_START
+fmr f2, REG_POS_X_START
+fmr f3, REG_POS_Y_START
 branchl r12, FG_CreateSubtext
 
 li r14, 0x8 # first empty address on Stack offset
@@ -326,9 +325,8 @@ mr r3, REG_TEXT_STRUCT
 addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 li r5, 0
 lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-lfs f2, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
-fmr f3, REG_POS_X_START
-fmr f4, REG_POS_Y_START
+fmr f2, REG_POS_X_START
+fmr f3, REG_POS_Y_START
 branchl r12, FG_CreateSubtext
 
 addi r14, r14, 0x4 # move to next player name address at SP offset
