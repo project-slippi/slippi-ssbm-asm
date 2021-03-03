@@ -1,11 +1,13 @@
 .include "Common/Common.s"
+.include "Online/Online.s"
+
 ################################################################################
 # Address: FG_CreateSubtext # 0x800056b4
 ################################################################################
 # Inputs:
 # r3 = text struct pointer
 # r4 = color pointer
-# r5 = 0: no outlines, 1: outlines
+# r5 = 0: no outlines, 1: outlines, 2: Use Premade Text (see FN_CreatePremadeText)
 # r6 = outline color pointer
 # r7... = string pointers
 
@@ -29,16 +31,26 @@
 .set REG_SUBTEXT_INDEX, REG_COLOR_ADDR+1
 .set REG_OUTLINE, REG_SUBTEXT_INDEX+1
 .set REG_OUTLINE_COLOR_ADDR, REG_OUTLINE+1
+# registers for premade text
+.set REG_TEXT_PROPERTIES, REG_OUTLINE_COLOR_ADDR+1
+.set REG_GX_LINK, REG_TEXT_PROPERTIES + 1
+.set REG_USE_SLIPPI_ID, REG_GX_LINK + 1
+.set REG_TEXT_ID, REG_USE_SLIPPI_ID + 1
+
 # float registers
-.set REG_SCALE_X, REG_TEXT_STRUCT_ADDR
-.set REG_SCALE_Y, REG_SCALE_X+1
-.set REG_X, REG_SCALE_Y+1
+.set REG_SCALE, REG_TEXT_STRUCT_ADDR
+.set REG_X, REG_SCALE+1
 .set REG_Y, REG_X+1
-.set REG_OUTLINE_SIZE, REG_Y+1
+.set REG_Z, REG_Y + 1
+.set REG_OUTLINE_SIZE, REG_Z+1
 .set REG_OUTLINE_OFFSET, REG_OUTLINE_SIZE+1 # outlines offsets to create size
 
 .set REG_LOOP_INDEX, 15
 .set TEXT_LAST_INDEX, 0
+
+# check which function to run
+cmpwi r5, 2
+beq FN_CREATE_PREMADE_TEXT
 
 ################################################################################
 # FN_CREATE_SUBTEXT
@@ -60,10 +72,9 @@ stw  r10,0x44(sp)
 stw  r11,0x48(sp)
 stw  r12,0x4C(sp)
 
-fmr REG_SCALE_X, f1
-fmr REG_SCALE_Y, f2
-fmr REG_X, f3
-fmr REG_Y, f4
+fmr REG_SCALE, f1
+fmr REG_X, f2
+fmr REG_Y, f3
 fmr REG_OUTLINE_SIZE, f5
 fmr REG_OUTLINE_OFFSET, f6
 
@@ -114,8 +125,8 @@ mr REG_SUBTEXT_INDEX, r3 # SubText Index
 # Set Text Size
 mr r3, REG_TEXT_STRUCT_ADDR
 mr r4, REG_SUBTEXT_INDEX
-fmr f1, REG_SCALE_X
-fmr f2, REG_SCALE_Y
+fmr f1, REG_SCALE
+fmr f2, REG_SCALE
 
 # If reached last index, scale y down
 # uncomment to mimic outlines
@@ -174,8 +185,8 @@ mr REG_SUBTEXT_INDEX, r3
 # Set Text Size
 mr r3, REG_TEXT_STRUCT_ADDR
 mr r4, REG_SUBTEXT_INDEX
-fmr f1, REG_SCALE_X
-fmr f2, REG_SCALE_Y
+fmr f1, REG_SCALE
+fmr f2, REG_SCALE
 branchl r12, Text_UpdateSubtextSize
 
 # Set Text Color
@@ -203,3 +214,72 @@ FN_CREATE_SUBTEXT_END:
 mr r3, REG_SUBTEXT_INDEX
 restore
 blr
+
+################################################################################
+# FN_CREATE_PREMADE_TEXT
+################################################################################
+FN_CREATE_PREMADE_TEXT:
+backup
+
+# Save arguments
+mr REG_TEXT_ID, r3
+mr REG_USE_SLIPPI_ID, r4
+# r5 is ignored as it is used to access this function
+mr REG_GX_LINK, r6
+
+fmr REG_X, f1
+fmr REG_Y, f2
+fmr REG_Z, f3
+fmr REG_SCALE, f4
+
+bl TEXT_PROPERTIES
+mflr REG_TEXT_PROPERTIES
+
+# Create Text Object
+li r3, 0
+mr r4, REG_GX_LINK # gx_link/priority?
+lfs f0, TPO_UNK0(REG_TEXT_PROPERTIES)
+fmr f1, REG_X
+fmr f2, REG_Y
+fmr f3, REG_Z
+lfs f4, TPO_UNK1(REG_TEXT_PROPERTIES)
+lfs f5, TPO_UNK2(REG_TEXT_PROPERTIES)
+branchl r12, Text_AllocateTextObject
+mr REG_TEXT_STRUCT_ADDR, r3
+
+cmpwi REG_USE_SLIPPI_ID, 0
+beq SKIP_SLIPPI_ID
+
+li r3, 1
+stb r3, OFST_R13_USE_PREMADE_TEXT(r13) # use slippi premade text
+mr r6, REG_USE_SLIPPI_ID # Reuse as param if any
+
+SKIP_SLIPPI_ID:
+
+mr r3, REG_TEXT_STRUCT_ADDR
+mr r4, REG_TEXT_ID # Premade Text id
+fmr f0, REG_SCALE
+stfs f0, 0x24(r3) # Scale X
+stfs f0, 0x28(r3) # Scale Y
+# stb r0, 0x4A(REG_TEXT_STRUCT_ADDR) # Set text to align center
+branchl r12, Text_CopyPremadeTextDataToStruct
+
+# return text struct address
+mr r3, REG_TEXT_STRUCT_ADDR
+
+restore
+blr
+
+################################################################################
+# Default Properties
+################################################################################
+TEXT_PROPERTIES:
+blrl
+.set TPO_UNK0, 0
+.float 9
+.set TPO_UNK1, TPO_UNK0+4
+.float 600
+.set TPO_UNK2, TPO_UNK1+4
+.float 20
+
+.align 2

@@ -53,39 +53,19 @@ lbz r8, 1(r3)  # UP length
 lbz r9, 2(r3)  # LEFT length
 lbz r10, 3(r3)  # RIGHT length
 
+# save target label in r6
+mr r6, r4
 # calculate address of label
-cmpwi r4, 0x08 # PAD_UP
-beq SET_UP_LABEL_ADDR
-cmpwi r4, 0x04 # PAD_DOWN
-beq SET_DOWN_LABEL_ADDR
-cmpwi r4, 0x02 # PAD_RIGHT
-beq SET_RIGHT_LABEL_ADDR
-cmpwi r4, 0x01 # PAD_LEFT
-beq SET_LEFT_LABEL_ADDR
-
-SET_UP_LABEL_ADDR:
 addi r4, r3, 0x4 # Skip over lengths
 add r4, r4, r7 # skip over header
-
-b EXIT
-SET_LEFT_LABEL_ADDR:
-addi r4, r3, 0x4 # Skip over lengths
-add r4, r4, r7 # skip over header
+cmpwi r6, 0x08 # PAD_UP
+beq EXIT
 add r4, r4, r8 # skip over up
-
-b EXIT
-SET_RIGHT_LABEL_ADDR:
-addi r4, r3, 0x4 # Skip over lengths
-add r4, r4, r7 # skip over header
-add r4, r4, r8 # skip over up
+cmpwi r6, 0x01 # PAD_LEFT
+beq EXIT
 add r4, r4, r9 # skip over left
-
-b EXIT
-SET_DOWN_LABEL_ADDR:
-addi r4, r3, 0x4 # Skip over lengths
-add r4, r4, r7 # skip over header
-add r4, r4, r8 # skip over up
-add r4, r4, r9 # skip over left
+cmpwi r6, 0x02 # PAD_RIGHT
+beq EXIT
 add r4, r4, r10 # skip over right
 
 EXIT:
