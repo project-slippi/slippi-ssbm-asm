@@ -7,7 +7,7 @@
 # Constants
 ################################################################################
 .set PAD_REPORT_SIZE, 0xC * 4 # 4 controller inputs to backup
-.set MIN_DELAY_FRAMES, 1
+.set MIN_DELAY_FRAMES, 0
 .set MAX_DELAY_FRAMES, 15
 
 ################################################################################

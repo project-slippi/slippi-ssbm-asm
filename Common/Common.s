@@ -349,6 +349,9 @@ add r3, r3, r4
 .set CONST_SlippiCmdGctLength, 0xD3
 .set CONST_SlippiCmdGctLoad, 0xD4
 
+# Misc
+.set CONST_SlippiCmdGetDelay, 0xD5
+
 # For Slippi Premade Texts
 .set CONST_SlippiCmdGetPremadeTextLength, 0xE1
 .set CONST_SlippiCmdGetPremadeText, 0xE2

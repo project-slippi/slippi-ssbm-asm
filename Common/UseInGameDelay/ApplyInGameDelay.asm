@@ -29,7 +29,7 @@ bne EXIT
 backup
 
 computeBranchTargetAddress INJ_InitInGameDelay
-lwz REG_IGDB_ADDR, 0x4(r3) # Loads the address of the buffer
+lwz REG_IGDB_ADDR, 0x8(r3) # Loads the address of the buffer
 
 # I don't think I need to check for zero delay, if someone wants zero delay, they need to turn
 # off the code
