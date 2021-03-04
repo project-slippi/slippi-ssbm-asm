@@ -120,6 +120,28 @@ lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
 rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .endm
 
+.macro getMajorId reg
+lis \reg, 0x8048 # load address to offset from for scene controller
+lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
+.endm
+
+# This macro takes in an address that is expected to have a branch instruction. It will set
+# r3 to the address being branched to. This will overwrite r3 and r4
+.macro computeBranchTargetAddress address
+load r3, \address
+lwz r4, 0(r3) # Get branch instruction which contains offset
+
+# Process 3rd byte and extend sign to handle negative branches
+rlwinm r5, r4, 16, 0xFF
+extsb r5, r5
+rlwinm r5, r5, 16, 0xFFFF0000
+
+# Extract last 2 bytes, combine with top half, and then add to base address to get result
+rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
+or r4, r4, r5
+add r3, r3, r4
+.endm
+
 ################################################################################
 # Settings
 ################################################################################
@@ -287,6 +309,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set PadAlarmCheck,0x80019894
 .set Event_StoreSceneNumber,0x80229860
 .set EventMatch_Store,0x801beb74
+.set PadRead,0x8034da00
 
 ## Miscellenia/Unsorted
 .set fetchAnimationHeader,0x80085fd4

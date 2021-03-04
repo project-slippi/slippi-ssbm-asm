@@ -20,8 +20,8 @@
 backup
 
 lis r5, 0x8048 # load address to offset from for scene controller
-lbz REG_MAJOR_ID, -0x62D0(r5) # Load major from 0x80479D30 (scene controller)
-lbz REG_MINOR_ID, -0x62CD(r5) # Load minor from 0x80479D30 (scene controller)
+lbz REG_MAJOR_ID, -0x62D0(r5) # Load major from 0x80479D30
+lbz REG_MINOR_ID, -0x62CD(r5) # Load minor from 0x80479D33
 
 load REG_MAJOR_TABLE_START, 0x803daca4
 
@@ -69,7 +69,7 @@ lbz r6, 0x0(r5) # Get minor ID of the current entry
 cmpw r6, REG_MINOR_ID
 bne LOOP_MINOR_CONTINUE
 # Here we have found the proper MINOR ID, load the address of the minor table
-lwz r3, 0xC(r5) # Load pointer to minor scene table
+lbz r3, 0xC(r5) # Load common minor ID
 b LOOP_MINOR_EXIT
 LOOP_MINOR_CONTINUE:
 addi r4, r4, 1

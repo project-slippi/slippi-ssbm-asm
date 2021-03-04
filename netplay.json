@@ -16,6 +16,7 @@
         "$Required: Slippi Recording",
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
+        "$Recommended: Apply In-Game Delay Everywhere",
         "",
         "[Gecko]"
       ]
@@ -36,6 +37,7 @@
         "$Required: Slippi Recording",
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
+        "$Recommended: Apply In-Game Delay Everywhere",
         "",
         "[Gecko]"
       ]
@@ -339,6 +341,29 @@
         {
           "type": "binary",
           "sourceFile": "Binary/NormalLagReduction.bin"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Apply In-Game Delay Everywhere",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Applies online delay to all in-game scenes such that Dolphin netplay is no longer necessary"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/UseInGameDelay",
+          "isRecursive": true,
+          "annotation": "Main codes"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/GetCommonMinorID",
+          "isRecursive": true,
+          "annotation": "Static function for obtaining common minor ID"
         }
       ]
     },
