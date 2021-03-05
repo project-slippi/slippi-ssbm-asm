@@ -1,12 +1,9 @@
 ################################################################################
-# Address: 0x80376a18 # HSD_PadRenewRawStatus right before PAD calls
+# Address: 0x80376a20 # HSD_PadRenewRawStatus right before PAD call
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
-
-# Replaced instruction
-addi r30, r3, 0
 
 ################################################################################
 # Short Circuit Conditions
@@ -32,7 +29,7 @@ cmpwi r3, 1
 bne EXIT # If rollback not active, continue as normal
 
 ################################################################################
-# Skip HSD_PadRumbleInterpret and PADRead
+# Skip PADRead
 ################################################################################
 
 # This goes to the branch to our trigger input function, this function will not
@@ -44,4 +41,5 @@ branch r12, 0x80376a28
 ################################################################################
 
 EXIT:
-mr r3, r30 # Return r30 to r3 in case it's needed for function call
+# replaced code line
+addi r3, sp, 44

@@ -120,6 +120,28 @@ lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
 rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .endm
 
+.macro getMajorId reg
+lis \reg, 0x8048 # load address to offset from for scene controller
+lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
+.endm
+
+# This macro takes in an address that is expected to have a branch instruction. It will set
+# r3 to the address being branched to. This will overwrite r3 and r4
+.macro computeBranchTargetAddress address
+load r3, \address
+lwz r4, 0(r3) # Get branch instruction which contains offset
+
+# Process 3rd byte and extend sign to handle negative branches
+rlwinm r5, r4, 16, 0xFF
+extsb r5, r5
+rlwinm r5, r5, 16, 0xFFFF0000
+
+# Extract last 2 bytes, combine with top half, and then add to base address to get result
+rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
+or r4, r4, r5
+add r3, r3, r4
+.endm
+
 ################################################################################
 # Settings
 ################################################################################
@@ -143,8 +165,10 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set FN_GetCSSIconData,0x800056b8
 .set FN_CSSUpdateCSP,0x800056bc
 .set FN_RequestSSM,0x800056a8
+.set FN_GetCommonMinorID,0x8000561c
 # available addresses for static functions
 # 0x800056a4
+.set FN_LoadPremadeText, 0x800056a4
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
@@ -173,13 +197,18 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set GObj_AddToObj,0x80390A70 #(gboj,obj_kind,obj_ptr)
 .set GObj_SetupGXLink, 0x8039069c #(gobj,function,gx_link,priority)
 
+## AObj Functions
+.set AObj_SetEndFrame, 0x8036532C #(aobj, frame)
+
 ## JObj Functions
 .set JObj_GetJObjChild,0x80011e24
 .set JObj_RemoveAnimAll,0x8036f6b4
 .set JObj_LoadJoint, 0x80370E44 #(jobj_desc_ptr)
 .set JObj_AddAnim, 0x8036FA10 # (jobj,an_joint,mat_joint,sh_joint)
 .set JObj_AddAnimAll, 0x8036FB5C # (jobj,an_joint,mat_joint,sh_joint)
+.set JObj_ReqAnim, 0x8036F934 #(HSD_JObj* jobj, f32 frame)
 .set JObj_ReqAnimAll, 0x8036F8BC #(HSD_JObj* jobj, f32 frame)
+.set JObj_Anim, 0x80370780 #(jobj)
 .set JObj_AnimAll, 0x80370928 #(jobj)
 .set JObj_ClearFlags, 0x80371f00 #(jobj,flags)
 .set JObj_ClearFlagsAll, 0x80371F9C #(jobj,flags)
@@ -191,7 +220,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set Text_FreeMenuTextMemory,0x80390228 # Not sure about this one, but it has a similar behavior to the Allocate
 .set Text_CreateStruct,0x803a6754
 .set Text_AllocateTextObject,0x803a5acc
-.set Text_CopyPremadeTextDataToStruct,0x803a6368
+.set Text_CopyPremadeTextDataToStruct,0x803a6368# (text struct, index on open menu file, cannot be used, jackpot=will change to memory address we want)
 .set Text_InitializeSubtext,0x803a6b98
 .set Text_UpdateSubtextSize,0x803a7548
 .set Text_ChangeTextColor,0x803a74f0
@@ -281,6 +310,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set PadAlarmCheck,0x80019894
 .set Event_StoreSceneNumber,0x80229860
 .set EventMatch_Store,0x801beb74
+.set PadRead,0x8034da00
 
 ## Miscellenia/Unsorted
 .set fetchAnimationHeader,0x80085fd4
@@ -321,6 +351,14 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set CONST_SlippiCmdGctLength, 0xD3
 .set CONST_SlippiCmdGctLoad, 0xD4
 
+# Misc
+.set CONST_SlippiCmdGetDelay, 0xD5
+
+# For Slippi Premade Texts
+.set CONST_SlippiCmdGetPremadeTextLength, 0xE1
+.set CONST_SlippiCmdGetPremadeText, 0xE2
+.set CONST_TextDolphin, 0x765 # Flag identifying that Text_CopyPremadeTextDataToStruct needs to load from dolphin
+
 .set CONST_FirstFrameIdx, -123
 
 .set RtocAddress, 0x804df9e0
@@ -352,6 +390,7 @@ rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
 .set textStructDescriptorBuffer,-0x3D24
+.set isWidescreen,-0x5020
 
 ################################################################################
 # Log levels

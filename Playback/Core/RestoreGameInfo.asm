@@ -197,6 +197,12 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,ShouldResyncBool(BufferPointer)
   stb r3,PDB_SHOULD_RESYNC(REG_DirectoryBuffer)
 
+# Get player display names
+  addi r3, REG_DirectoryBuffer, PDB_DISPLAY_NAMES # destination
+  addi r4, BufferPointer, DisplayNameData         # source
+  li r5, DisplayNameData_Length                   # length
+  branchl r12, memcpy
+
 #--------------- Apply Dynamic Gecko Codes ---------------------
 # Step 1: Grab size of gecko code list and create a buffer to store them
   # TODO: Make sure that returned size includes the termination sequence (8 bytes)

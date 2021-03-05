@@ -24,6 +24,12 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
 .set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
 .set OFST_R13_NAME_ENTRY_INDEX_FLAG,-0x5035 # byte, set to 1 if just entered name entry. Rsts direct code index.
+.set OFST_R13_USE_PREMADE_TEXT,-0x5014 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
+.set OFST_R13_ISWIDESCREEN,-0x5020 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
+# r13 offsets used in tournament mode (not sure if completely safe though)
+# -0x5040 (r13)
+# -0x5068 (r13)
+# -0x7510 (r13)
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
@@ -257,8 +263,8 @@ lwz \reg, -0x62A0(\reg)
 .set MSRB_DELAY_FRAMES, MSRB_RNG_OFFSET + 4 # u8
 .set MSRB_USER_CHATMSG_ID, MSRB_DELAY_FRAMES + 1 # u8
 .set MSRB_OPP_CHATMSG_ID, MSRB_USER_CHATMSG_ID + 1 # u8
-.set MSRB_OPP_CHATMSG_PLAYER_IDX, MSRB_OPP_CHATMSG_ID + 1 # u8
-.set MSRB_VS_LEFT_PLAYERS, MSRB_OPP_CHATMSG_PLAYER_IDX + 1 # u8 player ports 0xP1P2P3PN
+.set MSRB_CHATMSG_PLAYER_INDEX, MSRB_OPP_CHATMSG_ID + 1 # u8
+.set MSRB_VS_LEFT_PLAYERS, MSRB_CHATMSG_PLAYER_INDEX + 1 # u8 player ports 0xP1P2P3PN
 .set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u8 player ports 0xP1P2P3PN
 .set MSRB_LOCAL_NAME, MSRB_VS_RIGHT_PLAYERS + 4 # string (31)
 .set MSRB_P1_NAME, MSRB_LOCAL_NAME + 31 # string (31)
@@ -316,9 +322,10 @@ lwz \reg, -0x62A0(\reg)
 .set CSSDT_PREV_CONNECTED_STATE, CSSDT_PREV_LOCK_IN_STATE + 1 # u8
 .set CSSDT_Z_BUTTON_HOLD_TIMER, CSSDT_PREV_CONNECTED_STATE + 1 # u8 amount of frames Z has been hold for
 .set CSSDT_CHAT_WINDOW_OPENED, CSSDT_Z_BUTTON_HOLD_TIMER + 1 # u8
-.set CSSDT_CHAT_LAST_INPUT, CSSDT_CHAT_WINDOW_OPENED + 1 # u8
-.set CSSDT_CHAT_MSG_COUNT, CSSDT_CHAT_LAST_INPUT + 1 # u8
-.set CSSDT_LAST_CHAT_MSG_INDEX, CSSDT_CHAT_MSG_COUNT + 1 # u8
+.set CSSDT_CHAT_LAST_INPUT, CSSDT_CHAT_WINDOW_OPENED + 1 # u16
+.set CSSDT_CHAT_MSG_COUNT, CSSDT_CHAT_LAST_INPUT + 2 # u8
+.set CSSDT_CHAT_LOCAL_MSG_COUNT, CSSDT_CHAT_MSG_COUNT + 1 # u8
+.set CSSDT_LAST_CHAT_MSG_INDEX, CSSDT_CHAT_LOCAL_MSG_COUNT + 1 # u8
 .set CSSDT_TEAM_IDX, CSSDT_LAST_CHAT_MSG_INDEX + 1 # u8
 .set CSSDT_TEAM_COSTUME_IDX, CSSDT_TEAM_IDX + 1 #8
 .set CSSDT_SIZE, CSSDT_TEAM_COSTUME_IDX + 1
@@ -327,11 +334,12 @@ lwz \reg, -0x62A0(\reg)
 # CSS Chat Message Data Table
 ################################################################################
 .set CSSCMDT_TIMER, 0 # u8
-.set CSSCMDT_MSG_ID, CSSCMDT_TIMER + 1 # u8
+.set CSSCMDT_TIMER_STATUS, CSSCMDT_TIMER + 1 # u8 0=startup, 1=idle, 2=cleanup
+.set CSSCMDT_MSG_ID, CSSCMDT_TIMER_STATUS + 1 # u8
 .set CSSCMDT_MSG_INDEX, CSSCMDT_MSG_ID + 1 # u8
 .set CSSCMDT_MSG_TEXT_STRUCT_ADDR, CSSCMDT_MSG_INDEX + 1 # u32
-.set CSSCMDT_USER_NAME_ADDR, CSSCMDT_MSG_TEXT_STRUCT_ADDR + 4 # u32
-.set CSSCMDT_CSSDT_ADDR, CSSCMDT_USER_NAME_ADDR + 4 # u32 CSS Data Table Address
+.set CSSCMDT_PLAYER_INDEX, CSSCMDT_MSG_TEXT_STRUCT_ADDR + 4 # u8
+.set CSSCMDT_CSSDT_ADDR, CSSCMDT_PLAYER_INDEX + 1 # u32 CSS Data Table Address
 .set CSSCMDT_SIZE, CSSCMDT_CSSDT_ADDR + 4
 
 ################################################################################
@@ -347,7 +355,7 @@ lwz \reg, -0x62A0(\reg)
 .set CSSCWDT_TIMER, CSSCWDT_INPUT + 1 # u8
 .set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
 .set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
-.set CSSCWDT_SIZE, CSSCWDT_TEXT_STRUCT_ADDR + 4
+.set CSSCWDT_SIZE, CSSCWDT_CSSDT_ADDR + 4
 
 ################################################################################
 # Name Entry Direct Code Buffer

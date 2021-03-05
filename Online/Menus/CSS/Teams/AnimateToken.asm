@@ -1,11 +1,10 @@
 ################################################################################
-# Address: 0x8026295c # CSS_BigFunc... Before animating the tokens color
+# Address: 0x80262768 # CSS_PTokenThinkFunc, After Player index is loaded in 1P mode
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-# Do not override 29, we need its value
 .set REG_CSSDT_ADDR, 28
 .set REG_TEAM_IDX, REG_CSSDT_ADDR-1
 
@@ -21,12 +20,6 @@ lbz r4, OFST_R13_ONLINE_MODE(r13)
 cmpwi r4, ONLINE_MODE_TEAMS
 bne EXIT # exit if not on TEAMS mode
 
-# Ensure we are not locked in
-lwz r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
-lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
-cmpwi r3, 0
-bne EXIT # No changes when locked-in
-
 lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 
 cmpwi REG_TEAM_IDX, 3
@@ -35,10 +28,10 @@ beq SKIP_COLOR_MAP
 subi REG_TEAM_IDX, REG_TEAM_IDX, 1
 SKIP_COLOR_MAP:
 
-stb REG_TEAM_IDX, 0x6 (r29) # this is the original line
+stb	REG_TEAM_IDX, 0x6(r29)
 
-b EXIT
+# b EXIT
 
 EXIT:
 restore
-lbz r0, 0x6 (r29) # this is the original line
+addi	r3, r28, 0 # original line

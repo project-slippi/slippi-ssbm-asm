@@ -42,6 +42,8 @@
   li r3, 0
   stb r3, OFST_R13_NAME_ENTRY_MODE(r13)
   stb r3, OFST_R13_ISPAUSE(r13)
+  stb r3, OFST_R13_USE_PREMADE_TEXT(r13)
+  stb r3, isWidescreen(r13)
 
 ################################################################################
 # Set up Slippi major scene
@@ -676,8 +678,8 @@ stb r3,0xE(r4)
 
 # Make sure to clear out any special stages setup
 li r3, 0
-stb r3,-0x1(r4)
-stb r3,-0x5(r4)
+stb r3,-0x1(r4) # match event mode
+stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 
 lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
 cmpwi r3, 0 # 0 = no teams
