@@ -16,7 +16,7 @@
         "$Required: Slippi Recording",
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
-        "$Recommended: Apply In-Game Delay Everywhere",
+        "$Recommended: Apply Delay to all In-Game Scenes",
         "",
         "[Gecko]"
       ]
@@ -37,7 +37,7 @@
         "$Required: Slippi Recording",
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
-        "$Recommended: Apply In-Game Delay Everywhere",
+        "$Recommended: Apply Delay to all In-Game Scenes",
         "",
         "[Gecko]"
       ]
@@ -345,12 +345,13 @@
       ]
     },
     {
-      "name": "Recommended: Apply In-Game Delay Everywhere",
+      "name": "Recommended: Apply Delay to all In-Game Scenes",
       "authors": [
         "Fizzi"
       ],
       "description": [
-        "Applies online delay to all in-game scenes such that Dolphin netplay is no longer necessary"
+        "Applies online delay to all in-game scenes.",
+        "Dolphin netplay is no longer necessary for local practice"
       ],
       "build": [
         {
