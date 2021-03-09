@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Bootloader/bootloader.gct"
+    },
+    {
+      "file": "Output/Bootloader/bootloader.txt"
     }
   ],
   "codes": [
