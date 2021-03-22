@@ -90,9 +90,6 @@ $(PLAYBACK_INI): playback.json
 	@gecko build -defsym "STG_EXIIndex=1" -c $<
 	@echo ""
 
-$(ONLINE_INI): online.json
-	@gecko build -defsym "STG_EXIIndex=1" -c $< -o $@
-
 # -----------------------------------------------------------------------------
 clean:
 	rm -f $(ALL_TARGETS)
