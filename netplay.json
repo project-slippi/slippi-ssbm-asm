@@ -329,6 +329,12 @@
           "sourceFolder": "Online/Logging",
           "isRecursive": true,
           "annotation": "Log injections [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/FastForward",
+          "isRecursive": true,
+          "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
         }
       ]
     },
