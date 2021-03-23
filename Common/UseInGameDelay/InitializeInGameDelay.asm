@@ -62,9 +62,6 @@ blr
 #########################################
 
 CODE_START:
-# Replaced code line
-branchl r12, 0x802f665c # Call HUD_Create
-
 # Short circuit conditions
 getMajorId r3
 cmpwi r3, 0x8
@@ -248,3 +245,4 @@ branchl r12, Text_UpdateSubtextSize
 RESTORE_EXIT:
 restore
 EXIT:
+lwz r0, 0x001C(sp) # replaced code line

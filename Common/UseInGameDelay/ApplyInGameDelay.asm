@@ -11,8 +11,13 @@ branchl r12, PadRead
 # Check short circuit conditions
 branchl r12, FN_GetCommonMinorID
 cmpwi r3, 0x2 # Checks if we are in-game
-bne EXIT # If not in-game, do nothing
+beq ALLOWED_COMMON_ID
+cmpwi r3, 0x3 # Checks if we are in-game sudden death
+beq ALLOWED_COMMON_ID
+cmpwi r3, 0x4 # Checks if we are in-game training mode
+bne EXIT
 
+ALLOWED_COMMON_ID:
 getMajorId r3
 cmpwi r3, 0x8
 beq EXIT # Don't run this while online, it has its own built-in delay
