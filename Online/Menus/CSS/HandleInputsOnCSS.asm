@@ -279,6 +279,15 @@ lhz r3, 0x1E (r3)
 bl FN_TX_LOCK_IN
 b CHECK_SHOULD_START_MATCH
 HANDLE_CONNECTED_DIRECT_LOADSSS:
+# Set teams on/off bit. This is required by the "disable fod during doubles" gecko code
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+li r3, 0
+bne SET_TEAMS_BOOL
+li r3, 1
+SET_TEAMS_BOOL:
+lwz	r4, -0x49F0(r13)
+stb r3, 0x18(r4)
 # Request scene change
 li  r3,1
 stb	r3, -0x49AA (r13)
@@ -440,7 +449,11 @@ FN_TX_LOCK_IN_STAGE_SEND:
 sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
 stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
-# Start finding opponent
+# Write the online mode we are in
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+stb r3, PSTB_ONLINE_MODE(REG_TXB_ADDR)
+
+# Indicate to Dolphin we want to lock-in
 mr r3, REG_TXB_ADDR
 li r4, PSTB_SIZE
 li r5, CONST_ExiWrite
