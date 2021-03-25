@@ -27,9 +27,9 @@ restore
 branchl r12, 0x8023CE4C 
 EXIT:
 # Return to bottom of NameEntry_Think loop
-# Actually return to rest of loop
-branchl r12, 0x8023cca4
-# branchl r12, 0x8023ccfc
+# Previously it would check inputs again but this would cause an infinite loop on z press
+# branchl r12, 0x8023cca4
+branchl r12, 0x8023ccfc
 
 ERROR:
 # Play error sound

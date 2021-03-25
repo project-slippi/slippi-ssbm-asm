@@ -75,6 +75,8 @@ li r3, CONST_SlippiCmdSendNameEntryIndex
 stb r3, NEDC_CMD(REG_TX_ADDR)
 stb REG_CODE_INDEX, NEDC_NAME_ENTRY_INDEX(REG_TX_ADDR)
 
+# TODO: Add currently entered characters for filtering
+
 # Transmit our index variable to Dolphin
 mr r3, REG_TX_ADDR 
 li r4, NEDC_SIZE
