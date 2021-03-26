@@ -56,8 +56,12 @@ li r3, 1
 branchl r12, SFX_Menu_CommonSound
 
 # There's text that can be autocompleted. So we load it.
-li r3, 7 
+li r3, 7 # TODO: set to text length
 stb r3, 0x58 (r28) # store position
+
+# Move selector over the confirm button
+li r3, 57
+sth r3, 0x2(r26) # Kind of awkward to use r26 here
 
 branchl r12, 0x8023CE4C # NameEntry_UpdateTypedName
 
