@@ -62,6 +62,9 @@ blr
 #########################################
 
 CODE_START:
+# Original codeline
+mr	r31, r3
+
 # Short circuit conditions
 getMajorId r3
 cmpwi r3, 0x8
@@ -245,4 +248,4 @@ branchl r12, Text_UpdateSubtextSize
 RESTORE_EXIT:
 restore
 EXIT:
-lwz r0, 0x001C(sp) # replaced code line
+mr	r3, r31  # replaced code line
