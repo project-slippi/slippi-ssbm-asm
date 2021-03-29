@@ -119,8 +119,8 @@ lbz r3, 0x58 (r28) # load position
 stb r3, ACTXB_INPUT_LEN(REG_ACXB_ADDR)
 
 # Current scroll index
-lbz r3, ACB_INDEX(REG_ACB_ADDR)
-stb r3, ACTXB_INDEX(REG_ACXB_ADDR)
+lwz r3, ACB_INDEX(REG_ACB_ADDR)
+stw r3, ACTXB_INDEX(REG_ACXB_ADDR)
 
 # Write out scroll direction
 stb REG_SCROLL_DIR, ACTXB_SCROLL_DIR(REG_ACXB_ADDR)
@@ -146,11 +146,11 @@ load r3, 0x804a0740 # Load the start location of input
 addi r4, REG_ACXB_ADDR, ACRXB_SUGGESTION
 li r5, 3 * 8 # Copy 8 characters
 branchl r12, memcpy
+SKIP_SET_SUGGESTION:
 
 # Set new index. Not sure this is necessary, we could maybe just use the value in the XB directly
-lbz r3, ACRXB_NEW_INDEX(REG_ACXB_ADDR)
-stb r3, ACB_INDEX(REG_ACB_ADDR)
-SKIP_SET_SUGGESTION:
+lwz r3, ACRXB_NEW_INDEX(REG_ACXB_ADDR)
+stw r3, ACB_INDEX(REG_ACB_ADDR)
 
 # Update text display. Not strictly necessary to always do it but it saves an additional call
 # in B press auto complete and I don't think it hurts?

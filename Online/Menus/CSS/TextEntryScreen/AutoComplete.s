@@ -16,8 +16,8 @@
 .set ACTXB_CMD, 0x0 # u8
 .set ACTXB_INPUT, ACTXB_CMD + 1 # 3 * 8, for all possible characters in input
 .set ACTXB_INPUT_LEN, ACTXB_INPUT + (3 * 8) # u8, number of letters that have been input
-.set ACTXB_INDEX,  # u32, scroll index
-.set ACTXB_SCROLL_DIR, ACTXB_INDEX + 4 # u8, 0 = none, 1 = older, 2 = newer
+.set ACTXB_INDEX, ACTXB_INPUT_LEN + 1 # u32, scroll index
+.set ACTXB_SCROLL_DIR, ACTXB_INDEX + 4 # u8, See scroll option constants
 .set ACTXB_SIZE, ACTXB_SCROLL_DIR + 1
 
 # Set ACXB_SIZE to the larger of the two sizes
