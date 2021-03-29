@@ -4,6 +4,7 @@
 
 .include "Common/Common.s"
 .include "Online/Online.s"
+.include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
 
 lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
 cmpwi r3, 0
@@ -24,7 +25,7 @@ b CODE_START
 .set REG_JOBJ, 28
 .set REG_USER_DATA, 27
 .set REG_PRESSED_BUTTON, 26 # this comes from the 
-
+.set REG_ACIDT_ADDR, 25
 
 .set USER_DATA_SIZE, 1
 .set BTN_LEFT_TRIGGER, 0x40
@@ -33,6 +34,30 @@ b CODE_START
 
 CODE_START:
 backup
+
+# Fetch location where we will store auto-complete buffer
+computeBranchTargetAddress REG_ACIDT_ADDR, INJ_CheckAutofill
+
+# Initialize and store buffer used with auto-complete
+# TODO: Consider whether these buffers get cleaned up. Could we cause a crash by exiting and
+# TODO: entering name entry a bunch of times?
+li r3, ACB_SIZE
+branchl r12, HSD_MemAlloc
+stw r3, IDO_ACB_ADDR(REG_ACIDT_ADDR) # Store ACB address somewhere accessible
+li r4, ACB_SIZE
+branchl r12, Zero_AreaLength # Zero data in buffer
+
+# Initialize ACXB
+li r3, ACXB_SIZE
+branchl r12, HSD_MemAlloc
+lwz r4, IDO_ACB_ADDR(REG_ACIDT_ADDR)
+stw r3, ACB_ACXB_ADDR(r4)
+
+# Run function to fetch initial suggestion
+# addi r3, REG_ACIDT_ADDR, IDO_FN_FetchSuggestion
+# mtctr r3
+# li r3, CONST_ScrollReset
+# bctrl
 
 # Get Memory Buffer for Chat Window Data Table
 li r3, USER_DATA_SIZE # Buffer Size

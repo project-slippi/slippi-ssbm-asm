@@ -127,7 +127,7 @@ lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 
 # This macro takes in an address that is expected to have a branch instruction. It will set
 # r3 to the address being branched to. This will overwrite r3 and r4
-.macro computeBranchTargetAddress address
+.macro computeBranchTargetAddress reg address
 load r3, \address
 lwz r4, 0(r3) # Get branch instruction which contains offset
 
@@ -139,7 +139,7 @@ rlwinm r5, r5, 16, 0xFFFF0000
 # Extract last 2 bytes, combine with top half, and then add to base address to get result
 rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
 or r4, r4, r5
-add r3, r3, r4
+add \reg, r3, r4
 .endm
 
 ################################################################################

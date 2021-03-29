@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 0x8023ccbc
+# Address: 0x8023cce0
 ################################################################################
 
 .include "Common/Common.s"
@@ -11,8 +11,8 @@ addi r3, r3, IDO_FN_FetchSuggestion
 mtctr r3
 
 # Call FetchSuggestion function
-li r3, CONST_ScrollOlder
+li r3, CONST_ScrollNewer
 bctrl
 
-# Exit L handler and skip everything that previously happened on an L press. Exits think function
+# Exit R handler and skip everything that previously happened on an R press. Exits think function
 branch r12, 0x8023ce38
