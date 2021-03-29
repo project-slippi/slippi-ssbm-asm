@@ -137,16 +137,11 @@ li r4, ACRXB_SIZE
 li r5, CONST_ExiRead
 branchl r12, FN_EXITransferBuffer
 
-lbz r3, ACRXB_HAS_SUGGESTION(REG_ACXB_ADDR)
-cmpwi r3, 0
-beq SKIP_SET_SUGGESTION
-
 # Copy result
 load r3, 0x804a0740 # Load the start location of input
 addi r4, REG_ACXB_ADDR, ACRXB_SUGGESTION
 li r5, 3 * 8 # Copy 8 characters
 branchl r12, memcpy
-SKIP_SET_SUGGESTION:
 
 # Set new index. Not sure this is necessary, we could maybe just use the value in the XB directly
 lwz r3, ACRXB_NEW_INDEX(REG_ACXB_ADDR)
