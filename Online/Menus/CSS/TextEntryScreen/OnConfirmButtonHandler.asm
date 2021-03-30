@@ -26,7 +26,7 @@ lwz REG_ACB_ADDR, IDO_ACB_ADDR(r3)
 
 # check if the char count is not 0 to avoid confirming without text
 # this handles an issue when a suggestion is loaded but an empty
-connect code is used
+# connect code is used
 lbz r3, ACB_COMMITTED_CHAR_COUNT(REG_ACB_ADDR)
 cmpwi r3, 0
 bne SKIP_COUNT_CHECK
