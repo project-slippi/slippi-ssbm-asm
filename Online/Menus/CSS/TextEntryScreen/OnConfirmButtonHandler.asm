@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 0x8023cc14 
+# Address: 0x8023cc14
 # Executed after check to see if tag is empty or there are remaining autocomplete 
 # suggestions.
 # 
@@ -8,28 +8,32 @@
 
 .include "Common/Common.s"
 .include "Online/Online.s"
+.include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
 
-mr r23, r3  # Copy potentially passed arg.
+.set REG_ACB_ADDR, 31
+
 lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
 cmpwi r3, 0
 beq EXIT
 
-# Check to see if there's an autcomplete suggestion that hasn't 
-# been accepted.
-lbz r3, 0x58 (r28) # Get cursor position/index.
-cmpwi r3, 7
-bge START
 backup
-li r5, 0
-mulli r3, r3, 3
-CLEAR_REST_TEXT:
-    sthx r5, r30, r3
-    addi r3, r3, 2
-    cmpwi r3, 0xE
-blt CLEAR_REST_TEXT
-restore
 
-START:
+# Fetch INJ data table in order to branch to function stored in there
+computeBranchTargetAddress r3, INJ_CheckAutofill
+
+# Update committed char count in ADC
+lwz REG_ACB_ADDR, IDO_ACB_ADDR(r3)
+
+lbz r3, ACB_COMMITTED_CHAR_COUNT(REG_ACB_ADDR)
+cmpwi r3, 8
+bge SKIP_CLEAR_SUGGESTION
+
+# There might be a suggestion active, clear out the letter at the current length index to clear
+mulli r4, r3, 3
+li r5, 0
+sthx r5, r30, r4
+SKIP_CLEAR_SUGGESTION:
+
 # Play success sound
 li	r3, 1
 branchl r12, SFX_Menu_CommonSound
@@ -41,15 +45,8 @@ mtctr r12
 bctrl
 
 # Skip the regular stuff that would run on success (saving the nametag)
-mr r3, r23
-cmpwi r3, 1 # Determine if user confirmed with A button press.
-beq CONFIRM_A
+restore
 branch r12, 0x8023cc80
-b EXIT
-
-CONFIRM_A: 
-branch r12, 0x8023cabc 
 
 EXIT:
-mr r3, r23  # Restore r3 val.
 li r0, 0

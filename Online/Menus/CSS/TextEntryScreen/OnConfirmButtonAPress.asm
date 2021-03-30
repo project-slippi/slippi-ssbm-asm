@@ -4,5 +4,8 @@
 ################################################################################
 
 .include "Common/Common.s"
-li r3, 1
-branchl r12, 0x8023cc14 
+
+# The A/Start confirm handlers are identical, this just branches the logic for the A handler to
+# the logic for the Start handler to avoid code duplication
+
+branch r12, 0x8023cc14
