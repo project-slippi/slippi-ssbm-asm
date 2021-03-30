@@ -24,6 +24,25 @@ computeBranchTargetAddress r3, INJ_CheckAutofill
 # Update committed char count in ADC
 lwz REG_ACB_ADDR, IDO_ACB_ADDR(r3)
 
+# check if the char count is not 0 to avoid confirming without text
+# this handles an issue when a suggestion is loaded but an empty
+connect code is used
+lbz r3, ACB_COMMITTED_CHAR_COUNT(REG_ACB_ADDR)
+cmpwi r3, 0
+bne SKIP_COUNT_CHECK
+
+# TODO: Probably better to make sure the trigger handlers leave the
+# game's char count as 0 (though, I'm not sure that's possible)
+
+# play error sound and escape think function
+li r3, 3
+branchl r12, SFX_Menu_CommonSound
+
+restore
+branch r12, 0x8023ce38 # Exits think function
+
+SKIP_COUNT_CHECK:
+
 lbz r3, ACB_COMMITTED_CHAR_COUNT(REG_ACB_ADDR)
 cmpwi r3, 8
 bge SKIP_CLEAR_SUGGESTION
