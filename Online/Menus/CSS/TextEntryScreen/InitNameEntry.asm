@@ -53,12 +53,6 @@ branchl r12, HSD_MemAlloc
 lwz r4, IDO_ACB_ADDR(REG_ACIDT_ADDR)
 stw r3, ACB_ACXB_ADDR(r4)
 
-# Run function to fetch initial suggestion
-# addi r3, REG_ACIDT_ADDR, IDO_FN_FetchSuggestion
-# mtctr r3
-# li r3, CONST_ScrollReset
-# bctrl
-
 # Get Memory Buffer for Chat Window Data Table
 li r3, USER_DATA_SIZE # Buffer Size
 branchl r12, HSD_MemAlloc
