@@ -29,7 +29,8 @@
 
 # Auto Complete Buffer
 .set ACB_INDEX, 0x0 # u32, index for where we are in scroll list
-.set ACB_ACXB_ADDR, ACB_INDEX + 4 # u32
+.set ACB_COMMITTED_CHAR_COUNT, ACB_INDEX + 4 # u8
+.set ACB_ACXB_ADDR, ACB_COMMITTED_CHAR_COUNT + 1 # u32
 .set ACB_SIZE, ACB_ACXB_ADDR + 4
 
 # Scroll option constants

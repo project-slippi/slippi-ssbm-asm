@@ -6,6 +6,9 @@
 .include "Online/Online.s"
 .include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
 
+.set REG_ACB_ADDR, 31
+.set REG_ACXB_ADDR, 30
+
 b CODE_START
 STATIC_MEMORY_TABLE_BLRL:
 blrl
@@ -28,6 +31,12 @@ backup
 
 # Manually backup the contents of r4. Without this, it breaks moving the cursor.
 mr r26, r4
+
+# Load buffers into non-volatile registers
+bl STATIC_MEMORY_TABLE_BLRL
+mflr r3
+lwz REG_ACB_ADDR, (IDO_ACB_ADDR - 0x8)(r3)
+lwz REG_ACXB_ADDR, ACB_ACXB_ADDR(REG_ACB_ADDR)
 
 # Manually retrieve inputs - Best I can tell, the function 
 # "MainMenu_GetAllControllerInstantButtons" doesn't include check for Z.
@@ -63,9 +72,16 @@ FILL_SUCCESS:
 li r3, 1
 branchl r12, SFX_Menu_CommonSound
 
+# First load the input length into committed char count
+lbz r3, ACRXB_SUGGESTION_LEN(REG_ACXB_ADDR)
+stb r3, ACB_COMMITTED_CHAR_COUNT(REG_ACB_ADDR)
+
 # There's text that can be autocompleted. So we load it.
-li r3, 7 # TODO: set to text length
-stb r3, 0x58 (r28) # store position
+cmpwi r3, 7
+ble SKIP_CURSOR_POS_ADJUST
+li r3, 7 # limit cursor pos to 7
+SKIP_CURSOR_POS_ADJUST:
+stb r3, 0x58(r28) # store position
 
 # Move selector over the confirm button
 li r3, 57
@@ -113,9 +129,8 @@ load r4, 0x804a0740 # Load the start location of input
 li r5, 3 * 8 # Copy 8 characters
 branchl r12, memcpy
 
-# Fetch length
-# TODO: Properly manage length manually? Cursor position is not sufficient
-lbz r3, 0x58 (r28) # load position
+# Fetch length and set
+lbz r3, ACB_COMMITTED_CHAR_COUNT(REG_ACB_ADDR) # load position
 stb r3, ACTXB_INPUT_LEN(REG_ACXB_ADDR)
 
 # Current scroll index
