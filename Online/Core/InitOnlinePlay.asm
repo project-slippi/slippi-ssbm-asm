@@ -139,17 +139,6 @@ SET_DELAY_FRAMES:
 stb r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 
 ################################################################################
-# Initialize everyone to UCF
-################################################################################
-# Back up the controller settings
-lwz r3, -ControllerFixOptions(rtoc)
-stw r3, ODB_CF_OPTION_BACKUP(REG_ODB_ADDRESS)
-
-# Init everyone to UCF
-load r3, 0x01010101
-stw r3, -ControllerFixOptions(rtoc)
-
-################################################################################
 # Clear A inputs to prevent transformation
 ################################################################################
 # This is kind of jank but it will prevent Slippi from trying to flip the
@@ -227,10 +216,6 @@ blrl
 backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
-
-# Restore controller fix states
-lwz r3, ODB_CF_OPTION_BACKUP(REG_ODB_ADDRESS)
-stw r3, -ControllerFixOptions(rtoc)
 
 ################################################################################
 # Report game results for unranked
