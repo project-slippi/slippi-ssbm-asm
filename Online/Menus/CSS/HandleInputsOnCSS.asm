@@ -123,6 +123,12 @@ HANDLE_IDLE:
 # uncomment to debug the chat window
 # bl FN_CHECK_CHAT_INPUTS
 
+# Prevent CSS Actions if chat window is opened
+lbz r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR)
+cmpwi r3, 0
+bne SKIP_START_MATCH # skip input if chat window is opened
+
+
 # When idle, pressing start will start finding match
 # Check if start was pressed
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
@@ -913,8 +919,8 @@ cmpwi REG_CHAT_WINDOW_SECOND_INPUT, B_BUTTON
 bne SKIP_CSS_ONLINE_CHAT_WINDOW_THINK_CLOSE_CHAT_WINDOW
 
 # Play return SFX
-li  r3, 0
-branchl r12,SFX_Menu_CommonSound
+# li  r3, 0
+# branchl r12,SFX_Menu_CommonSound
 b CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC
 
 SKIP_CSS_ONLINE_CHAT_WINDOW_THINK_CLOSE_CHAT_WINDOW:
