@@ -257,6 +257,8 @@ ADJUST_COSTUME_NUMBER_LOOP_INC:
   li  r21,0                 #Init loop
   addi r22,REG_Buffer,UCFToggleStart
 UCF_LOOP:
+# The only reason we still write these is simply because if anyone reads a slp file with a parser,
+# they will know UCF was on
   mulli r23,r21,8
   li r3, 1 # UCF is always on now
   stwx r3,r22,r23
