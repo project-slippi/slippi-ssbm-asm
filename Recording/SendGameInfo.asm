@@ -2,6 +2,7 @@
 # Address: 8016e74c
 ################################################################################
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Recording/Recording.s"
 .include "Recording/SendInitialRNG.s"
 .include "Recording/SendItemInfo.s"
@@ -15,10 +16,8 @@
 
 .set REG_Buffer,30
 .set REG_BufferOffset,29
-.set REG_GeckoListSize,28
-.set REG_GeckoCopyBuffer,27
-.set REG_GeckoCopyPos,26
-.set REG_RDB,25
+.set REG_GeckoListSize, 28
+.set REG_RDB,27
 
 backup
 
@@ -49,7 +48,9 @@ backup
   stw r3,bufferOffset(r13)
 
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
-  load r3, GeckoCodeSectionStart # Gecko code list start
+  load r3,GeckoHeapPtr
+  lwz r3, 0 (r3)   # Gecko code list start
+  addi r3, r3, 8 # skip past d0c0de d0c0de
   li r4, 0 # No callback
   branchl r12, FN_ProcessGecko
   mr REG_GeckoListSize, r3
@@ -286,7 +287,7 @@ UCF_LOOP:
 
 # Init loop
   li  REG_LoopCount,0                               #init loop count
-  addi REG_PlayerDataStart,r31,PlayerDataStart     #player data start in match struct
+  addi REG_PlayerDataStart,r31,PlayerDataStart      #player data start in match struct
   addi r23,REG_Buffer,NametagDataStart              #Start of nametag data in buffer
 SEND_GAME_INFO_NAMETAG_LOOP:
 #Get nametag data in buffer in r24
@@ -345,6 +346,128 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   getMinorMajor r3
   sth r3, MinorMajorStart(REG_Buffer)
 
+#------------- SEND Display Names ------------
+.set DisplayNameStart, (MinorMajorStart + MinorMajorLength)
+.set DisplayNameLength,0x7C
+# Offsets
+.set PlayerDataStart,96       # player data starts in match struct
+.set PlayerDataLength,36      # length of each player's data
+.set PlayerStatus,0x1         # offset of players in-game status
+# Constants
+.set DisplayNameBytesToCopy,31  # 2 bytes per char + 1 byte for null terminator = 31 bytes
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferDisplayNameStart,23
+.set REG_BufferCurrentDisplayName,24
+.set REG_MSRB,25
+.set REG_MSRB_DisplayNameStart,26
+
+# Get MSRB address
+  li r3,0
+  branchl r12,FN_LoadMatchState
+  mr REG_MSRB,r3
+  
+# Init loop
+  li REG_LoopCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                 # player data start in match struct
+  addi REG_BufferDisplayNameStart,REG_Buffer,DisplayNameStart  # Start of write buffer
+  addi REG_MSRB_DisplayNameStart,REG_MSRB,MSRB_P1_NAME         # Start of read buffer
+
+  DISPLAY_NAME_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,DisplayNameBytesToCopy
+  add REG_BufferCurrentDisplayName,r3,REG_BufferDisplayNameStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_DISPLAY_NAME_NO_NAME
+
+#Next read offset
+  mulli r3,REG_LoopCount,DisplayNameBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_DisplayNameStart  # src (MSRB_DisplayNameStart + offset)
+  mr r3,REG_BufferCurrentDisplayName   # dest
+  li r5,DisplayNameBytesToCopy         # length
+  branchl r12,memcpy
+  b DISPLAY_NAME_INC_LOOP
+
+  SEND_DISPLAY_NAME_NO_NAME:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentDisplayName
+  li r4,DisplayNameBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  DISPLAY_NAME_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt DISPLAY_NAME_LOOP
+
+#------------- SEND Connect Codes ------------
+.set ConnectCodeStart, (DisplayNameStart + DisplayNameLength)
+.set ConnectCodeLength,0x28
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+# Constants
+.set ConnectCodeBytesToCopy,10  # 1 bytes per char + 2 bytes for hashtag + 1 byte for null terminator = 10 bytes
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferConnectCodeStart,23
+.set REG_BufferCurrentConnectCode,24
+.set REG_MSRB_ConnectCodeStart,26
+  
+# Init loop
+  li REG_LoopCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                  # player data start in match struct
+  addi REG_BufferConnectCodeStart,REG_Buffer,ConnectCodeStart   # Start of write buffer
+  addi REG_MSRB_ConnectCodeStart,REG_MSRB,MSRB_P1_CONNECT_CODE  # Start of read buffer
+
+  CONNECT_CODE_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,ConnectCodeBytesToCopy
+  add REG_BufferCurrentConnectCode,r3,REG_BufferConnectCodeStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_CONNECT_CODE_NO_CODE
+
+#Next read offset
+  mulli r3,REG_LoopCount,ConnectCodeBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_ConnectCodeStart  # src (MSRB_ConnectCodeStart + offset)
+  mr r3,REG_BufferCurrentConnectCode   # dest
+  li r5,ConnectCodeBytesToCopy         # length
+  branchl r12,memcpy
+  b CONNECT_CODE_INC_LOOP
+
+  SEND_CONNECT_CODE_NO_CODE:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentConnectCode
+  li r4,ConnectCodeBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  CONNECT_CODE_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt CONNECT_CODE_LOOP
+
+# Free MSRB
+  mr r3,REG_MSRB
+  branchl r12,HSD_Free
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
@@ -352,10 +475,18 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   branchl r12,FN_EXITransferBuffer
 
 #-------------- Transfer Gecko List ---------------
+.set REG_GeckoCopyBuffer,21
+.set REG_GeckoCopyPos,22
+.set REG_GeckoSectionStart,23
 # Create copy buffer
   li r3, SPLIT_MESSAGE_BUF_LEN
   branchl r12, HSD_MemAlloc
   mr REG_GeckoCopyBuffer, r3
+
+# Load gecko code section start
+  load r3, GeckoHeapPtr
+  lwz r3, 0 (r3)   # Gecko code list start
+  addi REG_GeckoSectionStart, r3, 8 # skip past d0c0de d0c0de
 
   li r3, CMD_SPLIT_MESSAGE
   stb r3, SPLIT_MESSAGE_OFST_COMMAND(REG_GeckoCopyBuffer)
@@ -389,7 +520,7 @@ CODE_LIST_LOOP_START:
 CODE_LIST_COPY_BLOCK:
   # Copy next gecko list section
   addi r3, REG_GeckoCopyBuffer, SPLIT_MESSAGE_OFST_DATA # destination
-  load r4, GeckoCodeSectionStart
+  mr r4, REG_GeckoSectionStart
   add r4, r4, REG_GeckoCopyPos
   lhz r5, SPLIT_MESSAGE_OFST_SIZE(REG_GeckoCopyBuffer)
   branchl r12, memcpy

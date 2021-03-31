@@ -50,8 +50,8 @@ stb r4, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE(r5)
 lwz r4, ODB_SAVESTATE_FRAME(r5)
 stw r4, ODB_STABLE_SAVESTATE_FRAME(r5)
 lwz r4, ODB_RXB_ADDR(r5)
-lwz r4, RXB_OPNT_FRAME_NUM(r4)
-stw r4, ODB_STABLE_OPNT_FRAME_NUM(r5)
+lwz r4, RXB_OPNT_FRAME_NUMS(r4)
+stw r4, ODB_STABLE_OPNT_FRAME_NUMS(r5)
 b RESTORE_AND_EXIT
 
 HANDLE_NO_ROLLBACK_NO_INPUTS:
@@ -64,7 +64,7 @@ beq RESTORE_AND_EXIT
 li r4, 0
 stb r4, ODB_SHOULD_FORCE_PAD_RENEW(r5)
 branchl r12, RenewInputs_Prefunction
-logf LOG_LEVEL_NOTICE, "Forced a pad renew..."
+#logf LOG_LEVEL_NOTICE, "Forced a pad renew..."
 
 RESTORE_AND_EXIT:
 mr r3, r26 # We will set r26 to 0 later so it's fine to use here
