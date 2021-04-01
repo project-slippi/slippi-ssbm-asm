@@ -1211,9 +1211,6 @@ SKIP_SET_CHAT_MSG_POS_X:
 # Create Text Object
 addi r3, REG_CHATMSG_PLAYER_INDEX, 1
 mr r4, REG_CHATMSG_MSG_ID
-cmpwi r4, 0x88 # for some reason if I send 0x88 the premade text data comes back empty but is properly built on dolphin.
-beq MAP_UP_UP
-SKIP_REMAP:
 li r5, 2 # use premade text fn
 li r6, 0 # gx_link/pri?
 
@@ -1232,11 +1229,6 @@ li r4, 1 # gx_link to restore
 stb r4, 0xE(r3)
 
 b CSS_ONLINE_CHAT_CHECK_MAX_MESSAGES
-
-MAP_UP_UP: # TODO: figure out why if this is not done GGs does not appear
-li r4, 0x83
-b SKIP_REMAP
-
 
 ##### END: INITIALIZING CHAT MSG TEXT ###########
 

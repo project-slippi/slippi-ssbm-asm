@@ -37,7 +37,7 @@ branchl r12, Zero_AreaLength
 # Initialize Buffer
 li r3, CONST_SlippiCmdGetPremadeTextLength
 bl FN_Exi
-lhz REG_BUFFER_SIZE, 0x2(REG_BUFFER) # get premade text size
+lwz REG_BUFFER_SIZE, 0x0(REG_BUFFER) # get premade text size
 # This should print 23 bytes = 0x17
 
 # Free previous allocated memory
