@@ -70,7 +70,7 @@ stb REG_PREMADE_TEXT_PARAM_1, 2(REG_BUFFER) # PARAM 1
 
 # Prepare Buffer to read
 mr r3, REG_BUFFER
-mr r4, REG_BUFFER_SIZE
+mr r4, 3 # Always sends 3 bytes
 li r5, CONST_ExiWrite
 branchl r12, FN_EXITransferBuffer
 
