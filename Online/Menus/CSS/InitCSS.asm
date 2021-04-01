@@ -757,9 +757,10 @@ bl FN_UPDATE_TEXT
 ################################################################################
 # Manage press D text
 ################################################################################
-lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
-cmpwi r3, MM_STATE_CONNECTION_SUCCESS
-beq UPDATE_PRESS_D_CONNECTED
+# TODO: Uncomment to show d-pad to chat message
+# lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+# cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+# beq UPDATE_PRESS_D_CONNECTED
 
 # clear on all other cases
 addi r5, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING

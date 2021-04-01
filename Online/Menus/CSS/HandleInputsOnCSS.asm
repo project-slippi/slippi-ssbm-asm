@@ -553,6 +553,9 @@ blr
 FN_CHECK_CHAT_INPUTS:
 backup
 
+# TODO: Remove when we want to enable chat
+b HANDLE_SKIP_CHAT_INPUT
+
 # uncomment this line to disable B press on chat window
 # b SKIP_CHAT_WINDOW_B_PRESS
 
