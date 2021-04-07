@@ -19,7 +19,8 @@
 # (vanilla shaodw mtx update during render @ 8037f8f4)
 
 # setup mtx for fighter jobj
-  lwz r3,0x28(r27)
+  lwz r3, 0x0(r30)
+  lwz r3, 0x28(r3)
   bl JOBJ_SetupMatrixSubAll
   b Exit
 
