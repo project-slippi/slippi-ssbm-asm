@@ -190,7 +190,7 @@ add r3, r3, r4
 
 ## GObj functions
 .set GObj_Create,0x803901f0 #(obj_type,subclass,priority)
-.set GObj_Initialize,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
+.set GObj_AddUserData,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54 # (obj,func,priority)
 .set GObj_RemoveProc,0x8038fed4

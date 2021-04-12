@@ -5,34 +5,22 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set REG_CSSDT_ADDR, 31
-.set REG_MSRB_ADDR, 30
-.set REG_TEXT_PROPERTIES, 29
-.set REG_TEXT_STRUCT, 28
-.set REG_SUBTEXT_IDX, 27
-.set REG_VARIOUS_1, 26
-.set REG_VARIOUS_2, 25
-.set REG_VARIOUS_3, 24
-.set REG_VARIOUS_4, 23
-.set REG_VARIOUS_5, 22
+.set REG_CSSDT_ADDR, 31 # everywhere 
+.set REG_MSRB_ADDR, 30 # everywhere 
+.set REG_TEXT_PROPERTIES, 29 # everywhere
+.set REG_TEXT_STRUCT, 28 # everywhere
+.set REG_SUBTEXT_IDX, 27 # think
 .set REG_LR, 21
 
-# Registers to be used in Chat Messagees Think Function
-.set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
-.set REG_CHATMSG_GOBJ, 14
-.set REG_CHATMSG_JOBJ, REG_CHATMSG_GOBJ+1
-.set REG_CHATMSG_GOBJ_DATA_ADDR, REG_CHATMSG_JOBJ+1
-.set REG_CHATMSG_TIMER, REG_CHATMSG_GOBJ_DATA_ADDR+1
-.set REG_CHATMSG_TIMER_STATUS, REG_CHATMSG_TIMER+1
-.set REG_CHATMSG_MSG_ID, REG_CHATMSG_TIMER_STATUS+1
-.set REG_CHATMSG_MSG_INDEX, REG_CHATMSG_MSG_ID+1
-.set REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, REG_CHATMSG_MSG_INDEX+1
-.set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
-.set REG_CHATMSG_PLAYER_INDEX, REG_CHATMSG_MSG_STRING_ADDR+1
-# float registers
-.set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
-.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
+# Text Update Userdata Struct Definition
+.set TEXTGOBJDATA_SIZE, 0x4
+.set TEXTGOBJDATA_SLPCHAT, 0x0  # pointer to slpChat symbol
 
+# slpChat Struct Definition
+.set SLPCHAT_SELECT, 0x0
+.set SLPCHAT_MSG, 0x4
+
+# Chat constants
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
 .set MAX_CHAT_MESSAGE_LINES, 9
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
@@ -209,6 +197,12 @@ blrl
 .set TPO_STRING_SPINNER_DONE, TPO_STRING_SPINNER_2 + 3
 .short 0x817C # －
 .byte 0x00
+
+# File-related strings
+.string "slpChat.dat"
+.set TPO_STRING_CHAT_FILENAME, TPO_STRING_SPINNER_DONE + 3
+.string "slpChat"
+.set TPO_STRING_CHAT_SYMBOLNAME, TPO_STRING_CHAT_FILENAME + 12
 .align 2
 
 ################################################################################
@@ -256,13 +250,30 @@ blrl # FN_InitUserDisplay
 ################################################################################
 # Queue up per-frame CSS text update function
 ################################################################################
+.set REG_GOBJ, REG_VARIOUS_1
+.set REG_USERDATA, REG_VARIOUS_2
+
 # Create GObj (input values stolen from CSS_BigFunc... GObj)
 li r3, 0x4
 li r4, 0x5
 li r5, 0x80
 branchl r12, GObj_Create
+mr REG_GOBJ, r3
+
+# Alloc userdata
+li r3, TEXTGOBJDATA_SIZE
+branchl r12,HSD_MemAlloc
+mr REG_USERDATA, r3
+
+# Add userdata
+addi r3, REG_GOBJ,0
+li r4, 4
+load r5, HSD_Free
+addi r6, REG_USERDATA, 0
+branchl r12, GObj_AddUserData
 
 # Schedule Function
+addi r3, REG_GOBJ,0
 bl CSS_ONLINE_TEXT_THINK
 mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
@@ -388,6 +399,24 @@ bl INIT_ERROR_LINE_SUBTEXT
 lfs f3, TPO_ERR_LINE4_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
 
+################################################################################
+# Load Chat File
+################################################################################
+# Get text properties address
+bl TEXT_PROPERTIES
+mflr r20
+
+# Load File
+addi r3, r20, TPO_STRING_CHAT_FILENAME
+branchl r12,0x80016be0
+
+# Retrieve symbol from file data
+addi r4, r20, TPO_STRING_CHAT_SYMBOLNAME
+branchl r12,0x80380358
+
+# Save this pointer
+stw r3, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
+
 restore
 b EXIT
 
@@ -472,7 +501,23 @@ blrl
 .set SPINNER_TRANSITION_FRAMES, 15
 .set FRAME_MAX, SPINNER_ICON_COUNT * SPINNER_TRANSITION_FRAMES
 
+# Registers
+.set REG_MSRB_ADDR, 31
+.set REG_MSRB_ADDR, 30
+.set REG_TEXT_PROPERTIES, 29
+.set REG_CSSDT_ADDR, 28
+.set REG_GOBJDATA, 27
+.set REG_TEXT_STRUCT, 26
+.set REG_VARIOUS_1, 25
+.set REG_VARIOUS_2, 24
+.set REG_VARIOUS_3, 23
+.set REG_VARIOUS_4, 22
+.set REG_VARIOUS_5, 21
+
 backup
+
+# Get gobj data
+lwz REG_GOBJDATA, 0x2C(r3)
 
 # Get text properties address
 bl TEXT_PROPERTIES
@@ -573,13 +618,15 @@ bl FN_UPDATE_TEXT
 # Manage Chat Messages: If there's a new message, then initialize a
 # disappearing text
 ################################################################################
-# r25 will store the user name string memory address
-# r26 will store chat message id
+
+.set REG_MSG_ID, REG_VARIOUS_1 # REG_MSG_ID will store chat message id
+.set REG_USER_STRING, REG_VARIOUS_2 # REG_USER_STRING will store the user name string memory address
+
 lbz r3, MSRB_USER_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq CHECK_OPP_CHAT_MESSAGE
-addi r25, REG_MSRB_ADDR, MSRB_LOCAL_NAME # store player name
-mr r26, r3 # store chat message id
+addi REG_USER_STRING, REG_MSRB_ADDR, MSRB_LOCAL_NAME # store player name
+mr REG_MSG_ID, r3 # store chat message id
 
 # Store Increased local Message Count
 lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR)
@@ -592,7 +639,7 @@ CHECK_OPP_CHAT_MESSAGE:
 lbz r3, MSRB_OPP_CHATMSG_ID(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq SKIP_CHAT_MESSAGES
-mr r26, r3 # store chat message id
+mr REG_MSG_ID, r3 # store chat message id
 
 UPDATE_CHAT_MESSAGES:
 # Start at the top after x messages
@@ -605,6 +652,8 @@ stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 beq SKIP_CHAT_MESSAGES
 
 CREATE_CHAT_MESSAGE:
+.set REG_BUFFER, REG_VARIOUS_3
+
 # Play a sound indicating a new message
 li r3, 0xb7
 li r4, 127
@@ -619,98 +668,94 @@ stb r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR)
 # Get Memory Buffer for Chat Message Data Table
 li r3, CSSCMDT_SIZE
 branchl r12, HSD_MemAlloc
-mr r23, r3 # save result address into r23
+mr REG_BUFFER, r3 # save result address into REG_BUFFER
 
 # Zero out CSS data table
 li r4, CSSDT_SIZE
 branchl r12, Zero_AreaLength
 
-# Set Buffer Initial Data
 # initialize timers
 li r3, 20
 li r4, 0 # default status is startup
-stb r3, CSSCMDT_TIMER(r23)
-stb r4, CSSCMDT_TIMER_STATUS(r23)
+stb r3, CSSCMDT_TIMER(REG_BUFFER)
+stb r4, CSSCMDT_TIMER_STATUS(REG_BUFFER)
 
 # initialize message id
-mr r3, r26
-stb r3, CSSCMDT_MSG_ID(r23)
+mr r3, REG_MSG_ID
+stb r3, CSSCMDT_MSG_ID(REG_BUFFER)
 
 # Set Message index + increase by 1
 lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR)
-stb r3, CSSCMDT_MSG_INDEX(r23) # set index in the new buffer
+stb r3, CSSCMDT_MSG_INDEX(REG_BUFFER) # set index in the new buffer
 addi r3, r3, 1 # increase message index
 stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 
 # Set player index
 lbz r3, MSRB_CHATMSG_PLAYER_INDEX(REG_MSRB_ADDR)
-stb r3, CSSCMDT_PLAYER_INDEX(r23)
+stb r3, CSSCMDT_PLAYER_INDEX(REG_BUFFER)
 
 # Set CSS DataTable Address
 mr r3, REG_CSSDT_ADDR # store address to CSSDT_DT
-stw r3, CSSCMDT_CSSDT_ADDR(r23)
+stw r3, CSSCMDT_CSSDT_ADDR(REG_BUFFER)
 
-# create gobj for think function
-li r3, 0x4
-li r4, 0x5
+.set REG_GOBJ, REG_VARIOUS_4
+# Create GObj (input values stolen from CSS_BigFunc... GObj)
+li r3, 4
+li r4, 5
 li r5, 0x80
 branchl r12, GObj_Create
-mr r14, r3 # save pointer to GOBJ
+mr REG_GOBJ, r3
 
-# create jbobj (custom chat window background)
-lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
-lwz r3, 0x84(r3) # pointer to our custom bg main jobj
-lwz r16, 0x10(r3) # pointer to our custom bg jobj anim joint
-lwz r3, 0x0C(r3) # pointer to our custom bg jobj
-branchl r12,JObj_LoadJoint #Create Jboj
-mr  r15,r3
-lwz r17, 0x10(r15) # jobj to animate
+# Load JOBJ
+lwz r3, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
+lwz r3, SLPCHAT_MSG (r3) # pointer to our custom bg main jobj
+lwz r3, 0x0 (r3) # jobj
+branchl r12,JObj_LoadJoint #Create jobj
+
+# Add JOBJ
+mr r5,r3
+mr r3, REG_GOBJ
+lbz	r4, -0x3E57 (r13)
+branchl r12,0x80390a70
+
+# Add GX Link
+mr r3, REG_GOBJ
+load r4,0x80391070
+li  r5, 3
+li  r6, 128
+branchl r12,GObj_SetupGXLink
+
+# Add anim
+lwz r3,0x28(REG_GOBJ)
+lwz r4, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
+lwz r4, SLPCHAT_MSG (r4)
+li r5, 0
+branchl r12,0x8016895c
+
+# Req anim
+lwz r3,0x28(REG_GOBJ)
+lfs	f1, -0x51D8 (rtoc)
+branchl r12, JObj_ReqAnimAll
 
 # Move to the left if widescreen is enabled
 lbz r3, OFST_R13_ISWIDESCREEN(r13)
 cmpwi r3, 0
 beq SKIP_SET_CHAT_BG_POS_X
-
+# Adjust X Translation
 lfs f1, TPO_CHAT_BG_X_POS_WIDESCREEN(REG_TEXT_PROPERTIES)
-stfs f1, 0x38(r15)
+lwz r3,0x28(REG_GOBJ)
+stfs f1, 0x38(r3)
 SKIP_SET_CHAT_BG_POS_X:
 
-# Add JOBJ To GObj
-mr  r3,r14
-li r4, 4
-mr  r5,r15
-branchl r12,0x80390a70 # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
 
-# Add Animations to JObj
-mr r3, r17 # jobj
-mr r4, r16 # anim joint
-li r5, 0
-li r6, 0
-branchl r12, JObj_AddAnimAll #
-
-# set end frame of anim
-lwz r3, 0x7C(r17) #aobj
-lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)
-branchl r12, AObj_SetEndFrame
-
-mr r3, r15
-lfs f1, TPO_CHAT_BG_FRAME_START(REG_TEXT_PROPERTIES)
-branchl r12, JObj_ReqAnimAll# (jobj, frames)
-
-# Add GX Link that draws the background
-mr  r3,r14
-load r4,0x80391070 # 80302608, 80391044, 8026407c, 80391070, 803a84bc
-li  r5, 3
-li  r6, 128
-branchl r12,GObj_SetupGXLink # void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri)
-
-
+# Add userdata
+mr r3, REG_GOBJ
 li r4, 4 # user data kind 0x80195b7c
 load r5, HSD_Free # destructor
-mr r6, r23 # memory pointer of allocated buffer above
-branchl r12, GObj_Initialize
+mr r6, REG_BUFFER # memory pointer of allocated buffer above
+branchl r12, GObj_AddUserData
 
-mr r3, r14 # set pointer back to GOBJ
+mr r3, REG_GOBJ # set pointer back to GOBJ
 bl CSS_ONLINE_CHAT_THINK
 mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
@@ -1123,7 +1168,26 @@ blr
 # CHAT MSG THINK Function: Looping function to keep on
 # updating the text until timer runs out
 ################################################################################
+
+# Registers
+.set CHAT_ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
+.set REG_CHATMSG_GOBJ, 14
+.set REG_CHATMSG_JOBJ, REG_CHATMSG_GOBJ+1
+.set REG_CHATMSG_GOBJ_DATA_ADDR, REG_CHATMSG_JOBJ+1
+.set REG_CHATMSG_TIMER, REG_CHATMSG_GOBJ_DATA_ADDR+1
+.set REG_CHATMSG_TIMER_STATUS, REG_CHATMSG_TIMER+1
+.set REG_CHATMSG_MSG_ID, REG_CHATMSG_TIMER_STATUS+1
+.set REG_CHATMSG_MSG_INDEX, REG_CHATMSG_MSG_ID+1
+.set REG_CHATMSG_MSG_TEXT_STRUCT_ADDR, REG_CHATMSG_MSG_INDEX+1
+.set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
+.set REG_CHATMSG_PLAYER_INDEX, REG_CHATMSG_MSG_STRING_ADDR+1
+# float registers
+.set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
+.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
+
+# offsets 
 .set JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
+
 CSS_ONLINE_CHAT_THINK:
 blrl
 mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
@@ -1280,13 +1344,17 @@ stb REG_CHATMSG_TIMER_STATUS, CSSCMDT_TIMER_STATUS(REG_CHATMSG_GOBJ_DATA_ADDR)
 li REG_CHATMSG_TIMER, 20 # reset timer
 stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
 
-lwz r3, 0x7C(REG_CHATMSG_JOBJ) #aobj
-lfs f1, TPO_CHAT_BG_FRAME_REWIND(REG_TEXT_PROPERTIES)
-branchl r12, AObj_SetEndFrame
+# add end animation
+lwz r3, 0x28 (REG_CHATMSG_GOBJ)
+lwz r4, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
+lwz r4, SLPCHAT_MSG (r4)
+li r5, 1
+branchl r12,0x8016895c
 
-mr r3, REG_CHATMSG_JOBJ
-lfs f1, TPO_CHAT_BG_FRAME_END(REG_TEXT_PROPERTIES)
-branchl r12, JObj_ReqAnimAll# (jobj, frames)
+# Req anim
+lwz r3, 0x28 (REG_CHATMSG_GOBJ)
+lfs	f1, -0x51D8 (rtoc)
+branchl r12, JObj_ReqAnimAll
 
 # free up custom slippi text id data
 lwz r3, 0x5C(REG_CHATMSG_MSG_TEXT_STRUCT_ADDR)
