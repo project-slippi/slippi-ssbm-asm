@@ -16,21 +16,15 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF + Arduino Toggle UI/UCF",
+          "sourceFolder": "External/UCF 0.8/Logic",
           "isRecursive": true,
-          "annotation": "UCF v0.74"
+          "annotation": "UCF v0.8"
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF CSS Indicator",
+          "sourceFolder": "External/UCF 0.8/Indicator",
           "isRecursive": true,
           "annotation": "UCF CSS Indicator"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Enable UCF Toggles",
-          "isRecursive": true,
-          "annotation": "Enable UCF Toggles [Fizzi]"
         }
       ]
     }

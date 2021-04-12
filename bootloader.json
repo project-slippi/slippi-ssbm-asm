@@ -1,0 +1,62 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Bootloader/bootloader.gct"
+    },
+    {
+      "file": "Output/Bootloader/bootloader.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Slippi Bootloader",
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Bootloader",
+          "annotation": "Slippi Bootloader [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/EXITransferBuffer",
+          "annotation": "EXI Transfer Buffer"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/Gecko",
+          "annotation": "Static function to process Gecko codes [Fizzi]"
+        }
+      ]
+    },
+    {
+      "name": "Early Load Codes, Must Run Before Bootloader",
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/StockMode.bin",
+          "annotation": "Stock Mode [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/4Stocks.bin",
+          "annotation": "4 Stocks [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/8Minutes.bin",
+          "annotation": "8 Minutes [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/NoItems.bin",
+          "annotation": "No Items [Magus]"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/SinglesStages.bin",
+          "annotation": "Singles Stages [Magus]"
+        }
+      ]
+    }
+  ]
+}

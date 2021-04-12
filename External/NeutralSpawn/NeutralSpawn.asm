@@ -273,10 +273,10 @@ blrl
     .float -20,10
     .float 20,10
   #Teams Data
-    .float -20,10
     .float -60,10
-    .float 20,10
+    .float -20,10
     .float 60,10
+    .float 20,10
 #Battlefield
 .long 0x1F                  #Stage ID
   #Singles Data

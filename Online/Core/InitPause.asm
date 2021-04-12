@@ -121,6 +121,11 @@ ClientPause_Paused_Disconnect:
 # Play SFX
 li  r3,2
 branchl r12,0x80024030
+# Stop Rumble
+branchl r12, 0x80378330
+# Set the address normally used to indicate who paused
+load r3, 0x8046b6a0 # Some static match state struct
+stb REG_PORT, 0x1(r3) # Write pauser index
 # End game
 mr r3, REG_PORT
 li r4, 0x7
