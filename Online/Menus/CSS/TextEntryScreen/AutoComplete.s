@@ -18,7 +18,8 @@
 .set ACTXB_INPUT_LEN, ACTXB_INPUT + (3 * 8) # u8, number of letters that have been input
 .set ACTXB_INDEX, ACTXB_INPUT_LEN + 1 # u32, scroll index
 .set ACTXB_SCROLL_DIR, ACTXB_INDEX + 4 # u8, See scroll option constants
-.set ACTXB_SIZE, ACTXB_SCROLL_DIR + 1
+.set ACTXB_MODE, ACTXB_SCROLL_DIR + 1 # u8, Mode we are currently in
+.set ACTXB_SIZE, ACTXB_MODE + 1
 
 # Set ACXB_SIZE to the larger of the two sizes
 .if ACTXB_SIZE > ACRXB_SIZE

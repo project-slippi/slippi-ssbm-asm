@@ -140,6 +140,10 @@ stw r3, ACTXB_INDEX(REG_ACXB_ADDR)
 # Write out scroll direction
 stb REG_SCROLL_DIR, ACTXB_SCROLL_DIR(REG_ACXB_ADDR)
 
+# Fetch and write current mode
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+stb r3, ACTXB_MODE(REG_ACXB_ADDR)
+
 # Write command to start EXI operation
 mr r3, REG_ACXB_ADDR
 li r4, ACTXB_SIZE
