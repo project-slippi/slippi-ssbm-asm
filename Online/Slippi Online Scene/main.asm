@@ -648,6 +648,7 @@ blrl
 SplashScenePrep:
 .set REG_VS_SSS_DATA, 31
 .set REG_MSRB_ADDR, 30
+.set REG_PLAYER_IDX, 29
 
 backup
 
@@ -658,6 +659,35 @@ mr REG_MSRB_ADDR, r3
 
 lwz	REG_VS_SSS_DATA, -0x77C0 (r13)
 addi	REG_VS_SSS_DATA, REG_VS_SSS_DATA, 1424 + 0x8   # adding 0x8 to skip past some unk stuff
+
+# Overwrite SSS Data colors for teams
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_CHAR_COLOR_OVERWRITE
+
+li REG_PLAYER_IDX, 0
+
+CHAR_COLOR_OVERWRITE_LOOP_START:
+# Load the team ID + 1 for team index and character ID to pass to function to get costume ID
+mulli r5, REG_PLAYER_IDX, 0x24
+addi r3, r5, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3 # Loads team ID
+addi r3, r3, 1
+addi r4, r5, 0x60
+lbzx r4, REG_VS_SSS_DATA, r4 # Loads character ID
+branchl r12, FN_GetTeamCostumeIndex # Loads costume ID into r3
+
+# Write costume ID 
+mulli r4, REG_PLAYER_IDX, 0x24
+addi r4, r4, 0x63
+stbx r3, REG_VS_SSS_DATA, r4
+
+# Increment port
+addi REG_PLAYER_IDX, REG_PLAYER_IDX, 1
+cmpwi REG_PLAYER_IDX, 4
+blt CHAR_COLOR_OVERWRITE_LOOP_START
+
+SKIP_CHAR_COLOR_OVERWRITE:
 
 #Copy Splash Data
 load  r3,0x80490888

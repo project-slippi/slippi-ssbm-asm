@@ -92,6 +92,7 @@ backup
 # get raw x analog input for UCF. The game has a 5 frame circular buffer
 # where it stores raw inputs for previous frames, we must fetch the location
 # where the current frame's value is stored
+# TODO: If we ever switch to 2f dashback, we probably won't need this
   load r3,0x8046b108  # start location of circular buffer
   load r4,0x804c1f78
   lbz r4, 0x0001(r4) # this is the current index in the circular buffer

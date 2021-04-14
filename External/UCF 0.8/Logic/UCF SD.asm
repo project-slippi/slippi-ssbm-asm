@@ -1,12 +1,24 @@
-################################################################################
-# Address: 800998a4
-################################################################################
+#To be inserted at 800998A4
 .include "Common/Common.s"
 
 .set  REG_PlayerData,31
 .set  REG_PlayerGObj,30
 .set  REG_Floats,29
 
+NTSC102:
+	.set	Injection,0x800998A4
+	.set	OFST_PlCo,-0x514C
+/*
+NTSC101:
+	.set	Injection,0x800996E0
+	.set	OFST_PlCo,-0x514C
+NTSC100:
+	.set	Injection,0x800995F8
+	.set	OFST_PlCo,-0x514C
+PAL100:
+	.set	Injection,0x80099F5C
+	.set	OFST_PlCo,-0x4F0C
+*/
 backup
 
 #Init
@@ -15,22 +27,9 @@ backup
   bl  Floats
   mflr  REG_Floats
 
-# Check for toggle bool
-  lbz r4,0x618(r31)          #get player port
-  subi r3,rtoc,ControllerFixOptions     #get UCF toggle bool base address
-  lbzx r3,r3,r4	            #get players UCF toggle bool
-  cmpwi r3,0x1
-  beq Start # if equal, skip to start of handler
-# Check for dashback bool (set by slp playback)
-  subi r3,rtoc,ShieldDropOptions     #get UCF toggle bool base address
-  lbzx r3,r3,r4	            #get players ShieldDrop toggle bool
-  cmpwi r3,0x1
-  bne EnterSpotdodge
-
-Start:
 #Check if cstick is
   lfs f1, 0x63C (REG_PlayerData)
-  lwz	r3, -0x514C (r13)
+  lwz	r3, OFST_PlCo (r13)
   lfs f0, 0x314 (r3)
   fcmpo cr0, f1, f0
   ble- EnterSpotdodge
@@ -63,10 +62,10 @@ Start:
 
 #Exit spotdodge function without entering the state
 # this is very hacky and is how UCF 0.73 functions.
-# the reason this is in place is because the spotdodge function is called
+# the reason this is used is because the spotdodge function is called
 # from 2 different places, so instead of making 2 injections, this is done.
 	restore
-  lwz	r3, 0x001C (sp)
+	lwz	r3, 0x001C (sp)
 	lwz	r31, 0x0014 (sp)
 	addi	sp, sp, 24
 	addi	r3,r3,0x8			#skip to the end of the function we are coming from

@@ -675,7 +675,7 @@ mr r3, REG_DLG_GOBJ
 li r4, 4 # user data kind
 load r5, HSD_Free # destructor
 mr r6, REG_DLG_BUFFER_ADDRESS # memory pointer of allocated buffer above
-branchl r12, GObj_Initialize # 0x80390b68;
+branchl r12, GObj_AddUserData # 0x80390b68;
 
 #Create Proc
 mr r3, REG_DLG_GOBJ
