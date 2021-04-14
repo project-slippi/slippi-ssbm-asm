@@ -6,9 +6,14 @@
 # do a suggestion lookup
 
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
 
 .set REG_RANDOM_NAME_LEN, 29 # set by parent function
+
+lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r3, 0
+beq RUN_REPLACED
 
 # Fetch INJ data table in order to branch to function stored in there
 computeBranchTargetAddress r3, INJ_CheckAutofill
@@ -30,3 +35,9 @@ bctrl
 
 # Called function always calls UpdateTypedName, which is the replaced function so we don't need
 # to call it again
+b END
+
+RUN_REPLACED:
+branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
+
+END:

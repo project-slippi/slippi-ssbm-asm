@@ -3,7 +3,12 @@
 ################################################################################
 
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
+
+lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r3, 0
+beq EXIT
 
 # Fetch INJ data table in order to branch to function stored in there
 computeBranchTargetAddress r3, INJ_CheckAutofill
@@ -24,3 +29,9 @@ mtctr r4
 # Call FetchSuggestion function
 li r3, CONST_ScrollReset
 bctrl
+b END
+
+EXIT:
+branchl r12, 0x8023CE4C # NameEntry_UpdateTypedName
+
+END:

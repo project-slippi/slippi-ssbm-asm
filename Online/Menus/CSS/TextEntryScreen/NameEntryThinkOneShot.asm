@@ -6,6 +6,11 @@
 .include "Online/Online.s"
 .include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
 
+# Used to populate the first prediction on load
+lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r3, 0
+beq EXIT
+
 # Fetch location where we will store auto-complete buffer
 computeBranchTargetAddress r6, INJ_CheckAutofill
 

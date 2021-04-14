@@ -3,6 +3,7 @@
 ################################################################################
 
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
 
 .set REG_CHAR_INDEX, 27 # Set by parent function
@@ -18,6 +19,10 @@ b CODE_START
  .align 2
 
 CODE_START:
+
+lbz r6, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r6, 0
+beq EXIT
 
 # r29 stores the color to load for the text, here we will overwrite it. This runs once per char
 

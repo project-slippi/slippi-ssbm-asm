@@ -114,6 +114,11 @@ backup
 # Store inputs
 mr REG_SCROLL_DIR, r3
 
+# Don't run any logic if in normal name entry
+lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r3, 0
+beq FN_FetchSuggestion_Restore
+
 # Fetch ACB and ACXB
 bl STATIC_MEMORY_TABLE_BLRL
 mflr r3
@@ -170,6 +175,7 @@ stw r3, ACB_INDEX(REG_ACB_ADDR)
 # in B press auto complete and I don't think it hurts?
 branchl r12, 0x8023ce4c # NameEntry_UpdateTypedName
 
+FN_FetchSuggestion_Restore:
 restore
 blr
 

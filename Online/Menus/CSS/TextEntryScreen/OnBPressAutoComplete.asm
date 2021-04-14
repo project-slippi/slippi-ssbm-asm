@@ -6,7 +6,12 @@
 # is fetched
 
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Online/Menus/CSS/TextEntryScreen/AutoComplete.s"
+
+lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r3, 0
+beq RUN_REPLACED
 
 # Fetch INJ data table in order to branch to function stored in there
 computeBranchTargetAddress r3, INJ_CheckAutofill
@@ -30,12 +35,12 @@ mtctr r4
 li r3, CONST_ScrollReset
 bctrl
 
-# Called function always calls UpdateTypedName, which is the replaced function so we don't need
-# to call it again
-
 EXIT:
 # Skip the rest of the original handler
 branch r12, 0x8023ce38
 
 CONTINUE_B_HANDLER:
 branch r12, 0x8023cd68 # Branch directly to the handler which exits the CSS
+
+RUN_REPLACED:
+lbz r5, 0x0058(r28)
