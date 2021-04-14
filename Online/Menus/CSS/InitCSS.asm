@@ -14,11 +14,12 @@
 
 # Text Update Userdata Struct Definition
 .set TEXTGOBJDATA_SIZE, 0x4
-.set TEXTGOBJDATA_SLPCHAT, 0x0  # pointer to slpChat symbol
+.set TEXTGOBJDATA_SLPCSS, 0x0  # pointer to slpChat symbol
 
 # slpChat Struct Definition
-.set SLPCHAT_SELECT, 0x0
-.set SLPCHAT_MSG, 0x4
+.set SLPCSS_CHATSELECT, 0x0
+.set SLPCSS_CHATMSG, 0x4
+.set SLPCSS_MODE, 0x8
 
 # Chat constants
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
@@ -199,10 +200,10 @@ blrl
 .byte 0x00
 
 # File-related strings
-.string "slpChat.dat"
-.set TPO_STRING_CHAT_FILENAME, TPO_STRING_SPINNER_DONE + 3
-.string "slpChat"
-.set TPO_STRING_CHAT_SYMBOLNAME, TPO_STRING_CHAT_FILENAME + 12
+.string "slpCSS.dat"
+.set TPO_STRING_SLPCSS_FILENAME, TPO_STRING_SPINNER_DONE + 3
+.string "slpCSS"
+.set TPO_STRING_SLPCSS_SYMBOLNAME, TPO_STRING_SLPCSS_FILENAME + 11
 .align 2
 
 ################################################################################
@@ -407,15 +408,15 @@ bl TEXT_PROPERTIES
 mflr r20
 
 # Load File
-addi r3, r20, TPO_STRING_CHAT_FILENAME
+addi r3, r20, TPO_STRING_SLPCSS_FILENAME
 branchl r12,0x80016be0
 
 # Retrieve symbol from file data
-addi r4, r20, TPO_STRING_CHAT_SYMBOLNAME
+addi r4, r20, TPO_STRING_SLPCSS_SYMBOLNAME
 branchl r12,0x80380358
 
 # Save this pointer
-stw r3, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
+stw r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
 
 restore
 b EXIT
@@ -544,29 +545,45 @@ cmpwi r5, 18
 blt WRITE_OPP_CODE_LOOP_START
 
 ################################################################################
-# Manage CSS Jobj Title Frame
+# Add CSS Mode Anim
 ################################################################################
 
+## Not sure why this anim has to be added every frame but I can't
+## be bothered to debug it because ishiiruka mem breakpoints :)
+
+branchl r12,0x8021b2d8
+
+# Get jobj
+  lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
+  addi  r4,sp,0x80
+  li r5, 36
+  li  r6,-1
+  branchl r12,0x80011e24
+# remove anim
+  lwz r3,0x80(sp)
+  branchl r12,0x8036f644
+# add matanim
+  lwz r3,0x80(sp)
+  li  r4,0
+  lwz r5, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+  lwz r5, SLPCSS_MODE (r5)
+  li  r6,0
+  branchl r12,0x8036fa10
+
 # Set MELEE Texture frame by default
-lfs f1, -0x50FC(rtoc) # 15.0f used to be -> # lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
+lfs f1, -0x513c(rtoc) # 0f used to be -> # lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
 bne SKIP_TEAMS_TITLE
 # set "TEAM MATCH" Texture Frame
-lfs f1, -0x52BC(rtoc) # 16.0f used to be -> #lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES)
+lfs f1, -0x5138(rtoc) # 16.0f used to be -> #lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES)
 
 SKIP_TEAMS_TITLE:
-# Animate Top Left Text
-lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
-addi r4, sp, JOBJ_CHILD_OFFSET # pointer where to store return value
-li r5, 0x24 # # Get Title at top left corner
-li r6, -1
-branchl r12, JObj_GetJObjChild
-
-lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
-branchl r12, JObj_ReqAnimAll# (jobj, frames)
-lwz r3, JOBJ_CHILD_OFFSET(sp) # jobj child
-branchl r12, JObj_AnimAll
+# Animate Mode Texture
+lwz r3,0x80(sp)
+branchl r12, JObj_ReqAnim # (jobj, frames)
+lwz r3,0x80(sp)
+branchl r12, JObj_Anim
 
 ################################################################################
 # Manage header text
@@ -707,8 +724,8 @@ branchl r12, GObj_Create
 mr REG_GOBJ, r3
 
 # Load JOBJ
-lwz r3, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
-lwz r3, SLPCHAT_MSG (r3) # pointer to our custom bg main jobj
+lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+lwz r3, SLPCSS_CHATMSG (r3) # pointer to our custom bg main jobj
 lwz r3, 0x0 (r3) # jobj
 branchl r12,JObj_LoadJoint #Create jobj
 
@@ -727,8 +744,8 @@ branchl r12,GObj_SetupGXLink
 
 # Add anim
 lwz r3,0x28(REG_GOBJ)
-lwz r4, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
-lwz r4, SLPCHAT_MSG (r4)
+lwz r4, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+lwz r4, SLPCSS_CHATMSG (r4)
 li r5, 0
 branchl r12,0x8016895c
 
@@ -1346,8 +1363,8 @@ stb REG_CHATMSG_TIMER, CSSCMDT_TIMER(REG_CHATMSG_GOBJ_DATA_ADDR)
 
 # add end animation
 lwz r3, 0x28 (REG_CHATMSG_GOBJ)
-lwz r4, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
-lwz r4, SLPCHAT_MSG (r4)
+lwz r4, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+lwz r4, SLPCSS_CHATMSG (r4)
 li r5, 1
 branchl r12,0x8016895c
 

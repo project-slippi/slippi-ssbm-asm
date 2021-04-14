@@ -679,8 +679,8 @@ branchl r12, GObj_Create
 mr REG_CHAT_GOBJ, r3 # save GOBJ pointer
 
 # Load JOBJ
-lwz r3, CSSDT_SLPCHAT_ADDR(REG_CSSDT_ADDR)
-lwz r3, SLPCHAT_SELECT (r3) # pointer to our custom bg main jobj
+lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+lwz r3, SLPCSS_CHATSELECT (r3) # pointer to our custom bg main jobj
 lwz r3, 0x0 (r3) # jobj
 branchl r12,0x80370e44 #Create jobj
 mr  REG_CHAT_JOBJ,r3
