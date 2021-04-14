@@ -114,7 +114,7 @@ backup
 # Store inputs
 mr REG_SCROLL_DIR, r3
 
-# Load buffers into non-volatile registers
+# Fetch ACB and ACXB
 bl STATIC_MEMORY_TABLE_BLRL
 mflr r3
 lwz REG_ACB_ADDR, (IDO_ACB_ADDR - 0x8)(r3)

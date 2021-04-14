@@ -84,65 +84,65 @@ li  r5, 4
 li  r6, 128
 branchl r12, GObj_SetupGXLink 
 
-mr r3, REG_GOBJ
-li r4, 4 # user data kind
-load r5, HSD_Free # destructor
-mr r6, REG_USER_DATA # memory pointer of allocated buffer above
-branchl r12, GObj_Initialize
+# mr r3, REG_GOBJ
+# li r4, 4 # user data kind
+# load r5, HSD_Free # destructor
+# mr r6, REG_USER_DATA # memory pointer of allocated buffer above
+# branchl r12, GObj_Initialize
 
-# Set Think Function that runs every frame
-mr r3, REG_GOBJ # set r3 to GOBJ pointer
-bl NAME_ENTRY_RECENT_CONNECT_CODE_THINK
-mflr r4 # Function to Run
-li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs 
-branchl r12, GObj_AddProc
+# # Set Think Function that runs every frame
+# mr r3, REG_GOBJ # set r3 to GOBJ pointer
+# bl NAME_ENTRY_RECENT_CONNECT_CODE_THINK
+# mflr r4 # Function to Run
+# li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs 
+# branchl r12, GObj_AddProc
 
 
 restore
 b EXIT
 
-################################################################################
-# Recent connect code think Function: Looping function to handle input 
-################################################################################
-NAME_ENTRY_RECENT_CONNECT_CODE_THINK:
-blrl
-backup
+# ################################################################################
+# # Recent connect code think Function: Looping function to handle input 
+# ################################################################################
+# NAME_ENTRY_RECENT_CONNECT_CODE_THINK:
+# blrl
+# backup
 
-# tried using this offset UP recommended (-0x4DE0) but doesn't work on name entry screen 
-# -0x49B0 did though, which is the same one used to setup teams stuff
-lbz r3, -0x49B0(r13) # get input of player that opened the menu
-branchl	r12, Inputs_GetPlayerInstantInputs
+# # tried using this offset UP recommended (-0x4DE0) but doesn't work on name entry screen 
+# # -0x49B0 did though, which is the same one used to setup teams stuff
+# lbz r3, -0x49B0(r13) # get input of player that opened the menu
+# branchl	r12, Inputs_GetPlayerInstantInputs
 
-cmpwi r4, BTN_LEFT_TRIGGER
-beq L_PRESSED
-cmpwi r4, BTN_RIGHT_TRIGGER
-beq R_PRESSED
-cmpwi r4, BTN_Z
-beq Z_PRESSED
+# cmpwi r4, BTN_LEFT_TRIGGER
+# beq L_PRESSED
+# cmpwi r4, BTN_RIGHT_TRIGGER
+# beq R_PRESSED
+# cmpwi r4, BTN_Z
+# beq Z_PRESSED
 
-b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
+# b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
 
-L_PRESSED:
+# L_PRESSED:
 
-R_PRESSED:
+# R_PRESSED:
 
-LR_PRESSED:
+# LR_PRESSED:
 
-# Play nav sound
-# li r3, 1
-# branchl r12, SFX_Menu_CommonSound
+# # Play nav sound
+# # li r3, 1
+# # branchl r12, SFX_Menu_CommonSound
 
-b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
+# b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
 
-Z_PRESSED:
+# Z_PRESSED:
 
-# Play success sound
-# li r3, 1
-# branchl r12, SFX_Menu_CommonSound
+# # Play success sound
+# # li r3, 1
+# # branchl r12, SFX_Menu_CommonSound
 
-NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT:
-restore
-blr
+# NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT:
+# restore
+# blr
 
 
 EXIT:
