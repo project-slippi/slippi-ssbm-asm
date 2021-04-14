@@ -551,8 +551,6 @@ blt WRITE_OPP_CODE_LOOP_START
 ## Not sure why this anim has to be added every frame but I can't
 ## be bothered to debug it because ishiiruka mem breakpoints :)
 
-branchl r12,0x8021b2d8
-
 # Get jobj
   lwz r3, -0x49E0(r13) # Points to SingleMenu live root Jobj
   addi  r4,sp,0x80
