@@ -16,11 +16,6 @@
 .set TEXTGOBJDATA_SIZE, 0x4
 .set TEXTGOBJDATA_SLPCSS, 0x0  # pointer to slpChat symbol
 
-# slpChat Struct Definition
-.set SLPCSS_CHATSELECT, 0x0
-.set SLPCSS_CHATMSG, 0x4
-.set SLPCSS_MODE, 0x8
-
 # Chat constants
 .set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
 .set MAX_CHAT_MESSAGE_LINES, 9

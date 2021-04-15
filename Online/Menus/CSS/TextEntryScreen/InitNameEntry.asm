@@ -66,8 +66,10 @@ branchl r12, GObj_Create
 mr REG_GOBJ, r3 # save GOBJ pointer
 
 # create jbobj (Recent Connect Code Buttons HUD)
-lwz r3, -0x49eC(r13) # 804db6a0 pointer to MnSlChar file
-lwz r3, 0x1C(r3) # pointer to our custom jobj
+load r3, CSSDT_BUF_ADDR
+lwz r3, 0(r3)
+lwz r3, CSSDT_SLPCSS_ADDR(r3)
+lwz r3,SLPCSS_CONNECTHELP(r3)
 branchl r12, JObj_LoadJoint 
 mr  REG_JOBJ,r3
 

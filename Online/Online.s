@@ -395,7 +395,15 @@ lwz \reg, -0x62A0(\reg)
 .set RGB_SIZE, RGB_P2_RGPB + RGPB_SIZE
 
 ################################################################################
-# Const Values
+# slpCSS Symbol Structure
+################################################################################
+.set SLPCSS_CHATSELECT, 0x0
+.set SLPCSS_CHATMSG, 0x4
+.set SLPCSS_MODE, 0x8
+.set SLPCSS_CONNECTHELP, 0xC
+
+################################################################################
+# Const values
 ################################################################################
 .set RESP_NORMAL, 1
 .set RESP_SKIP, 2
