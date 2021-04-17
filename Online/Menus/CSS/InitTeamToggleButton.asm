@@ -171,7 +171,7 @@ mr r3, REG_ICON_GOBJ
 li r4, 4 # user data kind
 load r5, HSD_Free # destructor
 mr r6, REG_DATA_BUFFER # memory pointer of allocated buffer above
-branchl r12, GObj_AddUserData
+branchl r12, GObj_Initialize
 
 # Set Think Function that runs every frame
 mr r3, REG_ICON_GOBJ # set r3 to GOBJ pointer
