@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 0x8023ca50 # Executed after check to see if tag is empty
+# Address: 0x8023cc14 # Executed after check to see if tag is empty
 ################################################################################
 
 .include "Common/Common.s"
@@ -20,7 +20,7 @@ mtctr r12
 bctrl
 
 # Skip the regular stuff that would run on success (saving the nametag)
-branch r12, 0x8023cabc
+branch r12, 0x8023cc80
 
 EXIT:
 li r0, 0

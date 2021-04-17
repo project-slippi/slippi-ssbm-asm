@@ -37,7 +37,7 @@ bne EXIT
 
 backup
 
-computeBranchTargetAddress r3, INJ_InitInGameDelay
+computeBranchTargetAddress INJ_InitInGameDelay
 lwz REG_IGDB_ADDR, 0x8(r3) # Loads the address of the buffer
 
 # Check for zero delay, if delay is zero, don't do anything
