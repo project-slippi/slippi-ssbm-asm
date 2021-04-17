@@ -160,9 +160,15 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF + Arduino Toggle UI",
+          "sourceFolder": "External/UCF 0.8/Logic",
           "isRecursive": true,
-          "annotation": "UCF + Arduino Toggle UI"
+          "annotation": "UCF v0.8"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF 0.8/Indicator",
+          "isRecursive": true,
+          "annotation": "UCF CSS Indicator"
         },
         {
           "type": "injectFolder",

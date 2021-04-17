@@ -99,6 +99,12 @@ READ_DATA:
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
+# This stuff is handled with dynamic gecko codes now but this has to stay
+# here for backward compatibility with old replays from before we got rid
+# of the toggles
+# As of 3/31/2021 this is no longer strictly necessary for new replays but
+# it has to stay here to play back legacy replays, those still use the toggle-based
+# UCF handlers
   subi r23,rtoc,DashbackOptions #Prepare game memory dashback toggle address
   subi r20,rtoc,ShieldDropOptions #Prepare game memory shield drop toggle address
   addi r21,BufferPointer,UCFToggles  #Get UCF toggles in buffer

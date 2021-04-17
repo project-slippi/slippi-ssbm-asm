@@ -23,14 +23,13 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_ISPAUSE,-0x5038 # byte, client paused bool (originally used for tournament mode @ 8019b8e4)
 .set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
 .set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
+.set OFST_R13_NAME_ENTRY_INDEX_FLAG,-0x5035 # byte, set to 1 if just entered name entry. Rsts direct code index.
 .set OFST_R13_USE_PREMADE_TEXT,-0x5014 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
 .set OFST_R13_ISWIDESCREEN,-0x5020 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
-
 # r13 offsets used in tournament mode (not sure if completely safe though)
 # -0x5040 (r13)
 # -0x5068 (r13)
 # -0x7510 (r13)
-
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
@@ -219,8 +218,7 @@ lwz \reg, -0x62A0(\reg)
 .set ODB_SAVESTATE_SSCB_ADDR, ODB_SAVESTATE_SSRB_ADDR + 4 # u32
 .set ODB_SFXDB_START, ODB_SAVESTATE_SSCB_ADDR + 4 # SFXDB_SIZE
 .set ODB_LATEST_FRAME, ODB_SFXDB_START + SFXDB_SIZE # u32
-.set ODB_CF_OPTION_BACKUP, ODB_LATEST_FRAME + 4 # u32
-.set ODB_FN_HANDLE_GAME_OVER_ADDR, ODB_CF_OPTION_BACKUP + 4 # u32
+.set ODB_FN_HANDLE_GAME_OVER_ADDR, ODB_LATEST_FRAME + 4 # u32
 .set ODB_STABLE_ROLLBACK_IS_ACTIVE, ODB_FN_HANDLE_GAME_OVER_ADDR + 4 # bool
 .set ODB_STABLE_ROLLBACK_END_FRAME, ODB_STABLE_ROLLBACK_IS_ACTIVE + 1 # s32
 .set ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE, ODB_STABLE_ROLLBACK_END_FRAME + 4 # bool
@@ -315,7 +313,8 @@ lwz \reg, -0x62A0(\reg)
 # CSS Data Table
 ################################################################################
 .set CSSDT_MSRB_ADDR, 0 # u32
-.set CSSDT_TEXT_STRUCT_ADDR, CSSDT_MSRB_ADDR + 4 # u32
+.set CSSDT_SLPCSS_ADDR, CSSDT_MSRB_ADDR + 4 # ptr
+.set CSSDT_TEXT_STRUCT_ADDR, CSSDT_SLPCSS_ADDR + 4 # u32
 .set CSSDT_SPINNER1, CSSDT_TEXT_STRUCT_ADDR + 4 # u8 (0 = hide, 1 = spin, 2 = done)
 .set CSSDT_SPINNER2, CSSDT_SPINNER1 + 1 # u8 (0 = hide, 1 = spin, 2 = done)
 .set CSSDT_SPINNER3, CSSDT_SPINNER2 + 1 # u8 (0 = hide, 1 = spin, 2 = done)
@@ -360,6 +359,20 @@ lwz \reg, -0x62A0(\reg)
 .set CSSCWDT_SIZE, CSSCWDT_CSSDT_ADDR + 4
 
 ################################################################################
+# Name Entry Direct Code Buffer
+###############################################################################
+.set NEDC_CMD, 0 # u8
+.set NEDC_NAME_ENTRY_INDEX, NEDC_CMD + 1 # u8
+.set NEDC_SIZE, NEDC_NAME_ENTRY_INDEX + 1
+
+################################################################################
+# Name Entry Auto Complete 
+###############################################################################
+.set NEAC_CMD, 0 # u8
+.set NEAC_CURRENT_TEXT, NEAC_CMD + 1
+.set NEAC_SIZE, NEAC_CURRENT_TEXT + 24
+
+################################################################################
 # Online status buffer offsets
 ################################################################################
 .set OSB_APP_STATE, 0 # 0 = not logged in, 1 = logged in, 2 = update required
@@ -382,7 +395,15 @@ lwz \reg, -0x62A0(\reg)
 .set RGB_SIZE, RGB_P2_RGPB + RGPB_SIZE
 
 ################################################################################
-# Const Values
+# slpCSS Symbol Structure
+################################################################################
+.set SLPCSS_CHATSELECT, 0x0
+.set SLPCSS_CHATMSG, 0x4
+.set SLPCSS_MODE, 0x8
+.set SLPCSS_CONNECTHELP, 0xC
+
+################################################################################
+# Const values
 ################################################################################
 .set RESP_NORMAL, 1
 .set RESP_SKIP, 2

@@ -37,7 +37,7 @@ branchl r12, Zero_AreaLength
 # Initialize Buffer
 li r3, CONST_SlippiCmdGetPremadeTextLength
 bl FN_Exi
-lhz REG_BUFFER_SIZE, 0x2(REG_BUFFER) # get premade text size
+lwz REG_BUFFER_SIZE, 0x0(REG_BUFFER) # get premade text size
 # This should print 23 bytes = 0x17
 
 # Free previous allocated memory
@@ -70,7 +70,7 @@ stb REG_PREMADE_TEXT_PARAM_1, 2(REG_BUFFER) # PARAM 1
 
 # Prepare Buffer to read
 mr r3, REG_BUFFER
-mr r4, REG_BUFFER_SIZE
+li r4, 3 # Always sends 3 bytes
 li r5, CONST_ExiWrite
 branchl r12, FN_EXITransferBuffer
 
