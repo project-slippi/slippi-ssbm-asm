@@ -553,9 +553,6 @@ blr
 FN_CHECK_CHAT_INPUTS:
 backup
 
-# TODO: Remove when we want to enable chat
-b HANDLE_SKIP_CHAT_INPUT
-
 # uncomment this line to disable B press on chat window
 # b SKIP_CHAT_WINDOW_B_PRESS
 
@@ -681,10 +678,11 @@ li r5, 0x80
 branchl r12, GObj_Create
 mr REG_CHAT_GOBJ, r3 # save GOBJ pointer
 
-# create jbobj (custom chat window background)
-lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
-lwz r3, 0x18(r3) # pointer to our custom bg jobj
-branchl r12,0x80370e44 #Create Jboj
+# Load JOBJ
+lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+lwz r3, SLPCSS_CHATSELECT (r3) # pointer to our custom bg main jobj
+lwz r3, 0x0 (r3) # jobj
+branchl r12,0x80370e44 #Create jobj
 mr  REG_CHAT_JOBJ,r3
 
 # Move to the left if widescreen is enabled
@@ -717,7 +715,7 @@ mr r3, REG_CHAT_GOBJ
 li r4, 4 # user data kind
 load r5, HSD_Free # destructor
 mr r6, r23 # memory pointer of allocated buffer above
-branchl r12, GObj_Initialize
+branchl r12, GObj_AddUserData
 
 # Set Think Function that runs every frame
 mr r3, REG_CHAT_GOBJ # set r3 to GOBJ pointer

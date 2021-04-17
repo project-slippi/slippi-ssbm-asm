@@ -127,7 +127,7 @@ lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 
 # This macro takes in an address that is expected to have a branch instruction. It will set
 # r3 to the address being branched to. This will overwrite r3 and r4
-.macro computeBranchTargetAddress address
+.macro computeBranchTargetAddress reg address
 load r3, \address
 lwz r4, 0(r3) # Get branch instruction which contains offset
 
@@ -139,7 +139,7 @@ rlwinm r5, r5, 16, 0xFFFF0000
 # Extract last 2 bytes, combine with top half, and then add to base address to get result
 rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
 or r4, r4, r5
-add r3, r3, r4
+add \reg, r3, r4
 .endm
 
 ################################################################################
@@ -190,7 +190,7 @@ add r3, r3, r4
 
 ## GObj functions
 .set GObj_Create,0x803901f0 #(obj_type,subclass,priority)
-.set GObj_Initialize,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
+.set GObj_AddUserData,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54 # (obj,func,priority)
 .set GObj_RemoveProc,0x8038fed4
@@ -302,6 +302,7 @@ add r3, r3, r4
 .set SinglePlayerModeCheck,0x8016b41c
 .set CheckIfGameEnginePaused,0x801a45e8
 .set Inputs_GetPlayerHeldInputs,0x801a3680
+.set Inputs_GetPlayerInstantInputs,0x801A36A0
 .set Rumble_StoreRumbleFlag,0x8015ed4c
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set DiscError_ResumeGame,0x80024f6c
@@ -342,7 +343,8 @@ add r3, r3, r4
 .set CONST_SlippiCmdSendChatMessage,0xBB
 .set CONST_SlippiCmdGetNewSeed,0xBC
 .set CONST_SlippiCmdReportMatch,0xBD
-
+.set CONST_SlippiCmdSendNameEntryIndex,0xBE
+.set CONST_SlippiCmdNameEntryAutoComplete,0xBF
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
