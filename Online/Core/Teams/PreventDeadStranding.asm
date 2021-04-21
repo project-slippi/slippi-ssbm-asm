@@ -6,8 +6,7 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set REG_IS_ASLEEP, 14
-.set REG_ODB_ADDRESS, 15
+.set REG_IS_ASLEEP, 4
 
 backup
 
@@ -28,8 +27,8 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
 bne EXIT_AND_RESTORE
 
-lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
-lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
+lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
+lbz r3, ODB_IS_DISCONNECTED(r3)
 cmpwi r3, 1
 beq EXIT_IS_WOKE
 
