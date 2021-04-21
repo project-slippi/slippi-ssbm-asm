@@ -6,41 +6,31 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set REG_IS_ASLEEP, 4
-
-backup
-
 # r3 holds boolean for is asleep or not (can or cannot take lives)
-mr REG_IS_ASLEEP, r3
-
 # leave r3 as is and exit if the player can pause
-cmpwi REG_IS_ASLEEP, 0
-beq EXIT_AND_RESTORE
+cmpwi r3, 0
+beq EXIT
 
 # Ensure that this is an online match
-getMinorMajor r3
-cmpwi r3, SCENE_ONLINE_IN_GAME
-bne EXIT_AND_RESTORE
+getMinorMajor r4
+cmpwi r4, SCENE_ONLINE_IN_GAME
+bne EXIT
 
 # Ensure this is only on teams
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_TEAMS
-bne EXIT_AND_RESTORE
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+bne EXIT
 
-lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
-lbz r3, ODB_IS_DISCONNECTED(r3)
-cmpwi r3, 1
+lwz r4, OFST_R13_ODB_ADDR(r13) # data buffer address
+lbz r4, ODB_IS_DISCONNECTED(r4)
+cmpwi r4, 1
 beq EXIT_IS_WOKE
 
-b EXIT_AND_RESTORE
+b EXIT
 
 EXIT_IS_WOKE:
 li r3, 0
 b EXIT
 
-EXIT_AND_RESTORE:
-mr r3, REG_IS_ASLEEP
-
 EXIT:
-restore
 cmpwi r3, 0 # original line
