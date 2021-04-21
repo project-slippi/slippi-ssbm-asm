@@ -6,9 +6,6 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-# offset from match info block which we can borrow for this
-.set OFST_UNPAUSED_ON_DISCONNECT, 0x9 # can also use 0xb and 0xc
-
 # Ensure that this is an online match
 getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_IN_GAME
@@ -23,7 +20,7 @@ cmpwi r3, 1
 bne EXIT # if we are not disconnected, just continue as normal
 
 lbz r4, ODB_LOCAL_PLAYER_INDEX(r29)
-lbz	r3, 0x01(r30) # index of player who paused
+lbz r3, 0x01(r30) # index of player who paused
 extsb r3, r3 # I don't know wth this does lol just mimicking the orig line
 cmpw r3, r4
 beq EXIT # if player who paused is local exit
