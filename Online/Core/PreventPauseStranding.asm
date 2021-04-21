@@ -31,4 +31,4 @@ stb	r3, OFST_UNPAUSED_ON_DISCONNECT(r30)
 branch r3, 0x8016cd28
 
 EXIT:
-addi r29, r4, 0 # original line
+li r4, -1
