@@ -39,8 +39,7 @@ backup
 computeBranchTargetAddress REG_ACIDT_ADDR, INJ_CheckAutofill
 
 # Initialize and store buffer used with auto-complete
-# TODO: Consider whether these buffers get cleaned up. Could we cause a crash by exiting and
-# TODO: entering name entry a bunch of times?
+# These two buffers will be cleaned up in SkipReturnToCssSound.asm
 li r3, ACB_SIZE
 branchl r12, HSD_MemAlloc
 stw r3, IDO_ACB_ADDR(REG_ACIDT_ADDR) # Store ACB address somewhere accessible
@@ -52,11 +51,6 @@ li r3, ACXB_SIZE
 branchl r12, HSD_MemAlloc
 lwz r4, IDO_ACB_ADDR(REG_ACIDT_ADDR)
 stw r3, ACB_ACXB_ADDR(r4)
-
-# Get Memory Buffer for Chat Window Data Table
-li r3, USER_DATA_SIZE # Buffer Size
-branchl r12, HSD_MemAlloc
-mr REG_USER_DATA, r3 
 
 # create gobj for think function
 li r3, 0x4
@@ -86,66 +80,8 @@ li  r5, 4
 li  r6, 128
 branchl r12, GObj_SetupGXLink 
 
-# mr r3, REG_GOBJ
-# li r4, 4 # user data kind
-# load r5, HSD_Free # destructor
-# mr r6, REG_USER_DATA # memory pointer of allocated buffer above
-# branchl r12, GObj_Initialize
-
-# # Set Think Function that runs every frame
-# mr r3, REG_GOBJ # set r3 to GOBJ pointer
-# bl NAME_ENTRY_RECENT_CONNECT_CODE_THINK
-# mflr r4 # Function to Run
-# li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs 
-# branchl r12, GObj_AddProc
-
-
 restore
 b EXIT
-
-# ################################################################################
-# # Recent connect code think Function: Looping function to handle input 
-# ################################################################################
-# NAME_ENTRY_RECENT_CONNECT_CODE_THINK:
-# blrl
-# backup
-
-# # tried using this offset UP recommended (-0x4DE0) but doesn't work on name entry screen 
-# # -0x49B0 did though, which is the same one used to setup teams stuff
-# lbz r3, -0x49B0(r13) # get input of player that opened the menu
-# branchl	r12, Inputs_GetPlayerInstantInputs
-
-# cmpwi r4, BTN_LEFT_TRIGGER
-# beq L_PRESSED
-# cmpwi r4, BTN_RIGHT_TRIGGER
-# beq R_PRESSED
-# cmpwi r4, BTN_Z
-# beq Z_PRESSED
-
-# b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
-
-# L_PRESSED:
-
-# R_PRESSED:
-
-# LR_PRESSED:
-
-# # Play nav sound
-# # li r3, 1
-# # branchl r12, SFX_Menu_CommonSound
-
-# b NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT
-
-# Z_PRESSED:
-
-# # Play success sound
-# # li r3, 1
-# # branchl r12, SFX_Menu_CommonSound
-
-# NAME_ENTRY_RECENT_CONNECT_CODE_THINK_EXIT:
-# restore
-# blr
-
 
 EXIT:
 li r3, 0
