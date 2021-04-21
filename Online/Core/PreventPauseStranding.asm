@@ -14,20 +14,21 @@ getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_IN_GAME
 bne EXIT
 
-lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
-lbz r3, ODB_IS_DISCONNECTED(r3)
+# we can safely set r29 here because it's replaced right after this injection and
+# restored on method exit too
+lwz r29, OFST_R13_ODB_ADDR(r13) # data buffer address
+
+lbz r3, ODB_IS_DISCONNECTED(r29)
 cmpwi r3, 1
 bne EXIT # if we are not disconnected, just continue as normal
 
-# make sure we have not already unpaused on disconnect once already
-lbz	r3, OFST_UNPAUSED_ON_DISCONNECT(r30)
-cmpwi r3, 1
-beq EXIT
+lbz r4, ODB_LOCAL_PLAYER_INDEX(r29)
+lbz	r3, 0x01(r30) # index of player who paused
+extsb r3, r3 # I don't know wth this does lol just mimicking the orig line
+cmpw r3, r4
+beq EXIT # if player who paused is local exit
 
 # if we are disconnected, just branch to unpause
-# and store that we already unpaused on disconnect
-li r3, 1
-stb	r3, OFST_UNPAUSED_ON_DISCONNECT(r30)
 branch r3, 0x8016cd28
 
 EXIT:
