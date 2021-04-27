@@ -431,7 +431,7 @@ stw r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
 SKIP_LOADING_CSS_FILE:
 
 
-# clear r13 callback since we are here again
+# clear r13 callback since we are already back at CSS
 li r3, 0
 stw r3, OFST_R13_CALLBACK(r13)
 
