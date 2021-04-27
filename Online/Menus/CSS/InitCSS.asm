@@ -278,6 +278,16 @@ branchl r12, GObj_AddProc
 ################################################################################
 # Allocate memory locations
 ################################################################################
+
+# Preload CSS Data Table buffer in case we already have allocated it
+load r20, CSSDT_BUF_ADDR
+lwz REG_CSSDT_ADDR, 0(r20)
+
+# Skip allocating again if we are coming back from name entry
+lwz r3, OFST_R13_CALLBACK(r13)
+cmpwi r3, 0
+bne SKIP_ALLOC_CSSDT
+
 # Initialize CSS data table
 li r3, CSSDT_SIZE
 branchl r12, HSD_MemAlloc
@@ -288,13 +298,13 @@ li r4, CSSDT_SIZE
 branchl r12, Zero_AreaLength
 
 # Store CSSDT to static mem location
-load r3, CSSDT_BUF_ADDR
-stw REG_CSSDT_ADDR, 0(r3)
+stw REG_CSSDT_ADDR, 0(r20)
 
 # Prepare the MSRB buffer
 li r3, MSRB_SIZE
 branchl r12, HSD_MemAlloc
 stw r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
+SKIP_ALLOC_CSSDT:
 
 ################################################################################
 # Set up CSS text
@@ -396,8 +406,14 @@ lfs f3, TPO_ERR_LINE4_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
 
 ################################################################################
-# Load Chat File
+# Load Slippi CSS File
 ################################################################################
+
+# if we already loaded the file skip loading it again
+lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+cmpwi r3, 0
+bne SKIP_LOADING_CSS_FILE
+
 # Get text properties address
 bl TEXT_PROPERTIES
 mflr r20
@@ -412,6 +428,12 @@ branchl r12,0x80380358
 
 # Save this pointer
 stw r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+SKIP_LOADING_CSS_FILE:
+
+
+# clear r13 callback since we are here again
+li r3, 0
+stw r3, OFST_R13_CALLBACK(r13)
 
 restore
 b EXIT
