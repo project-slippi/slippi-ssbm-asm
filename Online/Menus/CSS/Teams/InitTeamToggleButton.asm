@@ -1,9 +1,10 @@
 ################################################################################
-# Address: 0x802652f4 # CSS_LoadFunction
+# Address: INJ_InitTeamToggleButton # CSS_LoadFunction
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
+.include "Online/Menus/CSS/Teams/Teams.s"
 
 .set REG_PROPERTIES, 31
 .set REG_CSSDT_ADDR, 30
@@ -21,24 +22,20 @@
 .set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
 .set ICON_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 
-# Ensure that this is an online CSS
-getMinorMajor r3
-cmpwi r3, SCENE_ONLINE_CSS
-bne EXIT # If not online CSS, continue as normal
-
-lbz r4, OFST_R13_ONLINE_MODE(r13)
-cmpwi r4, ONLINE_MODE_TEAMS
-bne EXIT # exit if not on TEAMS mode
-
-b INIT_BUTTON
+b CODE_START
 
 ################################################################################
-# Properties
+# Data
 ################################################################################
-PROPERTIES:
+DATA_BLRL:
 blrl
+# Start with data that is accessible externally
+.set EXT_TEAM_IDX, 0
+.byte 1 # Will be used by SceneLoadCSS.asm
+
+# The remaining values are properties used internally
 # Toggle Button Bounds
-.set TPO_BOUNDS_ICON_TOP, 0
+.set TPO_BOUNDS_ICON_TOP, EXT_TEAM_IDX + 1
 .float -2.5
 .set TPO_BOUNDS_ICON_BOTTOM, TPO_BOUNDS_ICON_TOP + 4
 .float -5
@@ -61,6 +58,16 @@ blrl
 
 .align 2
 
+CODE_START:
+# Ensure that this is an online CSS
+getMinorMajor r3
+cmpwi r3, SCENE_ONLINE_CSS
+bne EXIT # If not online CSS, continue as normal
+
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+bne EXIT # exit if not on TEAMS mode
+
 ################################################################################
 # Creates and initializes Button and queues it's THINK function
 ################################################################################
@@ -73,7 +80,7 @@ backup
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 
 # INIT PROPERTIES
-bl PROPERTIES
+bl DATA_BLRL
 mflr REG_PROPERTIES
 
 lfs REG_F_0, TPO_FLOAT_0(REG_PROPERTIES)
@@ -244,7 +251,7 @@ cmpwi r3, 0
 bne FN_TEAM_BUTTON_THINK_EXIT # No changes when locked-in
 
 # Get text properties address
-bl PROPERTIES
+bl DATA_BLRL
 mflr REG_PROPERTIES
 
 li REG_IS_HOVERING, 0 # Initialize hover state as false
@@ -327,6 +334,7 @@ FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
 
 # Store Custom Team selection in data table
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
+stb r4, EXT_TEAM_IDX(REG_PROPERTIES)
 
 bl FN_UPDATE_CSP_TEXTURES
 
