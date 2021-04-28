@@ -4,6 +4,7 @@
 
 .include "Common/Common.s"
 .include "Online/Online.s"
+.include "Online/Menus/CSS/Teams/Teams.s"
 
 # We moved initialization of memory to here from LoadCSSText.asm because it runs every time name
 # entry is closed, which would cause Dolphin to run out of memory
@@ -86,7 +87,10 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
 bne SKIP_TEAM_SETUP
 
-li r3, 1
+# Fetch INJ data table in order to get previous team idx
+# Needed to restore the proper team color after a game finishes
+computeBranchTargetAddress r3, INJ_InitTeamToggleButton
+lbz r3, IDO_TEAM_IDX(r3)
 stb r3, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 
 SKIP_TEAM_SETUP:
