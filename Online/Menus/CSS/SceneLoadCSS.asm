@@ -81,10 +81,15 @@ stw r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 ################################################################################
 # Initialize values
 ################################################################################
-# Initialize start team color to red
+# Initialize start team color to red (only on teams mode)
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_TEAM_SETUP
+
 li r3, 1
 stb r3, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 
+SKIP_TEAM_SETUP:
 ################################################################################
 # Load Chat File
 ################################################################################

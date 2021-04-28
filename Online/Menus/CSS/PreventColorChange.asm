@@ -13,7 +13,7 @@ bne EXIT # If not online CSS, continue as normal
 # if on teams mode, skip
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
-beq SKIP_COLOR_CHANGE # exit if not on TEAMS mode
+beq EXIT_COSTUME_CHANGE # exit if not on TEAMS mode
 
 # Ensure we are not locked in
 loadwz r3, CSSDT_BUF_ADDR # Load where buf is stored
@@ -22,7 +22,7 @@ lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
 cmpwi r3, 0
 beq EXIT # No changes when locked-in
 
-SKIP_COLOR_CHANGE:
+EXIT_COSTUME_CHANGE:
 
 # Exit CSS_CostumeChange
 branch r12, 0x8026028c
