@@ -180,15 +180,8 @@ mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
-subi r3, r13, 0x77BC
-lbz r14, 0x0(r3) # load team index stored on heap
-li r15, 0 # start loop index
-
-SWITCH_TEAM:
-bl FN_SWITCH_PLAYER_TEAM
-addi r15, r15, 1
-cmpw r15, r14
-blt SWITCH_TEAM
+# Update textures to the right colors
+bl FN_UPDATE_CSP_TEXTURES
 
 ################################################################################
 # Hides Port from the portrait bg and moves franchise icon up
@@ -334,10 +327,24 @@ FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
 
 # Store Custom Team selection in data table
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
-subi r3, r13, 0x77BC # Store team selection on free space on heap?
-stb r4, 0x0(r3)
 
-mr REG_TEAM_IDX, r4
+bl FN_UPDATE_CSP_TEXTURES
+
+# Play team switch sound
+li	r3, 2
+branchl r12, SFX_Menu_CommonSound
+
+FN_SWITCH_PLAYER_TEAM_EXIT:
+restore
+blr
+
+################################################################################
+# Function: Updates Graphics and memory values for new team selection
+################################################################################
+FN_UPDATE_CSP_TEXTURES:
+backup
+
+lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 # logf LOG_LEVEL_NOTICE, "TEAM INDEX %d", "mr r5, 25"
 
 # Animate the team icon based on team index
@@ -395,11 +402,6 @@ mr r5,REG_COSTUME_IDX
 li	r6, 0
 branchl r12,FN_CSSUpdateCSP
 
-# Play team switch sound
-li	r3, 2
-branchl r12, SFX_Menu_CommonSound
-
-FN_SWITCH_PLAYER_TEAM_EXIT:
 restore
 blr
 
