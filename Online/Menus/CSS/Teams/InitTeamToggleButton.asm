@@ -35,7 +35,7 @@ blrl
 
 # The remaining values are properties used internally
 # Toggle Button Bounds
-.set TPO_BOUNDS_ICON_TOP, EXT_PREV_TEAM_COL + 1
+.set TPO_BOUNDS_ICON_TOP, EXT_TEAM_IDX + 1
 .float -2.5
 .set TPO_BOUNDS_ICON_BOTTOM, TPO_BOUNDS_ICON_TOP + 4
 .float -5
