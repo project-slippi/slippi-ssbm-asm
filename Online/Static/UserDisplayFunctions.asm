@@ -64,7 +64,6 @@ blrl
 .set REG_OSB_ADDR, 29
 .set REG_TEXT_STRUCT, 28
 .set REG_DISPLAY_MODE, 27
-.set REG_SHOULD_UPDATE, 26
 .set REG_DISPLAY_PROPERTIES, 25
 
 ################################################################################
@@ -73,6 +72,7 @@ blrl
 # Inputs:
 # r3 - Pointer to display properties
 # r4 - Display mode. 1 = No connect code, 2 = with connect code
+# r5 - Should init buffers. 0 = don't init, 1 = init
 ################################################################################
 # Outputs:
 # r3 - OSB Address
@@ -85,9 +85,11 @@ backup
 
 mr REG_DISPLAY_PROPERTIES, r3
 mr REG_DISPLAY_MODE, r4
-mr REG_SHOULD_UPDATE, r5
 
+cmpwi r5, 0
+beq FN_InitUserDisplay_SKIP_INIT_BUFFERS
 bl FN_InitBuffers
+FN_InitUserDisplay_SKIP_INIT_BUFFERS:
 
 # Get Data Addr
 bl DATA_BLRL
