@@ -194,11 +194,6 @@ blrl
 .short 0x817C # －
 .byte 0x00
 
-# File-related strings
-.string "slpCSS.dat"
-.set TPO_STRING_SLPCSS_FILENAME, TPO_STRING_SPINNER_DONE + 3
-.string "slpCSS"
-.set TPO_STRING_SLPCSS_SYMBOLNAME, TPO_STRING_SLPCSS_FILENAME + 11
 .align 2
 
 ################################################################################
@@ -241,6 +236,7 @@ INIT_USER_TEXT:
 bl DATA_USER_TEXT_BLRL
 mflr r3
 branchl r12, FG_UserDisplay
+li r5, 0 # set to 0 to indicate we don't want buffers initialized (done in SceneLoadCSS.asm)
 blrl # FN_InitUserDisplay
 
 ################################################################################
@@ -276,25 +272,9 @@ li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
 ################################################################################
-# Allocate memory locations
+# Get CSSDT
 ################################################################################
-# Initialize CSS data table
-li r3, CSSDT_SIZE
-branchl r12, HSD_MemAlloc
-mr REG_CSSDT_ADDR, r3
-
-# Zero out CSS data table
-li r4, CSSDT_SIZE
-branchl r12, Zero_AreaLength
-
-# Store CSSDT to static mem location
-load r3, CSSDT_BUF_ADDR
-stw REG_CSSDT_ADDR, 0(r3)
-
-# Prepare the MSRB buffer
-li r3, MSRB_SIZE
-branchl r12, HSD_MemAlloc
-stw r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
+loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 
 ################################################################################
 # Set up CSS text
@@ -394,24 +374,6 @@ bl INIT_ERROR_LINE_SUBTEXT
 
 lfs f3, TPO_ERR_LINE4_Y(REG_TEXT_PROPERTIES)
 bl INIT_ERROR_LINE_SUBTEXT
-
-################################################################################
-# Load Chat File
-################################################################################
-# Get text properties address
-bl TEXT_PROPERTIES
-mflr r20
-
-# Load File
-addi r3, r20, TPO_STRING_SLPCSS_FILENAME
-branchl r12,0x80016be0
-
-# Retrieve symbol from file data
-addi r4, r20, TPO_STRING_SLPCSS_SYMBOLNAME
-branchl r12,0x80380358
-
-# Save this pointer
-stw r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
 
 restore
 b EXIT
