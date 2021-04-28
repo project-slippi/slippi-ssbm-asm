@@ -5,7 +5,7 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-# We moved initialization of memory to here from InitCSS.asm because Init runs every time name
+# We moved initialization of memory to here from LoadCSSText.asm because it runs every time name
 # entry is closed, which would cause Dolphin to run out of memory
 
 b CODE_START
