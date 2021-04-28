@@ -373,11 +373,8 @@ branchl r12, JObj_ReqAnimAll # (jobj, frames)
 mr r3, REG_ICON_JOBJ
 branchl r12, JObj_AnimAll
 
-# Kind of hacky I know :) things get messed up so I just back everything up :D
-backupall
 mr r3, REG_TEAM_IDX
 bl FN_CHANGE_PORTRAIT_BG
-restoreall
 
 mr r3, REG_TEAM_IDX
 mr r4, REG_INTERNAL_CHAR_ID
