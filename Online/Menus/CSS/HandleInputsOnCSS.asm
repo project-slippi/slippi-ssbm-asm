@@ -156,6 +156,8 @@ beq SKIP_START_MATCH
 
 # Check which mode we are playing. direct mode should launch text entry
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT

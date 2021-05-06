@@ -237,6 +237,16 @@ bl SplashSceneDecide
 .align 2
 .long 0x80490880            #Minor Data 1
 .long 0x804d68d0            #Minor Data 2
+#GameSetup
+.byte 5                     #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+.long 0x00000000          #ScenePrep, previously 0x801b3500
+.long 0x00000000
+.byte 80                  #Common Minor ID (Classic Mode Splash)
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
 #End
 .byte -1
 .align 2
@@ -354,14 +364,14 @@ b CSSSceneDecide_Exit
 CSSSceneDecide_Advance:
 # Check for direct mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq CSSSceneDecide_Adv_IsRanked
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq CSSSceneDecide_Adv_IsUnranked
 cmpwi r3, ONLINE_MODE_DIRECT
 beq CSSSceneDecide_Adv_IsDirect
 cmpwi r3, ONLINE_MODE_TEAMS
 beq CSSSceneDecide_Adv_IsDirect
-cmpwi r3, ONLINE_MODE_RANKED
-beq CSSSceneDecide_Adv_IsRanked
 
 ################################################################################
 # Unranked Mode Logic
@@ -373,7 +383,11 @@ b CSSSceneDecide_LoadSplash
 # Ranked Mode Logic
 ################################################################################
 CSSSceneDecide_Adv_IsRanked:
-b CSSSceneDecide_LoadSplash
+# Set next scene as Splash
+load r4, 0x80479d30
+li r3, 0x06
+stb r3, 0x5(r4)
+b CSSSceneDecide_Exit
 
 ################################################################################
 # Direct Mode Logic
