@@ -459,6 +459,11 @@ stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 stb r3, PSTB_ONLINE_MODE(REG_TXB_ADDR)
 
+# Write the random stages block
+load r3, 0x8045c388 # Random Stages Selection Rules
+lwz r3, 0x0(r3)
+stw r3, PSTB_STAGES_BLOCK(REG_TXB_ADDR)
+
 # Indicate to Dolphin we want to lock-in
 mr r3, REG_TXB_ADDR
 li r4, PSTB_SIZE

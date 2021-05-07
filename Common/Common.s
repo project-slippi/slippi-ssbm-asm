@@ -344,7 +344,7 @@ add \reg, r3, r4
 .set CONST_SlippiCmdGetNewSeed,0xBC
 .set CONST_SlippiCmdReportMatch,0xBD
 .set CONST_SlippiCmdSendNameEntryIndex,0xBE
-.set CONST_SlippiCmdNameEntryAutoComplete,0xBF
+.set CONST_SlippiCmdSetMatchInfo,0xBF
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
