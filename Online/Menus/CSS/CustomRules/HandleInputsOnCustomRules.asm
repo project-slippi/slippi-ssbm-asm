@@ -72,7 +72,7 @@ DATA:
 blrl
 .long 0x00350102 # Custom Rules 1
 .long 0x04000A00 # Custom Rules 2
-.long 0x08010000 # Additional Rules 1
+.long 0x08010100 # Additional Rules 1
 .long 0x00000808 # Additional Rules 2
 
 .long 0xFF000000 # Items Speed Switch
