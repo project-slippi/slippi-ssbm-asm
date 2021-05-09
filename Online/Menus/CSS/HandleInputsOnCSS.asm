@@ -438,8 +438,8 @@ bge FN_TX_LOCK_IN_STAGE_PICK
 
 FN_TX_LOCK_IN_STAGE_RAND:
 bl FN_GET_RANDOM_STAGE_ID
-li  r4,1
-#li  r4,3
+#li  r4,1
+li  r4, 3
 
 b FN_TX_LOCK_IN_STAGE_SEND
 
@@ -1052,37 +1052,31 @@ blrl
 # Stolen from getStageFromRandomStageSelect
 ################################################################################
 FN_GET_RANDOM_STAGE_ID:
+.set REG_STAGES_ADDR, 31
+.set REG_STAGE_ID, 30
 backup
-load r31, 0x803f06d0 # static memory address where stage data starts
-
+load REG_STAGES_ADDR, 0x803f06d0 # static memory address where stage data starts
 
 # this loops is stolen and slightly modified from getStageFromRandomStageSelect
 # at 0x80259b58
-
 # 0x803f06d0 memory address where stages data start
 # each stage has a size of 0x24, next stage is offset at 0x28
 # If a stage has a pointer at offet 0x4 it is skipped from the loop
 # Stage id is at offset 0xA?
 
-start_loop:
+rnd_stage_loop:
 li	r3, 29
 branchl r12, HSD_Randi
-
 mulli	r4, r3, 28
-#addi	r0, r4, 4
-#lwzx	r0, r31, r0
-#addi	r30, r3, 0
-#cmpwi	r0, 0
-#bne start_loop
-
 addi	r0, r4, 10
-lbzx	r3, r31, r0
-mr r30, r3
+lbzx	r3, REG_STAGES_ADDR, r0
+mr REG_STAGE_ID, r3
+
 branchl r12, 0x80164330 # Stage_CheckIfStageUnlocked/Enabled
 cmpwi r3, 1
-bne start_loop
+bne rnd_stage_loop
 
-mr r3, r30
+mr r3, REG_STAGE_ID
 branchl r12, 0x801641cc # RandomStageSelectID->ExternalStageID
 restore
 blr

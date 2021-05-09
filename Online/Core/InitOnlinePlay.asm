@@ -24,7 +24,7 @@ cmpwi r3, SCENE_ONLINE_IN_GAME
 bne GECKO_EXIT
 
 ########################################################
-# Transfer Match Rules to EXI Device
+# Transfer Match Info Block to EXI Device
 ########################################################
 
 # Prepare buffer for EXI transfer
