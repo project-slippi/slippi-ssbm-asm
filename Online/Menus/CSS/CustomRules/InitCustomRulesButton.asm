@@ -6,12 +6,14 @@
 .include "Online/Online.s"
 
 .set REG_PROPERTIES, 31
-.set REG_IS_HOVERING, 28
-.set REG_RULES_BTN_GOBJ, 14
-.set REG_RULES_BTN_JOBJ, 15
+.set REG_IS_HOVERING, 30
+.set REG_RULES_BTN_GOBJ, 29
+.set REG_RULES_BTN_JOBJ, 28
+.set REG_TEXT_STRUCT_ADDR, 27
+.set REG_MSRB_ADDR, 26
 
-.set ENTITY_DATA_OFFSET, 0x2C # offset from GOBJ to entity data
-
+.set ENTITY_DATA_OFFSET, 0x28 # offset from GOBJ to entity data
+.set USER_DATA_OFFSET, 0x2C # offset from GOBJ to user data
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -44,6 +46,20 @@ blrl
 LOAD_START:
 backup
 
+
+li r3, 0x4A #  Text ID
+li r4, 0 # Use Slippi ID = false
+li r5, 2 # use premade text fn
+li r6, 0 # gx_link
+li r7, 1 # kern close, center text and fixed width
+lfs	f1, -0x33C4 (rtoc)
+lfs	f2, -0x33C0 (rtoc)
+lfs	f3, -0x35FC (rtoc)
+lfs	f4, -0x33F0 (rtoc)
+branchl r12, FG_CreateSubtext
+mr REG_TEXT_STRUCT_ADDR, r3
+branchl r12, 0x8025BD30 #CSS_UpdateRulesText
+
 ################################################################################
 # Queue up per-frame Rules selector handler function
 ################################################################################
@@ -53,6 +69,8 @@ li r4, 0x5
 li r5, 0x80
 branchl r12, GObj_Create
 mr REG_RULES_BTN_GOBJ, r3 # save GOBJ pointer
+
+stw REG_TEXT_STRUCT_ADDR, USER_DATA_OFFSET(REG_RULES_BTN_GOBJ)
 
 ################################################################################
 # create jbobj (Rules Container)
@@ -105,7 +123,6 @@ branchl r12, GObj_AddProc
 restore
 b EXIT
 
-
 ################################################################################
 # Function for updating online status graphics every frame
 ################################################################################
@@ -113,22 +130,39 @@ FN_RULES_SELECTOR_THINK:
 blrl
 backup
 
+mr REG_RULES_BTN_GOBJ, r3
+lwz REG_RULES_BTN_JOBJ, ENTITY_DATA_OFFSET(REG_RULES_BTN_GOBJ)
+lwz REG_TEXT_STRUCT_ADDR, USER_DATA_OFFSET(REG_RULES_BTN_GOBJ)
+
+loadwz r3, CSSDT_BUF_ADDR # Load where buf is stored
+lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(r3)
+
+################################################################################
+# Initialize
+################################################################################
+# unhide the text every frame
+li r3, 0
+stb r3, 0x4D(REG_TEXT_STRUCT_ADDR)
+
+# check if we are connected and hide text if we are.
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+bne SKIP_HIDE_TEXT
+
+# hide the text
+li r3, 1
+stb r3, 0x4D(REG_TEXT_STRUCT_ADDR)
+
+SKIP_HIDE_TEXT:
+
 # Check if character has been selected, if not exit
 lbz r3, -0x49A9(r13)
 cmpwi r3, 0
 beq FN_RULES_SELECTOR_THINK_EXIT
 
-mr REG_RULES_BTN_GOBJ, r3
-lwz REG_RULES_BTN_JOBJ, ENTITY_DATA_OFFSET(REG_RULES_BTN_GOBJ)
-
-
 # Get text properties address
 bl PROPERTIES
 mflr REG_PROPERTIES
-
-################################################################################
-# Initialize # 0x80196f14
-################################################################################
 
 # Initialize hover state as false
 li REG_IS_HOVERING, 0
@@ -142,9 +176,7 @@ cmpwi r3, 0
 bne FN_RULES_SELECTOR_THINK_EXIT
 
 # Ensure we are not locked in
-loadwz r3, CSSDT_BUF_ADDR # Load where buf is stored
-lwz r3, CSSDT_MSRB_ADDR(r3)
-lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
+lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
 cmpwi r3, 0
 bne FN_RULES_SELECTOR_THINK_EXIT # No changes when locked-in
 
@@ -181,6 +213,11 @@ beq FN_RULES_SELECTOR_THINK_EXIT
 
 bl FN_LOAD_RULES_MENU
 
+FN_RULES_SELECTOR_THINK_CLEANUP:
+
+# Delete Text
+#mr r3, REG_TEXT_STRUCT_ADDR
+#branchl r12, Text_RemoveText
 
 FN_RULES_SELECTOR_THINK_EXIT:
 restore

@@ -1249,7 +1249,7 @@ addi r3, REG_CHATMSG_PLAYER_INDEX, 1
 mr r4, REG_CHATMSG_MSG_ID
 li r5, 2 # use premade text fn
 li r6, 0 # gx_link/pri?
-
+li r7, 0 # kern close, center text and fixed width
 # f1 = X POS is set up above
 # f2 = Y POS is set up above
 lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES)

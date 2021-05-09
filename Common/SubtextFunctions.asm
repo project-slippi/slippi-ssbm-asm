@@ -36,6 +36,7 @@
 .set REG_GX_LINK, REG_TEXT_PROPERTIES + 1
 .set REG_USE_SLIPPI_ID, REG_GX_LINK + 1
 .set REG_TEXT_ID, REG_USE_SLIPPI_ID + 1
+.set REG_TEXT_FLAGS, REG_TEXT_ID + 1
 
 # float registers
 .set REG_SCALE, REG_TEXT_STRUCT_ADDR
@@ -226,6 +227,7 @@ mr REG_TEXT_ID, r3
 mr REG_USE_SLIPPI_ID, r4
 # r5 is ignored as it is used to access this function
 mr REG_GX_LINK, r6
+mr REG_TEXT_FLAGS, r7 # kern close, center text, fixed width
 
 fmr REG_X, f1
 fmr REG_Y, f2
@@ -242,10 +244,17 @@ lfs f0, TPO_UNK0(REG_TEXT_PROPERTIES)
 fmr f1, REG_X
 fmr f2, REG_Y
 fmr f3, REG_Z
-lfs f4, TPO_UNK1(REG_TEXT_PROPERTIES)
+lfs	f4, -0x33BC (rtoc)
 lfs f5, TPO_UNK2(REG_TEXT_PROPERTIES)
 branchl r12, Text_AllocateTextObject
 mr REG_TEXT_STRUCT_ADDR, r3
+
+cmpwi REG_TEXT_FLAGS, 0
+beq SKIP_TEXT_FLAGS
+stb REG_TEXT_FLAGS, 0x48(REG_TEXT_STRUCT_ADDR) # Fixed Width
+stb REG_TEXT_FLAGS, 0x49(REG_TEXT_STRUCT_ADDR) # kerning?
+stb REG_TEXT_FLAGS, 0x4A(REG_TEXT_STRUCT_ADDR) # Set text to align center
+SKIP_TEXT_FLAGS:
 
 cmpwi REG_USE_SLIPPI_ID, 0
 beq SKIP_SLIPPI_ID

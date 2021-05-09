@@ -1,0 +1,21 @@
+################################################################################
+# Address: 0x8026557c # CSS_LoadFunction where function branches to what
+# Objects to show depending on the VS mode
+################################################################################
+
+.include "Common/Common.s"
+.include "Online/Online.s"
+
+# Ensure that this is an online CSS
+getMinorMajor r3
+cmpwi r3, SCENE_ONLINE_CSS
+bne EXIT # If not online CSS, continue as normal
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_DIRECT
+blt EXIT # exit if not on DIRECT or TEAMS mode
+
+branch r12, 0x802662d4
+
+EXIT:
+lbz	r0, -0x49AB (r13) # original line

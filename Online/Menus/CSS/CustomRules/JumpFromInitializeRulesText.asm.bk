@@ -1,0 +1,21 @@
+################################################################################
+# Address: 0x80266318 # CSS_LoadFunction Right after Rules Text was set up
+################################################################################
+
+.include "Common/Common.s"
+.include "Online/Online.s"
+
+# Ensure that this is an online CSS
+getMinorMajor r3
+cmpwi r3, SCENE_ONLINE_CSS
+bne EXIT # If not online CSS, continue as normal
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_DIRECT
+blt EXIT # exit if not on DIRECT or TEAMS mode
+
+# jump back to original setup branch
+branch r12, 0x80265588
+
+EXIT:
+lwz	r3, -0x49F0 (r13) # original line
