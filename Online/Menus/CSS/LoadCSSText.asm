@@ -17,7 +17,7 @@
 .set TEXTGOBJDATA_SLPCSS, 0x0  # pointer to slpChat symbol
 
 # Chat constants
-.set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
+.set MAX_CHAT_MESSAGES, (3*4)+1 # Max messages being displayed at the same time (max messages being set by all team members)
 .set MAX_CHAT_MESSAGE_LINES, 9
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 .set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP

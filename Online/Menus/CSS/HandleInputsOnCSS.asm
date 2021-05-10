@@ -770,9 +770,14 @@ lhz REG_CHAT_WINDOW_SECOND_INPUT, CSSDT_CHAT_LAST_INPUT(REG_CHAT_WINDOW_CSSDT_AD
 li r3, 0
 sth r3, CSSDT_CHAT_LAST_INPUT(REG_CHAT_WINDOW_CSSDT_ADDR)
 
+# if chat command already sent destroy proc
+lbz r3, CSSCWDT_INPUT_SENT(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+cmpwi r3, 0
+bne CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC
+
 # if text is not initialized, assume we need to initalize everything
 # else skip to idle timer check
-cmpwi REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 0x00000000
+cmpwi REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 0
 bne CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_INPUT
 
 ##### BEGIN: INITIALIZING CHAT WINDOW TIMER ###########
@@ -955,6 +960,10 @@ slw r3, r3, r5
 add r3, r3, r4 # add second input to highest byte
 bl FN_SEND_CHAT_COMMAND
 
+# flag as input already sent
+li r3, 1
+stb r3, CSSCWDT_INPUT_SENT(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
 
 CSS_ONLINE_CHAT_WINDOW_THINK_BLOCK_MESSAGE:
@@ -973,7 +982,7 @@ stb REG_CHAT_WINDOW_TIMER, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
 
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
 
-CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
+CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC:
 
 # clear out chat window opened flag on the CSS Data Table
 li r3, 0
