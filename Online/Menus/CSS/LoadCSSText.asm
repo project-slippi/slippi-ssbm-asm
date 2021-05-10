@@ -1348,6 +1348,8 @@ branchl r12, GObj_Destroy
 lwz r4, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 lbz r4, MSRB_LOCAL_PLAYER_INDEX(r4)
 
+#logf LOG_LEVEL_INFO, "MSG LOCAL INDEX %d MSG INDEX %d", "mr r5, 4", "mr r6, 23"
+
 cmpw REG_CHATMSG_PLAYER_INDEX,r4
 bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT
 # Decrease local chat message count by 1
