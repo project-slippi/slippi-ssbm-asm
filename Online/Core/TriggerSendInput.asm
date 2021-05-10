@@ -387,6 +387,8 @@ rlwinm r4, r4, 0, 0x7F
 cmpw r3, r4
 bne TRIGGER_ROLLBACK
 
+# TODO: Sounds like new UCF still uses raw values but if it ever switches
+# TODO: to processed, consider removing this
 # Now do the analog sticks. We can't use the deadzones the way we do for the
 # triggers because of UCF checking for x differences
 lwz r3, 0x2(r6)

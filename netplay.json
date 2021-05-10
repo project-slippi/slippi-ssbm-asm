@@ -160,9 +160,15 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF + Arduino Toggle UI",
+          "sourceFolder": "External/UCF 0.8/Logic",
           "isRecursive": true,
-          "annotation": "UCF + Arduino Toggle UI"
+          "annotation": "UCF v0.8"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF 0.8/Indicator",
+          "isRecursive": true,
+          "annotation": "UCF CSS Indicator"
         },
         {
           "type": "injectFolder",
@@ -414,7 +420,8 @@
     {
       "name": "Optional: Center Align 2P HUD",
       "authors": [
-        "UnclePunch"
+        "UnclePunch",
+        "Fizzi"
       ],
       "description": [
         "When playing online, character %'s will always be centered ------------------------- ",
@@ -422,8 +429,9 @@
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/Force2PCenterHud.bin"
+          "type": "injectFolder",
+          "sourceFolder": "External/Force2PCenterHud",
+          "isRecursive": true
         }
       ]
     },

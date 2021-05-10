@@ -20,14 +20,7 @@ lbz r4, OFST_R13_ONLINE_MODE(r13)
 cmpwi r4, ONLINE_MODE_TEAMS
 bne EXIT # exit if not on TEAMS mode
 
-# Ensure we are not locked in
-lwz r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
-lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
-cmpwi r3, 0
-bne EXIT # No changes when locked-in
-
 lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
-
 
 SKIP_PORT_CALC:
 

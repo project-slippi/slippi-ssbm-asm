@@ -1,6 +1,4 @@
-################################################################################
-# Address: 800C9A44
-################################################################################
+#To be inserted at 800C9A44
 .include "Common/Common.s"
 
 .set REG_PlayerData,31
@@ -8,22 +6,36 @@
 .set REG_InputIndex,29
 .set REG_PrevInput,28
 
+NTSC102:
+	.set	Injection,0x800C9A44
+	.set	OFST_PlCo,-0x514C
+	.set	InputIndex,0x804c1f78
+	.set	InputArray,0x8046b108
+	.set	PlayerBlock_LoadPlayerGObj,0x8003418c
+/*
+NTSC101:
+	.set	Injection,0x800C97D0
+	.set	OFST_PlCo,-0x514C
+	.set	InputIndex,0x804c1258
+	.set	InputArray,0x8046a428
+	.set	PlayerBlock_LoadPlayerGObj,0x8003418C
+NTSC100:
+	.set	Injection,0x800C968C
+	.set	OFST_PlCo,-0x514C
+	.set	InputIndex,0x804bfdf8
+	.set	InputArray,0x80469140
+	.set	PlayerBlock_LoadPlayerGObj,0x8003410C
+PAL100:
+	.set	Injection,0x800CA1E8
+	.set	OFST_PlCo,-0x4F0C
+	.set	InputIndex,0x804b2ff8
+	.set	InputArray,0x8045bf10
+	.set	PlayerBlock_LoadPlayerGObj,0x80034780
+*/
+
 #Original codeline
 	stfs f0,0x2C(REG_PlayerData)    # Entry point, store new facing direction
 
-# Check for toggle bool
-  lbz r4,0x618(REG_PlayerData)        #get player port
-  subi r3,rtoc,ControllerFixOptions   #get UCF toggle bool base address
-  lbzx r3,r3,r4	          #get players UCF toggle bool
-  cmpwi r3,0x1
-  beq Init # if equal, skip to start of handler
-# Check for dashback bool (set by slp playback)
-  subi r3,rtoc,DashbackOptions
-  lbzx r3,r3,r4
-  cmpwi r3,0x1
-  bne Exit_Without_Restore
-
-Init:
 #Init
 	backup
 	bl	Floats
@@ -139,5 +151,3 @@ blrl
 
 Injection_Exit:
 	restore
-
-Exit_Without_Restore:
