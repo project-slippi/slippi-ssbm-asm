@@ -17,7 +17,7 @@
 .set TEXTGOBJDATA_SLPCSS, 0x0  # pointer to slpChat symbol
 
 # Chat constants
-.set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
+.set MAX_CHAT_MESSAGES, (3*4)+1 # Max messages being displayed at the same time (max messages being set by all team members)
 .set MAX_CHAT_MESSAGE_LINES, 9
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 .set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
@@ -1521,6 +1521,8 @@ branchl r12, GObj_Destroy
 # decrease local message count if this message is local
 lwz r4, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 lbz r4, MSRB_LOCAL_PLAYER_INDEX(r4)
+
+#logf LOG_LEVEL_INFO, "MSG LOCAL INDEX %d MSG INDEX %d", "mr r5, 4", "mr r6, 23"
 
 cmpw REG_CHATMSG_PLAYER_INDEX,r4
 bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT

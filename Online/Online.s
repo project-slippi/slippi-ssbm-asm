@@ -356,7 +356,8 @@ lwz \reg, -0x62A0(\reg)
 # CSS Chat Window Data Table
 ################################################################################
 .set CSSCWDT_INPUT, 0 # u8
-.set CSSCWDT_TIMER, CSSCWDT_INPUT + 1 # u8
+.set CSSCWDT_INPUT_SENT, CSSCWDT_INPUT + 1 # bool
+.set CSSCWDT_TIMER, CSSCWDT_INPUT_SENT + 1 # u8
 .set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
 .set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
 .set CSSCWDT_SIZE, CSSCWDT_CSSDT_ADDR + 4
