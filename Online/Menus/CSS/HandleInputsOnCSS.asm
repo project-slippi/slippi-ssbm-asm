@@ -348,6 +348,14 @@ stb r3, FMTB_CMD(REG_TXB_ADDR)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 stb r3, FMTB_ONLINE_MODE(REG_TXB_ADDR)
 
+# Write sub online mode
+lbz r3, OFST_R13_SUB_ONLINE_MODE(r13)
+stb r3, FMTB_SUB_ONLINE_MODE(REG_TXB_ADDR)
+
+# Write sub online mode
+lbz r3, OFST_R13_SUB_ONLINE_MODE_PARAM(r13)
+stb r3, FMTB_SUB_ONLINE_MODE_PARAM(REG_TXB_ADDR)
+
 # Write opp connect code, only matters for direct mode
 addi r7, REG_TXB_ADDR, FMTB_OPP_CONNECT_CODE
 load r6, 0x804a0740
@@ -385,10 +393,16 @@ FN_TX_LOCK_IN_BLRL:
 blrl
 FN_TX_LOCK_IN:
 .set  REG_SB, 31    # stage behavior
+.set REG_ONLINE_MODE, 30
+.set REG_SUB_ONLINE_MODE, 29
+.set REG_PORT_SELECTIONS_ADDR, 28
 backup
-
 # Backup stage behavior
 mr  REG_SB,r3
+
+lbz REG_ONLINE_MODE, OFST_R13_ONLINE_MODE(r13)
+lbz REG_SUB_ONLINE_MODE, OFST_R13_SUB_ONLINE_MODE(r13)
+
 
 # Prepare buffer for EXI transfer
 li r3, PSTB_SIZE
@@ -403,19 +417,61 @@ stb r3, PSTB_CMD(REG_TXB_ADDR)
 lwz r4, -0x49f0(r13) # base address where css selections are stored
 lbz r3, -0x5108(r13) # player index
 mulli r3, r3, 0x24
-add r4, r4, r3
+add REG_PORT_SELECTIONS_ADDR, r4, r3
 
-lbz r3, 0x70(r4) # load char id
+# Set RED Teams Char Color if on Unranked Teams
+cmpwi REG_ONLINE_MODE, ONLINE_MODE_UNRANKED
+bne SKIP_SET_UNRANKED_TEAMS_COLOR
+
+cmpwi REG_SUB_ONLINE_MODE, ONLINE_MODE_TEAMS
+bne SKIP_SET_UNRANKED_TEAMS_COLOR
+
+# get external cha rid
+lbz r4, 0x70(REG_PORT_SELECTIONS_ADDR) # internal char id
+branchl r12,FN_GetCSSIconData
+mr r5,r3
+# get port's icon ID
+li r3,0       # port index
+mulli r3,r3,36
+load r4,0x803f0a48
+add r4,r3,r4
+lbz	r3, 0x03C2(r4)
+# get icon ID's external ID
+mulli	r3, r3, 28
+add	r4, r3, r5
+lbz	r4, 0x00DD (r4) # char id
+
+li r3, 1 # red team
+branchl r12, FN_GetTeamCostumeIndex
+stb r3, 0x73(REG_PORT_SELECTIONS_ADDR)
+
+SKIP_SET_UNRANKED_TEAMS_COLOR:
+
+lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR) # load char id
 stb r3, PSTB_CHAR_ID(REG_TXB_ADDR)
-lbz r3, 0x73(r4) # load char color
+
+lbz r3, 0x73(REG_PORT_SELECTIONS_ADDR) # load char color
 stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
+
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 
 # Send a blank team ID if this isn't teams mode.
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_TEAMS
+cmpwi REG_ONLINE_MODE, ONLINE_MODE_TEAMS
 beq SEND_TEAM_ID
+
+cmpwi REG_ONLINE_MODE, ONLINE_MODE_UNRANKED
+bne SEND_EMPTY_TEAM_ID
+
+cmpwi REG_SUB_ONLINE_MODE, ONLINE_MODE_TEAMS
+bne SEND_EMPTY_TEAM_ID
+
+# Set read team id
+li r3, 0
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+b SKIP_SEND_TEAM_ID
+
+SEND_EMPTY_TEAM_ID:
 li r3, 0
 stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
 b SKIP_SEND_TEAM_ID
@@ -456,8 +512,7 @@ sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
 stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
 # Write the online mode we are in
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-stb r3, PSTB_ONLINE_MODE(REG_TXB_ADDR)
+stb REG_ONLINE_MODE, PSTB_ONLINE_MODE(REG_TXB_ADDR)
 
 # Indicate to Dolphin we want to lock-in
 mr r3, REG_TXB_ADDR
@@ -482,9 +537,6 @@ FN_LOCK_IN_AND_SEARCH_BLRL:
 blrl
 FN_LOCK_IN_AND_SEARCH:
 backup
-
-lbz r20, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
-# logf LOG_LEVEL_NOTICE, "TEAM INDEX AFTER %d", "mr r5, 20"
 
 bl FN_TX_LOCK_IN # Lock in character selection
 bl FN_TX_FIND_MATCH # Trigger matchmaking

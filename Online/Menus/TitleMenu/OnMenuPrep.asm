@@ -315,6 +315,7 @@ b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
 FN_OnlineSubmenuThink_HANDLE_UNRANKED:
 li r3, ONLINE_MODE_UNRANKED
+stb r3, OFST_R13_SUB_ONLINE_MODE(r13) # Set the sub selected mode
 b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_DIRECT:

@@ -33,8 +33,22 @@ b LOAD_START
 ################################################################################
 TEXT_PROPERTIES:
 blrl
+.set TPO_BOUNDS_TITLE_RIGHT, 0
+.float -25
+.set TPO_BOUNDS_TITLE_BOTTOM, TPO_BOUNDS_TITLE_RIGHT + 4
+.float 22
+
+.set TPO_BOUNDS_REGION_LEFT, TPO_BOUNDS_TITLE_BOTTOM + 4
+.float 2
+.set TPO_BOUNDS_REGION_RIGHT, TPO_BOUNDS_REGION_LEFT + 4
+.float 20
+.set TPO_BOUNDS_REGION_TOP, TPO_BOUNDS_REGION_RIGHT + 4
+.float -2.5
+.set TPO_BOUNDS_REGION_BOTTOM, TPO_BOUNDS_REGION_TOP + 4
+.float -5.5
+
 # Base Properties
-.set TPO_BASE_Z, 0
+.set TPO_BASE_Z, TPO_BOUNDS_REGION_BOTTOM+4
 .float 0
 .set TPO_BASE_CANVAS_SCALING, TPO_BASE_Z + 4
 .float 0.1
@@ -129,8 +143,24 @@ blrl
 .set TPO_COLOR_RED, TPO_COLOR_WHITE + 4
 .long 0xFF0000FF
 
+# Unranked Lobbies String Properties
+.set TPO_LOBBIES_EC, TPO_COLOR_RED + 4
+.string "-EC-"
+.set TPO_LOBBIES_WC, TPO_LOBBIES_EC + 5
+.string "-WC-"
+.set TPO_LOBBIES_EU, TPO_LOBBIES_WC + 5
+.string "-EU-"
+.set TPO_LOBBIES_SA, TPO_LOBBIES_EU + 5
+.string "-SA-"
+.set TPO_LOBBIES_LA, TPO_LOBBIES_SA + 5
+.string "-LA-"
+.set TPO_LOBBIES_AU, TPO_LOBBIES_LA + 5
+.string "-AU-"
+.set TPO_LOBBIES_AS, TPO_LOBBIES_AU + 5
+.string "-AS-"
+
 # String Properties
-.set TPO_EMPTY_STRING, TPO_COLOR_RED + 4
+.set TPO_EMPTY_STRING, TPO_LOBBIES_AS + 5
 .string ""
 .set TPO_STRING_UNRANKED, TPO_EMPTY_STRING + 1
 .string "Unranked"
@@ -140,9 +170,11 @@ blrl
 .string "Ranked"
 .set TPO_STRING_TEAMS, TPO_STRING_RANKED + 7
 .string "Teams"
-.set TPO_STRING_MODE_FORMAT, TPO_STRING_TEAMS + 6
-.string "%s Mode"
-.set TPO_STRING_SELECT_YOUR_CHARACTER, TPO_STRING_MODE_FORMAT + 8
+.set TPO_STRING_UNRANKED_TEAMS, TPO_STRING_TEAMS + 6
+.string "Teams"
+.set TPO_STRING_MODE_FORMAT, TPO_STRING_UNRANKED_TEAMS + 6
+.string "%s Mode %s"
+.set TPO_STRING_SELECT_YOUR_CHARACTER, TPO_STRING_MODE_FORMAT + 11
 .string "Select your character"
 .set TPO_STRING_CHARACTER_SELECTED, TPO_STRING_SELECT_YOUR_CHARACTER + 22
 .string "Character selected"
@@ -256,6 +288,10 @@ mr REG_GOBJ, r3
 li r3, TEXTGOBJDATA_SIZE
 branchl r12,HSD_MemAlloc
 mr REG_USERDATA, r3
+
+# zero out user data
+li r4, TEXTGOBJDATA_SIZE
+branchl r12, Zero_AreaLength
 
 # Add userdata
 addi r3, REG_GOBJ,0
@@ -501,6 +537,114 @@ addi r5, r5, 2
 cmpwi r5, 18
 blt WRITE_OPP_CODE_LOOP_START
 
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_UNRANKED
+bne SKIP_SUBMODE_CHECK
+
+################################################################################
+# Get inputs to switch sub mode
+################################################################################
+.set REG_PRESSED_A, REG_VARIOUS_1
+.set REG_CURSOR_POS, REG_VARIOUS_2
+
+li REG_PRESSED_A, 0 # By default A is not pressed
+loadwz REG_CURSOR_POS, 0x804A0BC0 # This gets ptr to cursor position on CSS
+
+# Check if a button was pressed this frame to reuse for later
+load r4, 0x804c20bc
+lbz r3, -0x49B0(r13) # player index
+mulli r3, r3, 68
+add r3, r4, r3
+lwz r3, 0x8(r3) # get inputs
+rlwinm. r3, r3, 0, 23, 23 # check if A was pressed
+beq SKIP_PRESSED_A # not pressed
+
+li REG_PRESSED_A, 1
+SKIP_PRESSED_A:
+
+# Check if cursor is outside top-right boundary
+lfs f1, 0xC(REG_CURSOR_POS) # Get x cursor pos
+lfs f2, 0x10(REG_CURSOR_POS) # Get y cursor pos
+lfs f3, TPO_BOUNDS_TITLE_RIGHT(REG_TEXT_PROPERTIES)
+lfs f4, TPO_BOUNDS_TITLE_BOTTOM(REG_TEXT_PROPERTIES)
+
+fcmpo cr0, f1, f3
+bgt SKIP_SWITCH_MODE_TITLE_CHECK
+fcmpo cr0, f2, f4
+blt SKIP_SWITCH_MODE_TITLE_CHECK
+
+cmpwi REG_PRESSED_A, 0 # Is A PRESSED?
+beq SKIP_SWITCH_MODE_TITLE_CHECK
+
+lbz r3, OFST_R13_SUB_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+beq SWICH_TO_MELEE
+cmpwi r3, ONLINE_MODE_UNRANKED
+beq SWICH_TO_TEAMS
+b SKIP_SWITCH_MODE_TITLE_CHECK
+
+SWICH_TO_MELEE:
+li r3, ONLINE_MODE_UNRANKED
+b SWITCH_SUB_MODE
+
+SWICH_TO_TEAMS:
+li r3, ONLINE_MODE_TEAMS
+b SWITCH_SUB_MODE
+
+SWITCH_SUB_MODE:
+stb r3, OFST_R13_SUB_ONLINE_MODE(r13)
+li r3, 2
+branchl r12, SFX_Menu_CommonSound
+SKIP_SWITCH_MODE_TITLE_CHECK:
+
+################################################################################
+# Get inputs to switch Region Mode
+################################################################################
+
+lbz r3, OFST_R13_SUB_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_SUBMODE_REGION_CHECK
+
+# Check if cursor is outside top boundary
+lfs f1, 0xC(REG_CURSOR_POS) # Get x cursor pos
+lfs f2, 0x10(REG_CURSOR_POS) # Get y cursor pos
+lfs f3, TPO_BOUNDS_REGION_TOP(REG_TEXT_PROPERTIES)
+lfs f4, TPO_BOUNDS_REGION_BOTTOM(REG_TEXT_PROPERTIES)
+lfs f5, TPO_BOUNDS_REGION_LEFT(REG_TEXT_PROPERTIES)
+lfs f6, TPO_BOUNDS_REGION_RIGHT(REG_TEXT_PROPERTIES)
+
+fcmpo cr0, f2, f3
+bgt SKIP_SUBMODE_REGION_CHECK
+fcmpo cr0, f2, f4
+blt SKIP_SUBMODE_REGION_CHECK
+fcmpo cr0, f1, f5
+blt SKIP_SUBMODE_REGION_CHECK
+fcmpo cr0, f1, f6
+bgt SKIP_SUBMODE_REGION_CHECK
+
+# If we get here, the cursor is within the bounds of the button
+cmpwi REG_PRESSED_A, 0 # Is A PRESSED?
+beq SKIP_SUBMODE_REGION_CHECK
+
+SET_NEXT_REGION:
+li r3, 2
+branchl r12, SFX_Menu_CommonSound
+
+# increase current selected region by one
+lbz r3, 0x0(REG_GOBJDATA)
+addi r3, r3, 1
+STORE_SUBMODE_REGION:
+stb r3, 0x0(REG_GOBJDATA)
+stb r3, OFST_R13_SUB_ONLINE_MODE_PARAM(r13) # store param to send to dolphin
+
+# reset index if reached end
+cmpwi r3, 7
+li r3,0
+beq STORE_SUBMODE_REGION
+
+SKIP_SUBMODE_REGION_CHECK:
+
+SKIP_SUBMODE_CHECK:
 ################################################################################
 # Add CSS Mode Anim
 ################################################################################
@@ -525,20 +669,36 @@ blt WRITE_OPP_CODE_LOOP_START
   li  r6,0
   branchl r12,0x8036fa10
 
-# Set MELEE Texture frame by default
-lfs f1, -0x513c(rtoc) # 0f used to be -> # lfs f1, TPO_FLOAT_15(REG_TEXT_PROPERTIES)
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_TEAMS
-bne SKIP_TEAMS_TITLE
-# set "TEAM MATCH" Texture Frame
-lfs f1, -0x5138(rtoc) # 16.0f used to be -> #lfs f1, TPO_FLOAT_16(REG_TEXT_PROPERTIES)
+SET_MELEE_TITLE: # Set MELEE Texture frame by default
+lfs f7, -0x513c(rtoc) # 0f
 
-SKIP_TEAMS_TITLE:
-# Animate Mode Texture
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+lbz r4, OFST_R13_SUB_ONLINE_MODE(r13)
+
+cmpwi r3, ONLINE_MODE_UNRANKED
+bne SKIP_TITLE_CHECK_SUBMODE
+
+cmpwi r4, ONLINE_MODE_UNRANKED
+beq ANIMATE_TITLE
+
+cmpwi r4, ONLINE_MODE_TEAMS
+beq SET_TEAMS_TITLE
+
+SKIP_TITLE_CHECK_SUBMODE:
+cmpwi r3, ONLINE_MODE_TEAMS
+bne ANIMATE_TITLE
+
+SET_TEAMS_TITLE: # set "TEAM MATCH" Texture Frame
+lfs f7, -0x5138(rtoc) # 16.0f
+
+ANIMATE_TITLE: # Animate Mode Texture
+fmr f1, f7
 lwz r3,0x80(sp)
 branchl r12, JObj_ReqAnim # (jobj, frames)
+
 lwz r3,0x80(sp)
 branchl r12, JObj_Anim
+SKIP_ANIMATE_TITLE:
 
 ################################################################################
 # Manage header text
@@ -550,9 +710,11 @@ bgt UPDATE_HEADER_ERROR
 # preset default text variables
 li r4, STIDX_HEADER # set substring header index
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
+addi r7, REG_TEXT_PROPERTIES, TPO_STRING_MODE_EMPTY
 
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+lbz r8, OFST_R13_SUB_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq UPDATE_HEADER_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
@@ -565,6 +727,18 @@ b UPDATE_HEADER_ERROR
 
 UPDATE_HEADER_UNRANKED:
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_UNRANKED
+cmpwi r8, ONLINE_MODE_TEAMS
+bne SKIP_UPDATE_HEADER_UNRANKED_TEAMS
+UPDATE_HEADER_UNRANKED_TEAMS:
+addi r6, REG_TEXT_PROPERTIES, TPO_STRING_UNRANKED_TEAMS
+lbz r8, 0x0(REG_GOBJDATA)
+mulli r8,r8,5 #move to the next string
+
+addi r7, REG_TEXT_PROPERTIES, TPO_LOBBIES_EC
+add r7, r7, r8
+
+SKIP_UPDATE_HEADER_UNRANKED_TEAMS:
+
 b UPDATE_HEADER
 
 UPDATE_HEADER_DIRECT:

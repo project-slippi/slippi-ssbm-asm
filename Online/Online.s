@@ -15,6 +15,8 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_ODB_ADDR,-0x49e4 # Online data buffer
 .set OFST_R13_SB_ADDR,-0x503C # Scene buffer, persists throughout scenes
 .set OFST_R13_ONLINE_MODE,-0x5060 # Byte, Selected online mode
+.set OFST_R13_SUB_ONLINE_MODE,-0x5040 # Byte, Selected sub online mode
+.set OFST_R13_SUB_ONLINE_MODE_PARAM,-0x5068 # Byte, Selected sub online mode param
 .set OFST_R13_APP_STATE,-0x505F # Byte, App state / online status
 .set OFST_R13_FORCE_MENU_CLEAR,-0x505E # Byte, Force menu clear
 .set OFST_R13_NAME_ENTRY_MODE,-0x505D # Byte, 0 = normal, 1 = connect code
@@ -27,7 +29,6 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_USE_PREMADE_TEXT,-0x5014 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
 .set OFST_R13_ISWIDESCREEN,-0x5020 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
 # r13 offsets used in tournament mode (not sure if completely safe though)
-# -0x5040 (r13)
 # -0x5068 (r13)
 # -0x7510 (r13)
 
@@ -306,7 +307,9 @@ lwz \reg, -0x62A0(\reg)
 ################################################################################
 .set FMTB_CMD, 0 # u8
 .set FMTB_ONLINE_MODE, FMTB_CMD + 1 # u8
-.set FMTB_OPP_CONNECT_CODE, FMTB_ONLINE_MODE + 1 # string (18) shift-jis
+.set FMTB_SUB_ONLINE_MODE, FMTB_ONLINE_MODE + 1 # u8
+.set FMTB_SUB_ONLINE_MODE_PARAM, FMTB_SUB_ONLINE_MODE + 1 # u8
+.set FMTB_OPP_CONNECT_CODE, FMTB_SUB_ONLINE_MODE_PARAM + 1 # string (18) shift-jis
 .set FMTB_SIZE, FMTB_OPP_CONNECT_CODE + 18
 
 ################################################################################
