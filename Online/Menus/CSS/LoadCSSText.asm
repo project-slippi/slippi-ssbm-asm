@@ -537,15 +537,19 @@ addi r5, r5, 2
 cmpwi r5, 18
 blt WRITE_OPP_CODE_LOOP_START
 
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_UNRANKED
-bne SKIP_SUBMODE_CHECK
-
 ################################################################################
 # Get inputs to switch sub mode
 ################################################################################
 .set REG_PRESSED_A, REG_VARIOUS_1
 .set REG_CURSOR_POS, REG_VARIOUS_2
+
+lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
+cmpwi r3, 0
+bne SKIP_SUBMODE_CHECK # No changes when locked-in
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_UNRANKED
+bne SKIP_SUBMODE_CHECK
 
 li REG_PRESSED_A, 0 # By default A is not pressed
 loadwz REG_CURSOR_POS, 0x804A0BC0 # This gets ptr to cursor position on CSS

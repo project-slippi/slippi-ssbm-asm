@@ -429,7 +429,8 @@ bne SKIP_SET_UNRANKED_TEAMS_COLOR
 cmpwi REG_SUB_ONLINE_MODE, ONLINE_MODE_TEAMS
 bne SKIP_SET_UNRANKED_TEAMS_COLOR
 
-# get external cha rid
+# All of this is to get the correct char costume id
+# TODO: move to a static function
 lbz r4, 0x70(REG_PORT_SELECTIONS_ADDR) # internal char id
 branchl r12,FN_GetCSSIconData
 mr r5,r3
