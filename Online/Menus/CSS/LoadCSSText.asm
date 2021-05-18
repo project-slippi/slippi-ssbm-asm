@@ -543,13 +543,14 @@ branchl r12, JObj_Anim
 ################################################################################
 # Manage header text
 ################################################################################
-lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
-cmpwi r3, MM_STATE_CONNECTION_SUCCESS
-bgt UPDATE_HEADER_ERROR
 
 # preset default text variables
 li r4, STIDX_HEADER # set substring header index
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
+
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+bgt UPDATE_HEADER_ERROR
 
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -581,7 +582,6 @@ b UPDATE_HEADER
 
 UPDATE_HEADER_ERROR:
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
-# b UPDATE_HEADER # commented out just to save gecko space no need to jump since it's the next instruction
 
 UPDATE_HEADER:
 bl FN_UPDATE_TEXT
@@ -1157,7 +1157,7 @@ blr
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
 
-# offsets 
+# offsets
 .set JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 
 CSS_ONLINE_CHAT_THINK:
