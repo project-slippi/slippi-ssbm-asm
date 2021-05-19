@@ -10,7 +10,6 @@
 .set REG_TEXT_PROPERTIES, 29 # everywhere
 .set REG_TEXT_STRUCT, 28 # everywhere
 .set REG_SUBTEXT_IDX, 27 # think
-.set REG_LR, 21
 
 # Text Update Userdata Struct Definition
 .set TEXTGOBJDATA_SIZE, 0x4
@@ -383,7 +382,7 @@ b EXIT
 # Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
-mflr REG_LR # Single depth helper function. Non-standard
+backup
 
 fmr f13, f3
 
@@ -407,7 +406,7 @@ fmr f3, f13
 addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, FG_CreateSubtext
 
-mtlr REG_LR
+restore
 blr
 
 ################################################################################
@@ -1387,12 +1386,12 @@ blr
 # Will set r3 to REG_TEXT_STRUCT. Expects caller to set other args
 ################################################################################
 FN_UPDATE_TEXT:
-mflr REG_LR # Single depth helper function. Non-standard
+backup
 
 mr r3, REG_TEXT_STRUCT
 branchl r12, Text_UpdateSubtextContents
 
-mtlr REG_LR
+restore
 blr
 
 
