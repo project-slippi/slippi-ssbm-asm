@@ -300,15 +300,6 @@ FN_SWITCH_PLAYER_TEAM:
 
 backup
 
-# Get location from which we can find selected character
-lwz r4, -0x49F0(r13) # base address where css selections are stored
-lbz r3, -0x49B0(r13) # player index
-mulli r3, r3, 0x24
-add REG_PORT_SELECTIONS_ADDR, r4, r3
-
-lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
-mr REG_INTERNAL_CHAR_ID, r3
-
 # get CSS icon data
 branchl r12,FN_GetCSSIconData
 mr r5,r3
@@ -351,6 +342,15 @@ blr
 ################################################################################
 FN_UPDATE_CSP_TEXTURES:
 backup
+
+# Get location from which we can find selected character
+lwz r4, -0x49F0(r13) # base address where css selections are stored
+lbz r3, -0x49B0(r13) # player index
+mulli r3, r3, 0x24
+add REG_PORT_SELECTIONS_ADDR, r4, r3
+
+lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
+mr REG_INTERNAL_CHAR_ID, r3
 
 lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 # logf LOG_LEVEL_NOTICE, "TEAM INDEX %d", "mr r5, 25"
