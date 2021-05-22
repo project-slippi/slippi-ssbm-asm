@@ -420,7 +420,8 @@
     {
       "name": "Optional: Center Align 2P HUD",
       "authors": [
-        "UnclePunch"
+        "UnclePunch",
+        "Fizzi"
       ],
       "description": [
         "When playing online, character %'s will always be centered ------------------------- ",
@@ -428,8 +429,9 @@
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/Force2PCenterHud.bin"
+          "type": "injectFolder",
+          "sourceFolder": "External/Force2PCenterHud",
+          "isRecursive": true
         }
       ]
     },

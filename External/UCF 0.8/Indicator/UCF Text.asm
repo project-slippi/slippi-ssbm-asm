@@ -41,7 +41,7 @@ backup
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
-	branchl r14,Text_CreateTextGObj
+	branchl r12,Text_CreateTextGObj
 
 #BACKUP STRUCT POINTER
 	mr REG_TextGObj,r3
@@ -69,7 +69,7 @@ backup
 	mflr 	r4		#pointer to ASCII
 	lfs f1,0x0(REG_TextProperties) #X offset of REG_TextGObj
 	lfs f2,0x4(REG_TextProperties) #Y offset of REG_TextGObj
-	branchl r14,Text_InitializeSubtext
+	branchl r12,Text_InitializeSubtext
 
 #Set Size/Scaling
   mr  r4,r3

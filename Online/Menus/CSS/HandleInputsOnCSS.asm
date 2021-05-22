@@ -100,6 +100,10 @@ branchl r12, SFX_Menu_CommonSound
 
 SOUND_PLAY_END:
 
+
+# uncomment to debug the chat window
+bl FN_CHECK_CHAT_INPUTS
+
 ################################################################################
 # Fork logic based on current connection state
 ################################################################################
@@ -127,7 +131,6 @@ HANDLE_IDLE:
 lbz r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR)
 cmpwi r3, 0
 bne SKIP_START_MATCH # skip input if chat window is opened
-
 
 # When idle, pressing start will start finding match
 # Check if start was pressed
@@ -307,7 +310,7 @@ b SKIP_START_MATCH
 CHECK_SHOULD_START_MATCH:
 
 # Check if we should open chat window
-bl FN_CHECK_CHAT_INPUTS
+#bl FN_CHECK_CHAT_INPUTS
 
 lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
 lbz r4, MSRB_IS_REMOTE_PLAYER_READY(REG_MSRB_ADDR)
@@ -553,9 +556,6 @@ blr
 FN_CHECK_CHAT_INPUTS:
 backup
 
-# TODO: Remove when we want to enable chat
-b HANDLE_SKIP_CHAT_INPUT
-
 # uncomment this line to disable B press on chat window
 # b SKIP_CHAT_WINDOW_B_PRESS
 
@@ -592,7 +592,7 @@ restore
 blr
 
 ################################################################################
-# Function: Send Chat Commnad 0 = ggs, 1 = brb, 2 = g2g, 3=one more, 4=last one
+# Function: Send Chat Commnad
 ################################################################################
 FN_SEND_CHAT_COMMAND:
 
@@ -681,10 +681,11 @@ li r5, 0x80
 branchl r12, GObj_Create
 mr REG_CHAT_GOBJ, r3 # save GOBJ pointer
 
-# create jbobj (custom chat window background)
-lwz r3, -0x49eC(r13) # = 804db6a0 pointer to MnSlChar file
-lwz r3, 0x18(r3) # pointer to our custom bg jobj
-branchl r12,0x80370e44 #Create Jboj
+# Load JOBJ
+lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+lwz r3, SLPCSS_CHATSELECT (r3) # pointer to our custom bg main jobj
+lwz r3, 0x0 (r3) # jobj
+branchl r12,0x80370e44 #Create jobj
 mr  REG_CHAT_JOBJ,r3
 
 # Move to the left if widescreen is enabled
@@ -717,7 +718,7 @@ mr r3, REG_CHAT_GOBJ
 li r4, 4 # user data kind
 load r5, HSD_Free # destructor
 mr r6, r23 # memory pointer of allocated buffer above
-branchl r12, GObj_Initialize
+branchl r12, GObj_AddUserData
 
 # Set Think Function that runs every frame
 mr r3, REG_CHAT_GOBJ # set r3 to GOBJ pointer
@@ -768,13 +769,20 @@ lwz REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR(REG_CHAT_WINDOW_G
 lwz REG_CHAT_WINDOW_CSSDT_ADDR, CSSCWDT_CSSDT_ADDR(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
 lhz REG_CHAT_WINDOW_SECOND_INPUT, CSSDT_CHAT_LAST_INPUT(REG_CHAT_WINDOW_CSSDT_ADDR)
 
+lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(REG_CHAT_WINDOW_CSSDT_ADDR)
+
 # clear last input
 li r3, 0
 sth r3, CSSDT_CHAT_LAST_INPUT(REG_CHAT_WINDOW_CSSDT_ADDR)
 
+# if chat command already sent destroy proc
+lbz r3, CSSCWDT_INPUT_SENT(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+cmpwi r3, 0
+bne CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC
+
 # if text is not initialized, assume we need to initalize everything
 # else skip to idle timer check
-cmpwi REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 0x00000000
+cmpwi REG_CHAT_WINDOW_TEXT_STRUCT_ADDR, 0
 bne CSS_ONLINE_CHAT_WINDOW_THINK_CHECK_INPUT
 
 ##### BEGIN: INITIALIZING CHAT WINDOW TIMER ###########
@@ -819,10 +827,19 @@ lbz r3, OFST_R13_ISWIDESCREEN(r13)
 cmpwi r3, 0
 beq END_SET_CHAT_HEADER_POS_X
 lfs f2, TPO_CHAT_HEADER_X_WIDESCREEN(REG_TEXT_PROPERTIES) # X POS Widescreen
-
 END_SET_CHAT_HEADER_POS_X:
+
+# set a different color if not connected
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_YELLOW # color when connected
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+beq END_SET_CHAT_HEADER_COLOR
+
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_FAINT_YELLOW # color when not connected
+END_SET_CHAT_HEADER_COLOR:
+
 mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR # Text Struct Address
-addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_YELLOW # Text Color
+# r4 is color
 li r5, 0 # no outline
 addi r6, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE # Text Color
 addi r7, REG_TEXT_PROPERTIES, TPO_STRING_CHAT_SHORTCUTS # String Format pointer
@@ -957,6 +974,10 @@ slw r3, r3, r5
 add r3, r3, r4 # add second input to highest byte
 bl FN_SEND_CHAT_COMMAND
 
+# flag as input already sent
+li r3, 1
+stb r3, CSSCWDT_INPUT_SENT(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
+
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
 
 CSS_ONLINE_CHAT_WINDOW_THINK_BLOCK_MESSAGE:
@@ -975,7 +996,7 @@ stb REG_CHAT_WINDOW_TIMER, CSSCWDT_TIMER(REG_CHAT_WINDOW_GOBJ_DATA_ADDR)
 
 b CSS_ONLINE_CHAT_WINDOW_THINK_EXIT
 
-CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC: # TODO: is this the proper way to delete this proc?
+CSS_ONLINE_CHAT_WINDOW_THINK_REMOVE_PROC:
 
 # clear out chat window opened flag on the CSS Data Table
 li r3, 0
@@ -1035,9 +1056,11 @@ blrl
 .long 0xFFFFFFFF # white
 .set TPO_COLOR_YELLOW, TPO_COLOR_WHITE + 4
 .long 0xffea2fFF
+.set TPO_COLOR_FAINT_YELLOW, TPO_COLOR_YELLOW + 4
+.long 0xc9c387FF
 
 # String Properties
-.set TPO_STRING_CHAT_SHORTCUTS, TPO_COLOR_YELLOW + 4
+.set TPO_STRING_CHAT_SHORTCUTS, TPO_COLOR_FAINT_YELLOW + 4
 .string "Chat: %s"
 .align 2
 

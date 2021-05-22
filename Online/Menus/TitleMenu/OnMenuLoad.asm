@@ -38,6 +38,7 @@ mflr r3
 li r4, 1
 branchl r12, FG_UserDisplay
 mflr REG_FG_USER_DISPLAY
+li r5, 1 # indicate to init buffers
 blrl # FN_InitUserDisplay
 
 ################################################################################

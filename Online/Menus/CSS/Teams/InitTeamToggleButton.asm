@@ -1,9 +1,10 @@
 ################################################################################
-# Address: 0x802652f4 # CSS_LoadFunction
+# Address: INJ_InitTeamToggleButton # CSS_LoadFunction
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
+.include "Online/Menus/CSS/Teams/Teams.s"
 
 .set REG_PROPERTIES, 31
 .set REG_CSSDT_ADDR, 30
@@ -21,24 +22,20 @@
 .set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
 .set ICON_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 
-# Ensure that this is an online CSS
-getMinorMajor r3
-cmpwi r3, SCENE_ONLINE_CSS
-bne EXIT # If not online CSS, continue as normal
-
-lbz r4, OFST_R13_ONLINE_MODE(r13)
-cmpwi r4, ONLINE_MODE_TEAMS
-bne EXIT # exit if not on TEAMS mode
-
-b INIT_BUTTON
+b CODE_START
 
 ################################################################################
-# Properties
+# Data
 ################################################################################
-PROPERTIES:
+DATA_BLRL:
 blrl
+# Start with data that is accessible externally
+.set EXT_TEAM_IDX, 0
+.byte 1 # Will be used by SceneLoadCSS.asm
+
+# The remaining values are properties used internally
 # Toggle Button Bounds
-.set TPO_BOUNDS_ICON_TOP, 0
+.set TPO_BOUNDS_ICON_TOP, EXT_TEAM_IDX + 1
 .float -2.5
 .set TPO_BOUNDS_ICON_BOTTOM, TPO_BOUNDS_ICON_TOP + 4
 .float -5
@@ -61,6 +58,16 @@ blrl
 
 .align 2
 
+CODE_START:
+# Ensure that this is an online CSS
+getMinorMajor r3
+cmpwi r3, SCENE_ONLINE_CSS
+bne EXIT # If not online CSS, continue as normal
+
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+bne EXIT # exit if not on TEAMS mode
+
 ################################################################################
 # Creates and initializes Button and queues it's THINK function
 ################################################################################
@@ -73,7 +80,7 @@ backup
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 
 # INIT PROPERTIES
-bl PROPERTIES
+bl DATA_BLRL
 mflr REG_PROPERTIES
 
 lfs REG_F_0, TPO_FLOAT_0(REG_PROPERTIES)
@@ -171,7 +178,7 @@ mr r3, REG_ICON_GOBJ
 li r4, 4 # user data kind
 load r5, HSD_Free # destructor
 mr r6, REG_DATA_BUFFER # memory pointer of allocated buffer above
-branchl r12, GObj_Initialize
+branchl r12, GObj_AddUserData
 
 # Set Think Function that runs every frame
 mr r3, REG_ICON_GOBJ # set r3 to GOBJ pointer
@@ -180,15 +187,8 @@ mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
 branchl r12, GObj_AddProc
 
-subi r3, r13, 0x77BC
-lbz r14, 0x0(r3) # load team index stored on heap
-li r15, 0 # start loop index
-
-SWITCH_TEAM:
-bl FN_SWITCH_PLAYER_TEAM
-addi r15, r15, 1
-cmpw r15, r14
-blt SWITCH_TEAM
+# Update textures to the right colors
+bl FN_UPDATE_CSP_TEXTURES
 
 ################################################################################
 # Hides Port from the portrait bg and moves franchise icon up
@@ -251,7 +251,7 @@ cmpwi r3, 0
 bne FN_TEAM_BUTTON_THINK_EXIT # No changes when locked-in
 
 # Get text properties address
-bl PROPERTIES
+bl DATA_BLRL
 mflr REG_PROPERTIES
 
 li REG_IS_HOVERING, 0 # Initialize hover state as false
@@ -300,15 +300,6 @@ FN_SWITCH_PLAYER_TEAM:
 
 backup
 
-# Get location from which we can find selected character
-lwz r4, -0x49F0(r13) # base address where css selections are stored
-lbz r3, -0x49B0(r13) # player index
-mulli r3, r3, 0x24
-add REG_PORT_SELECTIONS_ADDR, r4, r3
-
-lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
-mr REG_INTERNAL_CHAR_ID, r3
-
 # get CSS icon data
 branchl r12,FN_GetCSSIconData
 mr r5,r3
@@ -334,10 +325,34 @@ FN_SWITCH_PLAYER_TEAM_SKIP_RESET_TEAM:
 
 # Store Custom Team selection in data table
 stb r4, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
-subi r3, r13, 0x77BC # Store team selection on free space on heap?
-stb r4, 0x0(r3)
+stb r4, EXT_TEAM_IDX(REG_PROPERTIES)
 
-mr REG_TEAM_IDX, r4
+bl FN_UPDATE_CSP_TEXTURES
+
+# Play team switch sound
+li	r3, 2
+branchl r12, SFX_Menu_CommonSound
+
+FN_SWITCH_PLAYER_TEAM_EXIT:
+restore
+blr
+
+################################################################################
+# Function: Updates Graphics and memory values for new team selection
+################################################################################
+FN_UPDATE_CSP_TEXTURES:
+backup
+
+# Get location from which we can find selected character
+lwz r4, -0x49F0(r13) # base address where css selections are stored
+lbz r3, -0x49B0(r13) # player index
+mulli r3, r3, 0x24
+add REG_PORT_SELECTIONS_ADDR, r4, r3
+
+lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
+mr REG_INTERNAL_CHAR_ID, r3
+
+lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
 # logf LOG_LEVEL_NOTICE, "TEAM INDEX %d", "mr r5, 25"
 
 # Animate the team icon based on team index
@@ -366,11 +381,8 @@ branchl r12, JObj_ReqAnimAll # (jobj, frames)
 mr r3, REG_ICON_JOBJ
 branchl r12, JObj_AnimAll
 
-# Kind of hacky I know :) things get messed up so I just back everything up :D
-backupall
 mr r3, REG_TEAM_IDX
 bl FN_CHANGE_PORTRAIT_BG
-restoreall
 
 mr r3, REG_TEAM_IDX
 mr r4, REG_INTERNAL_CHAR_ID
@@ -395,11 +407,6 @@ mr r5,REG_COSTUME_IDX
 li	r6, 0
 branchl r12,FN_CSSUpdateCSP
 
-# Play team switch sound
-li	r3, 2
-branchl r12, SFX_Menu_CommonSound
-
-FN_SWITCH_PLAYER_TEAM_EXIT:
 restore
 blr
 

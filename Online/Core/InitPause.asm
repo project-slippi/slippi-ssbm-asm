@@ -55,56 +55,75 @@ backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
-# Check if opponent LRAS'd
-lbz REG_PORT, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS)
+# Check to see if someone with stocks wants to exit the game
+li REG_PORT, 0
+ClientPause_ExitLoopStart:
+# Check if player is human player
+mr r3, REG_PORT
+branchl r12, 0x8003241c # PlayerBlock_LoadSlotType
+cmpwi r3, 0
+bne ClientPause_ExitLoopContinue # If not human, continue
+
+# Check if disconnected, if so, skip stock check
+lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne ClientPause_SkipStockCheck
+
+# Check if this player has any stocks
+mr r3, REG_PORT
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+beq ClientPause_ExitLoopContinue # If no stocks remaining, continue
+ClientPause_SkipStockCheck:
+
+# Check if player LRAS'd
 load  r4,0x804c1fac
 mulli r3,REG_PORT,68
 add r3, r3, r4
 
-ClientPause_CheckRemoteLRAS:
-
-# Check if opponent holding L R A
+# Check if player holding L R A
 lwz r3,0x0(r3)
 rlwinm. r0,r3,0,0x40
-beq ClientPause_PrepLocalInputs
+beq ClientPause_ExitLoopContinue
 rlwinm. r0,r3,0,0x20
-beq ClientPause_PrepLocalInputs
+beq ClientPause_ExitLoopContinue
 rlwinm. r0,r3,0,0x100
-beq ClientPause_PrepLocalInputs
+beq ClientPause_ExitLoopContinue
 # Is holding LRA, check for start
 rlwinm. r0,r3,0,0x1000
 bne ClientPause_Paused_Disconnect
 
-ClientPause_PrepLocalInputs:
+ClientPause_ExitLoopContinue:
+addi REG_PORT, REG_PORT, 1
+cmpwi REG_PORT, 4
+blt ClientPause_ExitLoopStart
 
+ClientPause_PrepLocalInputs:
 # Get local clients inputs
 lbz REG_PORT, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS)
 load  r4,0x804c1fac
 mulli r3,REG_PORT,68
 add REG_INPUTS,r3,r4
 
-ClientPause_CheckLocalLRAS:
-
-# Check if holding L R A
-lwz r3,0x0(REG_INPUTS)
-rlwinm. r0,r3,0,0x40
-beq ClientPause_HandlePauseAndUnpause
-rlwinm. r0,r3,0,0x20
-beq ClientPause_HandlePauseAndUnpause
-rlwinm. r0,r3,0,0x100
-beq ClientPause_HandlePauseAndUnpause
-# Is holding LRA, check for start
-rlwinm. r0,r3,0,0x1000
-bne ClientPause_Paused_Disconnect
-
 ClientPause_HandlePauseAndUnpause:
-
 # Check pause state
 lbz r3, OFST_R13_ISPAUSE (r13)
 cmpwi r3,0
 beq ClientPause_Unpaused
 
 ClientPause_Paused_CheckUnpause:
+# Check if disconnected, if so, skip stock check
+lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne ClientPause_Paused_SkipStockCheck
+
+# Check if no stocks, if so unpause
+mr r3, REG_PORT
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+beq ClientPause_Paused_Unpause # If no stocks remaining, unpause
+ClientPause_Paused_SkipStockCheck:
+
 # Check if just pressed Start
 lwz r3,0x8(REG_INPUTS)
 rlwinm. r0,r3,0,0x1000
@@ -160,6 +179,18 @@ b ClientPause_Exit
 ################################################################################
 
 ClientPause_Unpaused:
+# Check if disconnected, if so, skip stock check
+lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne ClientPause_Unpaused_SkipStockCheck
+
+# Check if no stocks, if so don't allow pause
+mr r3, REG_PORT
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+beq ClientPause_Exit # If no stocks remaining, exit
+ClientPause_Unpaused_SkipStockCheck:
+
 # Check if just pressed Start
 lwz r3,0x8(REG_INPUTS)
 rlwinm. r0,r3,0,0x1000
