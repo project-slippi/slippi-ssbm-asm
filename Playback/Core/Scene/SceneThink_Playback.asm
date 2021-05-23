@@ -8,6 +8,10 @@
 .set REG_BufferPointer, 29
 .set REG_Text,28
 .set REG_FrameCount,27
+.set REG_LOGO_JOBJ,21
+.set REG_GOBJ,22
+.set REG_SecondBuf,24
+.set REG_LOCAL_DATA_ADDR,25
 
 #############################
 # Create Per Frame Function #
@@ -24,6 +28,46 @@
   li  r4,14
   li  r5,0
   branchl r12, GObj_Create
+  mr REG_GOBJ, r3 # save GOBJ pointer
+
+# Load LOGO file
+  addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
+  branchl r12,0x80016be0
+
+# Retrieve symbol from file data
+  addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
+  branchl r12,0x80380358
+
+# Save ptr to mem
+#  stw r3, SLPMSC_BUF_ADDR(0x0)
+
+# Load logo JOBJ
+# lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
+  lwz r3, 0x0 (r3) # pointer to our logo jobj
+  lwz r3, 0x0 (r3) #jobj
+  branchl r12, 0x80370e44 # Create Jobj
+  mr REG_LOGO_JOBJ,r3
+
+# Add logo JOBJ to GOBJ
+  mr r3, REG_GOBJ
+  li r4, 4
+  mr r5, REG_LOGO_JOBJ
+  branchl r12,0x80390a70 # void GObj_AddObject
+
+# Add GX link that draws the logo
+  mr r3, REG_GOBJ
+  load r4, 0x80391070
+  li r5, 9 # index
+  li r6, 128
+  branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
+
+# Add User Data to GOBJ
+  mr r3, REG_GOBJ
+  li r4, 4 # user data kind
+  load r5, HSD_Free # destructor
+  mr r6, REG_SecondBuf
+  branchl r12, GObj_AddUserData
+
 
 #Schedule Function
   bl  PlaybackThink
@@ -124,6 +168,10 @@ blrl
   li  r3,0x20
   branchl r12, HSD_MemAlloc
   mr  REG_BufferPointer,r3
+
+  li r3,0x20
+  branchl r12, HSD_MemAlloc
+  mr REG_SecondBuf,r3
 
   ######################
   ## Init Frame Count ##
