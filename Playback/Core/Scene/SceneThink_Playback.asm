@@ -13,6 +13,14 @@
 .set REG_SecondBuf,24
 .set REG_LOCAL_DATA_ADDR,25
 
+# File related strings
+.string "slpMisc.dat"
+.set DO_STRING_SLPLOGO_FILENAME, 0
+.string "slpMisc"
+.set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 12
+.align 2
+
+
 #############################
 # Create Per Frame Function #
 #############################
