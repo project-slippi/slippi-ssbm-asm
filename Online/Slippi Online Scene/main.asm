@@ -889,14 +889,15 @@ mr REG_CURR, REG_VS_SSS_DATA
 add	REG_CURR, REG_CURR, r0
 CSSSceneDecide_SSMLoop:
 # Get fighter's external ID
-lbz	r3, 0x0060 (REG_CURR)
-extsb	r3, r3
-cmpwi r3,33
+branchl r12,FN_GetFighterNum
+lbz	r4, 0x0060 (REG_CURR)
+extsb	r4, r4
+cmpw r4,r3
 beq CSSSceneDecide_SSMIncLoop
 # Get fighter's ssm ID
-load r4,0x803bb3c0
-mulli r3,r3,0x10
-lbzx r3,r3,r4
+mr r4,r3  # fighter index
+li r3,0   # fighter
+branchl r12,FN_GetSSMIndex
 branchl r12,FN_RequestSSM   # queue it
 CSSSceneDecide_SSMIncLoop:
 addi	REG_COUNT, REG_COUNT, 1
@@ -906,9 +907,9 @@ blt+	 CSSSceneDecide_SSMLoop
 # Get stage's ssm file index
 lhz r3, 0xE (REG_VS_SSS_DATA)
 branchl r12,0x8022519c  # get internal ID
-load r4,0x803bb6b0
-mulli r3,r3,0x3
-lbzx r3,r3,r4
+mr r4,r3  # stage index
+li r3,1   # stage
+branchl r12,FN_GetSSMIndex
 branchl r12,FN_RequestSSM   # queue it
 # set to load
 branchl r12, 0x80027168
