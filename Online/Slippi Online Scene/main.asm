@@ -881,8 +881,8 @@ extsb	r4, r4
 cmpw r4,r3
 beq CSSSceneDecide_SSMIncLoop
 # Get fighter's ssm ID
-mr r4,r3  # fighter index
 li r3,0   # fighter
+# r4 already contains fighter index
 branchl r12,FN_GetSSMIndex
 branchl r12,FN_RequestSSM   # queue it
 CSSSceneDecide_SSMIncLoop:
