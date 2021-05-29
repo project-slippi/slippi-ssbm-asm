@@ -13,7 +13,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s"
 
 cmpwi r3,1
 beq isStage
