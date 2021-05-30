@@ -1,5 +1,24 @@
 {
-  "outputFiles": [],
+  "outputFiles": [
+    {
+      "file": "Output/Console/GALE01r2.ini",
+      "header": [
+        "# GALE01 - Super Smash Bros. Melee NTSC-U 1.02",
+        "",
+        "[Core]",
+        "CPUThread = True",
+        "GPUDeterminismMode = fake-completion",
+        "PollingMethod = OnSIRead",
+        "FastDiscSpeed = True",
+        "",
+        "[Gecko_Enabled]",
+        "$General",
+        "$Slippi Recording",
+        "",
+        "[Gecko]"
+      ]
+    }
+  ],
   "codes": [
     {
       "name": "General",
@@ -143,8 +162,18 @@
         },
         {
           "type": "injectFolder",
+          "sourceFolder": "Common/EXITransferBuffer",
+          "annotation": "EXI Transfer Buffer"
+        },
+        {
+          "type": "injectFolder",
           "sourceFolder": "Common/Gecko",
           "annotation": "Static function to process Gecko codes [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/ConsoleOverrides",
+          "annotation": "Forces values for proper console operation [Fizzi]"
         }
       ]
     }

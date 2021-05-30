@@ -17,7 +17,6 @@ echo.
 
 set list=console_UCF.json
 set list=%list%;console_UCF_stealth.json
-set list=%list%;console_ControllerFixPlayerToggles.json
 set list=%list%;console_mods_stealth.json
 set list=%list%;console_mods_tournament.json
 set list=%list%;console_mods_friendlies.json
