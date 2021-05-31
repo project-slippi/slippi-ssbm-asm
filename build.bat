@@ -24,6 +24,7 @@ set list=%list%;console_PAL.json
 set list=%list%;console_frozen.json
 set list=%list%;console_lag_pd.json
 set list=%list%;console_lag_pdvb.json
+set list=%list%;console_screen_wide.json
 
 for %%a in (%list%) do (
   echo Building %%a...
