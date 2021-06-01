@@ -35,7 +35,10 @@ mflr r3
 b EXIT
 
 RUN_ORIGINAL:
-# Here we have a nametag set, so let's use that
+# Run original logic to fetch nametag
+mr r3, REG_PLAYER_SLOT
+branchl r12, 0x8003556c # PlayerBlock_LoadNameTagSlot#
+rlwinm r3, r3, 0, 24, 31
 branchl r12, 0x8023754c # Nametag_LoadNametagSlotText
 
 EXIT:
