@@ -452,6 +452,23 @@
           "isRecursive": true
         }
       ]
+    },
+    {
+      "name": "Optional: Force Nametag for Local Player",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "When playing online, nametag YOU will show above your character --------------------- ",
+        "Will not cause desyncs when playing online"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Optional/IndicateLocalPlayer",
+          "isRecursive": true
+        }
+      ]
     }
   ]
 }
