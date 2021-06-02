@@ -10,6 +10,6 @@
 
 Floats:
 blrl
-.float 9.125 # Original: 10
+.float 9.13 # Original: 10
 
 END:

@@ -3,4 +3,4 @@
 ################################################################################
 
 # Changing this doesn't seem to do anything?
-.float 178.3 # Original: 162.7
+.float 178.203683 # Original: 162.7
