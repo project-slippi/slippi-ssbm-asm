@@ -195,27 +195,6 @@
       ]
     },
     {
-      "name": "Optional: 4:3 -> 73:60",
-      "authors": [
-        "Dan Salvato",
-        "mirrorbender",
-        "Achilles1515",
-        "UnclePunch",
-        "Fizzi"
-      ],
-      "description": [
-        "Set Aspect Ratio to \"Force 4:3\" in Graphics"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Monitor4-3",
-          "isRecursive": true,
-          "annotation": "4:3 -> 73:60"
-        }
-      ]
-    },
-    {
       "name": "Optional: Disable Screen Shake",
       "authors": [
         "Achilles1515"
