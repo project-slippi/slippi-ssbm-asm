@@ -7,6 +7,8 @@
   getMinorMajor r3
   cmpwi r3, 0x0202
   beq ReturnTrue
+  cmpwi r3, 0x0302 # Sudden Death
+  beq ReturnTrue
   cmpwi r3, 0x0208
   beq ReturnTrue
 
