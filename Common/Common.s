@@ -163,6 +163,7 @@ add \reg, r3, r4
 .set FN_LoadChatMessageProperties,0x800056ac
 .set FN_GetTeamCostumeIndex,0x800056b0
 .set FN_GetCSSIconData,0x800056b8
+.set FN_GetCSSIconNum,0x80005698
 .set FN_LoadPremadeText, 0x800056a4
 .set FN_GetSSMIndex,0x800056a0
 .set FN_GetFighterNum,0x8000569c
@@ -170,7 +171,7 @@ add \reg, r3, r4
 .set FN_RequestSSM,0x800056a8
 .set FN_GetCommonMinorID,0x8000561c
 # available addresses for static functions
-# 0x80005698
+# 0x80005694
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
