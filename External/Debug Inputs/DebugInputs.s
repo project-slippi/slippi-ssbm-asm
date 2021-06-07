@@ -1,4 +1,17 @@
 
+################################################################################
+# Macros
+################################################################################
+.macro incrementByte reg, reg_address, offset, limit
+lbz \reg, \offset(\reg_address)
+addi \reg, \reg, 1
+cmpwi \reg, \limit
+blt 0f
+li \reg, 0
+0:
+stb \reg, \offset(\reg_address)
+.endm
+
 .set INJ_InitDebugInputs, 0x8016e774
 
 .set CIRCULAR_BUFFER_COUNT, 10

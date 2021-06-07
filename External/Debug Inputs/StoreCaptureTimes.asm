@@ -43,13 +43,7 @@ loadGlobalFrame r3
 logf LOG_LEVEL_WARN, "%d %d", "mr 5, 3", "mr 6, 4"
 
 # Increment index
-lbz r3, DIB_POLL_INDEX(REG_DIB)
-addi r3, r3, 1
-cmpwi r3, CIRCULAR_BUFFER_COUNT
-blt SKIP_IDX_WRAP
-li r3, 0
-SKIP_IDX_WRAP:
-stb r3, DIB_POLL_INDEX(REG_DIB)
+incrementByte r3, REG_DIB, DIB_POLL_INDEX, CIRCULAR_BUFFER_COUNT
 
 # Indicate ready, prevents other functions from running first
 li r3, 1
