@@ -16,6 +16,9 @@ lwz r3, 0x0(r3) # 0x80479d64 - Believed to be some loading state
 cmpwi r3, 0 # Loading state should be zero when game starts
 bne EXIT
 
+.set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
+.set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
+
 .set REG_DIB, 31
 .set REG_INTERRUPTS, 30
 
@@ -28,6 +31,11 @@ mr REG_INTERRUPTS, r3
 computeBranchTargetAddress r3, INJ_InitDebugInputs
 lwz REG_DIB, 8+0(r3)
 
+# Store "key" to inputs (sets d-pad inputs)
+loadGlobalFrame r3
+rlwinm r3, r3, 16, 0xF0000
+stw r3, P1_PAD_OFFSET(sp)
+
 # Get and write current tick
 branchl r12, 0x8034c408 # OSGetTick
 lbz r4, DIB_POLL_INDEX(REG_DIB)
@@ -35,12 +43,13 @@ mulli r4, r4, 4 # Get index offset
 addi r4, r4, DIB_CIRCULAR_BUFFER
 stwx r3, REG_DIB, r4
 
-# Log us, not needed
-li r4, 486
-divwu r3, r3, r4
-mulli r4, r3, 12
-loadGlobalFrame r3
-logf LOG_LEVEL_WARN, "%d %d", "mr 5, 3", "mr 6, 4"
+# Log
+mr r8, r3
+lwz r7, P1_PAD_OFFSET(sp)
+rlwinm r7, r7, 16, 0xF
+lbz r6, DIB_POLL_INDEX(REG_DIB)
+loadGlobalFrame r5
+logf LOG_LEVEL_WARN, "POLL %u %u 0x%X %u"
 
 # Increment index
 incrementByte r3, REG_DIB, DIB_POLL_INDEX, CIRCULAR_BUFFER_COUNT

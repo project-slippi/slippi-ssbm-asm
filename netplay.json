@@ -329,11 +329,6 @@
           "annotation": "Log injections [Fizzi]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/LagReduction/PD+VB.bin",
-          "annotation": "Polling Drift Fix + VB [tauKhan]"
-        },
-        {
           "type": "injectFolder",
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
@@ -471,7 +466,7 @@
       ]
     },
     {
-      "name": "Debug Input Timings",
+      "name": "Optional: Debug Input Timings",
       "authors": [
         "Fizzi"
       ],
@@ -484,6 +479,22 @@
           "sourceFolder": "External/Debug Inputs",
           "isRecursive": true,
           "annotation": "Debug Inputs"
+        }
+      ]
+    },
+    {
+      "name": "Optional: PD+VB",
+      "authors": [
+        "taukhan"
+      ],
+      "description": [
+        "PD+VB"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD+VB.bin",
+          "annotation": "Polling Drift Fix + VB [tauKhan]"
         }
       ]
     }
