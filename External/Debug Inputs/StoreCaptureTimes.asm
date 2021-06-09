@@ -32,7 +32,7 @@ computeBranchTargetAddress r3, INJ_InitDebugInputs
 lwz REG_DIB, 8+0(r3)
 
 # Store "key" to inputs (sets d-pad inputs)
-loadGlobalFrame r3
+lbz r3, DIB_POLL_INDEX(REG_DIB)
 rlwinm r3, r3, 16, 0xF0000
 stw r3, P1_PAD_OFFSET(sp)
 
@@ -44,12 +44,10 @@ addi r4, r4, DIB_CIRCULAR_BUFFER
 stwx r3, REG_DIB, r4
 
 # Log
-mr r8, r3
-lwz r7, P1_PAD_OFFSET(sp)
-rlwinm r7, r7, 16, 0xF
-lbz r6, DIB_POLL_INDEX(REG_DIB)
+lwz r6, P1_PAD_OFFSET(sp)
+rlwinm r6, r6, 16, 0xF
 loadGlobalFrame r5
-logf LOG_LEVEL_WARN, "POLL %u %u 0x%X %u"
+logf LOG_LEVEL_WARN, "POLL %u 0x%X"
 
 # Increment index
 incrementByte r3, REG_DIB, DIB_POLL_INDEX, CIRCULAR_BUFFER_COUNT
@@ -62,6 +60,7 @@ stb r3, DIB_IS_READY(REG_DIB)
 mr r3, REG_INTERRUPTS
 branchl r12, OSRestoreInterrupts
 
+RESTORE_AND_EXIT:
 restore
 
 EXIT:
