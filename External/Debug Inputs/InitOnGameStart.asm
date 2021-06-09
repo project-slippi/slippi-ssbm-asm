@@ -20,6 +20,23 @@ blrl
 .byte 0,0,0,255
 
 ################################################################################
+# Function: PollingHandler
+################################################################################
+FN_BLRL_PollingHandler:
+blrl
+backup
+
+bl DATA_BLRL
+mflr REG_DATA
+lwz r4, DO_DIB_ADDR(REG_DATA)
+lwz r3, DIB_CALLBACK_COUNT(r4)
+addi r3, r3, 1
+stw r3, DIB_CALLBACK_COUNT(r4)
+
+restore
+blr
+
+################################################################################
 # Function: InitColorSquare
 ################################################################################
 .set REG_DATA, 31
@@ -80,6 +97,11 @@ li r4, DIB_SIZE
 branchl r12, Zero_AreaLength
 
 bl FN_InitColorSquare
+
+# I thought this would fire twice per frame (same as polling), but it doesn't and idk what it does
+bl FN_BLRL_PollingHandler
+mflr r3
+branchl r12, 0x80349bf0 # SIRegisterPollingHandler
 
 EXIT:
 lfs f1, -0x5738(rtoc)

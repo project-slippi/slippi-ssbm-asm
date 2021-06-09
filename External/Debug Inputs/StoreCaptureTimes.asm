@@ -44,10 +44,13 @@ addi r4, r4, DIB_CIRCULAR_BUFFER
 stwx r3, REG_DIB, r4
 
 # Log
+# loadwz r7, 0xCC006430 # Includes details to poll more often. http://hitmen.c02.at/files/yagcd/yagcd/chap5.html#sec5.8
+# loadwz r7, 0xCC006434
+lwz r7, DIB_CALLBACK_COUNT(REG_DIB)
 lwz r6, P1_PAD_OFFSET(sp)
 rlwinm r6, r6, 16, 0xF
 loadGlobalFrame r5
-logf LOG_LEVEL_WARN, "POLL %u 0x%X"
+logf LOG_LEVEL_WARN, "POLL %u 0x%X %u"
 
 # Increment index
 incrementByte r3, REG_DIB, DIB_POLL_INDEX, CIRCULAR_BUFFER_COUNT

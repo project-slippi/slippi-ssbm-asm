@@ -497,6 +497,39 @@
           "annotation": "Polling Drift Fix + VB [tauKhan]"
         }
       ]
+    },
+    {
+      "name": "Optional: PD",
+      "authors": [
+        "Dan Salvato"
+      ],
+      "description": [
+        "PD"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD.bin",
+          "annotation": "Polling Drift Fix [Dan Salvato]"
+        }
+      ]
+    },
+    {
+      "name": "Optional: 59.94Hz Engine",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Attempts to fix polling drift"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/59.94Hz Engine",
+          "isRecursive": true,
+          "annotation": "59.94Hz Engine"
+        }
+      ]
     }
   ]
 }
