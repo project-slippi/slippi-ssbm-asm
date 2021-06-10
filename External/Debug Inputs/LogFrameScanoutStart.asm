@@ -32,7 +32,7 @@ computeBranchTargetAddress r3, INJ_InitDebugInputs
 lwz REG_DIB, 8+0(r3)
 
 # Check if DIB is ready (poll has happened)
-lbz r3, DIB_IS_READY(REG_DIB)
+lbz r3, DIB_ACTIVE_STATE(REG_DIB)
 cmpwi r3, 0
 beq RESTORE_AND_EXIT
 
@@ -52,13 +52,16 @@ calcDiffTicksToUs REG_DIB, REG_KEY
 mr REG_DIFF_US, r3
 
 # Log
-mr r8, REG_DIFF_US
-loadwz r7, 0x804a8b10 # Load ptr to frame that will be scanned out
-lwz r7, 0(r7) # Load top left pixel
-mr r6, REG_KEY
-loadGlobalFrame r5
-subi r5, r5, 1
-logf LOG_LEVEL_WARN, "BLANK %u 0x%X %X %u" # Label Frame TimeUs
+# mr r8, REG_DIFF_US
+# loadwz r7, 0x804a8b10 # Load ptr to frame that will be scanned out
+# lwz r7, 0(r7) # Load top left pixel
+# mr r6, REG_KEY
+# loadGlobalFrame r5
+# subi r5, r5, 1
+# logf LOG_LEVEL_WARN, "BLANK %u 0x%X %X %u" # Label Frame TimeUs
+
+# Store latest latency
+stw REG_DIFF_US, DIB_INPUT_TO_RENDER_US(REG_DIB)
 
 # Restore interrupts
 mr r3, REG_INTERRUPTS

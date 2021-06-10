@@ -176,6 +176,23 @@
           "annotation": "Forces values for proper console operation [Fizzi]"
         }
       ]
+    },
+    {
+      "name": "Optional: Debug Input Timings",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Try to debug inputs"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Debug Inputs",
+          "isRecursive": true,
+          "annotation": "Debug Inputs"
+        }
+      ]
     }
   ]
 }

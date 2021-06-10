@@ -6,19 +6,18 @@
   ],
   "codes": [
     {
-      "name": "59.94Hz Engine",
+      "name": "Polling Drift Fix",
       "authors": [
-        "Fizzi"
+        "Dan Salvato"
       ],
       "description": [
         "Removes polling drift phenomenon causing variable input lag"
       ],
       "build": [
         {
-          "type": "injectFolder",
-          "sourceFolder": "External/59.94Hz Engine",
-          "isRecursive": true,
-          "annotation": "59.94Hz Engine [Fizzi]"
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD.bin",
+          "annotation": "Polling Drift Fix [Dan Salvato]"
         }
       ]
     }

@@ -31,26 +31,29 @@ computeBranchTargetAddress r3, INJ_InitDebugInputs
 lwz REG_DIB, 8+0(r3)
 
 # Check if DIB is ready (poll has happened)
-lbz r3, DIB_IS_READY(REG_DIB)
+lbz r3, DIB_ACTIVE_STATE(REG_DIB)
 cmpwi r3, 0
 beq RESTORE_AND_EXIT
 
-# Fetch key from controller input
-loadwz r7, 0x804c1fac
-rlwinm REG_KEY, r7, 0, 0xF
+# Fetch key from controller input and clear d-pad inputs
+load r4, 0x804c1fac
+lwz r3, 0(r4)
+rlwinm REG_KEY, r3, 0, 0xF
+rlwinm r3, r3, 0, 0xFFFFFFF0 # clear d-pad inputs
+stw r3, 0(r4)
 
 # Calculate time diff
 calcDiffTicksToUs REG_DIB, REG_KEY
 mr REG_DIFF_US, r3
 
 # Log
-mr r7, REG_DIFF_US
-mr r6, REG_KEY
-loadGlobalFrame r5
-logf LOG_LEVEL_WARN, "ENGINE %u 0x%X %u" # Label Frame TimeUs
+# mr r7, REG_DIFF_US
+# mr r6, REG_KEY
+# loadGlobalFrame r5
+# logf LOG_LEVEL_WARN, "ENGINE %u 0x%X %u" # Label Frame TimeUs
 
 # Adjust develop text BG color
-lwz r3, DIB_DEVELOP_TEXT_ADDR(REG_DIB)
+lwz r3, DIB_COLOR_KEY_DTEXT_ADDR(REG_DIB)
 stb REG_KEY, BKP_FREE_SPACE_OFFSET+0(sp)
 stb REG_KEY, BKP_FREE_SPACE_OFFSET+1(sp)
 stb REG_KEY, BKP_FREE_SPACE_OFFSET+2(sp)
