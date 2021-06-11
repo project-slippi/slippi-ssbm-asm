@@ -26,8 +26,8 @@ blrl
 .set DO_LD_TEXT_Y_SCALE, DO_LD_TEXT_X_SCALE + 4
 .float 17
 .set DO_LD_STR_LATENCY, DO_LD_TEXT_Y_SCALE + 4
-.string "Input to Render: %u us\n"
-.set DO_LD_STR_POLL_COUNT, DO_LD_STR_LATENCY + 24
+.string "Input to Retrace: %u us\n\n"
+.set DO_LD_STR_POLL_COUNT, DO_LD_STR_LATENCY + 26
 .string "Poll Count: %u\n"
 .set DO_LD_STR_MIN_POLL_DIFF, DO_LD_STR_POLL_COUNT + 16
 .string "Min Poll Diff: %u us\n"
@@ -239,8 +239,8 @@ mr r8, r3
 li r3, 31 # ID
 li r4, 0 # X Pos, bottom right: 638
 li r5, 0 # Y Pos, bottom right: 478
-li r6, 28
-li r7, 7
+li r6, 29
+li r7, 8
 branchl r12, 0x80302834 # DevelopText_CreateDataTable
 mr REG_DEVELOP_TEXT, r3
 #Activate Text
