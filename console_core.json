@@ -178,19 +178,19 @@
       ]
     },
     {
-      "name": "Optional: Debug Input Timings",
+      "name": "Optional: Debug Game-Side Latency (Not Nintendont)",
       "authors": [
         "Fizzi"
       ],
       "description": [
-        "Try to debug inputs"
+        "Shows latency information on screen while in-game. To be used on native GC/Wii."
       ],
       "build": [
         {
           "type": "injectFolder",
           "sourceFolder": "External/Debug Inputs",
           "isRecursive": true,
-          "annotation": "Debug Inputs"
+          "annotation": "Shows latency information on screen while in-game"
         }
       ]
     }

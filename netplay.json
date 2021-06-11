@@ -466,19 +466,24 @@
       ]
     },
     {
-      "name": "Optional: Debug Input Timings",
+      "name": "Optional: Debug Game-Side Latency",
       "authors": [
         "Fizzi"
       ],
       "description": [
-        "Try to debug inputs"
+        "Shows latency information on screen while in-game"
       ],
       "build": [
         {
           "type": "injectFolder",
           "sourceFolder": "External/Debug Inputs",
           "isRecursive": true,
-          "annotation": "Debug Inputs"
+          "annotation": "Shows latency information on screen while in-game"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Boot to CSS",
+          "isRecursive": true
         }
       ]
     },

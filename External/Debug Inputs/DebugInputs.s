@@ -38,7 +38,7 @@ stb \reg, \offset(\reg_address)
 .macro calcDiffUs reg_now, reg_ref
 sub r3, \reg_now, \reg_ref # This works even if ticks overflow
 mulli r3, r3, 12
-li r4, 729 # This is the MHz of the PPC clock. 729 in Nintendont, 486 otherwise
+li r4, 486 # This is the MHz of the PPC clock. 729 in Nintendont, 486 otherwise
 divwu r3, r3, r4
 .endm
 

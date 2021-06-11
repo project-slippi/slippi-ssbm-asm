@@ -12,7 +12,7 @@ blrl
 .set DO_DIB_ADDR, 0
 .long 0 # Buffer
 .set DO_CS_X_SCALE, DO_DIB_ADDR + 4
-.float 25
+.float 200
 .set DO_CS_Y_SCALE, DO_CS_X_SCALE + 4
 .float 25
 .set DO_CS_COLOR, DO_CS_Y_SCALE + 4
@@ -191,8 +191,8 @@ li r3, 32
 branchl r12, HSD_MemAlloc
 mr r8, r3
 li r3, 30 # ID
-li r4, -43 # X Pos, bottom right: 638
-li r5, -42 # Y Pos, bottom right: 478
+li r4, -210 # X Pos, bottom right: 638
+li r5, -40 # Y Pos, bottom right: 478
 li r6, 1
 li r7, 1
 branchl r12, 0x80302834 # DevelopText_CreateDataTable
