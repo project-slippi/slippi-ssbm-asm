@@ -38,7 +38,12 @@ stb \reg, \offset(\reg_address)
 .macro calcDiffUs reg_now, reg_ref
 sub r3, \reg_now, \reg_ref # This works even if ticks overflow
 mulli r3, r3, 12
-li r4, 486 # This is the MHz of the PPC clock. 729 in Nintendont, 486 otherwise
+lis r4, 0x8000
+ori r4, r4, 0x00FC
+lwz r4, 0(r4) # Grab CPU speed so that this works on Nintendont (729MHz) and GC/Wii (486MHz)
+li r5, 1000
+divwu r4, r4, r5
+divwu r4, r4, r5 # Divide by 1000 twice because I can't li 1000000
 divwu r3, r3, r4
 .endm
 

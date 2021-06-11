@@ -178,12 +178,12 @@
       ]
     },
     {
-      "name": "Optional: Debug Game-Side Latency (Not Nintendont)",
+      "name": "Optional: Debug Game-Side Latency",
       "authors": [
         "Fizzi"
       ],
       "description": [
-        "Shows latency information on screen while in-game. To be used on native GC/Wii."
+        "Shows latency information on screen while in-game"
       ],
       "build": [
         {
