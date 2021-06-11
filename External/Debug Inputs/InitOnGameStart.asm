@@ -36,7 +36,13 @@ blrl
 .set DO_LD_STR_FETCH_DIFF, DO_LD_STR_MAX_POLL_DIFF + 22
 .string "Fetch-Fetch: %u us\n"
 .set DO_LD_STR_FETCH_TO_POLL_DIFF, DO_LD_STR_FETCH_DIFF + 20
-.string "Fetch-Poll: %u us\n"
+.string "Poll-Fetch: %u us\n"
+.set DO_LD_STR_POLL_TO_ENGINE_DIFF, DO_LD_STR_FETCH_TO_POLL_DIFF + 19
+.string "Poll-Engine: %u us\n\n"
+.set DO_LD_STR_COLOR_ERRORS, DO_LD_STR_POLL_TO_ENGINE_DIFF + 21
+.string "Color Errors: %u\n"
+.set DO_LD_STR_FAILED_COLOR, DO_LD_STR_COLOR_ERRORS + 18
+.string "Failed Color: 0x%08X\n"
 .align 2
 
 ################################################################################
@@ -87,7 +93,7 @@ branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
 
 mr r3, REG_DEVELOP_TEXT
 addi r4, REG_DATA, DO_LD_STR_POLL_COUNT
-lwz r5, DIB_CALLBACK_COUNT(REG_DIB)
+lwz r5, DIB_POLL_COUNT(REG_DIB)
 branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
 
 mr r3, REG_DEVELOP_TEXT
@@ -107,7 +113,22 @@ branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
 
 mr r3, REG_DEVELOP_TEXT
 addi r4, REG_DATA, DO_LD_STR_FETCH_TO_POLL_DIFF
-lwz r5, DIB_FETCH_TO_POLL_US(REG_DIB)
+lwz r5, DIB_POLL_TO_FETCH_US(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_POLL_TO_ENGINE_DIFF
+lwz r5, DIB_POLL_TO_ENGINE_US(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_COLOR_ERRORS
+lwz r5, DIB_COLOR_FAIL_COUNT(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_FAILED_COLOR
+lwz r5, DIB_FAILED_COLOR(REG_DIB)
 branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
 
 # Check if game over
@@ -188,14 +209,14 @@ bl DATA_BLRL
 mflr REG_DATA
 
 #Create Rectangle
-li r3, 1000
+li r3, 1200
 branchl r12, HSD_MemAlloc
 mr r8, r3
 li r3, 31 # ID
 li r4, 0 # X Pos, bottom right: 638
 li r5, 0 # Y Pos, bottom right: 478
 li r6, 29
-li r7, 8
+li r7, 12
 branchl r12, 0x80302834 # DevelopText_CreateDataTable
 mr REG_DEVELOP_TEXT, r3
 #Activate Text

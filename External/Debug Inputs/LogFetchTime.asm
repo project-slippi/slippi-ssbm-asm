@@ -49,7 +49,7 @@ stwx r3, REG_DIB, r4
 # Log
 # loadwz r7, 0xCC006430 # Includes details to poll more often. http://hitmen.c02.at/files/yagcd/yagcd/chap5.html#sec5.8
 # loadwz r7, 0xCC006434
-# lwz r6, DIB_CALLBACK_COUNT(REG_DIB)
+# lwz r6, DIB_POLL_COUNT(REG_DIB)
 # lwz r5, P1_PAD_OFFSET(sp)
 # rlwinm r5, r5, 16, 0xF
 # loadGlobalFrame r4
@@ -77,13 +77,13 @@ stw r3, DIB_FETCH_DIFF_US(REG_DIB)
 # Store time since poll
 lwz r3, DIB_LAST_POLL_TIME(REG_DIB)
 calcDiffUs REG_FETCH_TIME, r3
-stw r3, DIB_FETCH_TO_POLL_US(REG_DIB)
+stw r3, DIB_POLL_TO_FETCH_US(REG_DIB)
 
+RESTORE_AND_EXIT:
 # Restore interrupts
 mr r3, REG_INTERRUPTS
 branchl r12, OSRestoreInterrupts
 
-RESTORE_AND_EXIT:
 restore
 
 EXIT:

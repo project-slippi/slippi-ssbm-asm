@@ -28,9 +28,9 @@ mr REG_INTERRUPTS, r3
 computeBranchTargetAddress r3, INJ_InitDebugInputs
 lwz REG_DIB, 8+0(r3)
 
-lwz r3, DIB_CALLBACK_COUNT(REG_DIB)
+lwz r3, DIB_POLL_COUNT(REG_DIB)
 addi r3, r3, 1
-stw r3, DIB_CALLBACK_COUNT(REG_DIB)
+stw r3, DIB_POLL_COUNT(REG_DIB)
 
 # Write poll time
 branchl r12, 0x8034c408 # OSGetTick
@@ -40,7 +40,7 @@ calcDiffUs r3, r4 # Calculate difference since last poll
 mr REG_DIFF_SINCE_LAST, r3
 
 # Store min/max diff for logging
-lwz r3, DIB_CALLBACK_COUNT(REG_DIB)
+lwz r3, DIB_POLL_COUNT(REG_DIB)
 rlwinm. r3, r3, 0, 0xFF
 beq FN_PollingHandler_RESET_MIN_MAX # Reset every 256 polls, 2 seconds?
 
@@ -63,11 +63,11 @@ stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MIN_US(REG_DIB)
 stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MAX_US(REG_DIB)
 FN_PollingHandler_MIN_MAX_END:
 
+RESTORE_AND_EXIT:
 # Restore interrupts
 mr r3, REG_INTERRUPTS
 branchl r12, OSRestoreInterrupts
 
-RESTORE_AND_EXIT:
 restore
 
 EXIT:
