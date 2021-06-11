@@ -42,58 +42,13 @@ blrl
 ################################################################################
 # Function: PollingHandler
 ################################################################################
-.set REG_DATA, 31
-.set REG_DIB, 30
-.set REG_DIFF_SINCE_LAST, 29
-
 FN_BLRL_PollingHandler:
 blrl
-backup
 
-bl DATA_BLRL
-mflr REG_DATA
-lwz REG_DIB, DO_DIB_ADDR(REG_DATA)
-lwz r3, DIB_CALLBACK_COUNT(REG_DIB)
-addi r3, r3, 1
-stw r3, DIB_CALLBACK_COUNT(REG_DIB)
-
-# Write poll time
-branchl r12, 0x8034c408 # OSGetTick
-lwz r4, DIB_LAST_POLL_TIME(REG_DIB)
-stw r3, DIB_LAST_POLL_TIME(REG_DIB)
-calcDiffUs r3, r4 # Calculate difference since last poll
-mr REG_DIFF_SINCE_LAST, r3
-
-# Store min/max diff for logging
-lwz r3, DIB_CALLBACK_COUNT(REG_DIB)
-rlwinm. r3, r3, 0, 0xFF
-beq FN_PollingHandler_RESET_MIN_MAX # Reset every 256 polls, 2 seconds?
-
-lwz r3, DIB_POLL_DIFF_MIN_US(REG_DIB)
-cmpw REG_DIFF_SINCE_LAST, r3
-bge FN_PollingHandler_SKIP_ADJUST_MIN
-stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MIN_US(REG_DIB)
-FN_PollingHandler_SKIP_ADJUST_MIN:
-
-lwz r3, DIB_POLL_DIFF_MAX_US(REG_DIB)
-cmpw REG_DIFF_SINCE_LAST, r3
-ble FN_PollingHandler_SKIP_ADJUST_MAX
-stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MAX_US(REG_DIB)
-FN_PollingHandler_SKIP_ADJUST_MAX:
-
-b FN_PollingHandler_MIN_MAX_END
-
-FN_PollingHandler_RESET_MIN_MAX:
-stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MIN_US(REG_DIB)
-stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MAX_US(REG_DIB)
-FN_PollingHandler_MIN_MAX_END:
-
-# li r4, 486
-# divwu r4, r3, r4
-# mulli r4, r4, 12
-# logf "POLL %u"
-
-restore
+# This is only here to trigger the interrupt. The actual logic will happen in LogPollInterrupt.asm
+# I modified it to work this way such that the poll time is logged before any poll handlers
+# run in case the PadRenewRaw is called is a side effect of a poll handler such as is the case
+# with tau's 0.5f lag reduction code
 blr
 
 ################################################################################
