@@ -3,7 +3,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s" # Required for logf buffer, should fix that
 .include "./DebugInputs.s"
 
 b CODE_START
@@ -30,6 +29,14 @@ blrl
 .string "Input to Render: %u us\n"
 .set DO_LD_STR_POLL_COUNT, DO_LD_STR_LATENCY + 24
 .string "Poll Count: %u\n"
+.set DO_LD_STR_MIN_POLL_DIFF, DO_LD_STR_POLL_COUNT + 16
+.string "Min Poll Diff: %u us\n"
+.set DO_LD_STR_MAX_POLL_DIFF, DO_LD_STR_MIN_POLL_DIFF + 22
+.string "Max Poll Diff: %u us\n"
+.set DO_LD_STR_FETCH_DIFF, DO_LD_STR_MAX_POLL_DIFF + 22
+.string "Fetch-Fetch: %u us\n"
+.set DO_LD_STR_FETCH_TO_POLL_DIFF, DO_LD_STR_FETCH_DIFF + 20
+.string "Fetch-Poll: %u us\n"
 .align 2
 
 ################################################################################
@@ -37,6 +44,7 @@ blrl
 ################################################################################
 .set REG_DATA, 31
 .set REG_DIB, 30
+.set REG_DIFF_SINCE_LAST, 29
 
 FN_BLRL_PollingHandler:
 blrl
@@ -51,7 +59,39 @@ stw r3, DIB_CALLBACK_COUNT(REG_DIB)
 
 # Write poll time
 branchl r12, 0x8034c408 # OSGetTick
+lwz r4, DIB_LAST_POLL_TIME(REG_DIB)
 stw r3, DIB_LAST_POLL_TIME(REG_DIB)
+calcDiffUs r3, r4 # Calculate difference since last poll
+mr REG_DIFF_SINCE_LAST, r3
+
+# Store min/max diff for logging
+lwz r3, DIB_CALLBACK_COUNT(REG_DIB)
+rlwinm. r3, r3, 0, 0xFF
+beq FN_PollingHandler_RESET_MIN_MAX # Reset every 256 polls, 2 seconds?
+
+lwz r3, DIB_POLL_DIFF_MIN_US(REG_DIB)
+cmpw REG_DIFF_SINCE_LAST, r3
+bge FN_PollingHandler_SKIP_ADJUST_MIN
+stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MIN_US(REG_DIB)
+FN_PollingHandler_SKIP_ADJUST_MIN:
+
+lwz r3, DIB_POLL_DIFF_MAX_US(REG_DIB)
+cmpw REG_DIFF_SINCE_LAST, r3
+ble FN_PollingHandler_SKIP_ADJUST_MAX
+stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MAX_US(REG_DIB)
+FN_PollingHandler_SKIP_ADJUST_MAX:
+
+b FN_PollingHandler_MIN_MAX_END
+
+FN_PollingHandler_RESET_MIN_MAX:
+stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MIN_US(REG_DIB)
+stw REG_DIFF_SINCE_LAST, DIB_POLL_DIFF_MAX_US(REG_DIB)
+FN_PollingHandler_MIN_MAX_END:
+
+# li r4, 486
+# divwu r4, r3, r4
+# mulli r4, r4, 12
+# logf "POLL %u"
 
 restore
 blr
@@ -89,9 +129,30 @@ mr r3, REG_DEVELOP_TEXT
 addi r4, REG_DATA, DO_LD_STR_LATENCY
 lwz r5, DIB_INPUT_TO_RENDER_US(REG_DIB)
 branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
 mr r3, REG_DEVELOP_TEXT
 addi r4, REG_DATA, DO_LD_STR_POLL_COUNT
 lwz r5, DIB_CALLBACK_COUNT(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_MIN_POLL_DIFF
+lwz r5, DIB_POLL_DIFF_MIN_US(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_MAX_POLL_DIFF
+lwz r5, DIB_POLL_DIFF_MAX_US(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_FETCH_DIFF
+lwz r5, DIB_FETCH_DIFF_US(REG_DIB)
+branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
+
+mr r3, REG_DEVELOP_TEXT
+addi r4, REG_DATA, DO_LD_STR_FETCH_TO_POLL_DIFF
+lwz r5, DIB_FETCH_TO_POLL_US(REG_DIB)
 branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
 
 # Check if game over
@@ -179,7 +240,7 @@ li r3, 31 # ID
 li r4, 0 # X Pos, bottom right: 638
 li r5, 0 # Y Pos, bottom right: 478
 li r6, 28
-li r7, 4
+li r7, 7
 branchl r12, 0x80302834 # DevelopText_CreateDataTable
 mr REG_DEVELOP_TEXT, r3
 #Activate Text
@@ -229,7 +290,7 @@ CODE_START:
 .set REG_DIB, 30
 
 backup
-# logf LOG_LEVEL_WARN, "Init..."
+# logf "Init..."
 
 li r3, DIB_SIZE
 branchl r12, HSD_MemAlloc

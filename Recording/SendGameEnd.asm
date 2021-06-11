@@ -32,7 +32,7 @@ backup
 # check if we have previously sent game end message (don't send more than once)
   lwz REG_RDB, primaryDataBuffer(r13)
   lbz r3, RDB_GAME_END_SENT(REG_RDB)
-  #logf LOG_LEVEL_NOTICE, "Checking game end sent: %d", "mr r5, 3"
+  #exilogf LOG_LEVEL_NOTICE, "Checking game end sent: %d", "mr r5, 3"
   cmpwi r3, 0
   bne Injection_Exit # If game end already sent, do nothing more
 
@@ -45,7 +45,7 @@ backup
   bne StartWrite
   lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
   lbz r3, ODB_IS_GAME_OVER(r3)
-  #logf LOG_LEVEL_NOTICE, "Game end being checked %d", "mr r5, 3"
+  #exilogf LOG_LEVEL_NOTICE, "Game end being checked %d", "mr r5, 3"
   cmpwi r3, 0
   beq Injection_Exit # If game is not over yet, don't send game end
 
@@ -81,7 +81,7 @@ StoreLRAStarter:
 # Indicate game end has been sent
   li r3, 1
   stb r3, RDB_GAME_END_SENT(REG_RDB)
-  #logf LOG_LEVEL_NOTICE, "Wrote game end sent"
+  #exilogf LOG_LEVEL_NOTICE, "Wrote game end sent"
 
 Injection_Exit:
   restore

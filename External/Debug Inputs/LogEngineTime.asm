@@ -3,7 +3,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s" # Required for logf buffer, should fix that
 .include "./DebugInputs.s"
 
 # Check if VS Mode
@@ -43,14 +42,14 @@ rlwinm r3, r3, 0, 0xFFFFFFF0 # clear d-pad inputs
 stw r3, 0(r4)
 
 # Calculate time diff
-calcDiffTicksToUs REG_DIB, REG_KEY
+calcDiffFromFetchUs REG_DIB, REG_KEY
 mr REG_DIFF_US, r3
 
 # Log
-# mr r7, REG_DIFF_US
-# mr r6, REG_KEY
-# loadGlobalFrame r5
-# logf LOG_LEVEL_WARN, "ENGINE %u 0x%X %u" # Label Frame TimeUs
+# mr r6, REG_DIFF_US
+# mr r5, REG_KEY
+# loadGlobalFrame r4
+# logf "ENGINE %u 0x%X %u" # Label Frame TimeUs
 
 # Adjust develop text BG color
 lwz r3, DIB_COLOR_KEY_DTEXT_ADDR(REG_DIB)

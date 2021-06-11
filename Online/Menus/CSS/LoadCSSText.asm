@@ -1347,7 +1347,7 @@ branchl r12, GObj_Destroy
 lwz r4, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 lbz r4, MSRB_LOCAL_PLAYER_INDEX(r4)
 
-#logf LOG_LEVEL_INFO, "MSG LOCAL INDEX %d MSG INDEX %d", "mr r5, 4", "mr r6, 23"
+#exilogf LOG_LEVEL_INFO, "MSG LOCAL INDEX %d MSG INDEX %d", "mr r5, 4", "mr r6, 23"
 
 cmpw REG_CHATMSG_PLAYER_INDEX,r4
 bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT
@@ -1355,14 +1355,14 @@ bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT
 lbz r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
 subi r3, r3, 1
 stb r3, CSSDT_CHAT_LOCAL_MSG_COUNT(REG_CSSDT_ADDR) # store the new message count
-#logf LOG_LEVEL_WARN, "local msg count: %d", "mr r5, r3"
+#exilogf LOG_LEVEL_WARN, "local msg count: %d", "mr r5, r3"
 SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT:
 
 # Decrease chat message count by 1
 lbz r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # chat message index
 subi r3, r3, 1
 stb r3, CSSDT_CHAT_MSG_COUNT(REG_CSSDT_ADDR) # store the new message count
-#logf LOG_LEVEL_WARN, "msg count: %d", "mr r5, r3"
+#exilogf LOG_LEVEL_WARN, "msg count: %d", "mr r5, r3"
 
 # If This is the last message being removed, reset the Last MSG Index to 0
 lbz r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # chat message index

@@ -3,7 +3,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s" # Required for logf buffer, should fix that
 .include "./DebugInputs.s"
 
 # Check if VS Mode
@@ -48,17 +47,17 @@ divwu r3, r3, r4
 rlwinm REG_KEY, r3, 28, 0xF # Extract 4 bits to get key
 
 # Calculate time diff
-calcDiffTicksToUs REG_DIB, REG_KEY
+calcDiffFromFetchUs REG_DIB, REG_KEY
 mr REG_DIFF_US, r3
 
 # Log
-# mr r8, REG_DIFF_US
-# loadwz r7, 0x804a8b10 # Load ptr to frame that will be scanned out
-# lwz r7, 0(r7) # Load top left pixel
-# mr r6, REG_KEY
-# loadGlobalFrame r5
-# subi r5, r5, 1
-# logf LOG_LEVEL_WARN, "BLANK %u 0x%X %X %u" # Label Frame TimeUs
+# mr r7, REG_DIFF_US
+# loadwz r6, 0x804a8b10 # Load ptr to frame that will be scanned out
+# lwz r6, 0(r6) # Load top left pixel
+# mr r5, REG_KEY
+# loadGlobalFrame r4
+# subi r4, r4, 1
+# logf "BLANK %u 0x%X %X %u" # Label Frame TimeUs
 
 # Store latest latency
 stw REG_DIFF_US, DIB_INPUT_TO_RENDER_US(REG_DIB)

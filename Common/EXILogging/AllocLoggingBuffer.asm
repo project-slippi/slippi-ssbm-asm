@@ -1,14 +1,14 @@
 ################################################################################
-# Address: 0x801a4cb4
+# Address: 0x801a4cb8
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s"
 
 # Alloc buffer
-  li  r3,128
-  branchl r12,HSD_MemAlloc
-  stw r3,OFST_R13_SB_ADDR(r13)
+li  r3, 128
+branchl r12, HSD_MemAlloc
+stw r3, OFST_R13_LOG_BUF(r13)
 
 # Original
-  li	r0, 0
+li r0, 0
+stw r0, -0x4F78(r13)

@@ -36,7 +36,7 @@ li REG_IS_SOUND_ACTIVE, 0
 li REG_SOUND_INSTANCE_ID, 0
 rlwinm REG_SOUND_ID, r23, 0, 0xFFFF # Extract half word from sound ID input
 
-#logf LOG_LEVEL_WARN, "Play SFX %x, Frame: %d, Rollback: %d", "mr r5, REG_SOUND_ID", "loadGlobalFrame r6", "lbz r7, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)"
+#exilogf LOG_LEVEL_WARN, "Play SFX %x, Frame: %d, Rollback: %d", "mr r5, REG_SOUND_ID", "loadGlobalFrame r6", "lbz r7, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)"
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 loadGlobalFrame r3
@@ -84,11 +84,11 @@ lbz r3, SFXS_LOG_INDEX(r6)
 cmpw r8, r3
 blt FIND_SOUND_LOOP_START
 
-#logf LOG_LEVEL_ERROR, "SFX %x NOT found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+#exilogf LOG_LEVEL_ERROR, "SFX %x NOT found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 b STORE_SOUND
 
 SOUND_ALREADY_PLAYED:
-#logf LOG_LEVEL_WARN, "SFX %x found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+#exilogf LOG_LEVEL_WARN, "SFX %x found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 lwz REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)
 li REG_IS_SOUND_ACTIVE, 1
 

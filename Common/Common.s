@@ -1,153 +1,4 @@
 ################################################################################
-# Macros
-################################################################################
-.macro branchl reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctrl
-.endm
-
-.macro branch reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctr
-.endm
-
-.macro load reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-.endm
-
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
-
-.macro loadwz reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-lwz \reg, 0(\reg)
-.endm
-
-.macro loadbz reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-lbz \reg, 0(\reg)
-.endm
-
-.set BKP_FREE_SPACE_OFFSET, 0x38 # This is where the free space in our stack starts
-
-.macro backup space=0x78
-mflr r0
-stw r0, 0x4(r1)
-stwu r1,-(BKP_FREE_SPACE_OFFSET + \space)(r1)	# make space for 12 registers
-stmw r20,0x8(r1)
-.endm
-
-.macro restore space=0x78
-lmw r20,0x8(r1)
-lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space)(r1)
-addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
-mtlr r0
-.endm
-
-.macro byteAlign32 reg
-addi \reg, \reg, 31
-rlwinm \reg, \reg, 0, 0xFFFFFFE0
-.endm
-
-.macro backupall
-mflr r0
-stw r0, 0x4(r1)
-stwu r1,-0x100(r1)
-stmw r3,0x8(r1)
-.endm
-
-.macro restoreall
-lmw r3,0x8(r1)
-lwz r0, 0x104(r1)
-addi r1,r1,0x100
-mtlr r0
-.endm
-
-.macro logf level, str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
-b 1f
-0:
-blrl
-.string "\str"
-.align 2
-
-1:
-backupall
-
-# Set up args to log
-\arg1
-\arg2
-\arg3
-\arg4
-\arg5
-
-lwz r3, OFST_R13_SB_ADDR(r13) # Buf to use as EXI buf
-addi r3, r3, 3
-bl 0b
-mflr r4
-crset 6
-branchl r12, 0x80323cf4 # sprintf
-
-lwz r3, OFST_R13_SB_ADDR(r13) # Buf to use as EXI buf
-
-li r4, 0xD0
-stb r4, 0(r3)
-li r4, 0 # Do not request time to be logged
-stb r4, 1(r3)
-li r4, \level
-stb r4, 2(r3)
-
-li r4, 128 # Length of buf
-li r5, CONST_ExiWrite
-branchl r12, FN_EXITransferBuffer
-
-restoreall
-.endm
-
-.macro getMinorMajor reg
-lis \reg, 0x8048 # load address to offset from for scene controller
-lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
-rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
-.endm
-
-.macro getMajorId reg
-lis \reg, 0x8048 # load address to offset from for scene controller
-lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
-.endm
-
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
-# This macro takes in an address that is expected to have a branch instruction. It will set
-# r3 to the address being branched to. This will overwrite r3 and r4
-.macro computeBranchTargetAddress reg address
-load r3, \address
-lwz r4, 0(r3) # Get branch instruction which contains offset
-
-# Process 3rd byte and extend sign to handle negative branches
-rlwinm r5, r4, 16, 0xFF
-extsb r5, r5
-rlwinm r5, r5, 16, 0xFFFF0000
-
-# Extract last 2 bytes, combine with top half, and then add to base address to get result
-rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
-or r4, r4, r5
-add \reg, r3, r4
-.endm
-
-################################################################################
 # Settings
 ################################################################################
 # STG_EXIIndex is now set during build with arg -defsym STG_EXIIndex=1
@@ -393,7 +244,7 @@ add \reg, r3, r4
 # Offsets from r13
 ################################################################################
 .set primaryDataBuffer,-0x49b4
-.set secondaryDmaBuffer,-0x49b0
+.set OFST_R13_LOG_BUF, -0x5040 # From Line: 8019b914 (SceneLoad_TournamentBracket)
 .set archiveDataBuffer, -0x4AE8
 .set bufferOffset,-0x49b0
 .set frameIndex,-0x49ac
@@ -407,3 +258,177 @@ add \reg, r3, r4
 .set LOG_LEVEL_WARN, 3
 .set LOG_LEVEL_ERROR, 2
 .set LOG_LEVEL_NOTICE, 1
+
+################################################################################
+# Macros
+################################################################################
+.macro branchl reg, address
+lis \reg, \address @h
+ori \reg,\reg,\address @l
+mtctr \reg
+bctrl
+.endm
+
+.macro branch reg, address
+lis \reg, \address @h
+ori \reg,\reg,\address @l
+mtctr \reg
+bctr
+.endm
+
+.macro load reg, address
+lis \reg, \address @h
+ori \reg, \reg, \address @l
+.endm
+
+.macro loadf regf,reg,address
+lis \reg, \address @h
+ori \reg, \reg, \address @l
+stw \reg,-0x4(sp)
+lfs \regf,-0x4(sp)
+.endm
+
+.macro loadwz reg, address
+lis \reg, \address @h
+ori \reg, \reg, \address @l
+lwz \reg, 0(\reg)
+.endm
+
+.macro loadbz reg, address
+lis \reg, \address @h
+ori \reg, \reg, \address @l
+lbz \reg, 0(\reg)
+.endm
+
+.set BKP_FREE_SPACE_OFFSET, 0x38 # This is where the free space in our stack starts
+
+.macro backup space=0x78
+mflr r0
+stw r0, 0x4(r1)
+stwu r1,-(BKP_FREE_SPACE_OFFSET + \space)(r1)	# make space for 12 registers
+stmw r20,0x8(r1)
+.endm
+
+.macro restore space=0x78
+lmw r20,0x8(r1)
+lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space)(r1)
+addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
+mtlr r0
+.endm
+
+.macro byteAlign32 reg
+addi \reg, \reg, 31
+rlwinm \reg, \reg, 0, 0xFFFFFFE0
+.endm
+
+.macro backupall
+mflr r0
+stw r0, 0x4(r1)
+stwu r1,-0x100(r1)
+stmw r3,0x8(r1)
+.endm
+
+.macro restoreall
+lmw r3,0x8(r1)
+lwz r0, 0x104(r1)
+addi r1,r1,0x100
+mtlr r0
+.endm
+
+.macro logf str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+b 1f
+0:
+blrl
+.string "\str"
+.align 2
+
+1:
+backupall
+
+# Set up args to log
+\arg1
+\arg2
+\arg3
+\arg4
+\arg5
+
+# Call OSReport
+bl 0b
+mflr r3
+branchl r12, OSReport
+
+restoreall
+.endm
+
+.macro exilogf level, str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+b 1f
+0:
+blrl
+.string "\str"
+.align 2
+
+1:
+backupall
+
+# Set up args to log
+\arg1
+\arg2
+\arg3
+\arg4
+\arg5
+
+lwz r3, OFST_R13_LOG_BUF(r13) # Buf to use as EXI buf
+addi r3, r3, 3
+bl 0b
+mflr r4
+crset 6
+branchl r12, 0x80323cf4 # sprintf
+
+lwz r3, OFST_R13_LOG_BUF(r13) # Buf to use as EXI buf
+
+li r4, 0xD0
+stb r4, 0(r3)
+li r4, 0 # Do not request time to be logged
+stb r4, 1(r3)
+li r4, \level
+stb r4, 2(r3)
+
+li r4, 128 # Length of buf
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+restoreall
+.endm
+
+.macro getMinorMajor reg
+lis \reg, 0x8048 # load address to offset from for scene controller
+lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
+rlwinm \reg, \reg, 8, 0xFFFF # Loads major and minor scene into bottom of reg
+.endm
+
+.macro getMajorId reg
+lis \reg, 0x8048 # load address to offset from for scene controller
+lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
+.endm
+
+.macro loadGlobalFrame reg
+lis \reg, 0x8048
+lwz \reg, -0x62A0(\reg)
+.endm
+
+# This macro takes in an address that is expected to have a branch instruction. It will set
+# r3 to the address being branched to. This will overwrite r3 and r4
+.macro computeBranchTargetAddress reg address
+load r3, \address
+lwz r4, 0(r3) # Get branch instruction which contains offset
+
+# Process 3rd byte and extend sign to handle negative branches
+rlwinm r5, r4, 16, 0xFF
+extsb r5, r5
+rlwinm r5, r5, 16, 0xFFFF0000
+
+# Extract last 2 bytes, combine with top half, and then add to base address to get result
+rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
+or r4, r4, r5
+add \reg, r3, r4
+.endm
