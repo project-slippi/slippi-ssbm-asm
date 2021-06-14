@@ -45,12 +45,6 @@ stw r3, 0(r4)
 calcDiffFromFetchUs REG_DIB, REG_KEY
 mr REG_DIFF_US, r3
 
-# Log
-# mr r6, REG_DIFF_US
-# mr r5, REG_KEY
-# loadGlobalFrame r4
-# logf "ENGINE %u 0x%X %u" # Label Frame TimeUs
-
 stw REG_DIFF_US, DIB_POLL_TO_ENGINE_US(REG_DIB)
 
 # Adjust develop text BG color

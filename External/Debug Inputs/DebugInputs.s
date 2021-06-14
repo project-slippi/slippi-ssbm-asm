@@ -20,9 +20,7 @@
 .set DIB_POLL_TO_FETCH_US, DIB_FETCH_DIFF_US + 4 # u32
 .set DIB_POLL_TO_ENGINE_US, DIB_POLL_TO_FETCH_US + 4 # u32
 .set DIB_POLL_COUNT, DIB_POLL_TO_ENGINE_US + 4 # u32
-.set DIB_COLOR_FAIL_COUNT, DIB_POLL_COUNT + 4 # u32
-.set DIB_FAILED_COLOR, DIB_COLOR_FAIL_COUNT + 4 # u32
-.set DIB_SIZE, DIB_FAILED_COLOR + 4
+.set DIB_SIZE, DIB_POLL_COUNT + 4
 
 ################################################################################
 # Macros

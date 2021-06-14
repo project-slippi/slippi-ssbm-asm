@@ -26,8 +26,8 @@ blrl
 .set DO_LD_TEXT_Y_SCALE, DO_LD_TEXT_X_SCALE + 4
 .float 17
 .set DO_LD_STR_LATENCY, DO_LD_TEXT_Y_SCALE + 4
-.string "Input to Retrace: %u us\n\n"
-.set DO_LD_STR_POLL_COUNT, DO_LD_STR_LATENCY + 26
+.string "Total Game Lag: %u us\n\n"
+.set DO_LD_STR_POLL_COUNT, DO_LD_STR_LATENCY + 24
 .string "Poll Count: %u\n"
 .set DO_LD_STR_MIN_POLL_DIFF, DO_LD_STR_POLL_COUNT + 16
 .string "Min Poll Diff: %u us\n"
@@ -38,11 +38,7 @@ blrl
 .set DO_LD_STR_FETCH_TO_POLL_DIFF, DO_LD_STR_FETCH_DIFF + 20
 .string "Poll-Fetch: %u us\n"
 .set DO_LD_STR_POLL_TO_ENGINE_DIFF, DO_LD_STR_FETCH_TO_POLL_DIFF + 19
-.string "Poll-Engine: %u us\n\n"
-.set DO_LD_STR_COLOR_ERRORS, DO_LD_STR_POLL_TO_ENGINE_DIFF + 21
-.string "Color Errors: %u\n"
-.set DO_LD_STR_FAILED_COLOR, DO_LD_STR_COLOR_ERRORS + 18
-.string "Failed Color: 0x%08X\n"
+.string "Poll-Engine: %u us\n"
 .align 2
 
 ################################################################################
@@ -121,16 +117,6 @@ addi r4, REG_DATA, DO_LD_STR_POLL_TO_ENGINE_DIFF
 lwz r5, DIB_POLL_TO_ENGINE_US(REG_DIB)
 branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
 
-mr r3, REG_DEVELOP_TEXT
-addi r4, REG_DATA, DO_LD_STR_COLOR_ERRORS
-lwz r5, DIB_COLOR_FAIL_COUNT(REG_DIB)
-branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
-
-mr r3, REG_DEVELOP_TEXT
-addi r4, REG_DATA, DO_LD_STR_FAILED_COLOR
-lwz r5, DIB_FAILED_COLOR(REG_DIB)
-branchl r12, 0x80302d4c # DevelopText_FormatAndPrint
-
 # Check if game over
 load r3, 0x8046b6a0
 lbz r3, 0x8(r3)
@@ -167,8 +153,8 @@ li r3, 32
 branchl r12, HSD_MemAlloc
 mr r8, r3
 li r3, 30 # ID
-li r4, -210 # X Pos, bottom right: 638
-li r5, -40 # Y Pos, bottom right: 478
+li r4, -210 # X Pos
+li r5, -40 # Y Pos
 li r6, 1
 li r7, 1
 branchl r12, 0x80302834 # DevelopText_CreateDataTable
@@ -209,14 +195,14 @@ bl DATA_BLRL
 mflr REG_DATA
 
 #Create Rectangle
-li r3, 1200
+li r3, 1000
 branchl r12, HSD_MemAlloc
 mr r8, r3
 li r3, 31 # ID
-li r4, 0 # X Pos, bottom right: 638
-li r5, 0 # Y Pos, bottom right: 478
-li r6, 29
-li r7, 12
+li r4, 0 # X Pos
+li r5, 0 # Y Pos
+li r6, 29 # Width
+li r7, 9 # Height
 branchl r12, 0x80302834 # DevelopText_CreateDataTable
 mr REG_DEVELOP_TEXT, r3
 #Activate Text
