@@ -257,9 +257,9 @@ bl SplashSceneDecide
 .byte 5                     #Minor Scene ID
 .byte 3                    #Amount of persistent heaps
 .align 2
-.long 0x00000000          #ScenePrep, previously 0x801b3500
-.long 0x00000000
-.byte 80                  #Common Minor ID (Classic Mode Splash)
+.long 0x00000000          #ScenePrep
+bl GamePrepSceneDecide    #SceneDecide
+.byte 80                  #Common Minor ID (Game Preparation)
 .align 2
 .long 0x00000000            #Minor Data 1
 .long 0x00000000            #Minor Data 2
@@ -399,7 +399,7 @@ b CSSSceneDecide_LoadSplash
 # Ranked Mode Logic
 ################################################################################
 CSSSceneDecide_Adv_IsRanked:
-# Set next scene as Splash
+# Set next scene as game prep
 load r4, 0x80479d30
 li r3, 0x06
 stb r3, 0x5(r4)
@@ -1102,6 +1102,19 @@ li  r3,1
 restore
 blr
 #endregion
+
+GamePrepSceneDecide:
+backup
+
+bl  SplashSceneInit
+
+# This will cause the next scene to be the splash screen
+load r4, 0x80479d30
+li r3, 0x05
+stb r3, 0x5(r4)
+
+restore
+blr
 
 Injection_Exit:
 #Exit Scene
