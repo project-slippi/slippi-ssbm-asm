@@ -9,7 +9,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s"
 
 .set  REG_SSMID,3
 .set  REG_ToLoadOrig,12

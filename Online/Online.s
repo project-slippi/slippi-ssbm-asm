@@ -4,11 +4,6 @@
 # - Handle situation where a game ends while still predicting inputs, probably
 #   wouldn't want to trigger a game end until all inputs have been received
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
 ################################################################################
 # Offsets from r13
 ################################################################################

@@ -117,11 +117,11 @@ blrl
   addi r5,sp,0x40
   branchl r12, Text_ChangeTextColor
 
-  ###########################
-  ## Allocate Buffer Space ##
-  ###########################
+  #####################
+  ## Allocate Buffer ##
+  #####################
 
-  li  r3,0x20
+  li  r3,EXIBufferLength
   branchl r12, HSD_MemAlloc
   mr  REG_BufferPointer,r3
 
@@ -215,8 +215,110 @@ blrl
     mr  r3,REG_Text
     branchl r12, Text_RemoveText
 
-  #Resume
-    branchl r12, DiscError_ResumeGame
+  # get the game info data
+  REQUEST_DATA:
+  # request game information from slippi
+    li r3,CMD_GET_GAME_INFO        # store game info request ID
+    stb r3,0x0(REG_BufferPointer)
+  # write memory locations to preserve when doing mem savestates
+    li r3, 0  # wont be savestating yet so maybe 0 is a valid argument here =)
+    stw r3, 0x1(REG_BufferPointer)
+    li r3, 0  # include the latest frame which follows SFXDB, wont be savestating yet so maybe 0 is a valid argument here =) 
+    stw r3, 0x5(REG_BufferPointer)
+    li r3, 0
+    stw r3, 0x9(REG_BufferPointer)
+  # Transfer buffer over DMA
+    mr r3,REG_BufferPointer   #Buffer Pointer
+    li  r4,0xD            #Buffer Length
+    li  r5,CONST_ExiWrite
+    branchl r12,FN_EXITransferBuffer
+  RECEIVE_DATA:
+  # Transfer buffer over DMA
+    mr  r3,REG_BufferPointer
+    li  r4,GameInfoLength     #Buffer Length
+    li  r5,CONST_ExiRead
+    branchl r12,FN_EXITransferBuffer
+  # Check if successful
+    lbz r3,0x0(REG_BufferPointer)
+    cmpwi r3, 1
+    beq READ_DATA
+  # Wait a frame before trying again? idk i copied this from RestoreGameInfo.asm lol
+    branchl r12, VIWaitForRetrace
+    b REQUEST_DATA
+  READ_DATA:
+  .set REG_MatchInfo, 20
+    addi REG_MatchInfo,REG_BufferPointer,MatchStruct #Match info from slippi
+
+  # Preload these fighters
+    load r4,0x80432078
+    lbz r3, 0x60(REG_MatchInfo) # load p1 char id
+    stw r3, 0x14 (r4)
+    lbz r3, 0x63(REG_MatchInfo) # load char color
+    stb r3, 0x18 (r4)
+    lbz r3, 0x60 + 0x24(REG_MatchInfo) # load p2 char id
+    stw r3, 0x1C (r4)
+    lbz r3, 0x63 + 0x24(REG_MatchInfo) # load char color
+    stb r3, 0x20 (r4)
+    lbz r3, 0x60 + 0x24*2(REG_MatchInfo) # load p3 char id
+    stw r3, 0x24 (r4)
+    lbz r3, 0x63 + 0x24*2(REG_MatchInfo) # load char color
+    stb r3, 0x28 (r4)
+    lbz r3, 0x60 + 0x24*3(REG_MatchInfo) # load p4 char id
+    stw r3, 0x2C (r4)
+    lbz r3, 0x63 + 0x24*3(REG_MatchInfo) # load char color
+    stb r3, 0x30 (r4)
+
+  SKIP_TEAMS_PRELOAD:
+  # Preload the stage
+    lhz r3, 0xE (REG_MatchInfo)
+    stw r3, 0xC (r4)
+
+  # Queue file loads
+    branchl r12,0x80018254
+    li  r3,199
+    branchl r12,0x80018c2c
+    li  r3,4
+    branchl r12,0x80017700
+
+  # Clear ssm queue
+    li	r3, 28
+    branchl	r12, 0x80026F2C
+
+  branchl r12,0x8021b2d8
+
+  # Load fighters' ssm files
+  .set REG_COUNT,21
+  .set REG_CURR,22
+    li	REG_COUNT, 0
+    mulli	r0, REG_COUNT, 36
+    mr REG_CURR, REG_MatchInfo
+    add	REG_CURR, REG_CURR, r0
+  CSSSceneDecide_SSMLoop:
+  # Get fighter's external ID
+    branchl r12,FN_GetFighterNum
+    lbz	r4, 0x0060 (REG_CURR)
+    extsb	r4, r4
+    cmpw r4,r3
+    beq CSSSceneDecide_SSMIncLoop
+  # Get fighter's ssm ID
+    li r3,0   # fighter
+    # r4 already contains fighter index
+    branchl r12,FN_GetSSMIndex
+    branchl r12,FN_RequestSSM   # queue it
+  CSSSceneDecide_SSMIncLoop:
+    addi	REG_COUNT, REG_COUNT, 1
+    cmpwi	REG_COUNT, 6
+    addi	REG_CURR, REG_CURR, 36
+    blt+	 CSSSceneDecide_SSMLoop
+  # Get stage's ssm file index
+    lhz r3, 0xE (REG_MatchInfo)
+    branchl r12,0x8022519c  # get internal ID
+    mr r4,r3  # stage index
+    li r3,1   # stage
+    branchl r12,FN_GetSSMIndex
+    branchl r12,FN_RequestSSM   # queue it
+  # set to load
+    branchl r12, 0x80027168
 
   #Play SFX
     lwz r3,HideWaitingForGame(rtoc)
@@ -225,6 +327,10 @@ blrl
     li  r3,0x1
     branchl r12, SFX_Menu_CommonSound
   skipSFX:
+  
+  #Resume
+    branchl r12, DiscError_ResumeGame
+
   #Change Scene Minor
     branchl r12, MenuController_ChangeScreenMinor
 

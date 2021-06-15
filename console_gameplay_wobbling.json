@@ -1,0 +1,25 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_gameplay_wobbling.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Disable Wobbling",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Break out of grab after three Nana hits"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/PreventWobbling.bin",
+          "annotation": "Disable wobbling"
+        }
+      ]
+    }
+  ]
+}

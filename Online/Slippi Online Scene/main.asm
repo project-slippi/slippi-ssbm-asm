@@ -152,20 +152,36 @@ stb r3, 0x6(r4)
 ################################################################################
 # Set up Zelda to select Sheik as default
 ################################################################################
+.set REG_IconData, 20
+.set REG_IconNum, 21
+.set REG_Count, 22
 
 # get CSS icon data
-branchl r12,FN_GetCSSIconData
-mr r4,r3
-# get zelda icon ID's external ID
-li r3, 15
-mulli	r3, r3, 28
-add	r4, r3, r4
+  branchl r12,FN_GetCSSIconData
+  mr REG_IconData,r3
+# get icon num
+  branchl r12,FN_GetCSSIconNum
+  mr REG_IconNum,r3
+# init search
+  li REG_Count, 0
+  b ZeldaSearch_Check
+ZeldaSearch_Loop:
+# check for zelda
+  lbz	r3, 0x00DD (REG_IconData) # char id
+  cmpwi r3,0x12
+  bne ZeldaSearch_Inc
 # store sheik's ID
-li r3,0x13
-stb	r3, 0x00DD (r4) # char id
+  li r3,0x13
+  stb	r3, 0x00DD (REG_IconData) # char id
+  b ZeldaSearch_End
+ZeldaSearch_Inc:
+  addi REG_Count,REG_Count,1
+  addi REG_IconData,REG_IconData,28
+ZeldaSearch_Check:
+  cmpw REG_Count,REG_IconNum
+  blt ZeldaSearch_Loop
+ZeldaSearch_End:
 
-#load r4, 0x803f0cc8
-#stb r3, 0x1(r4)
 
 restore
 blr
@@ -895,8 +911,8 @@ extsb	r4, r4
 cmpw r4,r3
 beq CSSSceneDecide_SSMIncLoop
 # Get fighter's ssm ID
-mr r4,r3  # fighter index
 li r3,0   # fighter
+# r4 already contains fighter index
 branchl r12,FN_GetSSMIndex
 branchl r12,FN_RequestSSM   # queue it
 CSSSceneDecide_SSMIncLoop:

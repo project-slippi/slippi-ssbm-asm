@@ -125,6 +125,11 @@ lis \reg, 0x8048 # load address to offset from for scene controller
 lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 .endm
 
+.macro loadGlobalFrame reg
+lis \reg, 0x8048
+lwz \reg, -0x62A0(\reg)
+.endm
+
 # This macro takes in an address that is expected to have a branch instruction. It will set
 # r3 to the address being branched to. This will overwrite r3 and r4
 .macro computeBranchTargetAddress reg address
@@ -163,6 +168,7 @@ add \reg, r3, r4
 .set FN_LoadChatMessageProperties,0x800056ac
 .set FN_GetTeamCostumeIndex,0x800056b0
 .set FN_GetCSSIconData,0x800056b8
+.set FN_GetCSSIconNum,0x80005698
 .set FN_LoadPremadeText, 0x800056a4
 .set FN_GetSSMIndex,0x800056a0
 .set FN_GetFighterNum,0x8000569c
@@ -170,7 +176,7 @@ add \reg, r3, r4
 .set FN_RequestSSM,0x800056a8
 .set FN_GetCommonMinorID,0x8000561c
 # available addresses for static functions
-# 0x80005698
+# 0x80005694
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
