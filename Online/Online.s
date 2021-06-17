@@ -258,15 +258,15 @@
 .set MSRB_USER_CHATMSG_ID, MSRB_DELAY_FRAMES + 1 # u8
 .set MSRB_OPP_CHATMSG_ID, MSRB_USER_CHATMSG_ID + 1 # u8
 .set MSRB_CHATMSG_PLAYER_INDEX, MSRB_OPP_CHATMSG_ID + 1 # u8
-.set MSRB_VS_LEFT_PLAYERS, MSRB_CHATMSG_PLAYER_INDEX + 1 # u8 player ports 0xP1P2P3PN
-.set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u8 player ports 0xP1P2P3PN
+.set MSRB_VS_LEFT_PLAYERS, MSRB_CHATMSG_PLAYER_INDEX + 1 # u32 player ports 0xP1P2P3PN
+.set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u32 player ports 0xP1P2P3PN
 .set MSRB_LOCAL_NAME, MSRB_VS_RIGHT_PLAYERS + 4 # string (31)
 .set MSRB_P1_NAME, MSRB_LOCAL_NAME + 31 # string (31)
 .set MSRB_P2_NAME, MSRB_P1_NAME + 31 # string (31)
 .set MSRB_P3_NAME, MSRB_P2_NAME + 31 # string (31)
 .set MSRB_P4_NAME, MSRB_P3_NAME + 31 # string (31)
-.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (63)
-.set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 63 # string (10) hashtag is shift-jis
+.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (31)
+.set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 31 # string (10) hashtag is shift-jis
 .set MSRB_P2_CONNECT_CODE, MSRB_P1_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
 .set MSRB_P3_CONNECT_CODE, MSRB_P2_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
 .set MSRB_P4_CONNECT_CODE, MSRB_P3_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
