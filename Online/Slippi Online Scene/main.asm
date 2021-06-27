@@ -266,7 +266,7 @@ bl GamePrepSceneDecide    #SceneDecide
 .byte 80                  #Common Minor ID (Game Preparation)
 .align 2
 bl GamePrepData           #Minor Data 1
-.long 0x00000000          #Minor Data 2
+bl GamePrepData           #Minor Data 2
 #End
 .byte -1
 .align 2
@@ -345,6 +345,8 @@ GamePrepData:
 .byte 0x0 # p2 score
 .set GPDO_PREV_WINNER, GPDO_P2_SCORE + 1
 .byte 0x0 # previous winner
+.set GPDO_IS_TIEBREAK, GPDO_PREV_WINNER + 1
+.byte 0x0
 .align 2
 
 #region CSSScenePrep
@@ -429,6 +431,7 @@ li r3, 0
 stb r3, GPDO_P1_SCORE(r4)
 stb r3, GPDO_P2_SCORE(r4)
 stb r3, GPDO_PREV_WINNER(r4)
+stb r3, GPDO_IS_TIEBREAK(r4)
 
 # Set next scene as game prep
 load r4, 0x80479d30
@@ -582,11 +585,14 @@ bge VSSceneDecide_SkipTieHandler
 # Here we have a tie, we want to start a new one-stock, 3 min game
 # TODO: Prepare info to start a tiebreaker
 
-# Start a new game
-load r4, 0x80479d30
-li r3, 0x03
-stb r3, 0x5(r4)
-b VSSceneDecide_ModeHandlerEnd
+bl GamePrepData_BLRL
+mflr r6
+
+li r3, 1
+stb r3, GPDO_IS_TIEBREAK(r6)
+
+# Go to the game prep scene, with is tiebreak set to true, it will start a new game
+b VSSceneDecide_MoveToGamePrep
 VSSceneDecide_SkipTieHandler:
 
 # Here we have a conclusive game. Increment game prep game count and scores
@@ -611,6 +617,10 @@ lbz r3, GPDO_CUR_GAME(r6)
 addi r3, r3, 1
 stb r3, GPDO_CUR_GAME(r6)
 
+li r3, 0
+stb r3, GPDO_IS_TIEBREAK(r6)
+
+VSSceneDecide_MoveToGamePrep:
 # Go back to game prep, there are more games
 load r4, 0x80479d30
 li r3, 0x06
@@ -1138,7 +1148,7 @@ SinglesDetermineWinner:
 li r3, 0
 
 # TODO: Ties don't work atm, need to set match selections
-# li r3, -1
+li r3, -1
 
 blr
 
@@ -1236,8 +1246,22 @@ blr
 #endregion
 
 GamePrepSceneDecide:
+.set REG_GPD, 31
+
 backup
 
+lwz REG_GPD, 0x10(r3) # Grabs load data
+lbz r3, GPDO_IS_TIEBREAK(REG_GPD)
+cmpwi r3, 0
+beq GamePrepSceneDecide_DisplaySplash
+
+# On tiebreak, go right back into VS scene
+load r4, 0x80479d30
+li r3, 0x03
+stb r3, 0x5(r4)
+b GamePrepSceneDecide_RestoreAndExit
+
+GamePrepSceneDecide_DisplaySplash:
 bl  SplashSceneInit
 
 # This will cause the next scene to be the splash screen
@@ -1245,6 +1269,7 @@ load r4, 0x80479d30
 li r3, 0x05
 stb r3, 0x5(r4)
 
+GamePrepSceneDecide_RestoreAndExit:
 restore
 blr
 
