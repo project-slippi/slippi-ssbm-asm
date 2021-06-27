@@ -131,6 +131,10 @@ InitMinorSceneStruct_Loop:
   bl  PointerConvert
   addi  r3,REG_MinorStructParse,0x8
   bl  PointerConvert
+  addi  r3,REG_MinorStructParse,0x10
+  bl  PointerConvert
+  addi  r3,REG_MinorStructParse,0x14
+  bl  PointerConvert  
   addi  REG_MinorStructParse,REG_MinorStructParse,0x18
   b InitMinorSceneStruct_Loop
 InitMinorSceneStruct_Exit:
@@ -261,8 +265,8 @@ bl SplashSceneDecide
 bl GamePrepSceneDecide    #SceneDecide
 .byte 80                  #Common Minor ID (Game Preparation)
 .align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
+bl GamePrepData           #Minor Data 1
+.long 0x00000000          #Minor Data 2
 #End
 .byte -1
 .align 2
@@ -327,6 +331,21 @@ blrl
 .long 0x804D4E44
 */
 #endregion
+
+GamePrepData_BLRL:
+blrl
+GamePrepData:
+.set GPDO_MAX_GAMES, 0
+.byte 0x0 # max games
+.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1
+.byte 0x0 # current game
+.set GPDO_P1_SCORE, GPDO_CUR_GAME + 1
+.byte 0x0 # p1 score
+.set GPDO_P2_SCORE, GPDO_P1_SCORE + 1
+.byte 0x0 # p2 score
+.set GPDO_PREV_WINNER, GPDO_P2_SCORE + 1
+.byte 0x0 # previous winner
+.align 2
 
 #region CSSScenePrep
 CSSScenePrep:
@@ -399,6 +418,18 @@ b CSSSceneDecide_LoadSplash
 # Ranked Mode Logic
 ################################################################################
 CSSSceneDecide_Adv_IsRanked:
+# Initialize ranked mode data
+bl GamePrepData_BLRL
+mflr r4
+li r3, 3
+stb r3, GPDO_MAX_GAMES(r4)
+li r3, 1
+stb r3, GPDO_CUR_GAME(r4)
+li r3, 0
+stb r3, GPDO_P1_SCORE(r4)
+stb r3, GPDO_P2_SCORE(r4)
+stb r3, GPDO_PREV_WINNER(r4)
+
 # Set next scene as game prep
 load r4, 0x80479d30
 li r3, 0x06
@@ -536,8 +567,96 @@ li r3, 0
 branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
-VSSceneDecide_UpdateWinner:
+###########################################################################
+# VSSceneDecide: Handle Ranked Mode
+###########################################################################
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+bne VSSceneDecide_SkipRankedHandler
 
+# Get the winner of last game
+bl SinglesDetermineWinner
+cmpwi r3, 0
+bge VSSceneDecide_SkipTieHandler
+
+# Here we have a tie, we want to start a new one-stock, 3 min game
+# TODO: Prepare info to start a tiebreaker
+
+# Start a new game
+load r4, 0x80479d30
+li r3, 0x03
+stb r3, 0x5(r4)
+b VSSceneDecide_ModeHandlerEnd
+VSSceneDecide_SkipTieHandler:
+
+# Here we have a conclusive game. Increment game prep game count and scores
+bl GamePrepData_BLRL
+mflr r6
+
+stb r3, GPDO_PREV_WINNER(r6) # Store winner index
+
+addi r3, r3, GPDO_P1_SCORE # Get offset for winner
+lbzx r4, r6, r3
+addi r5, r4, 1
+stbx r5, r6, r3 # Store the game score for the winner
+
+lbz r4, GPDO_MAX_GAMES(r6)
+addi r4, r4, 1
+li r3, 2
+divwu r4, r4, r3 # Calculate number of wins needed
+cmpw r5, r4
+bge VSSceneDecide_RankedSetOver
+
+lbz r3, GPDO_CUR_GAME(r6)
+addi r3, r3, 1
+stb r3, GPDO_CUR_GAME(r6)
+
+# Go back to game prep, there are more games
+load r4, 0x80479d30
+li r3, 0x06
+stb r3, 0x5(r4)
+b VSSceneDecide_ModeHandlerEnd
+
+VSSceneDecide_RankedSetOver:
+# Disconnect from opponent
+# TODO: Figure out where to report result? It is likely someone rages and exits client by
+# TODO: this point. Or someone just kills the client early even after winning.
+# Prepare buffer for EXI transfer
+li r3, 1
+branchl r12, HSD_MemAlloc
+mr REG_TXB_ADDR, r3
+
+# Write tx data
+li r3, CONST_SlippiCmdCleanupConnections
+stb r3, 0(REG_TXB_ADDR)
+
+# Reset connections
+mr r3, REG_TXB_ADDR
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+mr r3, REG_TXB_ADDR
+branchl r12, HSD_Free
+
+# Return to CSS since ranked set is over
+load r4, 0x80479d30
+li r3, 0x01
+stb r3, 0x5(r4)
+b VSSceneDecide_ModeHandlerEnd
+VSSceneDecide_SkipRankedHandler:
+
+# Go back to CSS
+load r4, 0x80479d30
+li r3, 0x01
+stb r3, 0x5(r4)
+
+VSSceneDecide_ModeHandlerEnd:
+
+###########################################################################
+# VSSceneDecide: Handle Non-Ranked Modes
+###########################################################################
+VSSceneDecide_UpdateWinner:
 #Update ISWINNER static bool
 lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
 bl  CheckIfWonLastGame
@@ -612,7 +731,10 @@ HACK_GOLD_TEXT_LOSER_END:
 # For teams, trick the text into never turning gold (Doesn't work for both LRAS and wins easily)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
-bne HACK_GOLD_TEXT_END
+beq HACK_GOLD_TEXT_FORCE_OFF
+cmpwi r3, ONLINE_MODE_RANKED
+bne HACK_GOLD_TEXT_END # Also prevent gold text in ranked
+HACK_GOLD_TEXT_FORCE_OFF:
 li r3, 0
 stb r3, 0x4(REG_MATCH_END_STRUCT)
 HACK_GOLD_TEXT_END:
@@ -624,6 +746,7 @@ stb r3, OFST_R13_CHOSESTAGE (r13)
 # Prepare to reset RNG seed. This fixes the issue where both clients would
 # random the same character following a game
 
+VSSceneDecide_ResetRNG:
 # Prepare buffer for EXI transfer
 li r3, 4
 branchl r12, HSD_MemAlloc
@@ -653,11 +776,6 @@ stw r3, 0x5F90(r4) #RNG seed
 # Free the TX buffer
 mr r3, REG_TXB_ADDR
 branchl r12, HSD_Free
-
-# Go back to CSS
-load r4, 0x80479d30
-li r3, 0x01
-stb r3, 0x5(r4)
 
 # Free the buffer we allocated to get match state
 mr r3, REG_MSRB_ADDR
@@ -1009,6 +1127,20 @@ branchl r12, HSD_Free
 restore
 blr
 #endregion
+
+################################################################################
+# Function: SinglesDetermineWinner
+# ------------------------------------------------------------------------------
+# Output:
+# r3: winnderIndex # Index of the winner, -1 if tie
+################################################################################
+SinglesDetermineWinner:
+li r3, 0
+
+# TODO: Ties don't work atm, need to set match selections
+# li r3, -1
+
+blr
 
 #region CheckIfWonLastGame
 CheckIfWonLastGame:
