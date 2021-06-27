@@ -346,7 +346,7 @@ GamePrepData:
 .set GPDO_PREV_WINNER, GPDO_P2_SCORE + 1
 .byte 0x0 # previous winner
 .set GPDO_IS_TIEBREAK, GPDO_PREV_WINNER + 1
-.byte 0x0
+.byte 0x0 # Referenced directly in InitOnlinePlay.asm, if moved, must change reference
 .align 2
 
 #region CSSScenePrep

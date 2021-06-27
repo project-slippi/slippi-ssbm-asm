@@ -121,6 +121,28 @@ addi r4, REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK
 li r5, MATCH_STRUCT_LEN
 branchl r12, memcpy
 
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+bne SKIP_TIEBREAK_OVERWRITE
+
+# For ranked, in the case of a tiebreak, overwrite stock count and timer
+loadwz r5, 0x803dad40 # Load minor scene data array ptr
+lwz r5, 0x88(r5) # Load game prep minor scene data
+lbz r3, 0x5(r5) # Load is_tiebreak
+cmpwi r3, 0
+beq SKIP_TIEBREAK_OVERWRITE # If not a tiebreak, do nothing
+
+li r3, 180
+stw r3, 0x10(REG_GAME_INFO_START)
+
+li r3, 1
+stb r3, 0x62(REG_GAME_INFO_START)
+stb r3, 0x62 + 0x24(REG_GAME_INFO_START)
+stb r3, 0x62 + 0x24 * 2(REG_GAME_INFO_START)
+stb r3, 0x62 + 0x24 * 3(REG_GAME_INFO_START)
+
+SKIP_TIEBREAK_OVERWRITE:
+
 # For teams, overwrite the colors in the game info block with the proper color for the given team ID
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
