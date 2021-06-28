@@ -583,8 +583,6 @@ cmpwi r3, 0
 bge VSSceneDecide_SkipTieHandler
 
 # Here we have a tie, we want to start a new one-stock, 3 min game
-# TODO: Prepare info to start a tiebreaker
-
 bl GamePrepData_BLRL
 mflr r6
 
@@ -691,7 +689,6 @@ b SELECTOR_OVERWRITE_END
 SELECTOR_OVERWRITE_NON_TEAMS:
 .set  REG_Count,20
 .set  REG_Winners,21
-# todo: add check for teams (if that ever gets added)
 # Count number of winners
 li  REG_Count,0
 li  REG_Winners,0
@@ -1141,15 +1138,83 @@ blr
 ################################################################################
 # Function: SinglesDetermineWinner
 # ------------------------------------------------------------------------------
+# Description: Designed to be used only when playing online (only works with
+# ports 1 + 2). Will output the winner of the match or -1 if it's a tie.
+# 
+# Does not handle LRAS
+# ------------------------------------------------------------------------------
 # Output:
 # r3: winnderIndex # Index of the winner, -1 if tie
 ################################################################################
+.set REG_MATCH_END, 31
+.set REG_MATCH_END_P1, 30
+.set REG_MATCH_END_P2, 29
+.set REG_TEMP_VAR, 27
 SinglesDetermineWinner:
+backup
+
+load REG_MATCH_END, 0x80479da4
+
+# The following may be needed if we add LGL but are not needed right now
+# addi REG_MATCH_END_P1, REG_MATCH_END, 0x58 # Start of player array
+# addi REG_MATCH_END_P2, REG_MATCH_END_P1, 0xA8
+
+lbz r3, 0x4(REG_MATCH_END)
+cmpwi r3, 1
+beq SinglesDetermineWinner_HANDLE_TIMEOUT
+cmpwi r3, 2
+beq SinglesDetermineWinner_HANDLE_COMPLETION
+
+# We can only handle GAME and TIME atm. For LRAS (or something else?), stall
+b 0
+
+SinglesDetermineWinner_HANDLE_TIMEOUT:
 li r3, 0
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+mr REG_TEMP_VAR, r3
+li r3, 1
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpw REG_TEMP_VAR, r3
+bgt SinglesDetermineWinner_P1_WIN
+blt SinglesDetermineWinner_P2_WIN
 
-# TODO: Ties don't work atm, need to set match selections
+li r3, 0
+branchl r12, 0x800342b4 # PlayerBlock_LoadDamage
+mr REG_TEMP_VAR, r3
+li r3, 1
+branchl r12, 0x800342b4 # PlayerBlock_LoadDamage
+cmpw REG_TEMP_VAR, r3
+blt SinglesDetermineWinner_P1_WIN
+bgt SinglesDetermineWinner_P2_WIN
+
+# We only get here if stock and percent is the same, if so, it's a tie
+b SinglesDetermineWinner_TIE
+
+SinglesDetermineWinner_HANDLE_COMPLETION:
+# Here we check who won by looking at stock counts
+li r3, 0
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+bne SinglesDetermineWinner_P1_WIN
+
+li r3, 1
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+bne SinglesDetermineWinner_P2_WIN
+
+# If we get here, both players have zero stocks which indicates a same-frame double KO, it's a tie
+b SinglesDetermineWinner_TIE
+
+SinglesDetermineWinner_P1_WIN:
+li r3, 0
+b SinglesDetermineWinner_RESTORE_AND_EXIT
+SinglesDetermineWinner_P2_WIN:
+li r3, 1
+b SinglesDetermineWinner_RESTORE_AND_EXIT
+SinglesDetermineWinner_TIE:
 li r3, -1
-
+SinglesDetermineWinner_RESTORE_AND_EXIT:
+restore
 blr
 
 #region CheckIfWonLastGame
