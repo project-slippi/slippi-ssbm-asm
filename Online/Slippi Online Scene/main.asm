@@ -347,6 +347,12 @@ GamePrepData:
 .byte 0x0 # previous winner
 .set GPDO_IS_TIEBREAK, GPDO_PREV_WINNER + 1
 .byte 0x0 # Referenced directly in InitOnlinePlay.asm, if moved, must change reference
+.set GPDO_GAME_RESULTS, GPDO_IS_TIEBREAK + 1
+.set MAX_RESULT_COUNT, 9
+.long 0x0
+.long 0x0
+.byte 0x0 # Take space for 9 results, I guess? Probably a better way to write this
+.set GPDO_SIZE, GPDO_GAME_RESULTS + MAX_RESULT_COUNT
 .align 2
 
 #region CSSScenePrep
@@ -376,8 +382,9 @@ blr
 CSSSceneDecide:
 .set REG_MSRB_ADDR, 31
 .set REG_MINORSCENE, 30
-.set REG_EVENTCSS_DATA,29
+.set REG_EVENTCSS_DATA, 29
 .set REG_VS_SSS_DATA, 28
+.set REG_GAME_PREP_DATA, 27
 
 backup
 mr  REG_MINORSCENE,r3
@@ -422,16 +429,16 @@ b CSSSceneDecide_LoadSplash
 CSSSceneDecide_Adv_IsRanked:
 # Initialize ranked mode data
 bl GamePrepData_BLRL
-mflr r4
+mflr REG_GAME_PREP_DATA
+
+mr r3, REG_GAME_PREP_DATA
+li r4, GPDO_SIZE
+branchl r12, Zero_AreaLength
+
 li r3, 3
-stb r3, GPDO_MAX_GAMES(r4)
+stb r3, GPDO_MAX_GAMES(REG_GAME_PREP_DATA)
 li r3, 1
-stb r3, GPDO_CUR_GAME(r4)
-li r3, 0
-stb r3, GPDO_P1_SCORE(r4)
-stb r3, GPDO_P2_SCORE(r4)
-stb r3, GPDO_PREV_WINNER(r4)
-stb r3, GPDO_IS_TIEBREAK(r4)
+stb r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
 
 # Set next scene as game prep
 load r4, 0x80479d30
@@ -598,6 +605,10 @@ bl GamePrepData_BLRL
 mflr r6
 
 stb r3, GPDO_PREV_WINNER(r6) # Store winner index
+
+lbz r4, GPDO_CUR_GAME(r6)
+addi r4, r4, GPDO_GAME_RESULTS - 1 # Move offset to index in array (cur_game is 1-indexed)
+stbx r3, r6, r4
 
 addi r3, r3, GPDO_P1_SCORE # Get offset for winner
 lbzx r4, r6, r3
