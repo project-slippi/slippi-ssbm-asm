@@ -261,7 +261,7 @@ bl SplashSceneDecide
 .byte 5                     #Minor Scene ID
 .byte 3                    #Amount of persistent heaps
 .align 2
-.long 0x00000000          #ScenePrep
+bl GamePrepScenePrep      #ScenePrep
 bl GamePrepSceneDecide    #SceneDecide
 .byte 80                  #Common Minor ID (Game Preparation)
 .align 2
@@ -1321,12 +1321,21 @@ restore
 blr
 #endregion
 
+GamePrepScenePrep:
+backup
+# Invalidate pre-load cache otherwise changing one character mid-set crashes
+branchl r12, 0x800174bc
+restore
+blr
+
 GamePrepSceneDecide:
 .set REG_GPD, 31
 
 backup
 
 lwz REG_GPD, 0x10(r3) # Grabs load data
+
+# Check if there was a tie last game and a tiebreak is needed
 lbz r3, GPDO_IS_TIEBREAK(REG_GPD)
 cmpwi r3, 0
 beq GamePrepSceneDecide_DisplaySplash
