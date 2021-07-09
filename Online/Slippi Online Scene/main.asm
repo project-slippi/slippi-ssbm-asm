@@ -339,20 +339,18 @@ GamePrepData:
 .byte 0x0 # max games
 .set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1
 .byte 0x0 # current game
-.set GPDO_P1_SCORE, GPDO_CUR_GAME + 1
-.byte 0x0 # p1 score
-.set GPDO_P2_SCORE, GPDO_P1_SCORE + 1
-.byte 0x0 # p2 score
-.set GPDO_PREV_WINNER, GPDO_P2_SCORE + 1
+.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 1
+.fill 2, 1, 0
+.set GPDO_PREV_WINNER, GPDO_SCORE_BY_PLAYER + 2 * 1
 .byte 0x0 # previous winner
 .set GPDO_IS_TIEBREAK, GPDO_PREV_WINNER + 1
 .byte 0x0 # Referenced directly in InitOnlinePlay.asm, if moved, must change reference
 .set GPDO_GAME_RESULTS, GPDO_IS_TIEBREAK + 1
 .set MAX_RESULT_COUNT, 9
-.long 0x0
-.long 0x0
-.byte 0x0 # Take space for 9 results, I guess? Probably a better way to write this
-.set GPDO_SIZE, GPDO_GAME_RESULTS + MAX_RESULT_COUNT
+.fill MAX_RESULT_COUNT, 1, 0 # Take space for 9 bytes
+.set GPDO_LAST_STAGE_WIN_BY_PLAYER, GPDO_GAME_RESULTS + MAX_RESULT_COUNT
+.fill 2, 2, 0
+.set GPDO_SIZE, GPDO_LAST_STAGE_WIN_BY_PLAYER + 2 * 2
 .align 2
 
 #region CSSScenePrep
@@ -566,6 +564,8 @@ VSSceneDecide:
 .set REG_MSRB_ADDR, 31
 .set REG_TXB_ADDR, 30
 .set REG_SHOULD_PICK_STAGE, 29
+.set REG_WINNER_IDX, 28
+.set REG_GPD, 27
 
 backup
 
@@ -586,8 +586,9 @@ bne VSSceneDecide_SkipRankedHandler
 
 # Get the winner of last game
 bl SinglesDetermineWinner
-cmpwi r3, 0
-bge VSSceneDecide_SkipTieHandler
+mr REG_WINNER_IDX, r3
+cmpwi REG_WINNER_IDX, 0
+bge VSSceneDecide_SkipTieHandler # If winner is not -1, it is not a tie
 
 # Here we have a tie, we want to start a new one-stock, 3 min game
 bl GamePrepData_BLRL
@@ -602,32 +603,40 @@ VSSceneDecide_SkipTieHandler:
 
 # Here we have a conclusive game. Increment game prep game count and scores
 bl GamePrepData_BLRL
-mflr r6
+mflr REG_GPD
 
-stb r3, GPDO_PREV_WINNER(r6) # Store winner index
+stb REG_WINNER_IDX, GPDO_PREV_WINNER(REG_GPD) # Store winner index
 
-lbz r4, GPDO_CUR_GAME(r6)
+# Set winner ID at game index
+lbz r4, GPDO_CUR_GAME(REG_GPD)
 addi r4, r4, GPDO_GAME_RESULTS - 1 # Move offset to index in array (cur_game is 1-indexed)
-stbx r3, r6, r4
+stbx REG_WINNER_IDX, REG_GPD, r4
 
-addi r3, r3, GPDO_P1_SCORE # Get offset for winner
-lbzx r4, r6, r3
+# Increment game score
+addi r3, REG_WINNER_IDX, GPDO_SCORE_BY_PLAYER # Get offset for winner
+lbzx r4, REG_GPD, r3
 addi r5, r4, 1
-stbx r5, r6, r3 # Store the game score for the winner
+stbx r5, REG_GPD, r3 # Store the game score for the winner
 
-lbz r4, GPDO_MAX_GAMES(r6)
+# Store stage win
+mulli r4, REG_WINNER_IDX, 2
+addi r4, r4, GPDO_LAST_STAGE_WIN_BY_PLAYER
+lhz r3, MSRB_GAME_INFO_BLOCK + 0xE(REG_MSRB_ADDR) # Load last stage played
+sthx r3, REG_GPD, r4
+
+lbz r4, GPDO_MAX_GAMES(REG_GPD)
 addi r4, r4, 1
 li r3, 2
 divwu r4, r4, r3 # Calculate number of wins needed
 cmpw r5, r4
 bge VSSceneDecide_RankedSetOver
 
-lbz r3, GPDO_CUR_GAME(r6)
+lbz r3, GPDO_CUR_GAME(REG_GPD)
 addi r3, r3, 1
-stb r3, GPDO_CUR_GAME(r6)
+stb r3, GPDO_CUR_GAME(REG_GPD)
 
 li r3, 0
-stb r3, GPDO_IS_TIEBREAK(r6)
+stb r3, GPDO_IS_TIEBREAK(REG_GPD)
 
 VSSceneDecide_MoveToGamePrep:
 # Go back to game prep, there are more games
