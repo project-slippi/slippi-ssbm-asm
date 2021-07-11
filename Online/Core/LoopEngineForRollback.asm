@@ -167,8 +167,19 @@ branchl r12, OSRestoreInterrupts
 
 lbz REG_IS_ROLLBACK_ACTIVE, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi REG_IS_ROLLBACK_ACTIVE, 1
-bne RESTORE_AND_EXIT # If no rollback active, continue as normal
+beq HANDLE_ROLLBACK # If no rollback active, continue as normal
 
+# Here there is no rollback, check instead for a requested frame advance
+lbz r3, ODB_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
+cmpwi r3, 1
+bne RESTORE_AND_EXIT
+
+# Fetch new inputs immediately to skip a frame
+# logf LOG_LEVEL_ERROR, "Forcing an input"
+branchl r12, RenewInputs_Prefunction
+b RESTORE_AND_EXIT
+
+HANDLE_ROLLBACK:
 # Here we have a rollback, we are going to loop back to the start of the
 # updateFunction loop
 bl FN_ExecCameraTasks

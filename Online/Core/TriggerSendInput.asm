@@ -175,11 +175,17 @@ li r4, RXB_SIZE
 li r5, CONST_ExiRead
 branchl r12, FN_EXITransferBuffer
 
+# Default to no frame advance
+li r3, 0
+stb r3, ODB_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
+
 lbz r3, RXB_RESULT(REG_RXB_ADDRESS)
 cmpwi r3, RESP_SKIP
 beq SKIP_INPUT
 cmpwi r3, RESP_DISCONNECTED
 beq HANDLE_DISCONNECT
+cmpwi r3, RESP_ADVANCE
+beq HANDLE_ADVANCE
 b RESP_RES_CONTINUE
 
 HANDLE_DISCONNECT:
@@ -193,6 +199,10 @@ SKIP_INPUT:
 # to sync up between players
 restore
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
+
+HANDLE_ADVANCE:
+li r3, 1
+stb r3, ODB_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
 
 RESP_RES_CONTINUE:
 
