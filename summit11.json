@@ -1,0 +1,99 @@
+{
+    "outputFiles": [
+      {
+        "file": "Output/Events/summiteleven.bin"
+      }
+    ],
+    "codes": [
+      {
+        "name": "Polling Drift Fix",
+        "authors": [
+          "Dan Salvato"
+        ],
+        "description": [
+          "Removes polling drift phenomenon causing variable input lag"
+        ],
+        "build": [
+          {
+            "type": "binary",
+            "sourceFile": "Binary/LagReduction/PD.bin",
+            "annotation": "Polling Drift Fix [Dan Salvato]"
+          }
+        ]
+      },
+      {
+        "name": "UCF Slippi",
+        "authors": [
+          "Dan Salvato",
+          "tauKhan",
+          "UnclePunch",
+          "Fizzi"
+        ],
+        "build": [
+          {
+            "type": "injectFolder",
+            "sourceFolder": "External/UCF 0.8/Logic",
+            "isRecursive": true,
+            "annotation": "UCF v0.8"
+          },
+          {
+            "type": "injectFolder",
+            "sourceFolder": "External/UCF 0.8/Indicator",
+            "isRecursive": true,
+            "annotation": "UCF CSS Indicator"
+          }
+        ]
+      },
+      {
+        "name": "Ledge Grab Limit",
+        "authors": [
+          "UnclePunch"
+        ],
+        "description": [
+          "Enforces ledge grab limit"
+        ],
+        "build": [
+          {
+            "type": "binary",
+            "sourceFile": "Binary/LedgeGrabLimit.bin",
+            "annotation": "Ledge Grab Limit"
+          }
+        ]
+      },
+      {
+        "name": "Stealth tournament codes",
+        "authors": [
+          "Achilles",
+          "UnclePunch"
+        ],
+        "description": [
+          "Tournament mods to improve fair competition"
+        ],
+        "build": [
+          {
+            "type": "injectFolder",
+            "sourceFolder": "External/NeutralSpawn",
+            "annotation": "Neutral Spawns [UnclePunch]"
+          },
+          {
+            "type": "injectFolder",
+            "sourceFolder": "External/Hide Nametag When Invisible",
+            "annotation": "Hide Nametag When Invisible [Achilles1515]"
+          },
+          {
+            "type": "injectFolder",
+            "sourceFolder": "External/Closing CSS Door Preserves Nametag",
+            "isRecursive": true,
+            "annotation": "Closing CSS Door Preserves Nametag [UnclePunch]"
+          },
+          {
+            "type": "injectFolder",
+            "sourceFolder": "External/Unplugging Closes CSS Door",
+            "isRecursive": true,
+            "annotation": "Unplugging Closes CSS Door [UnclePunch]"
+          }
+        ]
+      }
+    ]
+  }
+  
