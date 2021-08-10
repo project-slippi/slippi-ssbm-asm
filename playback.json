@@ -124,6 +124,12 @@
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/NanaDeterminism",
+          "isRecursive": true,
+          "annotation": "Makes Nana inputs deterministic [UnclePunch, metaconstruct, Fizzi]"
         }
       ]
     },
