@@ -347,7 +347,7 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/PSSkipZoomedInMonitor",
+          "sourceFolder": "Common/PSCameraIndependentMonitor",
           "isRecursive": true,
           "annotation": "Avoids PS + Widescreen desyncs [Fizzi]"
         }
