@@ -9,16 +9,16 @@
 
 backup
 
-mr r30, r3 # Technically not necessary since it's loaded from r30 to begin with, but w/e
+mr REG_INPUT, r3 # Technically not necessary since it's loaded from r30 to begin with, but w/e
 
 # First fetch the fighter data address for the "main character"
-lwz r3, 0x2C(r30)
+lwz r3, 0x2C(REG_INPUT)
 lha r3, 0xEE(r3)
 branchl r12, 0x80034110 # PlayerBlock_LoadMainCharDataOffsetStart
 lwz REG_FIGHTERDATA, 0x2C(r3)
 
 # Call replaced function (seems to be responsible for handling the main character tracking)
-mr r3, r30
+mr r3, REG_INPUT
 branchl r12, 0x801d32d0 # PokemonStadium_CheckIfPlayerIsDamaged
 
 # The replaced function previously decided whether or not we transition off of the zoomed-in
