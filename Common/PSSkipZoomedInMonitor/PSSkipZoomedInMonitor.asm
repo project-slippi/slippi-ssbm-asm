@@ -3,7 +3,7 @@
 ################################################################################
 
 # This code causes the result of the instruction at 801d24fc (PokemonStadium_CheckIfPlayerIsDamaged)
-# to be ignored. I think the function may be incorrectly named. It seems to return true false when
+# to be ignored. I think the function may be incorrectly named. It seems to return false when
 # a player is offscreen and I didn't notice it doing anything with player damage. When it returns
 # false it causes a screen transition from the "zoomed in" player view to the "zoomed out" view
 # (8 -> 7). The problem is that it interacts with the widescreen code in such a way that the
