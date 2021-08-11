@@ -130,6 +130,12 @@
           "sourceFolder": "Common/NanaDeterminism",
           "isRecursive": true,
           "annotation": "Makes Nana inputs deterministic [UnclePunch, metaconstruct, Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/PSSkipZoomedInMonitor",
+          "isRecursive": true,
+          "annotation": "Avoids PS + Widescreen desyncs [Fizzi]"
         }
       ]
     },
