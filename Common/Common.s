@@ -39,6 +39,10 @@ ori \reg, \reg, \address @l
 lbz \reg, 0(\reg)
 .endm
 
+.macro bp
+branchl r12, 0x8021b2d8
+.endm
+
 .set BKP_FREE_SPACE_OFFSET, 0x38 # This is where the free space in our stack starts
 
 .macro backup space=0x78
