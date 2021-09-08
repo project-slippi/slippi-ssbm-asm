@@ -24,11 +24,6 @@ lbz r4, OFST_R13_ONLINE_MODE(r13)
 cmpwi r4, ONLINE_MODE_DIRECT
 blt EXIT # exit if not on DIRECT or TEAMS mode
 
-# only show this button after first match
-lbz r3, OFST_R13_ISWINNER (r13)
-cmpwi r3,ISWINNER_NULL # (first match)
-beq EXIT
-
 b LOAD_START
 
 ################################################################################
@@ -145,6 +140,19 @@ lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(r3)
 ################################################################################
 # Initialize
 ################################################################################
+
+
+# only show this button after first match
+lbz r3, OFST_R13_ISWINNER (r13)
+extsb r3,r3
+cmpwi r3,ISWINNER_NULL # (first match)
+beq FN_RULES_SELECTOR_THINK_HIDE_MENU_AND_EXIT
+
+# if not decider, hide
+lbz r3, MSRB_IS_DECIDER(REG_MSRB_ADDR)
+cmpwi r3, 0
+beq FN_RULES_SELECTOR_THINK_HIDE_MENU_AND_EXIT
+
 # unhide the text every frame
 li r3, 0
 stb r3, 0x4D(REG_TEXT_STRUCT_ADDR)
@@ -157,6 +165,11 @@ bne SKIP_HIDE_TEXT
 # hide the text
 li r3, 1
 stb r3, 0x4D(REG_TEXT_STRUCT_ADDR)
+
+# show the jobj
+mr r3, REG_RULES_BTN_JOBJ
+li r4, 0x10
+branchl r12, JObj_ClearFlagsAll
 
 SKIP_HIDE_TEXT:
 
@@ -223,6 +236,18 @@ FN_RULES_SELECTOR_THINK_CLEANUP:
 # Delete Text
 #mr r3, REG_TEXT_STRUCT_ADDR
 #branchl r12, Text_RemoveText
+
+b FN_RULES_SELECTOR_THINK_EXIT
+
+FN_RULES_SELECTOR_THINK_HIDE_MENU_AND_EXIT:
+# hide the text
+li r3, 1
+stb r3, 0x4D(REG_TEXT_STRUCT_ADDR)
+#hide the jobj
+mr r3, REG_RULES_BTN_JOBJ
+li r4, 0x10
+branchl r12, JObj_SetFlagsAll # 0x80371D9c
+
 
 FN_RULES_SELECTOR_THINK_EXIT:
 restore
