@@ -82,6 +82,11 @@ stw r3, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 ################################################################################
 # Initialize values
 ################################################################################
+# Initialize ISWINNER (first match) (do this here too to allow for custom rules
+# to be hidden)
+li  r3, ISWINNER_NULL
+stw r3, OFST_R13_ISWINNER (r13)
+
 # Initialize start team color to red (only on teams mode)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS

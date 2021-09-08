@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 0x802652dc # CSS_LoadFunction
+# Address: 0x802652ec # CSS_LoadFunction
 ################################################################################
 
 .include "Common/Common.s"
@@ -23,6 +23,11 @@ bne EXIT # If not online CSS, continue as normal
 lbz r4, OFST_R13_ONLINE_MODE(r13)
 cmpwi r4, ONLINE_MODE_DIRECT
 blt EXIT # exit if not on DIRECT or TEAMS mode
+
+# only show this button after first match
+lbz r3, OFST_R13_ISWINNER (r13)
+cmpwi r3,ISWINNER_NULL # (first match)
+beq EXIT
 
 b LOAD_START
 
@@ -247,4 +252,4 @@ blr
 
 
 EXIT:
-lwz	r3, 0x0108 (sp)
+li r3, 0
