@@ -4,6 +4,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-# Just branch to PreventColroResetRandomChar hack since it's exactly the same
+# Just branch to PreventColorResetRandomChar hack since it's exactly the same
 # behavior for TEAMS and vanilla game
 branch r12, 0x80260b90

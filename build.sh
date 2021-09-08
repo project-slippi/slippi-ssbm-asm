@@ -21,7 +21,7 @@ list=(
     "console_PAL.json"
     "console_frozen.json"
     "console_lag_pd.json"
-    "console_lag_pdvb.json"
+    "console_lag_pdhalfvb.json"
 )
 
 for file in "${list[@]}"

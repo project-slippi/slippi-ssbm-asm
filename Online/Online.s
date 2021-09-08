@@ -4,11 +4,6 @@
 # - Handle situation where a game ends while still predicting inputs, probably
 #   wouldn't want to trigger a game end until all inputs have been received
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
 ################################################################################
 # Offsets from r13
 ################################################################################
@@ -223,10 +218,11 @@ lwz \reg, -0x62A0(\reg)
 .set ODB_STABLE_ROLLBACK_END_FRAME, ODB_STABLE_ROLLBACK_IS_ACTIVE + 1 # s32
 .set ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE, ODB_STABLE_ROLLBACK_END_FRAME + 4 # bool
 .set ODB_STABLE_SAVESTATE_FRAME, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE + 1 # s32
-.set ODB_STABLE_OPNT_FRAME_NUMS, ODB_STABLE_SAVESTATE_FRAME + 4 # s32[3]
-.set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_OPNT_FRAME_NUMS + 4 # bool
+.set ODB_STABLE_FINALIZED_FRAME, ODB_STABLE_SAVESTATE_FRAME + 4 # s32
+.set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_FINALIZED_FRAME + 4 # bool
 .set ODB_HUD_CANVAS, ODB_SHOULD_FORCE_PAD_RENEW + 1 # u32
-.set ODB_SIZE, ODB_HUD_CANVAS + 4
+.set ODB_PAUSE_COUNTER, ODB_HUD_CANVAS + 4 # u32
+.set ODB_SIZE, ODB_PAUSE_COUNTER + 4
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
@@ -237,8 +233,9 @@ lwz \reg, -0x62A0(\reg)
 .set RXB_RESULT, 0 # u8
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
 .set RXB_OPNT_FRAME_NUMS, RXB_OPNT_COUNT + 1 # s32[3]
-.set RXB_OPNT_INPUTS, RXB_OPNT_FRAME_NUMS + 4*3 # PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT
-.set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3
+.set RXB_OPNT_INPUTS, RXB_OPNT_FRAME_NUMS + 4*3 # PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3
+.set RXB_FINALIZED_FRAME, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3 # s32
+.set RXB_SIZE, RXB_FINALIZED_FRAME + 4
 
 ################################################################################
 # Matchmaking States
@@ -364,7 +361,8 @@ lwz \reg, -0x62A0(\reg)
 # CSS Chat Window Data Table
 ################################################################################
 .set CSSCWDT_INPUT, 0 # u8
-.set CSSCWDT_TIMER, CSSCWDT_INPUT + 1 # u8
+.set CSSCWDT_INPUT_SENT, CSSCWDT_INPUT + 1 # bool
+.set CSSCWDT_TIMER, CSSCWDT_INPUT_SENT + 1 # u8
 .set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
 .set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
 .set CSSCWDT_SIZE, CSSCWDT_CSSDT_ADDR + 4

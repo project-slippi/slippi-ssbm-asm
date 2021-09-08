@@ -64,10 +64,16 @@ backup
   lbz r4, ODB_IS_GAME_OVER(r5)
   cmpwi r4, 0
   bne WRITE_FINALIZED_FRAME # If game is over, just write the current frame
-  lwz r4, ODB_STABLE_OPNT_FRAME_NUMS(r5)
+  lwz r4, ODB_STABLE_FINALIZED_FRAME(r5)
   addi r4, r4, CONST_FirstFrameIdx
+  lwz r7, ODB_PAUSE_COUNTER(r5)
+  sub r4, r4, r7
   cmpw r4, r3
-  bge WRITE_FINALIZED_FRAME # If latest frame greater than current frame, use current
+  # If latest frame greater than current frame, use current. This could happen in the case where
+  # we have really low ping and have received frames we are not ready to use yet. I think in
+  # practice, Dolphin doesn't ever return a frame greater than the current frame, but still safer
+  # to have this here
+  bge WRITE_FINALIZED_FRAME 
   mr r3, r4
 WRITE_FINALIZED_FRAME:
   stw r3,OFST_LATEST_FINALIZED_FRAME(REG_WritePos)

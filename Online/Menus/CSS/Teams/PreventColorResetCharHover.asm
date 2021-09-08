@@ -35,6 +35,10 @@ add REG_PORT_SELECTIONS_ADDR, r4, r3
 lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
 mr REG_INTERNAL_CHAR_ID, r3
 
+# TODO: this needs to be reviewed because on frame 1 after deselect, the wrong char id is returned.
+# TODO: This can cause a flickering effect of 1 frame when the wrong costume or character is selected.
+# TODO: For now this is fixed with PreventWrongCSPOnCharSelect.asm
+# i.e: for Falco it returns char id 0x4 instead of 14
 # get CSS icon data
 branchl r12,FN_GetCSSIconData
 mr r5,r3

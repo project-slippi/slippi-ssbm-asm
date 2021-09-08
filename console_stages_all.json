@@ -1,0 +1,27 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_stages_all.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Frozen Stages",
+      "authors": [
+        "UnclePunch",
+        "Fizzi"
+      ],
+      "description": [
+        "Disables all stage transformations"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Frozen All",
+          "isRecursive": true,
+          "annotation": "Disables stage transformations"
+        }
+      ]
+    }
+  ]
+}

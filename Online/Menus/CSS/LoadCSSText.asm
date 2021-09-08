@@ -10,14 +10,13 @@
 .set REG_TEXT_PROPERTIES, 29 # everywhere
 .set REG_TEXT_STRUCT, 28 # everywhere
 .set REG_SUBTEXT_IDX, 27 # think
-.set REG_LR, 21
 
 # Text Update Userdata Struct Definition
 .set TEXTGOBJDATA_SIZE, 0x4
 .set TEXTGOBJDATA_SLPCSS, 0x0  # pointer to slpChat symbol
 
 # Chat constants
-.set MAX_CHAT_MESSAGES, 6 # Max messages being displayed at the same time
+.set MAX_CHAT_MESSAGES, (3*4)+1 # Max messages being displayed at the same time (max messages being set by all team members)
 .set MAX_CHAT_MESSAGE_LINES, 9
 .set CHAT_MESSAGE_DISPLAY_TIMER, 0xAA
 .set JOBJ_CHILD_OFFSET, 0x38 # Pointer to store Child JOBJ on the SP
@@ -383,7 +382,7 @@ b EXIT
 # Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
-mflr REG_LR # Single depth helper function. Non-standard
+backup
 
 fmr f13, f3
 
@@ -407,7 +406,7 @@ fmr f3, f13
 addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, FG_CreateSubtext
 
-mtlr REG_LR
+restore
 blr
 
 ################################################################################
@@ -543,13 +542,14 @@ branchl r12, JObj_Anim
 ################################################################################
 # Manage header text
 ################################################################################
-lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
-cmpwi r3, MM_STATE_CONNECTION_SUCCESS
-bgt UPDATE_HEADER_ERROR
 
 # preset default text variables
 li r4, STIDX_HEADER # set substring header index
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_MODE_FORMAT
+
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+bgt UPDATE_HEADER_ERROR
 
 # Decide which text to load based on mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -581,7 +581,6 @@ b UPDATE_HEADER
 
 UPDATE_HEADER_ERROR:
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_ERROR
-# b UPDATE_HEADER # commented out just to save gecko space no need to jump since it's the next instruction
 
 UPDATE_HEADER:
 bl FN_UPDATE_TEXT
@@ -1157,7 +1156,7 @@ blr
 .set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
 .set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
 
-# offsets 
+# offsets
 .set JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 
 CSS_ONLINE_CHAT_THINK:
@@ -1348,6 +1347,8 @@ branchl r12, GObj_Destroy
 lwz r4, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 lbz r4, MSRB_LOCAL_PLAYER_INDEX(r4)
 
+#logf LOG_LEVEL_INFO, "MSG LOCAL INDEX %d MSG INDEX %d", "mr r5, 4", "mr r6, 23"
+
 cmpw REG_CHATMSG_PLAYER_INDEX,r4
 bne SKIP_DECREASE_LOCAL_CHAT_MSG_COUNT
 # Decrease local chat message count by 1
@@ -1385,12 +1386,12 @@ blr
 # Will set r3 to REG_TEXT_STRUCT. Expects caller to set other args
 ################################################################################
 FN_UPDATE_TEXT:
-mflr REG_LR # Single depth helper function. Non-standard
+backup
 
 mr r3, REG_TEXT_STRUCT
 branchl r12, Text_UpdateSubtextContents
 
-mtlr REG_LR
+restore
 blr
 
 

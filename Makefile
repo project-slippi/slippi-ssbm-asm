@@ -18,12 +18,12 @@ CONSOLE_MODS_FRIENDLIES	:= $(C_DIR)/g_mods_friendlies.bin
 CONSOLE_PAL		:= $(C_DIR)/g_pal.bin
 CONSOLE_FROZEN   	:= $(C_DIR)/g_frozen.bin
 CONSOLE_LAG_PD		:= $(C_DIR)/g_lag_pd.bin
-CONSOLE_LAG_PDVB	:= $(C_DIR)/g_lag_pdvb.bin
+CONSOLE_LAG_PDHALFVB	:= $(C_DIR)/g_lag_pdhalfvb.bin
 CONSOLE			:= $(CONSOLE_CORE) \
 	$(CONSOLE_CORE_PORTA) $(CONSOLE_UCF) $(CONSOLE_UCF_STEALTH) \
 	$(CONSOLE_TOGGLES) $(CONSOLE_MODS_STEALTH) $(CONSOLE_MODS_TOURNAMENT) \
 	$(CONSOLE_MODS_FRIENDLIES) $(CONSOLE_PAL) $(CONSOLE_FROZEN) \
-	$(CONSOLE_LAG_PD) $(CONSOLE_LAG_PDVB)
+	$(CONSOLE_LAG_PD) $(CONSOLE_LAG_PDHALFVB)
 
 ALL_TARGETS 		:= $(ONLINE_INI) $(NETPLAY_INI) $(PLAYBACK_INI) $(CONSOLE)
 .PHONY: $(ALL_TARGETS) clean
@@ -76,7 +76,7 @@ $(CONSOLE_LAG_PD): console_lag_pd.json
 	gecko build -c $<
 	@echo ""
 
-$(CONSOLE_LAG_PDVB): console_lag_pdvb.json
+$(CONSOLE_LAG_PDHALFVB): console_lag_pdhalfvb.json
 	gecko build -c $<
 	@echo ""
 
