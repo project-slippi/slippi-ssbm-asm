@@ -198,7 +198,7 @@ load r4, 0x8045c388 # Random Stages
 lwz r3, MSRB_STAGES_BLOCK(REG_MSRB_ADDR)
 stw r3, 0x0(r4)
 mr r5, r3
-logf LOG_LEVEL_ERROR, "Syncing STAGES: %x"
+# logf LOG_LEVEL_DEBUG, "Syncing STAGES: %x"
 
 SKIP_SYNC_RULES:
 
