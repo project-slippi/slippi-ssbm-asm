@@ -1,8 +1,9 @@
 ################################################################################
-# Address: 0x802652ec # CSS_LoadFunction
+# Address: INJ_InitCustomRulesButton
 ################################################################################
 
 .include "Common/Common.s"
+.include "Online/Menus/CSS/CustomRules/CustomRules.s"
 .include "Online/Online.s"
 
 .set REG_PROPERTIES, 31
@@ -11,9 +12,57 @@
 .set REG_RULES_BTN_JOBJ, 28
 .set REG_TEXT_STRUCT_ADDR, 27
 .set REG_MSRB_ADDR, 26
+.set REG_CSSDT_ADDR, 25
+.set REG_BUFFER, 24
 
 .set ENTITY_DATA_OFFSET, 0x28 # offset from GOBJ to entity data
 .set USER_DATA_OFFSET, 0x2C # offset from GOBJ to user data
+
+b CODE_START
+
+################################################################################
+# Function: Restores Game's custom rules settings
+################################################################################
+.set REG_RULES_ADDR, REG_IS_HOVERING
+FN_RESTORE_TOURNAMENT_RULES:
+backup
+
+# TODO: Consider using mem copy instead
+
+bl CR_DATA
+mflr r3
+
+load REG_RULES_ADDR, 0x8045BF10
+
+lwz r4, 0x0(r3)
+stw r4, 0x0(REG_RULES_ADDR)
+lwz r4, 0x4(r3)
+stw r4, 0x4(REG_RULES_ADDR)
+lwz r4, 0x8(r3)
+stw r4, 0x8(REG_RULES_ADDR)
+lwz r4, 0xC(r3)
+stw r4, 0xC(REG_RULES_ADDR)
+
+# Starts at 8045c370
+lwz r4, 0x10(r3)
+stw r4, 0x460 + 0x0(REG_RULES_ADDR)
+lwz r4, 0x14(r3)
+stw r4, 0x460 + 0x8(REG_RULES_ADDR)
+lwz r4, 0x18(r3)
+stw r4, 0x460 + 0xC(REG_RULES_ADDR)
+lwz r4, 0x1C(r3)
+stw r4, 0x460 + 0x10(REG_RULES_ADDR)
+lwz r4, 0x20(r3)
+stw r4, 0x460 + 0x14(REG_RULES_ADDR)
+lwz r4, 0x24(r3)
+stw r4, 0x460 + 0x18(REG_RULES_ADDR)
+restore
+blr 
+
+################################################################################
+# Code Start
+################################################################################
+CODE_START:
 
 # Ensure that this is an online CSS
 getMinorMajor r3
@@ -70,12 +119,29 @@ li r5, 0x80
 branchl r12, GObj_Create
 mr REG_RULES_BTN_GOBJ, r3 # save GOBJ pointer
 
-stw REG_TEXT_STRUCT_ADDR, USER_DATA_OFFSET(REG_RULES_BTN_GOBJ)
 
 ################################################################################
 # create jbobj (Rules Container)
 ################################################################################
 # We are going to create the whole VS Menu and remove all unnecesary objects
+
+
+# Get Memory Buffer for Chat Message Data Table
+li r3, CSSCRBDT_SIZE
+branchl r12, HSD_MemAlloc
+mr REG_BUFFER, r3 # save result address into REG_BUFFER
+
+# Zero out CSS data table
+li r4, CSSDT_SIZE
+branchl r12, Zero_AreaLength
+
+li r3, MM_STATE_IDLE # default connected state is MM_STATE_IDLE
+stb r3, CSSCRBDT_PREV_CONNECTED_STATE(REG_BUFFER)
+
+li r3, 0 # default lock in state is idle
+stb r3, CSSCRBDT_PREV_LOCK_IN_STATE(REG_BUFFER)
+
+stw REG_TEXT_STRUCT_ADDR, CSSCRBDT_TEXT_STRUCT_ADDR(REG_BUFFER)
 
 lwz r3, -0x49C8(r13) # pointer to MenuModel JObj Descriptor
 lwz	r3, 0x0030 (r3)
@@ -113,6 +179,13 @@ li  r5, 2
 li  r6, 128
 branchl r12,GObj_SetupGXLink
 
+# Add userdata
+mr r3, REG_RULES_BTN_GOBJ
+li r4, 4 # user data kind
+load r5, HSD_Free # destructor
+mr r6, REG_BUFFER # memory pointer of allocated buffer above
+branchl r12, GObj_AddUserData
+
 # Set Think Function that runs every frame
 mr r3, REG_RULES_BTN_GOBJ # set r3 to GOBJ pointer
 bl FN_RULES_SELECTOR_THINK
@@ -124,7 +197,7 @@ restore
 b EXIT
 
 ################################################################################
-# Function for updating online status graphics every frame
+# Function for updating custom rules button graphics every frame
 ################################################################################
 FN_RULES_SELECTOR_THINK:
 blrl
@@ -132,14 +205,43 @@ backup
 
 mr REG_RULES_BTN_GOBJ, r3
 lwz REG_RULES_BTN_JOBJ, ENTITY_DATA_OFFSET(REG_RULES_BTN_GOBJ)
-lwz REG_TEXT_STRUCT_ADDR, USER_DATA_OFFSET(REG_RULES_BTN_GOBJ)
+lwz REG_BUFFER, USER_DATA_OFFSET(REG_RULES_BTN_GOBJ)
 
-loadwz r3, CSSDT_BUF_ADDR # Load where buf is stored
-lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(r3)
+lwz REG_TEXT_STRUCT_ADDR, CSSCRBDT_TEXT_STRUCT_ADDR(REG_BUFFER)
+
+loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR # Load where buf is stored
+lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR)
 
 ################################################################################
 # Initialize
 ################################################################################
+# check previous lock in state and if it goes from locked to not, then clear
+
+lbz r3, CSSCRBDT_PREV_LOCK_IN_STATE(REG_BUFFER)
+lbz r4, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
+stb r4, CSSCRBDT_PREV_LOCK_IN_STATE(REG_BUFFER) # Change previous value
+cmpwi r3, 1
+bne LOCK_IN_RESET_CHECK_END
+cmpwi r4, 0
+bne LOCK_IN_RESET_CHECK_END
+
+bl FN_RESTORE_TOURNAMENT_RULES
+
+LOCK_IN_RESET_CHECK_END:
+
+# check previous connected state and if it goes from connected -> any then clear
+lbz r3, CSSCRBDT_PREV_CONNECTED_STATE(REG_BUFFER)
+lbz r4, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+stb r4, CSSCRBDT_PREV_CONNECTED_STATE(REG_BUFFER) # Change previous value
+
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+bne CONN_RESET_CHECK_END
+cmpwi r4, MM_STATE_CONNECTION_SUCCESS
+beq CONN_RESET_CHECK_END # If still success, skip reset
+
+bl FN_RESTORE_TOURNAMENT_RULES
+
+CONN_RESET_CHECK_END:
 
 
 # only show this button after first match
@@ -274,6 +376,22 @@ stb r0, -0x49aa(r13)
 
 restore
 blr
+
+
+CR_DATA:
+blrl # default tournament custom rules settings
+.long 0x00350102 # Custom Rules 1
+.long 0x04000A00 # Custom Rules 2
+.long 0x08010100 # Additional Rules 1
+.long 0x00000808 # Additional Rules 2
+
+.long 0xFF000000 # Items Speed Switch
+.long 0xffffffff # Items Selections 1
+.long 0xffffffff # Items Selections 2
+.long 0x01010101 # Rumble Settings (ignore)
+.long 0x00010100 # Screen Settings (ignore)
+.long 0xE70000B0 # Stage Selections
+
 
 
 EXIT:

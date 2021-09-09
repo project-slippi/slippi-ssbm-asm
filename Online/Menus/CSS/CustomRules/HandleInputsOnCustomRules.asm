@@ -4,6 +4,7 @@
 ################################################################################
 # 804a04fc address that saves animation states of css custom rles mneu
 .include "Common/Common.s"
+.include "Online/Menus/CSS/CustomRules/CustomRules.s"
 .include "Online/Online.s"
 
 .set REG_RULES_ADDR, 30
@@ -34,35 +35,10 @@ bne EXIT
 li	r3, 6 # snapshot sound
 branchl r12, SFX_Menu_CommonSound
 
-# TODO: Consider using mem copy instead
-
-bl DATA
-mflr r3
-
-load REG_RULES_ADDR, 0x8045BF10
-
-lwz r4, 0x0(r3)
-stw r4, 0x0(REG_RULES_ADDR)
-lwz r4, 0x4(r3)
-stw r4, 0x4(REG_RULES_ADDR)
-lwz r4, 0x8(r3)
-stw r4, 0x8(REG_RULES_ADDR)
-lwz r4, 0xC(r3)
-stw r4, 0xC(REG_RULES_ADDR)
-
-# Starts at 8045c370
-lwz r4, 0x10(r3)
-stw r4, 0x460 + 0x0(REG_RULES_ADDR)
-lwz r4, 0x14(r3)
-stw r4, 0x460 + 0x8(REG_RULES_ADDR)
-lwz r4, 0x18(r3)
-stw r4, 0x460 + 0xC(REG_RULES_ADDR)
-lwz r4, 0x1C(r3)
-stw r4, 0x460 + 0x10(REG_RULES_ADDR)
-lwz r4, 0x20(r3)
-stw r4, 0x460 + 0x14(REG_RULES_ADDR)
-lwz r4, 0x24(r3)
-stw r4, 0x460 + 0x18(REG_RULES_ADDR)
+computeBranchTargetAddress r3, INJ_InitCustomRulesButton
+addi r3, r3, 0x4 # move to function address  (FN_RESTORE_TOURNAMENT_RULES)
+mtctr r3
+bctrl
 
 branchl r12, 0x8022f4cc # CSSRules_CleanupAndReturnToMajor
 restore

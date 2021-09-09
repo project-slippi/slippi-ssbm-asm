@@ -341,6 +341,14 @@
 .set CSSDT_SIZE, CSSDT_TEAM_COSTUME_IDX + 1
 
 ################################################################################
+# CSS Custom Rules Button Data Table
+################################################################################
+.set CSSCRBDT_PREV_CONNECTED_STATE, 0 # u8
+.set CSSCRBDT_PREV_LOCK_IN_STATE, CSSCRBDT_PREV_CONNECTED_STATE + 1 # u8
+.set CSSCRBDT_TEXT_STRUCT_ADDR, CSSCRBDT_PREV_LOCK_IN_STATE + 1 # u32
+.set CSSCRBDT_SIZE, CSSCRBDT_TEXT_STRUCT_ADDR + 4
+
+################################################################################
 # CSS Chat Message Data Table
 ################################################################################
 .set CSSCMDT_TIMER, 0 # u8
