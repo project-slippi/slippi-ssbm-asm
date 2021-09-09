@@ -134,6 +134,10 @@ cmpwi r3, 0
 mr r3, REG_MSRB_ADDR # reuse msrb address
 beq CHECK_MATCH_READY # loop until match info is synched
 
+#logf LOG_LEVEL_WARN, "MSRB_IS_MATCH_INFO_READY: true\n"
+#lbz r5, MSRB_IS_CUSTOM_RULES(REG_MSRB_ADDR)
+#logf LOG_LEVEL_WARN, "MSRB_IS_CUSTOM_RULES: %x\n"
+
 # Prepare player indices
 lbz r3, -0x5108(r13) # Grab the 1p port in use
 stb r3, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS)
@@ -198,7 +202,7 @@ load r4, 0x8045c388 # Random Stages
 lwz r3, MSRB_STAGES_BLOCK(REG_MSRB_ADDR)
 stw r3, 0x0(r4)
 mr r5, r3
-# logf LOG_LEVEL_DEBUG, "Syncing STAGES: %x"
+#logf LOG_LEVEL_WARN, "Syncing STAGES: %x\n"
 
 SKIP_SYNC_RULES:
 

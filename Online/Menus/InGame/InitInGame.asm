@@ -208,7 +208,6 @@ lfs f2, DOFST_TEXT_X_POS_WIDESCREEN(REG_DATA_ADDR)
 SKIP_WIDESCREEN:
 
 # if custom rules are set let players know
-li r9, 0
 lbz r3, MSRB_IS_CUSTOM_RULES(REG_MSRB_ADDR)
 cmpwi r3, 0
 beq SKIP_CUSTOM_RULES
