@@ -367,6 +367,7 @@ add \reg, r3, r4
 
 # Misc
 .set CONST_SlippiCmdGetDelay, 0xD5
+.set CONST_SlippiCmdOvewriteInputs, 0xD6
 
 # For Slippi Premade Texts
 .set CONST_SlippiCmdGetPremadeTextLength, 0xE1

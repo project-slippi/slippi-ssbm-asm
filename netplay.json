@@ -487,6 +487,22 @@
           "isRecursive": true
         }
       ]
+    },
+    {
+      "name": "Optional: Allow Bot Input Overrides",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Allows bots to override inputs"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "AI/OverwriteInputs",
+          "isRecursive": true
+        }
+      ]
     }
   ]
 }
