@@ -70,7 +70,7 @@ beq LOOP_CONTINUE
 
 # Here we should overwrite... So let's do that
 mulli r8, r10, 0xC
-addi r8, r25, r8
+add r8, r25, r8
 
 lwz r3, RXPB_PAD_DATA(r9)
 stw r3, 0(r8)
