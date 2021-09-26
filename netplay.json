@@ -119,16 +119,6 @@
           "annotation": "C-Stick in Single Player [Zauron]"
         },
         {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/DebugMenu.bin",
-          "annotation": "Debug Menu [Magus, donny2112]"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/CssFromDebugMenu.bin",
-          "annotation": "Exiting Debug Menu Returns to CSS [Achilles]"
-        },
-        {
           "type": "injectFolder",
           "sourceFolder": "External/NeutralSpawn",
           "annotation": "Neutral Spawns [UnclePunch]"
