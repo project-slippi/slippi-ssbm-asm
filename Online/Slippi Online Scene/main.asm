@@ -1038,7 +1038,7 @@ li  r3,4
 branchl r12,0x80017700
 
 # Clear ssm queue
-li	r3, 28
+li	r3, 0x1c  # 0x10 = single player sounds, 0x8 = stage sounds, 0x4 = fighter sounds
 branchl	r12, 0x80026F2C
 
 # Load fighters' ssm files
@@ -1109,6 +1109,10 @@ mr  r3,REG_VS_SSS_DATA
 addi r4,REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK    #
 li  r5,0x60 + (0x24*6)  #match data + player data
 branchl r12,memcpy
+
+# Adjust null ID
+mr  r3,REG_VS_SSS_DATA
+branchl r12,FN_AdjustNullID
 
 # Write data for left character
 

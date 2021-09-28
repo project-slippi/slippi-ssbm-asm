@@ -343,6 +343,18 @@
           "type": "binary",
           "sourceFile": "Binary/m-ex.bin",
           "annotation": "m-ex codeset"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/NanaDeterminism",
+          "isRecursive": true,
+          "annotation": "Makes Nana inputs deterministic [UnclePunch, metaconstruct, Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/PSCameraIndependentMonitor",
+          "isRecursive": true,
+          "annotation": "Avoids PS + Widescreen desyncs [Fizzi]"
         }
       ]
     },
@@ -459,18 +471,24 @@
       ]
     },
     {
-      "name": "Optional: Force Nametag for Local Player",
+      "name": "Optional: Show Friendly Player Indicators",
       "authors": [
-        "Fizzi"
+        "Fizzi",
+        "UnclePunch"
       ],
       "description": [
-        "When playing online, nametag YOU will show above your character --------------------- ",
+        "When playing online, nametag YOU will show above your character. A heart will always be shown over your teammate. Helpful for colorblind players to keep track of the players.",
         "Will not cause desyncs when playing online"
       ],
       "build": [
         {
           "type": "injectFolder",
           "sourceFolder": "Online/Optional/IndicateLocalPlayer",
+          "isRecursive": true
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Optional/ShowAllyIndicator",
           "isRecursive": true
         }
       ]
