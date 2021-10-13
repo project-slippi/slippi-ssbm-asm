@@ -726,6 +726,7 @@ li r3, 0x13F #  Text ID
 li r4, 0 # Use Slippi ID = false
 li r5, 2 # use premade text fn
 li r6, 1 # gx_link?
+li r7, 0 # kern close, center text and fixed width
 lfs f1, TPO_DLG_LABEL_X_POS(REG_TEXT_PROPERTIES)
 lfs f2, TPO_DLG_LABEL_Y_POS(REG_TEXT_PROPERTIES)
 lfs f3, TPO_DLG_LABEL_Z_POS(REG_TEXT_PROPERTIES)

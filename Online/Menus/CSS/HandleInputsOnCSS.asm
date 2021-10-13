@@ -440,8 +440,10 @@ cmpwi REG_SB, 0
 bge FN_TX_LOCK_IN_STAGE_PICK
 
 FN_TX_LOCK_IN_STAGE_RAND:
-li  r3,0
-li  r4,3
+bl FN_GET_RANDOM_STAGE_ID
+#li  r4,1
+li  r4, 3
+
 b FN_TX_LOCK_IN_STAGE_SEND
 
 FN_TX_LOCK_IN_STAGE_UNSET:
@@ -461,6 +463,11 @@ stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 # Write the online mode we are in
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 stb r3, PSTB_ONLINE_MODE(REG_TXB_ADDR)
+
+# Write the random stages block to sync with players
+load r3, 0x8045c388 # Random Stages Selection Rules
+lwz r3, 0x0(r3)
+stw r3, PSTB_STAGES_BLOCK(REG_TXB_ADDR)
 
 # Indicate to Dolphin we want to lock-in
 mr r3, REG_TXB_ADDR
@@ -1063,6 +1070,41 @@ blrl
 .set TPO_STRING_CHAT_SHORTCUTS, TPO_COLOR_FAINT_YELLOW + 4
 .string "Chat: %s"
 .align 2
+
+################################################################################
+# Function: Gets Random Stage ID From Settings
+# return r3=stage id
+# Stolen from getStageFromRandomStageSelect
+################################################################################
+FN_GET_RANDOM_STAGE_ID:
+.set REG_STAGES_ADDR, 31
+.set REG_STAGE_ID, 30
+backup
+load REG_STAGES_ADDR, 0x803f06d0 # static memory address where stage data starts
+
+# this loops is stolen and slightly modified from getStageFromRandomStageSelect
+# at 0x80259b58
+# 0x803f06d0 memory address where stages data start
+# each stage has a size of 0x24, next stage is offset at 0x28
+# If a stage has a pointer at offet 0x4 it is skipped from the loop
+# Stage id is at offset 0xA?
+
+rnd_stage_loop:
+li	r3, 29
+branchl r12, HSD_Randi
+mulli	r4, r3, 28
+addi	r0, r4, 10
+lbzx	r3, REG_STAGES_ADDR, r0
+mr REG_STAGE_ID, r3
+
+branchl r12, 0x80164330 # Stage_CheckIfStageUnlocked/Enabled
+cmpwi r3, 1
+bne rnd_stage_loop
+
+mr r3, REG_STAGE_ID
+branchl r12, 0x801641cc # RandomStageSelectID->ExternalStageID
+restore
+blr
 
 ################################################################################
 # Skip starting match

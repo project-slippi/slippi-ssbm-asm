@@ -108,9 +108,9 @@ blrl
 .set TPO_PLAYING_Y, TPO_PRESS_D_Y + 4
 .float -246
 .set TPO_PLAYING_LABEL_X, TPO_PLAYING_Y + 4
-.float -130
+.float -110
 .set TPO_PLAYING_VALUE_X, TPO_PLAYING_LABEL_X + 4
-.float -50
+.float -30
 
 # Spinner properties
 .set TPO_SPINNER_SIZE, TPO_PLAYING_VALUE_X + 4
@@ -1248,7 +1248,7 @@ addi r3, REG_CHATMSG_PLAYER_INDEX, 1
 mr r4, REG_CHATMSG_MSG_ID
 li r5, 2 # use premade text fn
 li r6, 0 # gx_link/pri?
-
+li r7, 0 # kern close, center text and fixed width
 # f1 = X POS is set up above
 # f2 = Y POS is set up above
 lfs f3, TPO_CHATMSG_Z_POS(REG_TEXT_PROPERTIES)

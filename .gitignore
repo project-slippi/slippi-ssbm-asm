@@ -218,6 +218,7 @@ pip-log.txt
 .mr.developer.cfg
 
 .idea/
+.vscode
 
 Output/Netplay/install.bat
 Output/Netplay/build-netplay.bat - Shortcut.lnk

@@ -255,7 +255,11 @@
 .set MSRB_IS_REMOTE_PLAYER_READY, MSRB_IS_LOCAL_PLAYER_READY + 1 # bool
 .set MSRB_LOCAL_PLAYER_INDEX, MSRB_IS_REMOTE_PLAYER_READY + 1 # u8
 .set MSRB_REMOTE_PLAYER_INDEX, MSRB_LOCAL_PLAYER_INDEX + 1 # u8
-.set MSRB_RNG_OFFSET, MSRB_REMOTE_PLAYER_INDEX + 1 # u32
+.set MSRB_IS_DECIDER, MSRB_REMOTE_PLAYER_INDEX + 1 # bool
+.set MSRB_IS_MATCH_INFO_READY, MSRB_IS_DECIDER + 1 # bool
+.set MSRB_IS_CUSTOM_RULES, MSRB_IS_MATCH_INFO_READY + 1 # bool
+.set MSRB_STAGES_BLOCK, MSRB_IS_CUSTOM_RULES + 1 # u32
+.set MSRB_RNG_OFFSET, MSRB_STAGES_BLOCK + 4 # u32
 .set MSRB_DELAY_FRAMES, MSRB_RNG_OFFSET + 4 # u8
 .set MSRB_USER_CHATMSG_ID, MSRB_DELAY_FRAMES + 1 # u8
 .set MSRB_OPP_CHATMSG_ID, MSRB_USER_CHATMSG_ID + 1 # u8
@@ -278,6 +282,13 @@
 .set MSRB_SIZE, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
 
 ################################################################################
+# Match Info Transfer Buffer
+################################################################################
+.set MITB_CMD, 0 # u8
+.set MITB_GAME_INFO_BLOCK, MITB_CMD + 1 # 0x138
+.set MITB_SIZE, MITB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
+
+################################################################################
 # Player Selections Transfer Buffer
 ################################################################################
 .set PSTB_CMD, 0 # u8
@@ -288,7 +299,8 @@
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
 .set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear, 3 = random
 .set PSTB_ONLINE_MODE, PSTB_STAGE_OPT + 1 # u8
-.set PSTB_SIZE, PSTB_ONLINE_MODE + 1
+.set PSTB_STAGES_BLOCK, PSTB_ONLINE_MODE + 1 # u32
+.set PSTB_SIZE, PSTB_STAGES_BLOCK + 4
 
 ################################################################################
 # Chat Messages Transfer Buffer
@@ -327,6 +339,14 @@
 .set CSSDT_TEAM_IDX, CSSDT_LAST_CHAT_MSG_INDEX + 1 # u8
 .set CSSDT_TEAM_COSTUME_IDX, CSSDT_TEAM_IDX + 1 #8
 .set CSSDT_SIZE, CSSDT_TEAM_COSTUME_IDX + 1
+
+################################################################################
+# CSS Custom Rules Button Data Table
+################################################################################
+.set CSSCRBDT_PREV_CONNECTED_STATE, 0 # u8
+.set CSSCRBDT_PREV_LOCK_IN_STATE, CSSCRBDT_PREV_CONNECTED_STATE + 1 # u8
+.set CSSCRBDT_TEXT_STRUCT_ADDR, CSSCRBDT_PREV_LOCK_IN_STATE + 1 # u32
+.set CSSCRBDT_SIZE, CSSCRBDT_TEXT_STRUCT_ADDR + 4
 
 ################################################################################
 # CSS Chat Message Data Table
