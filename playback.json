@@ -14,7 +14,6 @@
         "[Gecko_Enabled]",
         "$Required: General Codes",
         "$Required: Slippi Playback",
-        "$Recommended: Normal Lag Reduction",
         "$Optional: Show Player Names",
         "",
         "[Gecko]"
@@ -34,7 +33,6 @@
         "[Gecko_Enabled]",
         "$Required: General Codes",
         "$Required: Slippi Playback",
-        "$Recommended: Normal Lag Reduction",
         "$Optional: Show Player Names",
         "",
         "[Gecko]"
@@ -124,18 +122,6 @@
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
-        }
-      ]
-    },
-    {
-      "name": "Recommended: Normal Lag Reduction",
-      "authors": [
-        "Hannes Mann"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/NormalLagReduction.bin"
         }
       ]
     },

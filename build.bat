@@ -29,7 +29,7 @@ set list=%list%;console_gameplay_both.json
 set list=%list%;console_lag_pd.json
 set list=%list%;console_lag_pdhalfvb.json
 set list=%list%;console_screen_wide.json
-set list=%list%;console_screen_mon43.json
+set list=%list%;console_screen_wide_shutters.json
 
 for %%a in (%list%) do (
   echo Building %%a...
