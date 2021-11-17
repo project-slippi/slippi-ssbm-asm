@@ -346,6 +346,12 @@
         },
         {
           "type": "injectFolder",
+          "sourceFolder": "Common/CompatibilityHooks",
+          "isRecursive": true,
+          "annotation": "Functions that can be externally modified"
+        },
+        {
+          "type": "injectFolder",
           "sourceFolder": "Common/NanaDeterminism",
           "isRecursive": true,
           "annotation": "Makes Nana inputs deterministic [UnclePunch, metaconstruct, Fizzi]"
