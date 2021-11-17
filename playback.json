@@ -122,6 +122,12 @@
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CompatibilityHooks",
+          "isRecursive": true,
+          "annotation": "Functions that can be externally modified"
         }
       ]
     },
