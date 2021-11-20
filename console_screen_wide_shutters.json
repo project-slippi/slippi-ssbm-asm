@@ -1,0 +1,36 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_screen_wide_shutters.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Optional: 16:9 -> 73:60",
+      "authors": [
+        "Dan Salvato",
+        "mirrorbender",
+        "Achilles1515",
+        "UnclePunch",
+        "Fizzi"
+      ],
+      "description": [
+        "Set Aspect Ratio to \"Force 16:9\" in Graphics"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Widescreen",
+          "isRecursive": true,
+          "annotation": "Widescreen 16:9"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/WidescreenShutters",
+          "isRecursive": true,
+          "annotation": "Converts 16:9 to 4:3"
+        }
+      ]
+    }
+  ]
+}
