@@ -38,7 +38,8 @@
 #Check if this player is a follower
   mr  r3,PlayerData
   branchl r12,FN_GetIsFollower
-  mr  r20,r3
+  mr.  r20,r3
+  bne Injection_Exit
 
 # Get players offset in buffer ()
   addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
