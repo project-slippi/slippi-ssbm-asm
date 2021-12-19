@@ -1,0 +1,25 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_safety.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Tournament safety codes",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Codes to ensure integrity of tournament matches"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/FixedDamageRatio",
+          "annotation": "Prevent Players From Changing Damage Ratio [Fizzi]"
+        }
+      ]
+    }
+  ]
+}
