@@ -18,6 +18,11 @@
           "type": "injectFolder",
           "sourceFolder": "External/FixedDamageRatio",
           "annotation": "Prevent Players From Changing Damage Ratio [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/PreventPauseSoftLocks",
+          "annotation": "Force pause on when not using tournament settings [Fizzi]"
         }
       ]
     }
