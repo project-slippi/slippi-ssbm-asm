@@ -1,6 +1,11 @@
 ################################################################################
 # Macros
 ################################################################################
+.macro loadGlobalFrame reg
+lis \reg, 0x8048
+lwz \reg, -0x62A0(\reg)
+.endm
+
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l

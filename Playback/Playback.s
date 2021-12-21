@@ -6,10 +6,7 @@
 
 # None
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
+
 
 ################################################################################
 # Const Definitions

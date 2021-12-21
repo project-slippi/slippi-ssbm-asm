@@ -1,7 +1,7 @@
 ################################################################################
 # Address: 801a6348
 ################################################################################
-.include "Common/Common.s"
+.include "Online/Core/EXIFileLoad/TransferFile.asm"
 .include "Playback/Playback.s"
 
 .set REG_Floats, 30
@@ -13,13 +13,22 @@
 .set REG_SecondBuf,24
 .set REG_LOCAL_DATA_ADDR,25
 
+  bl DATA_BLRL
+  mflr REG_LOCAL_DATA_ADDR
+  b FBegin
+
+
+DATA_BLRL:
+blrl
 # File related strings
-.string "slpMisc.dat"
+.string "slpCSS.dat"
 .set DO_STRING_SLPLOGO_FILENAME, 0
-.string "slpMisc"
+.string "slpCSS"
 .set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 12
 .align 2
 
+
+FBegin:
 
 #############################
 # Create Per Frame Function #
@@ -315,7 +324,7 @@ FloatValues:
 
   Text:
   blrl
-  .string "Waiting for game%s"
+  .string "Poggers%s"
   .align 2
 
   Dots:

@@ -124,6 +124,12 @@
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Online/Core/EXIFileLoad",
+          "isRecursive": true,
+          "annotation": "File load functions"
         }
       ]
     },
