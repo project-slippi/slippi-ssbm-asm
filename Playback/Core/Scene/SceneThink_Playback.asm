@@ -58,14 +58,9 @@ FBegin:
 
 # Retrieve symbol from file data
   addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
-  branchl r12,0x80380358
-
-# Save ptr to mem
-# I believe these are commented out because they're redundant memory operations? Not 100% sure
-#  stw r3, SLPMSC_BUF_ADDR(0x0)
+  branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress, returns a pointer in r3
 
 # Load logo JOBJ
-# lwz r3, CSSDT_SLPCSS_ADDR(REG_CSSDT_ADDR)
   lwz r3, 0x0 (r3) # pointer to our logo jobj
   lwz r3, 0x0 (r3) #jobj
   branchl r12, 0x80370e44 # Create Jobj
