@@ -33,6 +33,11 @@ FBegin:
 #############################
 # Create Per Frame Function #
 #############################
+  
+# Alloc SecondBuf
+  li r3,0x20
+  branchl r12, HSD_MemAlloc
+  mr REG_SecondBuf,r3
 
 #Check If Major Scene 0xE
   load  r3,0x80479D30   #Scene Controller
@@ -42,20 +47,21 @@ FBegin:
 
 #Create GObj
   li  r3, 13
-  li  r4,14
-  li  r5,0
+  li  r4, 14
+  li  r5, 0
   branchl r12, GObj_Create
   mr REG_GOBJ, r3 # save GOBJ pointer
 
 # Load LOGO file
   addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
-  branchl r12,0x80016be0
+  branchl r12,0x80016be0 # File load function?
 
 # Retrieve symbol from file data
   addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
   branchl r12,0x80380358
 
 # Save ptr to mem
+# I believe these are commented out because they're redundant memory operations? Not 100% sure
 #  stw r3, SLPMSC_BUF_ADDR(0x0)
 
 # Load logo JOBJ
@@ -75,7 +81,7 @@ FBegin:
   mr r3, REG_GOBJ
   load r4, 0x80391070
   li r5, 9 # index
-  li r6, 128
+  li r6, 1 # gx_pri, formerly 128
   branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
 
 # Add User Data to GOBJ
@@ -89,7 +95,7 @@ FBegin:
 #Schedule Function
   bl  PlaybackThink
   mflr  r4      #Function to Run
-  li  r5,0      #Priority
+  li  r5, 0      #Priority, formerly 0
   branchl r12, GObj_AddProc
 
 b Exit
@@ -185,10 +191,6 @@ blrl
   li  r3,0x20
   branchl r12, HSD_MemAlloc
   mr  REG_BufferPointer,r3
-
-  li r3,0x20
-  branchl r12, HSD_MemAlloc
-  mr REG_SecondBuf,r3
 
   ######################
   ## Init Frame Count ##
