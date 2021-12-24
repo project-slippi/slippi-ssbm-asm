@@ -23,8 +23,11 @@ blrl
 # File related strings
 .string "slpCSS.dat"
 .set DO_STRING_SLPLOGO_FILENAME, 0
-.string "slpCSS"
-.set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 12
+.string "slplogo_scene_data"
+.set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 11
+# symbol offsets
+.set SLPLOGO_LOGO, -0x53
+.set SLPLOGO_CAMDESC, -0x49
 .align 2
 
 
@@ -35,7 +38,7 @@ FBegin:
 #############################
   
 # Alloc SecondBuf
-  li r3,0x20
+  li r3,0x20 # 8065dc38
   branchl r12, HSD_MemAlloc
   mr REG_SecondBuf,r3
 
@@ -46,7 +49,7 @@ FBegin:
   bne Original
 
 #Create GObj
-  li  r3, 13
+  li  r3, 0
   li  r4, 14
   li  r5, 0
   branchl r12, GObj_Create
@@ -54,11 +57,32 @@ FBegin:
 
 # Load LOGO file
   addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
-  branchl r12,0x80016be0 # File load function?
+  branchl r12,0x80016be0 # File_Load
 
 # Retrieve symbol from file data
   addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
   branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress, returns a pointer in r3
+
+# Load camdesc
+  mr r4, r3 # Remember symbol pointer in r4. 8065dcac
+  addi r3, r3, SLPLOGO_CAMDESC # Address of camdesc into r3
+  branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3) CRASHES HERE CURRENTLY
+
+# Add GOBJ to COBJ? (Not sure of parameter order here)
+  mr r5, r3 # Move COBJ pointer to r5
+  li r4, 4
+  mr r3, REG_GOBJ
+  branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
+
+# Initialize camera
+  mr r3, REG_GOBJ # Might be redundant, but it's unclear whether GObj_AddToObj backs-up/restores register 3
+  load r4, 0x803910D8 # CObjThink_Common
+  li r5, 1 # gx_pri
+  branchl r12, 0x8039075C # void GObj_InitCamera(GOBJ* gobj, void (*render_cb)(GOBJ*, s32), u32 priority)
+
+# set gobj->cobj_links (0x20) to 1 << 9 (512)
+  li r4, 512
+  stw r4, 0x20(REG_GOBJ)
 
 # Load logo JOBJ
   lwz r3, 0x0 (r3) # pointer to our logo jobj
