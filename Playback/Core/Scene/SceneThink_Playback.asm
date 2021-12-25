@@ -13,6 +13,10 @@
 .set REG_SecondBuf,24
 .set REG_LOCAL_DATA_ADDR,25
 
+# symbol offsets
+.set SLPLOGO_LOGO, -0x53
+.set SLPLOGO_CAMDESC, -0x49
+
   bl DATA_BLRL
   mflr REG_LOCAL_DATA_ADDR
   b FBegin
@@ -25,11 +29,7 @@ blrl
 .set DO_STRING_SLPLOGO_FILENAME, 0
 .string "slplogo_scene_data"
 .set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 11
-# symbol offsets
-.set SLPLOGO_LOGO, -0x53
-.set SLPLOGO_CAMDESC, -0x49
 .align 2
-
 
 FBegin:
 
@@ -65,8 +65,8 @@ FBegin:
 
 # Load camdesc
   mr r4, r3 # Remember symbol pointer in r4. 8065dcac
-  addi r3, r3, SLPLOGO_CAMDESC # Address of camdesc into r3
-  branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3) CRASHES HERE CURRENTLY
+  lwz r3, SLPLOGO_CAMDESC(r3) # Address of camdesc into r3
+  branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3) 
 
 # Add GOBJ to COBJ? (Not sure of parameter order here)
   mr r5, r3 # Move COBJ pointer to r5
@@ -87,14 +87,16 @@ FBegin:
 # Load logo JOBJ
   lwz r3, 0x0 (r3) # pointer to our logo jobj
   lwz r3, 0x0 (r3) #jobj
-  branchl r12, 0x80370e44 # Create Jobj
+  branchl r12, JObj_LoadJoint # (jobj_desc_ptr)
   mr REG_LOGO_JOBJ,r3
 
 # Add logo JOBJ to GOBJ
   mr r3, REG_GOBJ
+  li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
+  stb r4, 0x6(REG_GOBJ) 
   li r4, 4
   mr r5, REG_LOGO_JOBJ
-  branchl r12,0x80390a70 # void GObj_AddObject
+  branchl r12,0x80390a70 # void GObj_AddObject CRASHES HERE CURRENTLY
 
 # Add GX link that draws the logo
   mr r3, REG_GOBJ
@@ -109,7 +111,6 @@ FBegin:
   load r5, HSD_Free # destructor
   mr r6, REG_SecondBuf
   branchl r12, GObj_AddUserData
-
 
 #Schedule Function
   bl  PlaybackThink
