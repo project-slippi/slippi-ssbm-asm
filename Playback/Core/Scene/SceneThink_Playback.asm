@@ -9,13 +9,16 @@
 .set REG_Text,28
 .set REG_FrameCount,27
 .set REG_LOGO_JOBJ,21
-.set REG_GOBJ,22
+.set REG_CAM_GOBJ,22
+.set REG_LOGO_GOBJ,26
 .set REG_SecondBuf,24
 .set REG_LOCAL_DATA_ADDR,25
+.set REG_PROC_GOBJ,19
 
 # symbol offsets
 .set SLPLOGO_LOGO, -0x53
 .set SLPLOGO_CAMDESC, -0x49
+.set COBJ_LINKS, 0x20
 
   bl DATA_BLRL
   mflr REG_LOCAL_DATA_ADDR
@@ -36,11 +39,6 @@ FBegin:
 #############################
 # Create Per Frame Function #
 #############################
-  
-# Alloc SecondBuf
-  li r3,0x20 # 8065dc38
-  branchl r12, HSD_MemAlloc
-  mr REG_SecondBuf,r3
 
 #Check If Major Scene 0xE
   load  r3,0x80479D30   #Scene Controller
@@ -48,12 +46,36 @@ FBegin:
   cmpwi r3,0xE          #DebugMelee
   bne Original
 
-#Create GObj
-  li  r3, 0
-  li  r4, 14
-  li  r5, 0
+# Alloc SecondBuf
+  li r3,0x20 
+  branchl r12, HSD_MemAlloc # 8065dc38
+  mr REG_SecondBuf,r3
+
+# Zero out
+# r3 already set to SecondBuf address
+  li r4, 0x20
+  branchl r12,0x8000c160 # ZeroAreaLength
+
+#Create Cam GObj
+  li  r3, 22 #formerly 0
+  li  r4, 23 # formerly 14
+  li  r5, 0 
   branchl r12, GObj_Create
-  mr REG_GOBJ, r3 # save GOBJ pointer
+  mr REG_CAM_GOBJ, r3 # save GOBJ pointer
+
+#Create Logo GObj
+  li  r3, 0 
+  li  r4, 15
+  li  r5, 0 
+  branchl r12, GObj_Create
+  mr REG_LOGO_GOBJ, r3 # save GOBJ pointer
+
+# Create Proc GOBJ
+  li r3, 13
+  li r4, 14
+  li r5, 0
+  branchl r12, GObj_Create
+  mr REG_PROC_GOBJ, r3 # save GOBJ pointer
 
 # Load LOGO file
   addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
@@ -71,18 +93,18 @@ FBegin:
 # Add GOBJ to COBJ? (Not sure of parameter order here)
   mr r5, r3 # Move COBJ pointer to r5
   li r4, 4
-  mr r3, REG_GOBJ
+  mr r3, REG_CAM_GOBJ
   branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
 
 # Initialize camera
-  mr r3, REG_GOBJ # Might be redundant, but it's unclear whether GObj_AddToObj backs-up/restores register 3
+  mr r3, REG_CAM_GOBJ # Might be redundant, but it's unclear whether GObj_AddToObj backs-up/restores register 3
   load r4, 0x803910D8 # CObjThink_Common
   li r5, 1 # gx_pri
   branchl r12, 0x8039075C # void GObj_InitCamera(GOBJ* gobj, void (*render_cb)(GOBJ*, s32), u32 priority)
 
-# set gobj->cobj_links (0x20) to 1 << 9 (512)
+# set gobj->cobj_links (0x20) to 1 << gx link index (9)
   li r4, 512
-  stw r4, 0x20(REG_GOBJ)
+  stw r4, COBJ_LINKS(REG_CAM_GOBJ)
 
 # Load logo JOBJ
   lwz r3, 0x0 (r3) # pointer to our logo jobj
@@ -91,22 +113,29 @@ FBegin:
   mr REG_LOGO_JOBJ,r3
 
 # Add logo JOBJ to GOBJ
-  mr r3, REG_GOBJ
+  mr r3, REG_LOGO_GOBJ
   li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
-  stb r4, 0x6(REG_GOBJ) 
-  li r4, 4
+  stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
+  li r4, 5
   mr r5, REG_LOGO_JOBJ
-  branchl r12,0x80390a70 # void GObj_AddObject CRASHES HERE CURRENTLY
+  branchl r12,0x80390a70 # void GObj_AddObject
 
 # Add GX link that draws the logo
-  mr r3, REG_GOBJ
-  load r4, 0x80391070
+  mr r3, REG_LOGO_GOBJ
+  load r4, 0x80391070 # GXLink_Common
   li r5, 9 # index
   li r6, 1 # gx_pri, formerly 128
   branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
 
 # Add User Data to GOBJ
-  mr r3, REG_GOBJ
+  mr r3, REG_CAM_GOBJ
+  li r4, 4 # user data kind
+  load r5, HSD_Free # destructor
+  mr r6, REG_SecondBuf
+  branchl r12, GObj_AddUserData
+
+# Add User Data to GOBJ
+  mr r3, REG_LOGO_GOBJ
   li r4, 4 # user data kind
   load r5, HSD_Free # destructor
   mr r6, REG_SecondBuf
@@ -114,8 +143,9 @@ FBegin:
 
 #Schedule Function
   bl  PlaybackThink
+  mr r3, REG_PROC_GOBJ
   mflr  r4      #Function to Run
-  li  r5, 0      #Priority, formerly 0
+  li  r5, 0      #Priority
   branchl r12, GObj_AddProc
 
 b Exit
