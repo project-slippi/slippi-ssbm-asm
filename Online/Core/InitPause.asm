@@ -140,22 +140,16 @@ ClientPause_Paused_Disconnect:
 # Play SFX
 li  r3,2
 branchl r12,0x80024030
-# Stop Rumble
-branchl r12, 0x80378330
-# Set the address normally used to indicate who paused
+
+# Write values which will cause line at 0x8016d2c8 to detect game has ended
 load r3, 0x8046b6a0 # Some static match state struct
 stb REG_PORT, 0x1(r3) # Write pauser index
-# End game
-mr r3, REG_PORT
 li r4, 0x7
-branchl r12,NoContestOrRetry_
-# Change scene
-li  r3,3
-load  r4,0x8046b6a0
-stb r3,0x0(r4)
-# Unpause clientside
-#li  r3,0
-#stb r3, OFST_R13_ISPAUSE (r13)
+stb r4, 0x8(r3) # Write that the game is exiting as an LRAS
+
+# Hide pause textures
+branchl r12, 0x801a10fc # Pause_HidePauseTextures
+
 b ClientPause_Exit
 
 ################################################################################

@@ -8,8 +8,18 @@
 # Execute replaced code line
 addi r29, r3, 0
 
+# So I think what is happening is that all controllers are told to stop rumbling when we are
+# exiting the scene... but inputs for the local player are being delayed, hence the message to
+# stop rumbling doesn't arrive for that player until we have left the in-game scene, which means
+# the redirect logic never runs.
+# So in short, if player 0 is the local player, the reset message will come in for player 1 while
+# still in the in-game scene, but it will be ignored because it's not the local player.
+# Then the reset message will come in for player 0 once the scene has transitioned to the CSS meaning
+# this command will be respected but the problem is that isn't the controller we are playing on.
+
 # Check if online in-game
 getMinorMajor r3
+logf LOG_LEVEL_ERROR, "Rumble for port %d. Value: %d. Scene: %X", "mr 5, 29", "mr 6, 4", "mr 7, 3"
 cmpwi r3, SCENE_ONLINE_IN_GAME
 bne EXIT
 
@@ -40,6 +50,7 @@ branch r12, 0x8034df44
 IS_LOCAL_PLAYER:
 # Set r3 output to the controller port to redirect to
 lbz r3, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS)
+logf LOG_LEVEL_ERROR, "Is local player, redirect to %d", "mr 5, 3"
 
 RESTORE:
 restore
