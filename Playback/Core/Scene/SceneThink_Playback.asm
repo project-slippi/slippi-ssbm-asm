@@ -12,7 +12,8 @@
 .set REG_LOCAL_DATA_ADDR, 25
 .set REG_CAM_GOBJ, 22
 .set REG_LOGO_JOBJ, 21
-.set REG_PROC_GOBJ, 19
+# .set REG_PROC_GOBJ, 19
+.set REG_SLPLOGO, 19
 .set REG_LOGO_GOBJ, 18
 
 # symbol offsets
@@ -64,35 +65,35 @@ FBegin:
   mr REG_CAM_GOBJ, r3 # save GOBJ pointer
 
 #Create Logo GObj
-  li  r3, 0 
-  li  r4, 15
-  li  r5, 0 
+  li  r3, 4 
+  li  r4, 5
+  li  r5, 0x80
   branchl r12, GObj_Create
   mr REG_LOGO_GOBJ, r3 # save GOBJ pointer
 
 # Create Proc GOBJ
-  li r3, 13
-  li r4, 14
-  li r5, 0
-  branchl r12, GObj_Create
-  mr REG_PROC_GOBJ, r3 # save GOBJ pointer
+#  li r3, 13
+#  li r4, 14
+#  li r5, 0
+#  branchl r12, GObj_Create
+#  mr REG_PROC_GOBJ, r3 # save GOBJ pointer
 
 # Load LOGO file
-  addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
+  addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME # TODO Pretty sure addi is inappropriate for pointer math
   branchl r12,0x80016be0 # File_Load
 
 # Retrieve symbol from file data
-  addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
+  addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME # TODO Pretty sure addi is inappropriate for pointer math
   branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress, returns a pointer in r3
+  mr REG_SLPLOGO, r3 # Remember symbol pointer
 
 # Load camdesc
-  mr r4, r3 # Remember symbol pointer in r4. 8065dcac
   lwz r3, SLPLOGO_CAMDESC(r3) # Address of camdesc into r3
   branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3) 
 
-# Add GOBJ to COBJ? (Not sure of parameter order here)
+# Add COBJ to GOBJ
   mr r5, r3 # Move COBJ pointer to r5
-  li r4, 4
+  lbz r4, -0x3E55(r13)
   mr r3, REG_CAM_GOBJ
   branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
 
@@ -107,16 +108,16 @@ FBegin:
   stw r4, COBJ_LINKS(REG_CAM_GOBJ)
 
 # Load logo JOBJ
-  lwz r3, 0x0 (r3) # pointer to our logo jobj
-  lwz r3, 0x0 (r3) #jobj
+  lwz r3, SLPLOGO_LOGO (REG_SLPLOGO) # pointer to our logo jobj
   branchl r12, JObj_LoadJoint # (jobj_desc_ptr)
   mr REG_LOGO_JOBJ,r3
 
 # Add logo JOBJ to GOBJ
   mr r3, REG_LOGO_GOBJ
-  li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
-  stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
-  li r4, 5
+  # li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
+  lbz r4, -0x3E55(r13)
+  # stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
+  # li r4, 5
   mr r5, REG_LOGO_JOBJ
   branchl r12,0x80390a70 # void GObj_AddObject
 
@@ -143,7 +144,7 @@ FBegin:
 
 #Schedule Function
   bl  PlaybackThink
-  mr r3, REG_PROC_GOBJ
+  mr r3, REG_LOGO_GOBJ
   mflr  r4      #Function to Run
   li  r5, 0      #Priority
   branchl r12, GObj_AddProc
