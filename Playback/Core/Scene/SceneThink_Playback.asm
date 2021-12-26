@@ -6,14 +6,14 @@
 
 .set REG_Floats, 30
 .set REG_BufferPointer, 29
-.set REG_Text,28
-.set REG_FrameCount,27
-.set REG_LOGO_JOBJ,21
-.set REG_CAM_GOBJ,22
-.set REG_LOGO_GOBJ,26
-.set REG_SecondBuf,24
-.set REG_LOCAL_DATA_ADDR,25
-.set REG_PROC_GOBJ,19
+.set REG_Text, 28
+.set REG_FrameCount, 27
+.set REG_SecondBuf, 24
+.set REG_LOCAL_DATA_ADDR, 25
+.set REG_CAM_GOBJ, 22
+.set REG_LOGO_JOBJ, 21
+.set REG_PROC_GOBJ, 19
+.set REG_LOGO_GOBJ, 18
 
 # symbol offsets
 .set SLPLOGO_LOGO, -0x53
