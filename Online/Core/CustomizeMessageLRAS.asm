@@ -14,15 +14,37 @@ cmpwi r7, SCENE_ONLINE_IN_GAME
 bne EXIT
 
 # Ensure that this is an unranked game
+# TODO: We could perhaps check for any mode which has local-pausing enabled instead
 lbz r7, OFST_R13_ONLINE_MODE(r13)
 cmpwi r7, ONLINE_MODE_UNRANKED
 bne EXIT
 
-# TODO: Check if this is the person that paused
+# Ensure the game ended as an LRAS
+lbz r7, 0x8(REG_MATCH_INFO)
+cmpwi r7, 7
+bne EXIT
+
+# Store the index of the person that paused
+lbz r10, 0x1(REG_MATCH_INFO)
+
+################################################################################
+# It's safe to change r3 now cause we are exiting the function
+################################################################################
+
+# Fetch the index of the local player
+lwz r11, OFST_R13_ODB_ADDR(r13) # data buffer address
+lbz r3, ODB_LOCAL_PLAYER_INDEX(r11)
+cmpw r3, r10 # Compare local player index to index of pauser
+beq SKIP_PLAY_PAUSE_SOUND
+
+# Play SFX
+li  r3, 5
+branchl r12, SFX_Menu_CommonSound
+SKIP_PLAY_PAUSE_SOUND:
 
 # branch r12, 0x802f70fc # Failure
 # branch r12, 0x802f7110 # Game!
-branch r12, 0x802f7120 # Exit function
+branch r12, 0x802f7120 # Exit function, shows nothing and plays no sound
 
 EXIT:
 lbz	r8, 0x000B(REG_MATCH_INFO) # Replaced codeline

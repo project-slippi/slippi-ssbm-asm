@@ -137,15 +137,24 @@ b ClientPause_Exit
 ################################################################################
 
 ClientPause_Paused_Disconnect:
-# Play SFX
-li  r3,2
-branchl r12,0x80024030
+# ASM Notes. Match struct at 0x8046b6a0 has info about the game. The early values seem to be control
+# values. Here are notes on offsets:
+# 0x0 (u8): Control byte. 0 during game, 1 during GAME!, 3 to transition to next scene
+# 0x1 (u8): Stores index of last person that paused
+# 0x8 (u8): Stores type of game exit, instructs which text to show on GAME! screen?
+# 0x30 (u8): Counter that counts up during GAME! screen until it is greater than timeout
+# 0x24D5 (u8): Max time to stay on GAME! screen
 
 # Write values which will cause line at 0x8016d2c8 to detect game has ended
 load r3, 0x8046b6a0 # Some static match state struct
 stb REG_PORT, 0x1(r3) # Write pauser index
 li r4, 0x7
 stb r4, 0x8(r3) # Write that the game is exiting as an LRAS
+li r4, 0x1E # Default value for this is 0x6e
+stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it shorter
+
+# Hide HUD so that it's hidden for both players during GAME!
+branchl r12, 0x802f3394 # Pause_HideHUD
 
 # Hide pause textures
 branchl r12, 0x801a10fc # Pause_HidePauseTextures
@@ -202,7 +211,7 @@ li  r4,0x5      #shows LRA start and stick
 branchl r12,0x801a0fec
 # Play SFX
 li  r3,5
-branchl r12,0x80024030
+branchl r12, SFX_Menu_CommonSound
 b ClientPause_Exit
 
 ClientPause_Exit:
