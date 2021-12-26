@@ -17,8 +17,8 @@
 .set REG_LOGO_GOBJ, 18
 
 # symbol offsets
-.set SLPLOGO_LOGO, -0x53
-.set SLPLOGO_CAMDESC, -0x49
+.set SLPLOGO_LOGO_JOBJDESC, 0x0
+.set SLPLOGO_CAMDESC, 0x4
 .set COBJ_LINKS, 0x20
 
   bl DATA_BLRL
@@ -79,16 +79,17 @@ FBegin:
 #  mr REG_PROC_GOBJ, r3 # save GOBJ pointer
 
 # Load LOGO file
-  addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME # TODO Pretty sure addi is inappropriate for pointer math
+  addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
   branchl r12,0x80016be0 # File_Load
 
 # Retrieve symbol from file data
-  addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME # TODO Pretty sure addi is inappropriate for pointer math
+  addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
   branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress, returns a pointer in r3
   mr REG_SLPLOGO, r3 # Remember symbol pointer
 
 # Load camdesc
-  lwz r3, SLPLOGO_CAMDESC(r3) # Address of camdesc into r3
+  lwz r3, SLPLOGO_CAMDESC (REG_SLPLOGO) 
+  lwz r3, 0x0 (r3) # r3 becomes Camera_
   branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3) 
 
 # Add COBJ to GOBJ
@@ -108,16 +109,18 @@ FBegin:
   stw r4, COBJ_LINKS(REG_CAM_GOBJ)
 
 # Load logo JOBJ
-  lwz r3, SLPLOGO_LOGO (REG_SLPLOGO) # pointer to our logo jobj
+  lwz r3, 0x0 (REG_SLPLOGO) # r3 = slplogo_scene_data
+  lwz r3, SLPLOGO_LOGO_JOBJDESC (r3) # r3 becomes JOBJDescs_
+  lwz r3, 0x0 (r3) # r3 becomes Array_0_ (HSD_JOBJDesc[]) 
   branchl r12, JObj_LoadJoint # (jobj_desc_ptr)
   mr REG_LOGO_JOBJ,r3
 
 # Add logo JOBJ to GOBJ
   mr r3, REG_LOGO_GOBJ
   # li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
-  lbz r4, -0x3E55(r13)
   # stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
-  # li r4, 5
+  # lbz r4, -0x3E55(r13)
+  li r4, 5
   mr r5, REG_LOGO_JOBJ
   branchl r12,0x80390a70 # void GObj_AddObject
 
