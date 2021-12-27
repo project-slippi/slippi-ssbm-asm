@@ -8,7 +8,6 @@
 .set REG_BufferPointer, 29
 .set REG_Text, 28
 .set REG_FrameCount, 27
-.set REG_SecondBuf, 24
 .set REG_LOCAL_DATA_ADDR, 25
 .set REG_CAM_GOBJ, 22
 .set REG_LOGO_JOBJ, 21
@@ -47,16 +46,6 @@ FBegin:
   cmpwi r3,0xE          #DebugMelee
   bne Original
 
-# Alloc SecondBuf
-  li r3,0x20 
-  branchl r12, HSD_MemAlloc # 8065dc38
-  mr REG_SecondBuf,r3
-
-# Zero out
-# r3 already set to SecondBuf address
-  li r4, 0x20
-  branchl r12,0x8000c160 # ZeroAreaLength
-
 #Create Cam GObj
   li  r3, 22 #formerly 0
   li  r4, 23 # formerly 14
@@ -94,7 +83,7 @@ FBegin:
 
 # Add COBJ to GOBJ
   mr r5, r3 # Move COBJ pointer to r5
-  lbz r4, -0x3E55(r13)
+  lbz r4, 4 # -0x3E55(r13)
   mr r3, REG_CAM_GOBJ
   branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
 
@@ -120,7 +109,7 @@ FBegin:
   # li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
   # stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
   # lbz r4, -0x3E55(r13)
-  li r4, 5
+  li r4, 4
   mr r5, REG_LOGO_JOBJ
   branchl r12,0x80390a70 # void GObj_AddObject
 
@@ -130,20 +119,6 @@ FBegin:
   li r5, 9 # index
   li r6, 1 # gx_pri, formerly 128
   branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
-
-# Add User Data to GOBJ
-  mr r3, REG_CAM_GOBJ
-  li r4, 4 # user data kind
-  load r5, HSD_Free # destructor
-  mr r6, REG_SecondBuf
-  branchl r12, GObj_AddUserData
-
-# Add User Data to GOBJ
-  mr r3, REG_LOGO_GOBJ
-  li r4, 4 # user data kind
-  load r5, HSD_Free # destructor
-  mr r6, REG_SecondBuf
-  branchl r12, GObj_AddUserData
 
 #Schedule Function
   bl  PlaybackThink
