@@ -18,7 +18,7 @@
 # symbol offsets
 .set SLPLOGO_LOGO_JOBJDESC, 0x0
 .set SLPLOGO_CAMDESC, 0x4
-.set COBJ_LINKS, 0x20
+.set COBJ_LINKS, 0x24
 
   bl DATA_BLRL
   mflr REG_LOCAL_DATA_ADDR
@@ -83,7 +83,8 @@ FBegin:
 
 # Add COBJ to GOBJ
   mr r5, r3 # Move COBJ pointer to r5
-  lbz r4, 4 # -0x3E55(r13)
+#  li r4, 4 
+  lbz r4, -0x3E55(r13)
   mr r3, REG_CAM_GOBJ
   branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
 
@@ -106,10 +107,10 @@ FBegin:
 
 # Add logo JOBJ to GOBJ
   mr r3, REG_LOGO_GOBJ
-  # li r4, 0xFF # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
+  # li r4, 0xFF
   # stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
-  # lbz r4, -0x3E55(r13)
-  li r4, 4
+  lbz r4, -0x3E55(r13) # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
+# li r4, 4
   mr r5, REG_LOGO_JOBJ
   branchl r12,0x80390a70 # void GObj_AddObject
 
