@@ -18,7 +18,7 @@
 # symbol offsets
 .set SLPLOGO_LOGO_JOBJDESC, 0x0
 .set SLPLOGO_CAMDESC, 0x4
-.set COBJ_LINKS, 0x24
+.set COBJ_LINKS, 0x20
 .set LOGO_GXLINK, 9
 
   bl DATA_BLRL
