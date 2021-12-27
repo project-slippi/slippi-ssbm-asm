@@ -19,6 +19,7 @@
 .set SLPLOGO_LOGO_JOBJDESC, 0x0
 .set SLPLOGO_CAMDESC, 0x4
 .set COBJ_LINKS, 0x24
+.set LOGO_GXLINK, 9
 
   bl DATA_BLRL
   mflr REG_LOCAL_DATA_ADDR
@@ -47,8 +48,8 @@ FBegin:
   bne Original
 
 #Create Cam GObj
-  li  r3, 22 #formerly 0
-  li  r4, 23 # formerly 14
+  li  r3, 19 #formerly 0
+  li  r4, 20 # formerly 14
   li  r5, 0 
   branchl r12, GObj_Create
   mr REG_CAM_GOBJ, r3 # save GOBJ pointer
@@ -79,7 +80,7 @@ FBegin:
 # Load camdesc
   lwz r3, SLPLOGO_CAMDESC (REG_SLPLOGO) 
   lwz r3, 0x0 (r3) # r3 becomes Camera_
-  branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3) 
+  branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3)
 
 # Add COBJ to GOBJ
   mr r5, r3 # Move COBJ pointer to r5
@@ -95,7 +96,7 @@ FBegin:
   branchl r12, 0x8039075C # void GObj_InitCamera(GOBJ* gobj, void (*render_cb)(GOBJ*, s32), u32 priority)
 
 # set gobj->cobj_links (0x20) to 1 << gx link index (9)
-  li r4, 512
+  load r4, 1 << LOGO_GXLINK
   stw r4, COBJ_LINKS(REG_CAM_GOBJ)
 
 # Load logo JOBJ
@@ -117,7 +118,7 @@ FBegin:
 # Add GX link that draws the logo
   mr r3, REG_LOGO_GOBJ
   load r4, 0x80391070 # GXLink_Common
-  li r5, 9 # index
+  li r5, LOGO_GXLINK # index
   li r6, 1 # gx_pri, formerly 128
   branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
 
