@@ -48,8 +48,7 @@ backup
   stw r3,bufferOffset(r13)
 
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
-  load r3,GeckoHeapPtr
-  lwz r3, 0 (r3)   # Gecko code list start
+  loadwz r3, GeckoHeapPtr # Gecko code list start
   addi r3, r3, 8 # skip past d0c0de d0c0de
   li r4, 0 # No callback
   branchl r12, FN_ProcessGecko
@@ -366,6 +365,11 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 .set REG_MSRB,25
 .set REG_MSRB_DisplayNameStart,26
 
+# Before trying to load match state, make sure we are in an online scene
+  getMinorMajor r3
+  cmpwi r3, SCENE_ONLINE_IN_GAME
+  bne DISPLAY_CC_WRITE_ZERO # If not online in-game, skip normal processing
+
 # Get MSRB address
   li r3,0
   branchl r12,FN_LoadMatchState
@@ -469,7 +473,15 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 # Free MSRB
   mr r3,REG_MSRB
   branchl r12,HSD_Free
+  b SEND_CONNECT_CODE_END
 
+  DISPLAY_CC_WRITE_ZERO:
+# We will get here if not online. Just zero out the entire display name and cc sections
+  addi r3, REG_Buffer, DisplayNameStart
+  li r4, 4 * (DisplayNameBytesToCopy + ConnectCodeBytesToCopy)
+  branchl r12,Zero_AreaLength
+
+  SEND_CONNECT_CODE_END:
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1

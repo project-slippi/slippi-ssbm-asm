@@ -1,25 +1,25 @@
 {
   "outputFiles": [
     {
-      "file": "Output/Console/g_lag_pdvb.bin"
+      "file": "Output/Console/g_lag_pdhalfvb.bin"
     }
   ],
   "codes": [
     {
-      "name": "Polling Drift + Visual Buffer Fixes",
+      "name": "Polling Drift + Half Visual Buffer Fixes",
       "authors": [
         "tauKhan",
         "UnclePunch"
       ],
       "description": [
         "Removes polling drift phenomenon causing variable input lag",
-        "Prevents visual buffer from accruing 1 frame of lag"
+        "Prevents visual buffer from accruing 1/2 frame of lag"
       ],
       "build": [
         {
           "type": "binary",
-          "sourceFile": "Binary/LagReduction/PD+VB.bin",
-          "annotation": "Polling Drift Fix [tauKhan]"
+          "sourceFile": "Binary/LagReduction/PD+HalfVB.bin",
+          "annotation": "Polling Drift Fix + Half Visual Buffer [tauKhan]"
         },
         {
           "type": "injectFolder",

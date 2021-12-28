@@ -1,0 +1,30 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_screen_wide.bin"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Optional: Widescreen 16:9",
+      "authors": [
+        "Dan Salvato",
+        "mirrorbender",
+        "Achilles1515",
+        "UnclePunch"
+      ],
+      "description": [
+        "16:9 codes",
+        "Will not cause desyncs when playing online"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Widescreen",
+          "isRecursive": true,
+          "annotation": "Widescreen 16:9"
+        }
+      ]
+    }
+  ]
+}

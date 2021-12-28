@@ -219,7 +219,9 @@ pip-log.txt
 
 .idea/
 
+Output/Netplay/install.bat
 Output/Netplay/build-netplay.bat - Shortcut.lnk
+Output/Playback/install.bat
 Output/Playback/build-playback.bat - Shortcut.lnk
 ./build-netplay0.sh
 ./netplay0.json
