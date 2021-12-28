@@ -18,7 +18,7 @@
 # symbol offsets
 .set SLPLOGO_LOGO_JOBJDESC, 0x0
 .set SLPLOGO_CAMDESC, 0x4
-.set COBJ_LINKS, 0x20
+.set COBJ_LINKS, 0x24
 .set LOGO_GXLINK, 9
 
   bl DATA_BLRL
@@ -92,7 +92,7 @@ FBegin:
 # Initialize camera
   mr r3, REG_CAM_GOBJ # Might be redundant, but it's unclear whether GObj_AddToObj backs-up/restores register 3
   load r4, 0x803910D8 # CObjThink_Common
-  li r5, 1 # gx_pri
+  li r5, 1 # gx_pri. this might need to be 7
   branchl r12, 0x8039075C # void GObj_InitCamera(GOBJ* gobj, void (*render_cb)(GOBJ*, s32), u32 priority)
 
 # set gobj->cobj_links (0x20) to 1 << gx link index (9)
@@ -110,8 +110,8 @@ FBegin:
   mr r3, REG_LOGO_GOBJ
   # li r4, 0xFF
   # stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
-  lbz r4, -0x3E55(r13) # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
-# li r4, 4
+  # lbz r4, -0x3E55(r13) # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
+  li r4, 3
   mr r5, REG_LOGO_JOBJ
   branchl r12,0x80390a70 # void GObj_AddObject
 
@@ -119,7 +119,7 @@ FBegin:
   mr r3, REG_LOGO_GOBJ
   load r4, 0x80391070 # GXLink_Common
   li r5, LOGO_GXLINK # index
-  li r6, 1 # gx_pri, formerly 128
+  li r6, 17 # gx_pri, formerly 128
   branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
 
 #Schedule Function
@@ -246,6 +246,8 @@ blrl
     li  r3,0x0
     mr  r4,REG_Text
     branchl r12, Text_DrawEachFrame
+
+    branchl r12, GObj_RunGXLinkMaxCallbacks
   skipDraw:
     li  r3,0x0
     branchl r12, HSD_VICopyXFBASync

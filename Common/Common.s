@@ -201,6 +201,7 @@ add \reg, r3, r4
 .set GObj_RemoveProc,0x8038fed4
 .set GObj_AddToObj,0x80390A70 #(gboj,obj_kind,obj_ptr)
 .set GObj_SetupGXLink, 0x8039069c #(gobj,function,gx_link,priority)
+.set GObj_RunGXLinkMaxCallbacks, 0x80390fc0 #void GObj_RunGXLinkMaxCallbacks(void)
 
 ## AObj Functions
 .set AObj_SetEndFrame, 0x8036532C #(aobj, frame)
