@@ -11,7 +11,6 @@
 .set REG_LOCAL_DATA_ADDR, 25
 .set REG_CAM_GOBJ, 22
 .set REG_LOGO_JOBJ, 21
-# .set REG_PROC_GOBJ, 19
 .set REG_SLPLOGO, 19
 .set REG_LOGO_GOBJ, 18
 
@@ -27,7 +26,7 @@
 
 
 DATA_BLRL:
-blrl
+  blrl
 # File related strings
 .string "slpCSS.dat"
 .set DO_STRING_SLPLOGO_FILENAME, 0
@@ -48,25 +47,18 @@ FBegin:
   bne Original
 
 #Create Cam GObj
-  li  r3, 19 #formerly 0
-  li  r4, 20 # formerly 14
-  li  r5, 0 
+  li  r3, 19
+  li  r4, 20
+  li  r5, 0
   branchl r12, GObj_Create
-  mr REG_CAM_GOBJ, r3 # save GOBJ pointer
+  mr REG_CAM_GOBJ, r3
 
 #Create Logo GObj
-  li  r3, 4 
+  li  r3, 4
   li  r4, 5
   li  r5, 0x80
   branchl r12, GObj_Create
-  mr REG_LOGO_GOBJ, r3 # save GOBJ pointer
-
-# Create Proc GOBJ
-#  li r3, 13
-#  li r4, 14
-#  li r5, 0
-#  branchl r12, GObj_Create
-#  mr REG_PROC_GOBJ, r3 # save GOBJ pointer
+  mr REG_LOGO_GOBJ, r3
 
 # Load LOGO file
   addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
@@ -74,17 +66,16 @@ FBegin:
 
 # Retrieve symbol from file data
   addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
-  branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress, returns a pointer in r3
+  branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress
   mr REG_SLPLOGO, r3 # Remember symbol pointer
 
 # Load camdesc
-  lwz r3, SLPLOGO_CAMDESC (REG_SLPLOGO) 
-  lwz r3, 0x0 (r3) # r3 becomes Camera_
+  lwz r3, SLPLOGO_CAMDESC (REG_SLPLOGO)
+  lwz r3, 0x0 (r3)
   branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3)
 
 # Add COBJ to GOBJ
   mr r5, r3 # Move COBJ pointer to r5
-#  li r4, 4 
   lbz r4, -0x3E55(r13)
   mr r3, REG_CAM_GOBJ
   branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
@@ -96,22 +87,20 @@ FBegin:
   branchl r12, 0x8039075C # void GObj_InitCamera(GOBJ* gobj, void (*render_cb)(GOBJ*, s32), u32 priority)
 
 # set gobj->cobj_links (0x20) to 1 << gx link index (9)
+# cobj_links is a 64 bit bitfield starting at 0x20, so to set the low bits (the lower word) we stw at 0x24
   load r4, 1 << LOGO_GXLINK
   stw r4, COBJ_LINKS(REG_CAM_GOBJ)
 
 # Load logo JOBJ
-  lwz r3, 0x0 (REG_SLPLOGO) # r3 = slplogo_scene_data
-  lwz r3, SLPLOGO_LOGO_JOBJDESC (r3) # r3 becomes JOBJDescs_
-  lwz r3, 0x0 (r3) # r3 becomes Array_0_ (HSD_JOBJDesc[]) 
+  lwz r3, 0x0 (REG_SLPLOGO)
+  lwz r3, SLPLOGO_LOGO_JOBJDESC (r3)
+  lwz r3, 0x0 (r3)
   branchl r12, JObj_LoadJoint # (jobj_desc_ptr)
   mr REG_LOGO_JOBJ,r3
 
 # Add logo JOBJ to GOBJ
   mr r3, REG_LOGO_GOBJ
-  # li r4, 0xFF
-  # stb r4, 0x6(REG_LOGO_GOBJ) # For some reason gobj->obj_kind is an invalid value here (could be heap corruption?), so we fix it by setting it to 0xFF
-  # lbz r4, -0x3E55(r13) # 0x804db6a0 + -0x3E55 (an offset to obj_kind)
-  li r4, 3
+  li r4, 3 # Stolen from training mode
   mr r5, REG_LOGO_JOBJ
   branchl r12,0x80390a70 # void GObj_AddObject
 
@@ -119,7 +108,7 @@ FBegin:
   mr r3, REG_LOGO_GOBJ
   load r4, 0x80391070 # GXLink_Common
   li r5, LOGO_GXLINK # index
-  li r6, 17 # gx_pri, formerly 128
+  li r6, 17 # gx_pri
   branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
 
 #Schedule Function
@@ -359,7 +348,7 @@ FloatValues:
 
   Text:
   blrl
-  .string "Poggers%s"
+  .string "Waiting for game%s"
   .align 2
 
   Dots:
