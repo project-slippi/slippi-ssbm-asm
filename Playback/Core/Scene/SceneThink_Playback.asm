@@ -28,10 +28,10 @@
 DATA_BLRL:
   blrl
 # File related strings
-.string "slpCSS.dat"
+.string "slpLogo.dat"
 .set DO_STRING_SLPLOGO_FILENAME, 0
 .string "slplogo_scene_data"
-.set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 11
+.set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 12
 .align 2
 
 FBegin:
