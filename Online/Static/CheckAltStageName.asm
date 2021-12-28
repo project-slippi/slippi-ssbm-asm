@@ -1,29 +1,17 @@
 ################################################################################
-# Address: FN_RequestSSM
+# Address: FN_CheckAltStageName
 ################################################################################
 # Inputs:
-# r3 = ssm Index
+# r3 = text ptr
+# r4 = ext stage id
 ################################################################################
 # Description:
-# Queues SSM to load
+# Checks to run alternate stage name logic (non-applicable to vanilla melee)
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set  REG_SSMID,3
-.set  REG_ToLoadOrig,12
-
-#Check if null ssm ID
-  cmpwi  REG_SSMID,55
-  beq Exit
-
-#Get Disposable Orig
-  load REG_ToLoadOrig,0x804337c4
-#Queue up ssm load
-  li  r4,1
-  mulli REG_SSMID,REG_SSMID,4
-  stwx  r4,REG_SSMID,REG_ToLoadOrig
-
-Exit:
-  blr
+EXIT:
+li r3,0
+blr
