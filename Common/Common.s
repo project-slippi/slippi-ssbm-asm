@@ -134,11 +134,6 @@ lis \reg, 0x8048 # load address to offset from for scene controller
 lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 .endm
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
 # This macro takes in an address that is expected to have a branch instruction. It will set
 # r3 to the address being branched to. This will overwrite r3 and r4
 .macro computeBranchTargetAddress reg address
