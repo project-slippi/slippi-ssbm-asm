@@ -19,6 +19,8 @@
 .set SLPLOGO_CAMDESC, 0x4
 .set COBJ_LINKS, 0x24
 .set LOGO_GXLINK, 9
+.set JOBJ_XSCALE_OFST, 0x2c
+.set JOBJ_XPOS_OFST, 0x38
 
   bl DATA_BLRL
   mflr REG_LOCAL_DATA_ADDR
@@ -32,6 +34,10 @@ DATA_BLRL:
 .set DO_STRING_SLPLOGO_FILENAME, 0
 .string "slplogo_scene_data"
 .set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 12
+.float 1.48410099
+.set WIDESCREEN_XSCALE_FACTOR, DO_STRING_SLPLOGO_SYMBOLNAME + 19
+.float -1.7
+.set WIDESCREEN_XPOS_OFFSET, WIDESCREEN_XSCALE_FACTOR + 4
 .align 2
 
 FBegin:
@@ -98,6 +104,24 @@ FBegin:
   branchl r12, JObj_LoadJoint # (jobj_desc_ptr)
   mr REG_LOGO_JOBJ,r3
 
+# if widescreen, fix x scale
+  lbz r3, isWidescreen(r13)
+  cmpwi r3, 0
+  beq skipWidescreenFix
+
+# Fix xscale
+  lfs f1, 0x2c(REG_LOGO_JOBJ) # 0x2c = x scale in jobj
+  lfs f2, WIDESCREEN_XSCALE_FACTOR(REG_LOCAL_DATA_ADDR)
+  fmuls f3, f1, f2
+  stfs f3, JOBJ_XSCALE_OFST(REG_LOGO_JOBJ)
+
+# Fix xpos (shift left)
+  lfs f1, 0x38(REG_LOGO_JOBJ) # 0x38 = x pos in jobj
+  lfs f2, WIDESCREEN_XPOS_OFFSET(REG_LOCAL_DATA_ADDR)
+  fadds f3, f1, f2
+  stfs f3, JOBJ_XPOS_OFST(REG_LOGO_JOBJ)
+
+skipWidescreenFix:
 # Add logo JOBJ to GOBJ
   mr r3, REG_LOGO_GOBJ
   li r4, 3 # Stolen from training mode
