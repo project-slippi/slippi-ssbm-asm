@@ -25,7 +25,7 @@ branch r12, 0x801a5024 # go to where branch would have taken us
 START:
 # Make sure we are in game
 getMinorMajor r3
-cmpwi r3, 0x010E
+cmpwi r3, SCENE_PLAYBACK_IN_GAME
 bne EXIT
 
 backup

@@ -3,15 +3,16 @@
 ################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
+.include "Online/Online.s"
 
   getMinorMajor r3
-  cmpwi r3, 0x0202 # Versus
+  cmpwi r3, SCENE_VERSUS_IN_GAME
   beq ReturnTrue
-  cmpwi r3, 0x0302 # Sudden Death
+  cmpwi r3, SCENE_VERSUS_SUDDEN_DEATH
   beq ReturnTrue
-  cmpwi r3, 0x0208 # Versus Online
+  cmpwi r3, SCENE_ONLINE_IN_GAME
   beq ReturnTrue
-  cmpwi r3, 0x010f # Break the Targets
+  cmpwi r3, SCENE_TARGETS_IN_GAME
   beq ReturnTrue
 
 ReturnFalse:
