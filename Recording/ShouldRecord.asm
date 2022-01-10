@@ -5,11 +5,13 @@
 .include "Recording/Recording.s"
 
   getMinorMajor r3
-  cmpwi r3, 0x0202
+  cmpwi r3, 0x0202 # Versus
   beq ReturnTrue
   cmpwi r3, 0x0302 # Sudden Death
   beq ReturnTrue
-  cmpwi r3, 0x0208
+  cmpwi r3, 0x0208 # Versus Online
+  beq ReturnTrue
+  cmpwi r3, 0x010f # Break the Targets
   beq ReturnTrue
 
 ReturnFalse:
