@@ -14,6 +14,8 @@
   beq ReturnTrue
   cmpwi r3, SCENE_TARGETS_IN_GAME
   beq ReturnTrue
+  cmpwi r3, SCENE_HOMERUN_IN_GAME
+  beq ReturnTrue
 
 ReturnFalse:
   li  r3,0
