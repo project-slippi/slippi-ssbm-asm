@@ -395,6 +395,11 @@ add \reg, r3, r4
 .set CFOptionsAddress, RtocAddress - ControllerFixOptions
 .set GeckoHeapPtr, 0x80005600
 
+# Internal scenes
+.set SCENE_TRAINING_CSS, 0x001C
+.set SCENE_TRAINING_SSS, 0x011C
+.set SCENE_TRAINING_IN_GAME, 0x021C
+
 ################################################################################
 # Offsets from r13
 ################################################################################
