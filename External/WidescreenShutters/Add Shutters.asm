@@ -8,7 +8,7 @@ b CODE_START
 DATA_BLRL:
 blrl
 .set DO_X_SCALE, 0
-.float 34
+.float 114 # previously 34
 .set DO_Y_SCALE, DO_X_SCALE + 4
 .float 1000
 .set DO_COLOR, DO_Y_SCALE + 4
@@ -33,7 +33,7 @@ backup
   cmpwi r3, 0
   beq FN_InitShutter_SKIP_RIGHT
   li REG_ID, 21
-  li REG_X_POS, 639
+  li REG_X_POS, 561
   FN_InitShutter_SKIP_RIGHT:
 
   bl DATA_BLRL

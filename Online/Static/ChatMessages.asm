@@ -75,10 +75,10 @@ bctr
 
 UP_CHAT_TEXT_PROPERTIES:
 blrl
-.byte 7 # length of UP
-.byte 4 # length of LEFT
-.byte 9 # length of RIGHT
-.byte 4 # length of DOWN
+.byte 7 # length of Header
+.byte 4 # length of UP
+.byte 9 # length of LEFT
+.byte 4 # length of RIGHT
 .string "Common"
 .string "ggs"
 .string "one more"
@@ -88,10 +88,10 @@ blrl
 
 LEFT_CHAT_TEXT_PROPERTIES:
 blrl
+.byte 12 # length of Header
 .byte 12 # length of UP
-.byte 12 # length of LEFT
-.byte 13 # length of RIGHT
-.byte 7 # length of DOWN
+.byte 13 # length of LEFT
+.byte 7 # length of RIGHT
 .string "Compliments"
 .string "well played"
 .string "that was fun"
@@ -101,12 +101,12 @@ blrl
 
 RIGHT_CHAT_TEXT_PROPERTIES:
 blrl
-.byte 10 # length of UP
-.byte 4 # length of LEFT
-.byte 5 # length of RIGHT
-.byte 4 # length of DOWN
+.byte 10 # length of Header
+.byte 6 # length of UP
+.byte 5 # length of LEFT
+.byte 4 # length of RIGHT
 .string "Reactions"
-.string "oof"
+.string "sorry"
 .string "my b"
 .string "lol"
 .string "wow"
@@ -114,13 +114,13 @@ blrl
 
 DOWN_CHAT_TEXT_PROPERTIES:
 blrl
-.byte 5 # length of UP
-.byte 5 # length of LEFT
-.byte 9 # length of RIGHT
-.byte 23 # length of DOWN
+.byte 5 # length of Header
+.byte 9 # length of UP
+.byte 8 # length of LEFT
+.byte 23 # length of RIGHT
 .string "Misc"
-.string "okay"
-.string "thinking"
+.string "gotta go"
+.string "one sec"
 .string "let's play again later"
 .string "bad connection"
 .align 2
