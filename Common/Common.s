@@ -118,6 +118,31 @@ branchl r12, FN_EXITransferBuffer
 restoreall
 .endm
 
+.macro oslogf str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+b 1f
+0:
+blrl
+.string "\str"
+.align 2
+
+1:
+backupall
+
+# Set up args to log
+\arg1
+\arg2
+\arg3
+\arg4
+\arg5
+
+# Call OSReport
+bl 0b
+mflr r3
+branchl r12, 0x803456a8 # OSReport
+
+restoreall
+.endm
+
 .macro getMinorMajor reg
 lis \reg, 0x8048 # load address to offset from for scene controller
 lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
