@@ -52,8 +52,6 @@ stw r4, ODB_STABLE_SAVESTATE_FRAME(r5)
 lwz r4, ODB_RXB_ADDR(r5)
 lwz r4, RXB_FINALIZED_FRAME(r4)
 stw r4, ODB_STABLE_FINALIZED_FRAME(r5)
-lbz r4, ODB_IS_FRAME_ADVANCE(r5)
-stb r4, ODB_STABLE_IS_FRAME_ADVANCE(r5)
 b RESTORE_AND_EXIT
 
 HANDLE_NO_ROLLBACK_NO_INPUTS:
@@ -78,3 +76,4 @@ bne EXEC_ENGINE
 branch r12, 0x801a4da8 # If no pad inputs, loop to keep waiting
 
 EXEC_ENGINE:
+# logf LOG_LEVEL_NOTICE, "Starting engine loop..."
