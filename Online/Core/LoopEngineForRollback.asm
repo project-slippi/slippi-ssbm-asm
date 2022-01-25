@@ -170,7 +170,7 @@ cmpwi REG_IS_ROLLBACK_ACTIVE, 1
 beq HANDLE_ROLLBACK # If no rollback active, continue as normal
 
 # Here there is no rollback, check instead for a requested frame advance
-lbz r3, ODB_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
+lbz r3, ODB_STABLE_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
 cmpwi r3, 1
 bne RESTORE_AND_EXIT
 
