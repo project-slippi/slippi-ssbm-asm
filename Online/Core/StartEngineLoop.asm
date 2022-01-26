@@ -62,6 +62,10 @@ loadGlobalFrame REG_FRAME_INDEX
 branchl r12, OSDisableInterrupts
 mr REG_INTERRUPT_IDX, r3
 
+# # Log the frame we are starting
+# mr r3, REG_FRAME_INDEX
+# logf LOG_LEVEL_INFO, "Starting frame: %d", "mr 5, 3"
+
 ################################################################################
 # Check if we should display disconnect message
 ################################################################################
