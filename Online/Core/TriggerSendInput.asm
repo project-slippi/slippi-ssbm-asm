@@ -52,8 +52,16 @@ lwz REG_FRAME_INDEX, ODB_FRAME(REG_ODB_ADDRESS)
 # Check if we have an active rollback, if so, we don't want to fetch
 # new data from Slippi, we just want to operate on the existing data
 lbz r3, ODB_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
-cmpwi r3, 1
+cmpwi r3, 0
+beq PROCESS_NOT_ROLLBACK
+
+# Check to see if we should load state, if so then we actually have yet to process our
+# savestate load, in this case we are not ready to call the rollback handler so let's queue
+# up another input instead.
+lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
+cmpwi r3, 0
 beq ROLLBACK_HANDLER
+PROCESS_NOT_ROLLBACK:
 
 ################################################################################
 # Section 1: Clear all inputs during freeze time, this is done such that
@@ -167,8 +175,7 @@ branchl r12, FN_EXITransferBuffer
 # Get response from Slippi and figure out whether this input should be skipped
 # Skipping an input causes the game to stall one frame and allows the opponent's
 # client to catch up
-# TODO: Is it possible to do something better than skipping an input? Obviously
-# TODO: this could throw off the timing of someone that is ahead
+
 # request data from EXI that was prepared when we sent our frame
 addi r3, REG_RXB_ADDRESS, RXB_RESULT
 li r4, RXB_SIZE
@@ -305,13 +312,13 @@ stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 # Section 8: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
-# If ODB_SAVESTATE_IS_ACTIVE is 0, we either don't have a savestate created
+# If ODB_SAVESTATE_IS_PREDICTING is 0, we either don't have a savestate created
 # or we're in a rollback, so set the per-player savestate flags to 0 and skip
 # to section 9. If we're missing inputs for the current frame, they'll get reset
 # correctly there.
-lbz r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+lbz r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 cmpwi r3, 0
-bne COMPARE_PREDICTED_INPUTS
+bne HANDLE_PREDICTING_STATE
 
 li r3, 0
 stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
@@ -319,6 +326,15 @@ stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x1(REG_ODB_ADDRESS)
 stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x2(REG_ODB_ADDRESS)
 
 b LOAD_OPPONENT_INPUTS
+
+HANDLE_PREDICTING_STATE:
+# Check if state should be loaded, if so this means we've gotten a second input before the
+# state was loaded. If that's the case, just continue the request for a rollback and update
+# the end frame so that this new frame of inputs gets used. TRIGGER_ROLLBACK already handles
+# all of that for us, so just call that
+lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne TRIGGER_ROLLBACK
 
 # If we were missing past inputs for one or more players, check and see
 # if we've received any new inputs that would allow us to compare those to
@@ -459,10 +475,10 @@ bne CHECK_WHETHER_TO_ROLL_BACK_LOOP # Not caught up, try loop again with next fr
 b CONTINUE_ROLLBACK_CHECK_LOOP
 
 TRIGGER_ROLLBACK:
-mulli r6, REG_COUNT, 4
-addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
-lwzx r3, r6, REG_ODB_ADDRESS # get our player-specific savestate frame
-#logf LOG_LEVEL_WARN, "Triggering rollback from player %d input on past frame %d", "mr r5, 20", "mr r6, 3"
+# mulli r6, REG_COUNT, 4
+# addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
+# lwzx r3, r6, REG_ODB_ADDRESS # get our player-specific savestate frame
+# logf LOG_LEVEL_WARN, "Triggering rollback from player %d input on past frame %d", "mr r5, 20", "mr r6, 3"
 
 # Set the is rollback active flag to indicate to the engine to continue
 # processing inputs until we have completed the rollback process
@@ -472,6 +488,14 @@ stb r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 
 # Store the end frame index to remember when to terminate rollback logic
 stw REG_FRAME_INDEX, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
+
+# We have successfully sent inputs to our opponent and preped them to use for rollback
+# We still want to increment the frame just in case another input is sent before we have
+# a chance to load the savestate. This should be fine because it will get overwritten when
+# the state actually gets loaded. Getting a frame advance at the same time as a rollback
+# requires this such that we can still ffw to the advanced frame.
+addi REG_FRAME_INDEX, REG_FRAME_INDEX, 1
+stw REG_FRAME_INDEX, ODB_FRAME(REG_ODB_ADDRESS)
 
 # We are going to exit the parent function here. We have initiated a rollback
 # which will cause the engine to loop without rendering frames, our rollback
@@ -589,7 +613,7 @@ blt CHECK_GLOBAL_SAVESTATE_LOOP
 
 # If we made it here, we have caught up to the prediction, clear the savestate flags for everyone
 li r3, 0
-stb r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+stb r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 
 #logf LOG_LEVEL_WARN, "Reset savestate flags to 0"
 
@@ -696,7 +720,7 @@ stbx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS
 
 # In the case where we don't have this player's inputs but already have a
 # savestate because of another player's missing inputs, don't touch the global savestate frame counter
-lbz r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+lbz r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 cmpwi r3, 1
 beq LOAD_STALE_INPUTS
 
@@ -706,7 +730,7 @@ stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 
 # Indicate that we have prepared for a rollback
 li r3, 1
-stb r3, ODB_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
+stb r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 #logf LOG_LEVEL_WARN, "Setting global savestate flag to 1"
 
 LOAD_STALE_INPUTS:
