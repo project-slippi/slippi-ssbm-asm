@@ -309,6 +309,20 @@ SKIP_DELAY_BUFFER_INDEX_WRAP:
 stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 
 ################################################################################
+# Section 7.5: Determine if we need to check for opponent inputs
+################################################################################
+# If we already have an active rollback that we are waiting to be processed, just update
+# the end frame so that this new frame of inputs gets used. TRIGGER_ROLLBACK already handles
+# all of that for us, so just call that
+lbz r3, ODB_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne ROLLBACK_NOT_ACTIVE
+lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne TRIGGER_ROLLBACK # If state should be loaded, TRIGGER_ROLLBACK
+ROLLBACK_NOT_ACTIVE:
+
+################################################################################
 # Section 8: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
@@ -318,7 +332,7 @@ stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 # correctly there.
 lbz r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 cmpwi r3, 0
-bne HANDLE_PREDICTING_STATE
+bne COMPARE_PREDICTED_INPUTS
 
 li r3, 0
 stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
@@ -326,15 +340,6 @@ stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x1(REG_ODB_ADDRESS)
 stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x2(REG_ODB_ADDRESS)
 
 b LOAD_OPPONENT_INPUTS
-
-HANDLE_PREDICTING_STATE:
-# Check if state should be loaded, if so this means we've gotten a second input before the
-# state was loaded. If that's the case, just continue the request for a rollback and update
-# the end frame so that this new frame of inputs gets used. TRIGGER_ROLLBACK already handles
-# all of that for us, so just call that
-lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
-cmpwi r3, 0
-bne TRIGGER_ROLLBACK
 
 # If we were missing past inputs for one or more players, check and see
 # if we've received any new inputs that would allow us to compare those to
