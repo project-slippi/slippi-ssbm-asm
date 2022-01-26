@@ -4,7 +4,7 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 .include "Recording/Recording.s"
-.include "Recording/SendInitialRNG.s"
+.include "Recording/SendFrameStart.s"
 .include "Recording/SendItemInfo.s"
 
 ################################################################################
@@ -96,7 +96,7 @@ backup
 # initial rng command
   li  r3,CMD_INITIAL_RNG
   stb r3,CommandSizesStart+0xE(REG_Buffer)
-  li r3, GAME_INITIAL_RNG_PAYLOAD_LENGTH
+  li r3, GAME_FRAME_START_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0xF(REG_Buffer)
 
 # item data command
@@ -554,8 +554,8 @@ CODE_LIST_CLEANUP:
   mr r3, REG_GeckoCopyBuffer
   branchl r12, HSD_Free
 
-# run macro to create the SendInitialRNG process
-  Macro_SendInitialRNG
+# run macro to create the SendFrameStart process
+  Macro_SendFrameStart
 
 # run macro to create SendProjectileInfo process
   Macro_SendItemInfo
