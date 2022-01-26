@@ -118,6 +118,31 @@ branchl r12, FN_EXITransferBuffer
 restoreall
 .endm
 
+.macro oslogf str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+b 1f
+0:
+blrl
+.string "\str"
+.align 2
+
+1:
+backupall
+
+# Set up args to log
+\arg1
+\arg2
+\arg3
+\arg4
+\arg5
+
+# Call OSReport
+bl 0b
+mflr r3
+branchl r12, 0x803456a8 # OSReport
+
+restoreall
+.endm
+
 .macro getMinorMajor reg
 lis \reg, 0x8048 # load address to offset from for scene controller
 lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
@@ -399,6 +424,20 @@ add \reg, r3, r4
 .set SCENE_TRAINING_CSS, 0x001C
 .set SCENE_TRAINING_SSS, 0x011C
 .set SCENE_TRAINING_IN_GAME, 0x021C
+
+.set SCENE_VERSUS_CSS, 0x0002
+.set SCENE_VERSUS_SSS, 0x0102
+.set SCENE_VERSUS_IN_GAME, 0x0202
+.set SCENE_VERSUS_SUDDEN_DEATH, 0x0302
+
+.set SCENE_TARGETS_CSS, 0x000F
+.set SCENE_TARGETS_IN_GAME, 0x010F
+
+.set SCENE_HOMERUN_CSS, 0x0020
+.set SCENE_HOMERUN_IN_GAME, 0x0120
+
+# Playback scene
+.set SCENE_PLAYBACK_IN_GAME, 0x010E
 
 ################################################################################
 # Offsets from r13

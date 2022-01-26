@@ -76,3 +76,4 @@ bne EXEC_ENGINE
 branch r12, 0x801a4da8 # If no pad inputs, loop to keep waiting
 
 EXEC_ENGINE:
+# logf LOG_LEVEL_NOTICE, "Starting engine loop..."

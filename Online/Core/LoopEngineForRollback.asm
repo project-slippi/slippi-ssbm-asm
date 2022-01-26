@@ -169,6 +169,7 @@ lbz REG_IS_ROLLBACK_ACTIVE, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi REG_IS_ROLLBACK_ACTIVE, 1
 bne RESTORE_AND_EXIT # If no rollback active, continue as normal
 
+HANDLE_ROLLBACK:
 # Here we have a rollback, we are going to loop back to the start of the
 # updateFunction loop
 bl FN_ExecCameraTasks

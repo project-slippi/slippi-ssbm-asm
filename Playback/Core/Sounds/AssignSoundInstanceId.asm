@@ -10,7 +10,7 @@ stw r0, -0x3F18 (r13)
 
 # Make sure we are in game
 getMinorMajor r3
-cmpwi r3, 0x010E
+cmpwi r3, SCENE_PLAYBACK_IN_GAME
 bne EXIT
 
 .set REG_PDB_ADDRESS, 31

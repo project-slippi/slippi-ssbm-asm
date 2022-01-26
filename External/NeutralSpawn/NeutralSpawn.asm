@@ -20,6 +20,10 @@ backup
   getMinorMajor r3
   cmpwi r3, SCENE_TRAINING_IN_GAME
   beq Exit
+#Don't run in Target Test
+  getMinorMajor r3
+  cmpwi r3, SCENE_TARGETS_IN_GAME
+  beq Exit
 
 #Check if teams
   lbz	r3, 0x24D0 (MatchInfo)
