@@ -10,8 +10,8 @@ bne CLEAR
 
 # Check force bool
 lbz r3, OFST_R13_FORCE_MENU_CLEAR(r13)
-cmpwi r3, 0
-bne CLEAR
+cmpwi r3, 1
+beq CLEAR
 
 # Skip clear handling
 branch r12, 0x8022B11C
