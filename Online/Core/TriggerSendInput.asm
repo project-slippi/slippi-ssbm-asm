@@ -317,6 +317,8 @@ stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 lbz r3, ODB_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne ROLLBACK_NOT_ACTIVE
+# The check below might not be required because I think we might not be able to get here
+# is should load state is false because of the check at the start of the file
 lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne TRIGGER_ROLLBACK # If state should be loaded, TRIGGER_ROLLBACK
