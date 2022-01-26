@@ -420,6 +420,21 @@ add \reg, r3, r4
 .set CFOptionsAddress, RtocAddress - ControllerFixOptions
 .set GeckoHeapPtr, 0x80005600
 
+# Internal scenes
+.set SCENE_VERSUS_CSS, 0x0002
+.set SCENE_VERSUS_SSS, 0x0102
+.set SCENE_VERSUS_IN_GAME, 0x0202
+.set SCENE_VERSUS_SUDDEN_DEATH, 0x0302
+
+.set SCENE_TARGETS_CSS, 0x000F
+.set SCENE_TARGETS_IN_GAME, 0x010F
+
+.set SCENE_HOMERUN_CSS, 0x0020
+.set SCENE_HOMERUN_IN_GAME, 0x0120
+
+# Playback scene
+.set SCENE_PLAYBACK_IN_GAME, 0x010E
+
 ################################################################################
 # Offsets from r13
 ################################################################################
