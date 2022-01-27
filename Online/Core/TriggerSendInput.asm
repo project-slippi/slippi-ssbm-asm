@@ -825,61 +825,8 @@ b LOAD_OPPONENT_INPUTS
 ################################################################################
 .if DEBUG_INPUTS==1
 FN_PrintInputs:
-backupall
-
-mr r31, r11 # Frame
-mr r30, r12 # Inputs
-mr r28, r10 # Log Num
-# r27 is ODB_ADDRESS and should not be used
-
-bl PrintInputs_STRING
-mflr r29 # Data
-
-lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
-addi r3, r3, 1
-cmpw r31, r3
-bgt FN_PrintInputs_SKIP_ALLOC
-
-# This will actually alloc a few times... but that's fine
-li r3, 64
-branchl r12, HSD_MemAlloc
-stw r3, 0(r29)
-
-# Store command byte for logging
-li r4, 0xD0
-stb r4, 0(r3)
-
-# Indicate we don't need to print time
-li r4, 0
-stb r4, 1(r3)
-
-FN_PrintInputs_SKIP_ALLOC:
-
-# Format input string
-lwz r3, 0(r29)
-addi r3, r3, 2 # skip to string
-addi r4, r29, 4 # Input string
-mr r5, r31
-mr r6, r28
-lwz r7, 0(r30)
-lwz r8, 4(r30)
-lwz r9, 8(r30)
-branchl r12, 0x80323cf4 # sprintf
-
-# Transfer string buffer
-lwz r3, 0(r29) # Use the receive buffer to send the command
-li r4, 64
-li r5, CONST_ExiWrite
-branchl r12, FN_EXITransferBuffer
-
-restoreall
+logf LOG_LEVEL_NOTICE, "[%d] (%d) %08X %08X %08X", "mr r5, 11", "mr r6, 10", "lwz r7, 0(12)", "lwz r8, 4(12)", "lwz r9, 8(12)"
 blr
-
-PrintInputs_STRING:
-blrl
-.long 0 # address of buffer
-.string "[%d] (%d) %08X %08X %08X" # sprintf input string
-.align 2
 .endif
 
 ################################################################################
