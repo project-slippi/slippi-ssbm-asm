@@ -23,8 +23,8 @@ lbz r3, ODB_IS_FRAME_ADVANCE(r5)
 cmpwi r3, 0
 beq EXIT
 
-# lwz r3, ODB_FRAME(r5)
-# logf LOG_LEVEL_WARN, "Processing advance request on frame: %d", "mr 5, 3"
+lwz r3, ODB_FRAME(r5)
+logf LOG_LEVEL_WARN, "Processing advance request on frame: %d", "mr 5, 3"
 
 # Here we got the signal to advance a frame, let's call RenewInputs_Prefunction again.
 # This should force the engine to loop twice the next time it runs.
