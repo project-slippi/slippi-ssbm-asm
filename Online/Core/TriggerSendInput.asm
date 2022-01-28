@@ -146,6 +146,13 @@ lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
 mulli r4, r4, PAD_REPORT_SIZE
 addi r4, r4, P1_PAD_OFFSET # offset from sp where pad report we want is
 
+# TODO: Transfer over the last frame we are predicting for to discard all previous old inputs.
+# TODO: Might be possible to use SAVESTATE_FRAME for this if it updates correctly. Might not
+# TODO: update in the case where we aren't getting rollbacks? Need to check. Could be safer
+# TODO: to just use new variable.
+# TODO: Something else to note is that when Dolphin sends us inputs, it should actually send us the
+# TODO: 7 oldest inputs just to make sure an input doesn't get lost when processing a rollback.
+
 # Move over pad data into transfer buffer
 addi r3, REG_TXB_ADDRESS, TXB_PAD # destination
 add r4, sp, r4 # source
@@ -337,9 +344,9 @@ cmpwi r3, 0
 bne COMPARE_PREDICTED_INPUTS
 
 li r3, 0
-stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE(REG_ODB_ADDRESS)
-stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x1(REG_ODB_ADDRESS)
-stb r3, ODB_PLAYER_SAVESTATE_IS_ACTIVE+0x2(REG_ODB_ADDRESS)
+stb r3, ODB_PLAYER_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
+stb r3, ODB_PLAYER_SAVESTATE_IS_PREDICTING+0x1(REG_ODB_ADDRESS)
+stb r3, ODB_PLAYER_SAVESTATE_IS_PREDICTING+0x2(REG_ODB_ADDRESS)
 
 b LOAD_OPPONENT_INPUTS
 
@@ -351,7 +358,7 @@ COMPARE_PREDICTED_INPUTS:
 li REG_COUNT, 0
 
 CHECK_WHETHER_TO_ROLL_BACK_LOOP:
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 lbzx r3, r6, REG_ODB_ADDRESS
 cmpwi r3, 1
 bne CONTINUE_ROLLBACK_CHECK_LOOP
@@ -524,20 +531,13 @@ li REG_SAVESTATE_FRAME_SET, 0
 li REG_COUNT, 0
 
 lwz r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS) # r3 will hold the min savestate frame we see
-mr REG_VARIOUS_1, r3
 #logf LOG_LEVEL_WARN, "Attempting to advance savestate frame past %d", "mr r5, 3"
-mr r3, REG_VARIOUS_1
 
 COMPUTE_SAVESTATE_FRAME_LOOP:
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
-lbzx r4, r6, REG_ODB_ADDRESS
-mr REG_VARIOUS_1, r3
-#logf LOG_LEVEL_WARN, "Player %d savestate flag: %d", "mr r5, 20", "mr r6, 4"
-mr r3, REG_VARIOUS_1
-
 # If this player doesn't have missing inputs, ignore their savestate frame
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 lbzx r4, r6, REG_ODB_ADDRESS
+#logf LOG_LEVEL_WARN, "Player %d savestate flag: %d", "mr r5, 20", "mr r6, 4"
 cmpwi r4, 1
 bne CONTINUE_SAVESTATE_FRAME_LOOP
 
@@ -555,9 +555,7 @@ bge CONTINUE_SAVESTATE_FRAME_LOOP
 
 SKIP_SAVESTATE_FRAME_CHECK:
 mr r3, r4
-mr REG_VARIOUS_1, r3
 #logf LOG_LEVEL_WARN, "Player %d set savestate frame %d", "mr r5, 20", "mr r6, 4"
-mr r3, REG_VARIOUS_1
 li REG_SAVESTATE_FRAME_SET, 1
 
 CONTINUE_SAVESTATE_FRAME_LOOP:
@@ -573,7 +571,7 @@ stw r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 li REG_COUNT, 0
 CHECK_RESET_SAVESTATE_LOOP:
 # Don't bother checking read/write index match for players without an active savestate.
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 lbzx r4, r6, REG_ODB_ADDRESS
 cmpwi r4, 1
 bne CONTINUE_CHECK_RESET_SAVESTATE_LOOP
@@ -595,7 +593,7 @@ cmpw r4, r3
 bne CONTINUE_CHECK_RESET_SAVESTATE_LOOP
 
 li r3, 0
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 stbx r3, r6, REG_ODB_ADDRESS
 
 CONTINUE_CHECK_RESET_SAVESTATE_LOOP:
@@ -608,7 +606,7 @@ blt CHECK_RESET_SAVESTATE_LOOP
 li REG_COUNT, 0
 CHECK_GLOBAL_SAVESTATE_LOOP:
 # Don't bother checking read/write index match for players without an active savestate.
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 lbzx r4, r6, REG_ODB_ADDRESS
 cmpwi r4, 1
 beq LOAD_OPPONENT_INPUTS
@@ -652,6 +650,9 @@ sub r3, r3, REG_FRAME_INDEX
 cmpwi r3, 0
 bge CALC_OPNT_PAD_OFFSET
 
+.if DEBUG_INPUTS==1
+logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d Needs Prediction"
+.endif
 # We are predicting inputs, back up the inputs for later comparison
 
 # Don't save any states at the start of the game, it's frozen anyway
@@ -704,7 +705,7 @@ lbzx r4, r6, REG_ODB_ADDRESS
 
 # in the case where we don't have this opponent's inputs but already have a
 # savestate location for them, just keep the old savestate location
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE # compute offset of savestate flag for this player
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING # compute offset of savestate flag for this player
 lbzx r3, r6, REG_ODB_ADDRESS
 cmpwi r3, 1
 beq LOAD_STALE_INPUTS
@@ -717,7 +718,7 @@ stwx REG_FRAME_INDEX, r6, REG_ODB_ADDRESS
 
 # Indicate we have prepared for a rollback because of this player's missing input
 li r3, 1
-addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_ACTIVE
+addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 stbx r3, r6, REG_ODB_ADDRESS
 #logf LOG_LEVEL_WARN, "Setting savestate flag to 1 for player %d", "mr r5, 20"
 
@@ -733,7 +734,7 @@ beq LOAD_STALE_INPUTS
 
 # Store the rollback frame in the global savestate frame counter
 stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-#logf LOG_LEVEL_WARN, "Setting global savestate frame to %d", "mr r5, 26"
+# logf LOG_LEVEL_WARN, "Setting global savestate frame to %d", "mr r5, 26"
 
 # Indicate that we have prepared for a rollback
 li r3, 1
@@ -759,6 +760,14 @@ addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
 add r3, sp, r3 # destination
 add r4, REG_RXB_ADDRESS, r5 # source
 li r5, PAD_REPORT_SIZE
+
+.if DEBUG_INPUTS==1
+cmpwi REG_COUNT, 1
+bge SKIP_OPP_LOG
+logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d %08X %08X %08X", "mr r5, REG_FRAME_INDEX", "mr r6, REG_REMOTE_PLAYER_IDX", "lwz r7, 0(4)", "lwz r8, 4(4)", "lwz r9, 8(4)"
+SKIP_OPP_LOG:
+.endif
+
 branchl r12, memcpy
 
 addi REG_COUNT, REG_COUNT, 1
