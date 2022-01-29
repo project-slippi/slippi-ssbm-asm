@@ -335,6 +335,13 @@ ROLLBACK_NOT_ACTIVE:
 # Section 8: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
+.set REG_ROLLBACK_REQUIRED, REG_VARIOUS_3
+
+# Keep track if rollback is required. We still need to iterate through all the players
+# and frames and determine the earliest frame so we can update the SAVESTATE_FRAME before
+# triggering a rollback, otherwise we'd always rollback to the oldest frame
+li REG_ROLLBACK_REQUIRED, 0
+
 # If ODB_SAVESTATE_IS_PREDICTING is 0, we either don't have a savestate created
 # or we're in a rollback, so set the per-player savestate flags to 0 and skip
 # to section 9. If we're missing inputs for the current frame, they'll get reset
@@ -422,7 +429,7 @@ lbz r4, 0(r7)
 rlwinm r3, r3, 0, 0x1F
 rlwinm r4, r4, 0, 0x1F
 cmpw r3, r4
-bne TRIGGER_ROLLBACK
+bne INDICATE_ROLLBACK_REQUIRED
 
 # -LRZUDRL
 lbz r3, 0x1(r6)
@@ -430,7 +437,7 @@ lbz r4, 0x1(r7)
 rlwinm r3, r3, 0, 0x7F
 rlwinm r4, r4, 0, 0x7F
 cmpw r3, r4
-bne TRIGGER_ROLLBACK
+bne INDICATE_ROLLBACK_REQUIRED
 
 # TODO: Sounds like new UCF still uses raw values but if it ever switches
 # TODO: to processed, consider removing this
@@ -439,7 +446,7 @@ bne TRIGGER_ROLLBACK
 lwz r3, 0x2(r6)
 lwz r4, 0x2(r7)
 cmpw r3, r4
-bne TRIGGER_ROLLBACK
+bne INDICATE_ROLLBACK_REQUIRED
 
 # And finally, the triggers. Use deadzone at 42. 43+ are valid
 li r5, 5 # Valid indices are 6-7
@@ -455,7 +462,7 @@ cmpwi r4, 42
 ble TRIGGER_LOOP_START # If both triggers are 42 or under, they are in deadzone
 CONTINUE_TRIGGER_CHECK:
 cmpw r3, r4
-bne TRIGGER_ROLLBACK
+bne INDICATE_ROLLBACK_REQUIRED
 b TRIGGER_LOOP_START
 
 INPUTS_MATCH:
@@ -491,6 +498,13 @@ bne CHECK_WHETHER_TO_ROLL_BACK_LOOP # Not caught up, try loop again with next fr
 
 b CONTINUE_ROLLBACK_CHECK_LOOP
 
+INDICATE_ROLLBACK_REQUIRED:
+# This gets called when we determine we will need to rollback for one of the players
+# we still need to go through the other players though to determine the earliest frame
+# we are allowed to rollback to
+li REG_ROLLBACK_REQUIRED, 1
+b CONTINUE_ROLLBACK_CHECK_LOOP # Move on to next player
+
 TRIGGER_ROLLBACK:
 # mulli r6, REG_COUNT, 4
 # addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
@@ -525,9 +539,10 @@ addi REG_COUNT, REG_COUNT, 1
 cmpwi REG_COUNT, 3
 blt CHECK_WHETHER_TO_ROLL_BACK_LOOP
 
-# We've checked past predictions against any new inputs and nothing triggered a rollback;
+# We've checked past predictions against any new inputs and know whether a rollback is needed
 # now determine how far (if at all) to move the savestate frame forward. It should end up as
-# the lowest value among players we're tracking a savestate frame for.
+# the lowest value among players we're tracking a savestate frame for. This will allow us to
+# then roll back (if we need to) to the earliest frame that requires it
 
 .set REG_SAVESTATE_FRAME_SET, REG_VARIOUS_2
 li REG_SAVESTATE_FRAME_SET, 0
@@ -570,11 +585,16 @@ blt COMPUTE_SAVESTATE_FRAME_LOOP
 stw r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 #logf LOG_LEVEL_WARN, "Set savestate frame to %d, game frame: %d", "mr r5, 3", "loadGlobalFrame r6"
 
-# Update finalized frame when predictions were correct
+# Update finalized frame to the earliest frame where our predictions matched
 subi r5, r3, 1
 stw r5, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
 
-# logf LOG_LEVEL_NOTICE, "New frame finalized: %d (Prediction)"
+# logf LOG_LEVEL_NOTICE, "New frame finalized: %d (Prediction)", "lwz r5, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
+
+# Check if we had determined that a rollback was needed. If so, trigger the rollback now
+# that we've updated the frame we need to roll back to.
+cmpwi REG_ROLLBACK_REQUIRED, 0
+bne TRIGGER_ROLLBACK
 
 # Check if all players inputs have caught up to the prediction so we can set savestate = 0
 li REG_COUNT, 0
