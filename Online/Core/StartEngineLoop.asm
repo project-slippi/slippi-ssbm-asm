@@ -141,7 +141,7 @@ DISPLAY_DISCONNECT_END:
 # Check if a rollback is active
 lbz r3, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
 cmpwi r3, 0
-beq CAPTURE_CHECK # If rollback not active, check if we need to save state
+beq HANDLE_ROLLBACK_INPUTS_END # If rollback not active, check if we need to save state
 
 # Check if we have a savestate, if so, we need to load state
 lbz r3, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
@@ -180,7 +180,7 @@ lwz r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 stw r3, ODB_FRAME(REG_ODB_ADDRESS)
 
 .if DEBUG_INPUTS==1
-logf LOG_LEVEL_WARN, "Finished reverting state to frame: %d", "mr r5, 3"
+logf LOG_LEVEL_WARN, "[Rollback] Finished reverting state to frame: %d", "mr r5, 3"
 .endif
 
 # Clear savestate and should load flags flag
@@ -192,6 +192,9 @@ stb r3, ODB_PLAYER_SAVESTATE_IS_PREDICTING+0x2(REG_ODB_ADDRESS)
 stb r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 stb r3, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 
+################################################################################
+# Fetch the next inputs during a rollback
+################################################################################
 CONTINUE_ROLLBACK:
 
 # If there is an active rollback, trigger a controller status renewal.
@@ -203,12 +206,21 @@ branchl r12, RenewInputs_Prefunction
 # Determine whether we should disable rollback if we have reached the target
 lwz r3, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
 cmpw REG_FRAME_INDEX, r3
-blt CAPTURE_CHECK
+blt HANDLE_ROLLBACK_INPUTS_END
 
 # If we have reached the frame, turn off rollback
 li r3, 0
 stb r3, ODB_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
 stb r3, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
+
+HANDLE_ROLLBACK_INPUTS_END:
+
+################################################################################
+# Store stable data that needs to update every time RenewInputs_Prefunction is
+# called
+################################################################################
+lwz r3, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+stw r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 
 ################################################################################
 # Check if we should capture state. We need to do this after the rollback

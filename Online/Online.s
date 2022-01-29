@@ -223,11 +223,13 @@
 .set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_FINALIZED_FRAME + 4 # bool
 .set ODB_HUD_CANVAS, ODB_SHOULD_FORCE_PAD_RENEW + 1 # u32
 .set ODB_PAUSE_COUNTER, ODB_HUD_CANVAS + 4 # u32
-.set ODB_SIZE, ODB_PAUSE_COUNTER + 4
+.set ODB_FINALIZED_FRAME, ODB_PAUSE_COUNTER + 4 # u32
+.set ODB_SIZE, ODB_FINALIZED_FRAME + 4
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
-.set TXB_DELAY, TXB_FRAME + 4 # u8 TODO: Delay should be part of some init message or something at start of game
+.set TXB_FINALIZED_FRAME, TXB_FRAME + 4 # s32
+.set TXB_DELAY, TXB_FINALIZED_FRAME + 4  # u8 TODO: Delay should be part of some init message or something at start of game
 .set TXB_PAD, TXB_DELAY + 1 # PAD_REPORT_SIZE
 .set TXB_SIZE, TXB_PAD + PAD_REPORT_SIZE
 
@@ -235,8 +237,7 @@
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
 .set RXB_OPNT_FRAME_NUMS, RXB_OPNT_COUNT + 1 # s32[3]
 .set RXB_OPNT_INPUTS, RXB_OPNT_FRAME_NUMS + 4*3 # PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3
-.set RXB_FINALIZED_FRAME, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3 # s32
-.set RXB_SIZE, RXB_FINALIZED_FRAME + 4
+.set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3
 
 ################################################################################
 # Matchmaking States

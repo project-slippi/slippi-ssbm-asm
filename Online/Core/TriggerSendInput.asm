@@ -8,6 +8,7 @@
 .set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
 .set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
 
+.set REG_VARIOUS_3, 28
 .set REG_ODB_ADDRESS, 27
 .set REG_FRAME_INDEX, 26
 .set REG_TXB_ADDRESS, 25
@@ -62,6 +63,8 @@ lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 cmpwi r3, 0
 beq ROLLBACK_HANDLER
 PROCESS_NOT_ROLLBACK:
+
+# logf LOG_LEVEL_NOTICE, "[%d] Input Requested, not rollback", "mr r5, REG_FRAME_INDEX"
 
 ################################################################################
 # Section 1: Clear all inputs during freeze time, this is done such that
@@ -137,6 +140,10 @@ stb r3, TXB_CMD(REG_TXB_ADDRESS)
 # Load frame index into transfer buffer
 stw REG_FRAME_INDEX, TXB_FRAME(REG_TXB_ADDRESS)
 
+# Transfer the finalized frame to know what inputs we can discard
+lwz r3, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+stw r3, TXB_FINALIZED_FRAME(REG_TXB_ADDRESS)
+
 # Transfer delay amount
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 stb r3, TXB_DELAY(REG_TXB_ADDRESS)
@@ -145,13 +152,6 @@ stb r3, TXB_DELAY(REG_TXB_ADDRESS)
 lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
 mulli r4, r4, PAD_REPORT_SIZE
 addi r4, r4, P1_PAD_OFFSET # offset from sp where pad report we want is
-
-# TODO: Transfer over the last frame we are predicting for to discard all previous old inputs.
-# TODO: Might be possible to use SAVESTATE_FRAME for this if it updates correctly. Might not
-# TODO: update in the case where we aren't getting rollbacks? Need to check. Could be safer
-# TODO: to just use new variable.
-# TODO: Something else to note is that when Dolphin sends us inputs, it should actually send us the
-# TODO: 7 oldest inputs just to make sure an input doesn't get lost when processing a rollback.
 
 # Move over pad data into transfer buffer
 addi r3, REG_TXB_ADDRESS, TXB_PAD # destination
@@ -385,13 +385,13 @@ HAVE_PLAYER_INPUTS:
 # required to handle the savestate, so let's check the inputs to see if we need
 # to roll back
 
-mr REG_VARIOUS_1, r3
+mr REG_VARIOUS_1, r3 # backup depth offset to savestate frame
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS
 #logf LOG_LEVEL_WARN, "Player %d[%d] r/w indexes when reading next input: %d/%d", "mr r5, 20", "mr r6, 22", "mr r7, 3", "mr r8, 4"
-mr r3, REG_VARIOUS_1
+mr r3, REG_VARIOUS_1 # restore depth offset to savestate frame
 
 # Compute offset of true inputs for this player on this frame
 mulli r3, r3, PAD_REPORT_SIZE
@@ -407,8 +407,13 @@ addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs
 mulli r5, REG_COUNT, PLAYER_MAX_INPUT_SIZE
 add r4, r4, r5
 
-add r6, REG_RXB_ADDRESS, r3
-add r7, REG_ODB_ADDRESS, r4
+add r6, REG_RXB_ADDRESS, r3 # contains actual input for frame
+add r7, REG_ODB_ADDRESS, r4 # contains predicted input
+
+# mulli r3, REG_COUNT, 4
+# addi r3, r3, ODB_PLAYER_SAVESTATE_FRAME
+# lwzx r3, r3, REG_ODB_ADDRESS
+# logf LOG_LEVEL_NOTICE, "Comparing inputs to predicted for frame: %d", "mr r5, 3"
 
 # Check to see if inputs have changed. Start with buttons
 # ---SYXBA
@@ -462,6 +467,9 @@ lwzx r3, r6, REG_ODB_ADDRESS # get our player-specific savestate frame
 addi r3, r3, 1
 stwx r3, r6, REG_ODB_ADDRESS
 
+# Here we have found one frame of inputs that match, we are going to advance one frame and check
+# to see if the next frame's inputs match
+
 # increment read index
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS # load this player's read idx
@@ -472,17 +480,12 @@ subi r3, r3, ROLLBACK_MAX_FRAME_COUNT
 SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST:
 stbx r3, r6, REG_ODB_ADDRESS
 
-addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
-lbzx r3, r6, REG_ODB_ADDRESS
-addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
-lbzx r4, r6, REG_ODB_ADDRESS
-#logf LOG_LEVEL_WARN, "Player %d r/w indexes after reading: %d/%d", "mr r5, 20", "mr r6, 3", "mr r7, 4"
-
 # Check if we have caught up to the prediction
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS
+#logf LOG_LEVEL_WARN, "Player %d r/w indexes after reading: %d/%d", "mr r5, 20", "mr r6, 3", "mr r7, 4"
 cmpw r4, r3
 bne CHECK_WHETHER_TO_ROLL_BACK_LOOP # Not caught up, try loop again with next frame for this player
 
@@ -567,6 +570,12 @@ blt COMPUTE_SAVESTATE_FRAME_LOOP
 stw r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 #logf LOG_LEVEL_WARN, "Set savestate frame to %d, game frame: %d", "mr r5, 3", "loadGlobalFrame r6"
 
+# Update finalized frame when predictions were correct
+subi r5, r3, 1
+stw r5, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+
+# logf LOG_LEVEL_NOTICE, "New frame finalized: %d (Prediction)"
+
 # Check if all players inputs have caught up to the prediction so we can set savestate = 0
 li REG_COUNT, 0
 CHECK_RESET_SAVESTATE_LOOP:
@@ -627,11 +636,16 @@ stb r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 ################################################################################
 
 .set REG_REMOTE_PLAYER_IDX, REG_VARIOUS_2
+.set REG_HAS_INPUTS_FROM_ALL, REG_VARIOUS_3
 
 LOAD_OPPONENT_INPUTS:
+
+# logf LOG_LEVEL_NOTICE, "[%d] Reading Inputs...", "mr r5, REG_FRAME_INDEX"
+
 # loop over each remote player
 li REG_COUNT, 0
 li REG_REMOTE_PLAYER_IDX, 0 # port index of the current remote player
+li REG_HAS_INPUTS_FROM_ALL, 1 # will get reset if we are predicting for any players
 
 LOOP_LOAD_OPPONENT_INPUTS:
 # skip over the local player's port for inputs
@@ -650,10 +664,11 @@ sub r3, r3, REG_FRAME_INDEX
 cmpwi r3, 0
 bge CALC_OPNT_PAD_OFFSET
 
+PREDICT_INPUTS_OPP:
+# We are predicting inputs, back up the inputs for later comparison
 .if DEBUG_INPUTS==1
 logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d Needs Prediction"
 .endif
-# We are predicting inputs, back up the inputs for later comparison
 
 # Don't save any states at the start of the game, it's frozen anyway
 # and there might still be stuff loading
@@ -667,6 +682,14 @@ blt LOAD_STALE_INPUTS
 lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)
 cmpwi r3, 1
 beq LOAD_STALE_INPUTS
+
+# Indicate we had to predict some inputs for this frame
+li REG_HAS_INPUTS_FROM_ALL, 0
+
+# mulli r6, REG_COUNT, 4
+# addi r6, r6, RXB_OPNT_FRAME_NUMS
+# lwzx r3, r6, REG_RXB_ADDRESS
+# logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d Predicting. Latest: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_REMOTE_PLAYER_IDX", "mr r7, 3"
 
 .set REG_PREDICTED_WRITE_IDX, REG_VARIOUS_1
 
@@ -775,6 +798,13 @@ addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
 cmpwi REG_COUNT, 3
 blt LOOP_LOAD_OPPONENT_INPUTS
 
+# Overwrite finalized frame if we were not predicting for all the players
+cmpwi REG_HAS_INPUTS_FROM_ALL, 0
+beq SKIP_FINALIZED_FRAME_ADJUST
+stw REG_FRAME_INDEX, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+# logf LOG_LEVEL_NOTICE, "New frame finalized: %d", "lwz r5, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
+SKIP_FINALIZED_FRAME_ADJUST:
+
 b INCREMENT_AND_EXIT
 
 ################################################################################
@@ -782,6 +812,8 @@ b INCREMENT_AND_EXIT
 ################################################################################
 
 ROLLBACK_HANDLER:
+# logf LOG_LEVEL_NOTICE, "[%d] Input Requested (rollback)", "mr r5, REG_FRAME_INDEX"
+
 # If the frame we want is past the rollback end, just do nothing. This might
 # happen in the case where we get an interrupt during a rollback
 lwz r3, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
