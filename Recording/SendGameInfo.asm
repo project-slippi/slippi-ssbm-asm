@@ -368,7 +368,7 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 # Before trying to load match state, make sure we are in an online scene
   getMinorMajor r3
   cmpwi r3, SCENE_ONLINE_IN_GAME
-  bne DISPLAY_CC_WRITE_ZERO # If not online in-game, skip normal processing
+  bne DISPLAY_CC_UID_WRITE_ZERO # If not online in-game, skip normal processing
 
 # Get MSRB address
   li r3,0
@@ -470,18 +470,74 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   cmpwi REG_LoopCount,4
   blt CONNECT_CODE_LOOP
 
+#------------- SEND Slippi UIDs ------------
+.set SlippiUIDStart, (ConnectCodeStart + ConnectCodeLength)
+.set SlippiUIDLength,0x74
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+# Constants
+.set SlippiUIDBytesToCopy,29  # 1 bytes per char + 1 byte for null terminator = 29 bytes
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferSlippiUIDStart,23
+.set REG_BufferCurrentSlippiUID,24
+.set REG_MSRB_SlippiUIDStart,26
+  
+# Init loop
+  li REG_LoopCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                # player data start in match struct
+  addi REG_BufferSlippiUIDStart,REG_Buffer,SlippiUIDStart     # Start of write buffer
+  addi REG_MSRB_SlippiUIDStart,REG_MSRB,MSRB_P1_SLIPPI_UID    # Start of read buffer
+
+  SLIPPI_UID_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,SlippiUIDBytesToCopy
+  add REG_BufferCurrentSlippiUID,r3,REG_BufferSlippiUIDStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_SLIPPI_UID_NO_CODE
+
+#Next read offset
+  mulli r3,REG_LoopCount,SlippiUIDBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_SlippiUIDStart  # src (MSRB_SlippiUIDStart + offset)
+  mr r3,REG_BufferCurrentSlippiUID   # dest
+  li r5,SlippiUIDBytesToCopy         # length
+  branchl r12,memcpy
+  b SLIPPI_UID_INC_LOOP
+
+  SEND_SLIPPI_UID_NO_CODE:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentSlippiUID
+  li r4,SlippiUIDBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  SLIPPI_UID_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt SLIPPI_UID_LOOP
+
 # Free MSRB
   mr r3,REG_MSRB
   branchl r12,HSD_Free
-  b SEND_CONNECT_CODE_END
+  b SEND_SLIPPI_UID_END
 
-  DISPLAY_CC_WRITE_ZERO:
-# We will get here if not online. Just zero out the entire display name and cc sections
+  DISPLAY_CC_UID_WRITE_ZERO:
+# We will get here if not online. Just zero out the entire display name, cc, and uid sections
   addi r3, REG_Buffer, DisplayNameStart
-  li r4, 4 * (DisplayNameBytesToCopy + ConnectCodeBytesToCopy)
+  li r4, 4 * (DisplayNameBytesToCopy + ConnectCodeBytesToCopy + SlippiUIDBytesToCopy)
   branchl r12,Zero_AreaLength
 
-  SEND_CONNECT_CODE_END:
+  SEND_SLIPPI_UID_END:
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
