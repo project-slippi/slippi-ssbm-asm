@@ -8,6 +8,7 @@
 .set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
 .set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
 
+.set REG_LOCAL_SOURCE_INPUT, 29
 .set REG_VARIOUS_3, 28
 .set REG_ODB_ADDRESS, 27
 .set REG_FRAME_INDEX, 26
@@ -50,6 +51,12 @@ lwz REG_SSRB_ADDR, ODB_SAVESTATE_SSRB_ADDR(REG_ODB_ADDRESS)
 # Load frame index
 lwz REG_FRAME_INDEX, ODB_FRAME(REG_ODB_ADDRESS)
 
+# Load address in sp of the source input for the local player
+lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
+mulli r4, r4, PAD_REPORT_SIZE
+addi r3, r4, P1_PAD_OFFSET # offset from sp where local player pad report is
+add REG_LOCAL_SOURCE_INPUT, sp, r3 # get ptr to local input
+
 # Check if we have an active rollback, if so, we don't want to fetch
 # new data from Slippi, we just want to operate on the existing data
 lbz r3, ODB_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
@@ -81,17 +88,92 @@ li r4, CONTROLLER_COUNT * PAD_REPORT_SIZE
 branchl r12, Zero_AreaLength
 
 SKIP_FROZEN_INPUT_CLEAR:
+
 ################################################################################
-# Section 2: Deal with stale? controller inputs
+# Section 2: Reduce analog stick resting noise
+################################################################################
+b SKIP_STICK_AT_REST_FUNCTION
+
+# Function to calculate whether a stick is at rest
+FUNC_STICK_IS_AT_REST:
+# Check x-axis between -2 and 2
+lbz r4, 0x0(r3)
+extsb r4, r4
+cmpwi r4, -2
+blt STICK_NOT_AT_REST
+cmpwi r4, 2
+bgt STICK_NOT_AT_REST
+# Check y-axis between -2 and 2
+lbz r4, 0x1(r3)
+extsb r4, r4
+cmpwi r4, -2
+blt STICK_NOT_AT_REST
+cmpwi r4, 2
+bgt STICK_NOT_AT_REST
+# Stick is at rest
+li r3, 1
+b FUNC_STICK_IS_AT_REST_EXIT
+STICK_NOT_AT_REST:
+li r3, 0
+FUNC_STICK_IS_AT_REST_EXIT:
+blr
+SKIP_STICK_AT_REST_FUNCTION:
+
+addi r3, REG_LOCAL_SOURCE_INPUT, 0x2
+bl FUNC_STICK_IS_AT_REST
+cmpwi r3, 0
+beq CHECK_RIGHT_STICK
+
+addi r3, REG_ODB_ADDRESS, ODB_LAST_LOCAL_INPUTS + 0x2
+bl FUNC_STICK_IS_AT_REST
+cmpwi r3, 0
+beq CHECK_RIGHT_STICK
+
+# Last frame left stick and this frame left stick at rest, compare
+lhz r3, 0x2(REG_LOCAL_SOURCE_INPUT)
+lhz r4, 0x2+ODB_LAST_LOCAL_INPUTS(REG_ODB_ADDRESS)
+cmpw r3, r4
+beq CHECK_RIGHT_STICK
+
+# Not equal, increment
+lwz r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
+addi r3, r3, 1
+stw r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
+b STICK_REST_CHECK_END
+
+CHECK_RIGHT_STICK:
+addi r3, REG_LOCAL_SOURCE_INPUT, 0x4
+bl FUNC_STICK_IS_AT_REST
+cmpwi r3, 0
+beq STICK_REST_CHECK_END
+
+addi r3, REG_ODB_ADDRESS, ODB_LAST_LOCAL_INPUTS + 0x4
+bl FUNC_STICK_IS_AT_REST
+cmpwi r3, 0
+beq STICK_REST_CHECK_END
+
+# Last frame left stick and this frame left stick at rest, compare
+lhz r3, 0x4(REG_LOCAL_SOURCE_INPUT)
+lhz r4, 0x4+ODB_LAST_LOCAL_INPUTS(REG_ODB_ADDRESS)
+cmpw r3, r4
+beq STICK_REST_CHECK_END
+
+# Not equal, increment
+lwz r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
+addi r3, r3, 1
+stw r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
+
+STICK_REST_CHECK_END:
+logf LOG_LEVEL_INFO, "[%d] Noisy stick count: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)"
+
+################################################################################
+# Section 3: Deal with stale? controller inputs
 ################################################################################
 # These seem to happen when Dolphin slows down? Or during big rollbacks?
 # They are problematic because they usually show up as zero inputs and
 # are processed differently locally, branch at 803775b4 is hit though
 # the zero inputs are used remotely.
-lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
-mulli r4, r4, PAD_REPORT_SIZE
-addi r3, r4, P1_PAD_OFFSET + 0xA # offset from sp where pad report we want is
-lbzx r3, sp, r3 # Load local controller connected state
+lbz r3, 0xA(REG_LOCAL_SOURCE_INPUT) # Load status byte for pad
 extsb r3, r3
 cmpwi r3, -3 # This code probably means no new data? Not fully sure but it causes issues
 bne SKIP_STALE_CONTROLLER_FIX
@@ -110,27 +192,21 @@ bl FN_PrintInputs
 # Replace the zero inputs with inputs from last frame. I believe this is what
 # the game does internally on a -3 status code, we need to make sure our remote
 # client does the same
-addi r3, r4, P1_PAD_OFFSET
-add r3, sp, r3 # destination
+mr r3, REG_LOCAL_SOURCE_INPUT # destination
 addi r4, REG_ODB_ADDRESS, ODB_LAST_LOCAL_INPUTS # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
 SKIP_STALE_CONTROLLER_FIX:
 
-# Back up inputs to use for next frame if we get stale inputs
-lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
-mulli r4, r4, PAD_REPORT_SIZE
-addi r4, r4, P1_PAD_OFFSET # offset from sp where pad report we want is
-
 # Move over pad data into last inputs storage
 addi r3, REG_ODB_ADDRESS, ODB_LAST_LOCAL_INPUTS # destination
-add r4, sp, r4 # source
+mr r4, REG_LOCAL_SOURCE_INPUT # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
 ################################################################################
-# Section 3: Send this frame's pad data over EXI
+# Section 4: Send this frame's pad data over EXI
 ################################################################################
 
 # Write command byte to transfer buffer
@@ -148,14 +224,9 @@ stw r3, TXB_FINALIZED_FRAME(REG_TXB_ADDRESS)
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 stb r3, TXB_DELAY(REG_TXB_ADDRESS)
 
-# prepare to send local player pad
-lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
-mulli r4, r4, PAD_REPORT_SIZE
-addi r4, r4, P1_PAD_OFFSET # offset from sp where pad report we want is
-
-# Move over pad data into transfer buffer
+# Move local pad data into transfer buffer
 addi r3, REG_TXB_ADDRESS, TXB_PAD # destination
-add r4, sp, r4 # source
+mr r4, REG_LOCAL_SOURCE_INPUT # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
@@ -176,7 +247,7 @@ li r5, CONST_ExiWrite
 branchl r12, FN_EXITransferBuffer
 
 ################################################################################
-# Section 4: Receive response and determine whether this input will be used
+# Section 5: Receive response and determine whether this input will be used
 ################################################################################
 
 # Get response from Slippi and figure out whether this input should be skipped
@@ -221,7 +292,7 @@ stb r3, ODB_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
 RESP_RES_CONTINUE:
 
 ################################################################################
-# Section 5: Overwrite this frame's pad data with data from x frames ago
+# Section 6: Overwrite this frame's pad data with data from x frames ago
 ################################################################################
 
 # get delayed pad data offset from
@@ -241,7 +312,7 @@ li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
 ################################################################################
-# Section 6: Copy local inputs into buffer for use if a rollback happens
+# Section 7: Copy local inputs into buffer for use if a rollback happens
 ################################################################################
 
 # get write location for inputs
@@ -280,7 +351,7 @@ SKIP_LOCAL_INPUT_BUFFER_INDEX_WRAP:
 stb r3, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)
 
 ################################################################################
-# Section 7: Add this frame's pad data to delay buffer
+# Section 8: Add this frame's pad data to delay buffer
 ################################################################################
 
 # prepare offset of current buffer data location
@@ -316,7 +387,7 @@ SKIP_DELAY_BUFFER_INDEX_WRAP:
 stb r3, ODB_DELAY_BUFFER_INDEX(REG_ODB_ADDRESS)
 
 ################################################################################
-# Section 7.5: Determine if we need to check for opponent inputs
+# Section 9: Determine if we need to check for opponent inputs
 ################################################################################
 # If we already have an active rollback that we are waiting to be processed, just update
 # the end frame so that this new frame of inputs gets used. TRIGGER_ROLLBACK already handles
@@ -332,7 +403,7 @@ bne TRIGGER_ROLLBACK # If state should be loaded, TRIGGER_ROLLBACK
 ROLLBACK_NOT_ACTIVE:
 
 ################################################################################
-# Section 8: Check if we have prepared for rollback and inputs have been received
+# Section 10: Check if we have prepared for rollback and inputs have been received
 ################################################################################
 
 .set REG_ROLLBACK_REQUIRED, REG_VARIOUS_3
@@ -652,7 +723,7 @@ stb r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 #logf LOG_LEVEL_WARN, "Reset savestate flags to 0"
 
 ################################################################################
-# Section 9: Try to read opponent's input for this frame
+# Section 11: Try to read opponent's input for this frame
 ################################################################################
 
 .set REG_REMOTE_PLAYER_IDX, REG_VARIOUS_2
