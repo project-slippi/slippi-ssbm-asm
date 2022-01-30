@@ -93,78 +93,36 @@ SKIP_FROZEN_INPUT_CLEAR:
 # Section 2: Reduce analog stick resting noise
 ################################################################################
 b SKIP_STICK_AT_REST_FUNCTION
-
-# Function to calculate whether a stick is at rest
-FUNC_STICK_IS_AT_REST:
-# Check x-axis between -2 and 2
+# Function to clamp a stick if it is at rest (to prevent noise from triggering rollbacks)
+# This happens on about 10% of frames as per the testing done:
+# https://github.com/project-slippi/slippi-ssbm-asm/commit/5aa07980a1cc27a3b4395e415a97eb8ddbea0b34
+FUNC_CLAMP_STICK_AT_REST:
+.set CONST_REST_THRESH, 2
+# Check x-axis between at rest range
 lbz r4, 0x0(r3)
 extsb r4, r4
-cmpwi r4, -2
-blt STICK_NOT_AT_REST
-cmpwi r4, 2
-bgt STICK_NOT_AT_REST
-# Check y-axis between -2 and 2
+cmpwi r4, -CONST_REST_THRESH
+blt FUNC_CLAMP_STICK_AT_REST_EXIT
+cmpwi r4, CONST_REST_THRESH
+bgt FUNC_CLAMP_STICK_AT_REST_EXIT
+# Check y-axis between at rest range
 lbz r4, 0x1(r3)
 extsb r4, r4
-cmpwi r4, -2
-blt STICK_NOT_AT_REST
-cmpwi r4, 2
-bgt STICK_NOT_AT_REST
-# Stick is at rest
-li r3, 1
-b FUNC_STICK_IS_AT_REST_EXIT
-STICK_NOT_AT_REST:
-li r3, 0
-FUNC_STICK_IS_AT_REST_EXIT:
+cmpwi r4, -CONST_REST_THRESH
+blt FUNC_CLAMP_STICK_AT_REST_EXIT
+cmpwi r4, CONST_REST_THRESH
+bgt FUNC_CLAMP_STICK_AT_REST_EXIT
+# Clamp stick that is at rest
+li r4, 0
+sth r4, 0x0(r3)
+FUNC_CLAMP_STICK_AT_REST_EXIT:
 blr
 SKIP_STICK_AT_REST_FUNCTION:
 
 addi r3, REG_LOCAL_SOURCE_INPUT, 0x2
-bl FUNC_STICK_IS_AT_REST
-cmpwi r3, 0
-beq CHECK_RIGHT_STICK
-
-addi r3, REG_ODB_ADDRESS, ODB_LAST_LOCAL_INPUTS + 0x2
-bl FUNC_STICK_IS_AT_REST
-cmpwi r3, 0
-beq CHECK_RIGHT_STICK
-
-# Last frame left stick and this frame left stick at rest, compare
-lhz r3, 0x2(REG_LOCAL_SOURCE_INPUT)
-lhz r4, 0x2+ODB_LAST_LOCAL_INPUTS(REG_ODB_ADDRESS)
-cmpw r3, r4
-beq CHECK_RIGHT_STICK
-
-# Not equal, increment
-lwz r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
-addi r3, r3, 1
-stw r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
-b STICK_REST_CHECK_END
-
-CHECK_RIGHT_STICK:
+bl FUNC_CLAMP_STICK_AT_REST
 addi r3, REG_LOCAL_SOURCE_INPUT, 0x4
-bl FUNC_STICK_IS_AT_REST
-cmpwi r3, 0
-beq STICK_REST_CHECK_END
-
-addi r3, REG_ODB_ADDRESS, ODB_LAST_LOCAL_INPUTS + 0x4
-bl FUNC_STICK_IS_AT_REST
-cmpwi r3, 0
-beq STICK_REST_CHECK_END
-
-# Last frame left stick and this frame left stick at rest, compare
-lhz r3, 0x4(REG_LOCAL_SOURCE_INPUT)
-lhz r4, 0x4+ODB_LAST_LOCAL_INPUTS(REG_ODB_ADDRESS)
-cmpw r3, r4
-beq STICK_REST_CHECK_END
-
-# Not equal, increment
-lwz r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
-addi r3, r3, 1
-stw r3, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)
-
-STICK_REST_CHECK_END:
-logf LOG_LEVEL_INFO, "[%d] Noisy stick count: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_REST_STICK_CHANGE_COUNTER(REG_ODB_ADDRESS)"
+bl FUNC_CLAMP_STICK_AT_REST
 
 ################################################################################
 # Section 3: Deal with stale? controller inputs
