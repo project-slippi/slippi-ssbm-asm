@@ -71,7 +71,7 @@ cmpwi r3, 0
 beq ROLLBACK_HANDLER
 PROCESS_NOT_ROLLBACK:
 
-# logf LOG_LEVEL_NOTICE, "[%d] Input Requested, not rollback", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_NOTICE, "[%d] Input Requested (not rollback)", "mr r5, REG_FRAME_INDEX"
 
 ################################################################################
 # Section 1: Clear all inputs during freeze time, this is done such that
@@ -174,8 +174,10 @@ stb r3, TXB_CMD(REG_TXB_ADDRESS)
 # Load frame index into transfer buffer
 stw REG_FRAME_INDEX, TXB_FRAME(REG_TXB_ADDRESS)
 
-# Transfer the finalized frame to know what inputs we can discard
-lwz r3, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+# Finalized frame is used to decide which old inputs to discard. It is also used to determine
+# whether to halt due to rollback limit. We are using STABLE because that ensures the frame
+# has actually been processed by the game engine
+lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 stw r3, TXB_FINALIZED_FRAME(REG_TXB_ADDRESS)
 
 # Transfer delay amount
@@ -549,6 +551,8 @@ stb r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 # Store the end frame index to remember when to terminate rollback logic
 stw REG_FRAME_INDEX, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
 
+# logf LOG_LEVEL_WARN, "[%d] Triggering rollback to end on frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+
 # We have successfully sent inputs to our opponent and preped them to use for rollback
 # We still want to increment the frame just in case another input is sent before we have
 # a chance to load the savestate. This should be fine because it will get overwritten when
@@ -612,7 +616,7 @@ blt COMPUTE_SAVESTATE_FRAME_LOOP
 
 # Set the savestate frame to the minimum value among players with missing inputs
 stw r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-#logf LOG_LEVEL_WARN, "Set savestate frame to %d, game frame: %d", "mr r5, 3", "loadGlobalFrame r6"
+# logf LOG_LEVEL_WARN, "[%d] Update savestate frame to %d after checking predictions", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
 
 # Update finalized frame to the earliest frame where our predictions matched
 subi r5, r3, 1
@@ -806,7 +810,7 @@ beq LOAD_STALE_INPUTS
 
 # Store the rollback frame in the global savestate frame counter
 stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-# logf LOG_LEVEL_WARN, "Setting global savestate frame to %d", "mr r5, 26"
+# logf LOG_LEVEL_WARN, "[%d] Predicting on this frame and setting the savestate frame", "mr r5, REG_FRAME_INDEX"
 
 # Indicate that we have prepared for a rollback
 li r3, 1
@@ -861,7 +865,7 @@ b INCREMENT_AND_EXIT
 ################################################################################
 
 ROLLBACK_HANDLER:
-# logf LOG_LEVEL_NOTICE, "[%d] Input Requested (rollback)", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_NOTICE, "[%d] Input Requested (rollback). End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 
 # If the frame we want is past the rollback end, just do nothing. This might
 # happen in the case where we get an interrupt during a rollback
