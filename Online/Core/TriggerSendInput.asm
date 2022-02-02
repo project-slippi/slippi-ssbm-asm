@@ -72,6 +72,7 @@ beq ROLLBACK_HANDLER
 PROCESS_NOT_ROLLBACK:
 
 # logf LOG_LEVEL_NOTICE, "[%d] Input Requested (not rollback)", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_NOTICE, "[%d] Local Input: %08X %08X %08X", "mr r5, REG_FRAME_INDEX", "lwz r6, 0(REG_LOCAL_SOURCE_INPUT)", "lwz r7, 4(REG_LOCAL_SOURCE_INPUT)", "lwz r8, 8(REG_LOCAL_SOURCE_INPUT)"
 
 ################################################################################
 # Section 1: Clear all inputs during freeze time, this is done such that
@@ -302,7 +303,7 @@ branchl r12, memcpy
 # increment index
 lbz r3, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)
 addi r3, r3, 1
-cmpwi r3, ROLLBACK_MAX_FRAME_COUNT
+cmpwi r3, LOCAL_INPUT_BUFFER_LEN
 blt SKIP_LOCAL_INPUT_BUFFER_INDEX_WRAP
 
 li r3, 0
@@ -878,6 +879,7 @@ restore
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
 
 COPY_LOCAL_INPUTS:
+# logf LOG_LEVEL_INFO, "[%d] Prior to local input copy. END_FRAME: %d, LOCAL_INPUTS_IDX: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)", "lbz r7, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)"
 # get local input from history
 lwz r3, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
 sub r3, r3, REG_FRAME_INDEX
@@ -885,8 +887,9 @@ addi r3, r3, 1
 lbz r4, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)
 sub. r3, r4, r3
 bge SKIP_LOCAL_INPUT_IDX_NEG
-addi r3, r3, ROLLBACK_MAX_FRAME_COUNT
+addi r3, r3, LOCAL_INPUT_BUFFER_LEN
 SKIP_LOCAL_INPUT_IDX_NEG:
+# logf LOG_LEVEL_INFO, "[%d] Copying local inputs for rollback. Idx: %d, Offset: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mulli r7, 3, PAD_REPORT_SIZE"
 mulli r3, r3, PAD_REPORT_SIZE
 addi r4, r3, ODB_ROLLBACK_LOCAL_INPUTS
 
