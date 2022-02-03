@@ -21,7 +21,7 @@ lwz r7, 0(r25)
 lwz r8, 4(r25)
 lwz r9, 8(r25)
 
-logf LOG_LEVEL_NOTICE, "[%d] P%d %08X %08X %08X"
+logf LOG_LEVEL_NOTICE, "[%d] P%d Using Input: %08X %08X %08X"
 
 lbz	r3, 0x0041(r26)
 extsb. r0, r3

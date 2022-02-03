@@ -248,7 +248,7 @@ UPDATE_STABLE_FINALIZED:
 lwz r4, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 cmpw r3, r4
 ble SKIP_STABLE_FINALIZED_UPDATE
-# logf LOG_LEVEL_INFO, "[%d] Stable value updated to %d. Volatile: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[%d] Stable finalized value updated to %d. Volatile: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 stw r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 SKIP_STABLE_FINALIZED_UPDATE:
 
@@ -266,9 +266,9 @@ cmpwi r3, 0
 beq CAPTURE_END
 
 # Next check if this frame is greater than or equal to the frame we need
-lwz r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
+lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 cmpw REG_FRAME_INDEX, r3
-blt CAPTURE_END
+ble CAPTURE_END
 
 # logf LOG_LEVEL_WARN, "[%d] Saving state", "mr r5, REG_FRAME_INDEX"
 
