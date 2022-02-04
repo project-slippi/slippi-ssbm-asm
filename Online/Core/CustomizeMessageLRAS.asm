@@ -13,11 +13,8 @@ getMinorMajor r7
 cmpwi r7, SCENE_ONLINE_IN_GAME
 bne EXIT
 
-# Ensure that this is an unranked game
-# TODO: We could perhaps check for any mode which has local-pausing enabled instead
-lbz r7, OFST_R13_ONLINE_MODE(r13)
-cmpwi r7, ONLINE_MODE_UNRANKED
-bne EXIT
+# It seems like on an LRAS where pause is still on/normal, we don't get into this function
+# anyway, so we don't have to worry about direct mode's LRAS
 
 # Ensure the game ended as an LRAS
 lbz r7, 0x8(REG_MATCH_INFO)
