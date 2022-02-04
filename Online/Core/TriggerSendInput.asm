@@ -71,8 +71,8 @@ cmpwi r3, 0
 beq ROLLBACK_HANDLER
 PROCESS_NOT_ROLLBACK:
 
-# logf LOG_LEVEL_NOTICE, "[%d] Input Requested (not rollback)", "mr r5, REG_FRAME_INDEX"
-# logf LOG_LEVEL_NOTICE, "[%d] Local Input: %08X %08X %08X", "mr r5, REG_FRAME_INDEX", "lwz r6, 0(REG_LOCAL_SOURCE_INPUT)", "lwz r7, 4(REG_LOCAL_SOURCE_INPUT)", "lwz r8, 8(REG_LOCAL_SOURCE_INPUT)"
+# logf LOG_LEVEL_NOTICE, "[TSI] [%d] Input Requested (not rollback)", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_NOTICE, "[TSI] [%d] Local Input: %08X %08X %08X", "mr r5, REG_FRAME_INDEX", "lwz r6, 0(REG_LOCAL_SOURCE_INPUT)", "lwz r7, 4(REG_LOCAL_SOURCE_INPUT)", "lwz r8, 8(REG_LOCAL_SOURCE_INPUT)"
 
 ################################################################################
 # Section 1: Clear all inputs during freeze time, this is done such that
@@ -225,7 +225,7 @@ branchl r12, FN_EXITransferBuffer
 li r3, 0
 stb r3, ODB_IS_FRAME_ADVANCE(REG_ODB_ADDRESS)
 
-# logf LOG_LEVEL_INFO, "[%d] Received results from Dolphin. Result: %d, Latest Frame: %d", "mr r5, REG_FRAME_INDEX", "lbz r6, RXB_RESULT(REG_RXB_ADDRESS)", "lwz r7, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Received results from Dolphin. Result: %d, Latest Frames: %d | %d | %d", "mr r5, REG_FRAME_INDEX", "lbz r6, RXB_RESULT(REG_RXB_ADDRESS)", "lwz r7, RXB_OPNT_FRAME_NUMS(REG_RXB_ADDRESS)", "lwz r8, RXB_OPNT_FRAME_NUMS+4(REG_RXB_ADDRESS)", "lwz r9, RXB_OPNT_FRAME_NUMS+8(REG_RXB_ADDRESS)"
 lbz r3, RXB_RESULT(REG_RXB_ADDRESS)
 cmpwi r3, RESP_SKIP
 beq SKIP_INPUT
@@ -407,7 +407,7 @@ lwzx r4, r6, REG_ODB_ADDRESS
 sub. REG_RXB_OFFSET, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
 blt CONTINUE_ROLLBACK_CHECK_LOOP
 
-# logf LOG_LEVEL_INFO, "[%d] Checking predictions for opp #%d. SavestateFrame: %d, Finalized: %d, Latest: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 4", "lwz r8, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)", "mr r9, 3"
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Checking predictions for opp #%d. SavestateFrame: %d, Finalized: %d, Latest: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 4", "lwz r8, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)", "mr r9, 3"
 lwz r6, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 cmpw r4, r6 # If PLAYER_SAVESTATE_FRAME is greater than the finalized frame, check if inputs matched
 bgt HAVE_PLAYER_INPUTS
@@ -547,7 +547,7 @@ stb r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 # Store the end frame index to remember when to terminate rollback logic
 stw REG_FRAME_INDEX, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
 
-# logf LOG_LEVEL_WARN, "[%d] Triggering rollback to end on frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "[TSI] [%d] Triggering rollback. Start: %d, End: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)", "lwz r7, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 
 # We have successfully sent inputs to our opponent and preped them to use for rollback
 # We still want to increment the frame just in case another input is sent before we have
@@ -573,16 +573,16 @@ blt CHECK_WHETHER_TO_ROLL_BACK_LOOP
 # the lowest value among players we're tracking a savestate frame for. This will allow us to
 # then roll back (if we need to) to the earliest frame that requires it
 
-.set REG_LATEST_FRAME, REG_VARIOUS_1
-.set REG_SAVESTATE_FRAME_SET, REG_VARIOUS_2
-li REG_SAVESTATE_FRAME_SET, 0
+.set REG_SAVESTATE_FRAME, REG_VARIOUS_2
+.set REGV_VALUES_SET, 11
+li REGV_VALUES_SET, 0
 li REG_COUNT, 0
 
 # Minimum savestate should always be equal to the finalized frame, normally it should be +1 but
 # in the case where we have not received any new inputs, we don't want to update the finalized
 # frame which could cause inputs to get discarded
-lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS) # r3 will hold the min savestate frame we see
-# logf LOG_LEVEL_WARN, "[%d] Attempting to advance savestate frame past %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
+lwz REG_SAVESTATE_FRAME, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS) # will hold the min savestate frame we see
+# logf LOG_LEVEL_WARN, "[TSI] [%d] Attempting to advance savestate frame past %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
 
 COMPUTE_SAVESTATE_FRAME_LOOP:
 # If this player doesn't have missing inputs, ignore their savestate frame
@@ -596,25 +596,20 @@ mulli r6, REG_COUNT, 4
 addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
 lwzx r4, r6, REG_ODB_ADDRESS
 
-# logf LOG_LEVEL_INFO, "[%d] Checking savestate frame for opp #%d. Value: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 4"
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Checking savestate frame for opp #%d. Value: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 4"
 # If we are the first player to bump the savestate frame, do it to set an initial value.
-cmpwi REG_SAVESTATE_FRAME_SET, 0
-beq SKIP_SAVESTATE_FRAME_CHECK
-
+cmpwi REGV_VALUES_SET, 0
+beq UPDATE_SAVESTATE_FRAME_SET
 # Otherwise only replace it with our frame if we're the new lowest.
-cmpw r4, r3 # r4 = this player's savestate frame, r3 = lowest frame seen so far
-bge CONTINUE_SAVESTATE_FRAME_LOOP
+cmpw r4, REG_SAVESTATE_FRAME # r4 = this player's savestate frame, REG_SAVESTATE_FRAME = lowest frame seen so far
+bge UPDATE_SAVESTATE_FRAME_END
+UPDATE_SAVESTATE_FRAME_SET:
+mr REG_SAVESTATE_FRAME, r4
+UPDATE_SAVESTATE_FRAME_END:
 
-SKIP_SAVESTATE_FRAME_CHECK:
-mr r3, r4
 #logf LOG_LEVEL_WARN, "Player %d set savestate frame %d", "mr r5, 20", "mr r6, 4"
-li REG_SAVESTATE_FRAME_SET, 1
 
-# Keep track of the latest received frame for the player that sets the savestate frame. We don't
-# want finalized frame to be greater than the latest received frame
-mulli r6, REG_COUNT, 4
-addi r6, r6, RXB_OPNT_FRAME_NUMS
-lwzx REG_LATEST_FRAME, r6, REG_RXB_ADDRESS
+li REGV_VALUES_SET, 1
 
 CONTINUE_SAVESTATE_FRAME_LOOP:
 addi REG_COUNT, REG_COUNT, 1
@@ -622,18 +617,19 @@ cmpwi REG_COUNT, 3
 blt COMPUTE_SAVESTATE_FRAME_LOOP
 
 # Set the savestate frame to the minimum value among players with missing inputs
-stw r3, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
+stw REG_SAVESTATE_FRAME, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 
 # Update finalized frame to the earliest frame where our predictions matched
 # We don't want finalized frame to be greater than the latest frame though, so make sure
 # to not allow that
-stw r3, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
-cmpw r3, REG_LATEST_FRAME
+stw REG_SAVESTATE_FRAME, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+lwz r6, RXB_SMALLEST_LATEST_FRAME(REG_RXB_ADDRESS)
+cmpw REG_SAVESTATE_FRAME, r6
 ble SKIP_FINALIZED_OVERWRITE
-stw REG_LATEST_FRAME, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
+stw r6, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
 SKIP_FINALIZED_OVERWRITE:
 
-# logf LOG_LEVEL_WARN, "[%d] Savestate frame and volatile finalized set to: %d after checking predictions", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
+# logf LOG_LEVEL_WARN, "[TSI] [%d] Setting frames after checking predictions: savestate: %d, volatile finalized: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 # logf LOG_LEVEL_NOTICE, "New frame finalized: %d (Prediction)", "lwz r5, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 
 # Check if we had determined that a rollback was needed. If so, trigger the rollback now
@@ -700,7 +696,7 @@ stb r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 
 LOAD_OPPONENT_INPUTS:
 
-# logf LOG_LEVEL_NOTICE, "[%d] Reading Inputs...", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_NOTICE, "[TSI] [%d] Reading Inputs...", "mr r5, REG_FRAME_INDEX"
 
 # loop over each remote player
 li REG_COUNT, 0
@@ -727,7 +723,7 @@ bge CALC_OPNT_PAD_OFFSET
 PREDICT_INPUTS_OPP:
 # We are predicting inputs, back up the inputs for later comparison
 .if DEBUG_INPUTS==1
-logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d Needs Prediction"
+logf LOG_LEVEL_NOTICE, "[TSI] [%d] (Opp) P%d Needs Prediction"
 .endif
 
 # Don't save any states at the start of the game, it's frozen anyway
@@ -749,7 +745,7 @@ li REG_HAS_INPUTS_FROM_ALL, 0
 # mulli r6, REG_COUNT, 4
 # addi r6, r6, RXB_OPNT_FRAME_NUMS
 # lwzx r3, r6, REG_RXB_ADDRESS
-# logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d Predicting. Latest: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_REMOTE_PLAYER_IDX", "mr r7, 3"
+# logf LOG_LEVEL_NOTICE, "[TSI] [%d] (Opp) P%d Predicting. Latest: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_REMOTE_PLAYER_IDX", "mr r7, 3"
 
 .set REG_PREDICTED_WRITE_IDX, REG_VARIOUS_1
 
@@ -817,7 +813,7 @@ beq LOAD_STALE_INPUTS
 
 # Store the rollback frame in the global savestate frame counter
 stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
-# logf LOG_LEVEL_WARN, "[%d] Predicting on this frame and setting the savestate frame", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_WARN, "[TSI] [%d] Predicting on this frame and setting the savestate frame", "mr r5, REG_FRAME_INDEX"
 
 # Indicate that we have prepared for a rollback
 li r3, 1
@@ -847,7 +843,7 @@ li r5, PAD_REPORT_SIZE
 .if DEBUG_INPUTS==1
 cmpwi REG_COUNT, 1
 bge SKIP_OPP_LOG
-logf LOG_LEVEL_NOTICE, "[%d] (Opp) P%d %08X %08X %08X", "mr r5, REG_FRAME_INDEX", "mr r6, REG_REMOTE_PLAYER_IDX", "lwz r7, 0(4)", "lwz r8, 4(4)", "lwz r9, 8(4)"
+logf LOG_LEVEL_NOTICE, "[TSI] [%d] (Opp) P%d %08X %08X %08X", "mr r5, REG_FRAME_INDEX", "mr r6, REG_REMOTE_PLAYER_IDX", "lwz r7, 0(4)", "lwz r8, 4(4)", "lwz r9, 8(4)"
 SKIP_OPP_LOG:
 .endif
 
@@ -862,7 +858,7 @@ blt LOOP_LOAD_OPPONENT_INPUTS
 cmpwi REG_HAS_INPUTS_FROM_ALL, 0
 beq SKIP_FINALIZED_FRAME_ADJUST
 stw REG_FRAME_INDEX, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
-# logf LOG_LEVEL_NOTICE, "New frame finalized: %d", "lwz r5, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_NOTICE, "[TSI] [%d] New volatile finalized: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 SKIP_FINALIZED_FRAME_ADJUST:
 
 b INCREMENT_AND_EXIT
@@ -872,7 +868,7 @@ b INCREMENT_AND_EXIT
 ################################################################################
 
 ROLLBACK_HANDLER:
-# logf LOG_LEVEL_NOTICE, "[%d] Input Requested (rollback). End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_NOTICE, "[TSI] [%d] Input Requested (rollback). End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 
 # If the frame we want is past the rollback end, just do nothing. This might
 # happen in the case where we get an interrupt during a rollback
@@ -885,7 +881,7 @@ restore
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
 
 COPY_LOCAL_INPUTS:
-# logf LOG_LEVEL_INFO, "[%d] Prior to local input copy. END_FRAME: %d, LOCAL_INPUTS_IDX: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)", "lbz r7, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Prior to local input copy. END_FRAME: %d, LOCAL_INPUTS_IDX: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)", "lbz r7, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)"
 # get local input from history
 lwz r3, ODB_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
 sub r3, r3, REG_FRAME_INDEX
@@ -895,7 +891,7 @@ sub. r3, r4, r3
 bge SKIP_LOCAL_INPUT_IDX_NEG
 addi r3, r3, LOCAL_INPUT_BUFFER_LEN
 SKIP_LOCAL_INPUT_IDX_NEG:
-# logf LOG_LEVEL_INFO, "[%d] Copying local inputs for rollback. Idx: %d, Offset: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mulli r7, 3, PAD_REPORT_SIZE"
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Copying local inputs for rollback. Idx: %d, Offset: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mulli r7, 3, PAD_REPORT_SIZE"
 mulli r3, r3, PAD_REPORT_SIZE
 addi r4, r3, ODB_ROLLBACK_LOCAL_INPUTS
 
@@ -928,7 +924,7 @@ b LOAD_OPPONENT_INPUTS
 ################################################################################
 .if DEBUG_INPUTS==1
 FN_PrintInputs:
-logf LOG_LEVEL_NOTICE, "[%d] (%d) %08X %08X %08X", "mr r5, 11", "mr r6, 10", "lwz r7, 0(12)", "lwz r8, 4(12)", "lwz r9, 8(12)"
+logf LOG_LEVEL_NOTICE, "[TSI] [%d] (%d) %08X %08X %08X", "mr r5, 11", "mr r6, 10", "lwz r7, 0(12)", "lwz r8, 4(12)", "lwz r9, 8(12)"
 blr
 .endif
 

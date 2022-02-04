@@ -65,7 +65,7 @@ branchl r12, OSDisableInterrupts
 mr REG_INTERRUPT_IDX, r3
 
 # Log the frame we are starting
-# logf LOG_LEVEL_INFO, "[%d] Starting frame processing... r26: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 26"
+# logf LOG_LEVEL_INFO, "[SEL] [%d] Starting frame processing... r26: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 26"
 
 ################################################################################
 # Check if we should display disconnect message
@@ -152,7 +152,7 @@ beq CONTINUE_ROLLBACK # If we don't need to load state, just continue rollback
 ################################################################################
 # Load state and restore data
 ################################################################################
-# logf LOG_LEVEL_INFO, "[%d] Considering loading state: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[SEL] [%d] Considering loading state: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
 
 # If we need a load a state but the requested frame is either equal to or greater than the current
 # frame, that means that we have advanced some frames and determined a rollback was needed on the
@@ -163,13 +163,13 @@ beq CONTINUE_ROLLBACK # If we don't need to load state, just continue rollback
 lwz r3, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 # cmpw REG_FRAME_INDEX, r3
 # bgt SKIP_LOAD_LOG
-# logf LOG_LEVEL_NOTICE, "[%d] Surprising state load: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_NOTICE, "[SEL] [%d] Surprising state load: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
 cmpw REG_FRAME_INDEX, r3
 beq SKIP_LOAD_STATE
 blt HANDLE_ROLLBACK_INPUTS_END
 SKIP_LOAD_LOG:
 
-# logf LOG_LEVEL_WARN, "[%d] Loading state: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Loading state: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
 
 # Load state from savestate frame
 lwz r3, ODB_SAVESTATE_SSRB_ADDR(REG_ODB_ADDRESS)
@@ -221,14 +221,14 @@ stb r3, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE(REG_ODB_ADDRESS)
 ################################################################################
 CONTINUE_ROLLBACK:
 
-# logf LOG_LEVEL_INFO, "[%d] About to request rollback input. End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[SEL] [%d] About to request rollback input. End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 
 # If there is an active rollback, trigger a controller status renewal.
 # This should pick up on the new global frame timer inputs for this game engine
 # loop and continue the rollback
 branchl r12, RenewInputs_Prefunction
 
-# logf LOG_LEVEL_INFO, "[%d] Finished getting rollback input. End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[SEL] [%d] Finished getting rollback input. End frame: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 
 HANDLE_ROLLBACK_INPUTS_END:
 
@@ -236,7 +236,7 @@ HANDLE_ROLLBACK_INPUTS_END:
 # Store stable data that needs to update every time RenewInputs_Prefunction is
 # called
 ################################################################################
-# logf LOG_LEVEL_INFO, "[%d] Updating stable finalized frame. CurrentStable: %d, Volatile: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[SEL] [%d] Considering updating stable finalized frame. CurrentStable: %d, Volatile: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 lwz r3, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
 cmpw REG_FRAME_INDEX, r3
 bgt UPDATE_STABLE_FINALIZED # If cur frame greater than volatile, set stable to volatile
@@ -248,7 +248,7 @@ UPDATE_STABLE_FINALIZED:
 lwz r4, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 cmpw r3, r4
 ble SKIP_STABLE_FINALIZED_UPDATE
-# logf LOG_LEVEL_INFO, "[%d] Stable finalized value updated to %d. Volatile: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Stable finalized value updated to %d. Volatile: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 stw r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 SKIP_STABLE_FINALIZED_UPDATE:
 
@@ -258,7 +258,7 @@ SKIP_STABLE_FINALIZED_UPDATE:
 # even during a rollback
 ################################################################################
 CAPTURE_CHECK:
-# logf LOG_LEVEL_INFO, "[%d] Considering saving state. Predicting: %d, Savestate Frame: %d", "mr r5, REG_FRAME_INDEX", "lbz r6, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)", "lwz r7, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_INFO, "[SEL] [%d] Considering saving state. Predicting: %d, Finalized: %d", "mr r5, REG_FRAME_INDEX", "lbz r6, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)", "lwz r7, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 
 # First check if a savestate is required (the frame has predicted inputs)
 lbz r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
@@ -270,7 +270,7 @@ lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 cmpw REG_FRAME_INDEX, r3
 ble CAPTURE_END
 
-# logf LOG_LEVEL_WARN, "[%d] Saving state", "mr r5, REG_FRAME_INDEX"
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Saving state", "mr r5, REG_FRAME_INDEX"
 
 # Do savestate
 lwz r3, ODB_SAVESTATE_SSRB_ADDR(REG_ODB_ADDRESS)
