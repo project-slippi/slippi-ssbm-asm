@@ -78,7 +78,7 @@ addi r1,r1,0x100
 mtlr r0
 .endm
 
-.macro logf level, str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+.macro logf level, str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop", arg6="nop"
 b 1f
 0:
 blrl
@@ -94,6 +94,7 @@ backupall
 \arg3
 \arg4
 \arg5
+\arg6
 
 lwz r3, OFST_R13_SB_ADDR(r13) # Buf to use as EXI buf
 addi r3, r3, 3

@@ -304,7 +304,7 @@ branchl r12, memcpy
 # increment index
 lbz r3, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)
 addi r3, r3, 1
-cmpwi r3, LOCAL_INPUT_BUFFER_LEN
+cmpwi r3, LOCAL_INPUTS_COUNT
 blt SKIP_LOCAL_INPUT_BUFFER_INDEX_WRAP
 
 li r3, 0
@@ -387,6 +387,7 @@ li REG_COUNT, 0
 CHECK_WHETHER_TO_ROLL_BACK_LOOP:
 addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING
 lbzx r3, r6, REG_ODB_ADDRESS
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Opp #%d prediction loop start. isPredicting: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 3"
 cmpwi r3, 1
 bne CONTINUE_ROLLBACK_CHECK_LOOP
 
@@ -404,6 +405,7 @@ lwzx r3, r6, REG_RXB_ADDRESS
 mulli r6, REG_COUNT, 4
 addi r6, r6, ODB_PLAYER_SAVESTATE_FRAME
 lwzx r4, r6, REG_ODB_ADDRESS
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Opp #%d comparing savestate frame to latest. savestate: %d, latest: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 4", "mr r8, 3"
 sub. REG_RXB_OFFSET, r3, r4 # Load offset for RXB, subtract opp frame from savestate frame
 blt CONTINUE_ROLLBACK_CHECK_LOOP
 
@@ -430,19 +432,22 @@ HAVE_PLAYER_INPUTS:
 # Compute offset of true inputs for this player on this frame
 mulli r3, REG_RXB_OFFSET, PAD_REPORT_SIZE
 addi r3, r3, RXB_OPNT_INPUTS
-mulli r6, REG_COUNT, PLAYER_MAX_INPUT_SIZE
+mulli r6, REG_COUNT, RXB_INPUTS_COUNT * PAD_REPORT_SIZE
 add r3, r3, r6
 
 # Get inputs that were predicted for this frame
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r4, r6, REG_ODB_ADDRESS # load this player's read idx # r4 = read idx = 0
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Opp #%d reading predicted inputs from idx: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mr r7, 4"
 mulli r4, r4, PAD_REPORT_SIZE # compute offset within predicted input buffer
 addi r4, r4, ODB_ROLLBACK_PREDICTED_INPUTS # Offset of inputs
-mulli r5, REG_COUNT, PLAYER_MAX_INPUT_SIZE
+mulli r5, REG_COUNT, PREDICTED_INPUTS_COUNT * PAD_REPORT_SIZE
 add r4, r4, r5
 
 add r6, REG_RXB_ADDRESS, r3 # contains actual input for frame
 add r7, REG_ODB_ADDRESS, r4 # contains predicted input
+
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Opp #%d comparing inputs. Predicted: %08X %08X, Actual: %08X %08X", "lwz r8, 4(7)", "lwz r7, 0(7)", "lwz r10, 4(6)", "lwz r9, 0(6)", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT"
 
 # mulli r3, REG_COUNT, 4
 # addi r3, r3, ODB_PLAYER_SAVESTATE_FRAME
@@ -508,9 +513,9 @@ stwx r3, r6, REG_ODB_ADDRESS
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS # compute offset of read idx for this player
 lbzx r3, r6, REG_ODB_ADDRESS # load this player's read idx
 addi r3, r3, 1
-cmpwi r3, LOCAL_INPUT_BUFFER_LEN
+cmpwi r3, PREDICTED_INPUTS_COUNT
 blt SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST
-subi r3, r3, LOCAL_INPUT_BUFFER_LEN
+subi r3, r3, PREDICTED_INPUTS_COUNT
 SKIP_PREDICTED_INPUTS_READ_IDX_ADJUST:
 stbx r3, r6, REG_ODB_ADDRESS
 
@@ -529,6 +534,7 @@ INDICATE_ROLLBACK_REQUIRED:
 # This gets called when we determine we will need to rollback for one of the players
 # we still need to go through the other players though to determine the earliest frame
 # we are allowed to rollback to
+# logf LOG_LEVEL_INFO, "[TSI] [%d] Opp #%d marking savestate required. Frame: %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_COUNT", "mulli r7, REG_COUNT, 4", "addi r7, 7, ODB_PLAYER_SAVESTATE_FRAME", "lwzx r7, 7, REG_ODB_ADDRESS"
 li REG_ROLLBACK_REQUIRED, 1
 b CONTINUE_ROLLBACK_CHECK_LOOP # Move on to next player
 
@@ -582,7 +588,7 @@ li REG_COUNT, 0
 # in the case where we have not received any new inputs, we don't want to update the finalized
 # frame which could cause inputs to get discarded
 lwz REG_SAVESTATE_FRAME, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS) # will hold the min savestate frame we see
-# logf LOG_LEVEL_WARN, "[TSI] [%d] Attempting to advance savestate frame past %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
+# logf LOG_LEVEL_WARN, "[TSI] [%d] Attempting to advance savestate frame past %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_SAVESTATE_FRAME"
 
 COMPUTE_SAVESTATE_FRAME_LOOP:
 # If this player doesn't have missing inputs, ignore their savestate frame
@@ -754,12 +760,12 @@ addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of
 lbzx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS
 mulli r3, REG_PREDICTED_WRITE_IDX, PAD_REPORT_SIZE
 addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS # offset from REG_ODB_ADDRESS where to write
-mulli r5, REG_COUNT, PLAYER_MAX_INPUT_SIZE # Add offset based on which player this is
+mulli r5, REG_COUNT, PREDICTED_INPUTS_COUNT * PAD_REPORT_SIZE # Add offset based on which player this is
 add r3, r3, r5
 
 # copy predicted pad data to predicted input buffer for later comparison
 # in order to decide whether to roll back
-mulli r6, REG_COUNT, PLAYER_MAX_INPUT_SIZE
+mulli r6, REG_COUNT, RXB_INPUTS_COUNT * PAD_REPORT_SIZE
 addi r6, r6, RXB_OPNT_INPUTS
 add r3, REG_ODB_ADDRESS, r3 # destination
 add r4, REG_RXB_ADDRESS, r6 # source
@@ -768,9 +774,9 @@ branchl r12, memcpy
 
 # increment write index
 addi r3, REG_PREDICTED_WRITE_IDX, 1
-cmpwi r3, LOCAL_INPUT_BUFFER_LEN
+cmpwi r3, PREDICTED_INPUTS_COUNT
 blt SKIP_PREDICTED_INPUTS_WRITE_IDX_ADJUST
-subi r3, r3, LOCAL_INPUT_BUFFER_LEN
+subi r3, r3, PREDICTED_INPUTS_COUNT
 
 SKIP_PREDICTED_INPUTS_WRITE_IDX_ADJUST:
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
@@ -828,7 +834,7 @@ CALC_OPNT_PAD_OFFSET:
 # Slippi should have told us to wait
 mulli r3, r3, PAD_REPORT_SIZE # offset for index of input frame to look at
 addi r5, r3, RXB_OPNT_INPUTS # offset from start of RXB
-mulli r6, REG_COUNT, PLAYER_MAX_INPUT_SIZE # offset for index of remote player
+mulli r6, REG_COUNT, RXB_INPUTS_COUNT * PAD_REPORT_SIZE # offset for index of remote player
 add r5, r5, r6
 
 # get offset from sp of online player's pad data
@@ -889,7 +895,7 @@ addi r3, r3, 1
 lbz r4, ODB_ROLLBACK_LOCAL_INPUTS_IDX(REG_ODB_ADDRESS)
 sub. r3, r4, r3
 bge SKIP_LOCAL_INPUT_IDX_NEG
-addi r3, r3, LOCAL_INPUT_BUFFER_LEN
+addi r3, r3, LOCAL_INPUTS_COUNT
 SKIP_LOCAL_INPUT_IDX_NEG:
 # logf LOG_LEVEL_INFO, "[TSI] [%d] Copying local inputs for rollback. Idx: %d, Offset: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mulli r7, 3, PAD_REPORT_SIZE"
 mulli r3, r3, PAD_REPORT_SIZE
