@@ -542,7 +542,7 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 .set LanguageStart, (SlippiUIDStart + SlippiUIDLength)
 .set LanguageLength,0x1
 
-# write out random seed
+# fetch and write current language setting
   branchl r12, 0x8000adf4 # Language_GetLanguage
   stb r3, LanguageStart+0x0(REG_Buffer)
 
