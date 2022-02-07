@@ -538,6 +538,14 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   branchl r12,Zero_AreaLength
 
   SEND_SLIPPI_UID_END:
+  #------------- LANGUAGE INFO -------------
+.set LanguageStart, (SlippiUIDStart + SlippiUIDLength)
+.set LanguageLength,0x1
+
+# write out random seed
+  branchl r12, 0x8000adf4 # Language_GetLanguage
+  stb r3, LanguageStart+0x0(REG_Buffer)
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
