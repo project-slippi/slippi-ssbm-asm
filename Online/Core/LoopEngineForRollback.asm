@@ -161,13 +161,36 @@ stb REG_SOUND_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 
 SKIP_NEW_FRAME_PROCESSING:
 
+lbz REG_IS_ROLLBACK_ACTIVE, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
+cmpwi REG_IS_ROLLBACK_ACTIVE, 1
+bne RESTORE_AND_EXIT # If no rollback active, continue as normal
+
+lwz r3, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)
+cmpw REG_CURRENT_FRAME, r3
+blt HANDLE_ROLLBACK # If we haven't reached end frame, loop the engine
+
+# Here we have reached the end frame for the rollback, clear states and don't loop
+# Break out of the input loop here because r27 might still have a value that could
+# make the loop continue otherwise
+# logf LOG_LEVEL_INFO, "[%d] Resetting rollback active state", "mr r5, REG_CURRENT_FRAME"
+
+# If we have reached the frame, turn off rollback
+li r3, 0
+stb r3, ODB_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
+stb r3, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
+
 # Restore interrupts
 mr r3, REG_INTERRUPT_IDX
 branchl r12, OSRestoreInterrupts
 
-lbz REG_IS_ROLLBACK_ACTIVE, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)
-cmpwi REG_IS_ROLLBACK_ACTIVE, 1
-bne RESTORE_AND_EXIT # If no rollback active, continue as normal
+restore
+addi r26, r26, 1 # Probably not necessary
+branch r12, 0x801a5024 # Exit input processing loop
+
+HANDLE_ROLLBACK:
+# Restore interrupts
+mr r3, REG_INTERRUPT_IDX
+branchl r12, OSRestoreInterrupts
 
 # Here we have a rollback, we are going to loop back to the start of the
 # updateFunction loop
@@ -175,6 +198,9 @@ bl FN_ExecCameraTasks
 
 # Loop back to start of updateFunction loop
 restore
+# Add 1 to r26 to move to the next input in the case of an advance rollback where loading a state
+# is not needed. Not 100% sure about whether this is safe
+addi r26, r26, 1 
 branch r12, 0x801a4de4 # Continue rollback, branch to the start of game engine loop
 
 # Functions section
@@ -182,6 +208,10 @@ FunctionBody_ExecCameraTasks
 
 # Terminate code
 RESTORE_AND_EXIT:
+# Restore interrupts
+mr r3, REG_INTERRUPT_IDX
+branchl r12, OSRestoreInterrupts
+
 restore
 
 EXIT:

@@ -18,6 +18,13 @@ lwz r3, 0x0(r3) # 0x80479d64 - Believed to be some loading state
 cmpwi r3, 0 # Loading state should be zero when game starts
 bne EXIT
 
+lwz r5, OFST_R13_ODB_ADDR(r13) # data buffer address
+
+# Reset the frame advance state here just to make sure it never gets stuck on. Might not be
+# necessary to be here.
+li r3, 0
+stb r3, ODB_IS_FRAME_ADVANCE(r5)
+
 # Check to see if this call came from VI callback, if not, just execute
 # Kinda jank but it should do the job. Alternative would be creating a wrapper
 # function for the RenewInputs_Prefunction call and setting that as the
@@ -29,13 +36,12 @@ bne EXIT
 # Check if a rollback is active, if a rollback is active, do not renew inputs
 # now as it may mess up the rollback logic. Instead let's store that inputs
 # should be renewed at the earliest possible time.
-lwz r5, OFST_R13_ODB_ADDR(r13) # data buffer address
 lbz r3, ODB_ROLLBACK_IS_ACTIVE(r5)
 cmpwi r3, 0
 beq EXIT
 
 # Here we have gotten a VI retrace callback while executing a rollback
-# logf LOG_LEVEL_NOTICE, "VI retrace CB during rollback..."
+# logf LOG_LEVEL_NOTICE, "[%d] VI retrace CB during rollback...", "lwz r5, ODB_FRAME(5)"
 li r3, 1
 stb r3, ODB_SHOULD_FORCE_PAD_RENEW(r5)
 

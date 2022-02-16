@@ -22,11 +22,17 @@ bne EXIT
 ################################################################################
 # Check if rollback is active
 ################################################################################
+lwz r4, OFST_R13_ODB_ADDR(r13) # data buffer address
+lbz r3, ODB_ROLLBACK_IS_ACTIVE(r4)
+cmpwi r3, 0
+beq EXIT # If rollback not active, continue as normal to execute pad read
 
-lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
-lbz r3, ODB_ROLLBACK_IS_ACTIVE(r3)
-cmpwi r3, 1
-bne EXIT # If rollback not active, continue as normal
+# We do this check because with frame advance especially, we can get in a state where
+# we request a second input before savestate has been processed, we still want to fetch
+# a controller input in this case
+lbz r3, ODB_ROLLBACK_SHOULD_LOAD_STATE(r4)
+cmpwi r3, 0
+bne EXIT # If state should be loaded, continue as normal to execute pad read
 
 ################################################################################
 # Skip PADRead
