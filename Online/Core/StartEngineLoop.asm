@@ -280,7 +280,7 @@ branchl r12, FN_CaptureSavestate
 CAPTURE_END:
 
 ################################################################################
-# Check if game has ended
+# Check if game has ended. We give a buffer of ROLLBACK_MAX_FRAME_COUNT
 ################################################################################
 lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)
 cmpwi r3, 1
@@ -290,18 +290,22 @@ beq CHECK_GAME_END_END
 load r3, 0x8046b6a0
 lbz r3, 0x8(r3)
 cmpwi r3, 0
-bne INCREMENT_GAME_END_COUNTER
+bne SKIP_GAME_END_FRAME_RESET
 
-# Game end is 0, that means the game is not over, reset the counter
+# Game end is 0, that means the game is not over, reset the end frame
 li r3, 0
-stb r3, ODB_GAME_OVER_COUNTER(REG_ODB_ADDRESS)
+stw r3, ODB_GAME_END_FRAME(REG_ODB_ADDRESS)
 b CHECK_GAME_END_END
+SKIP_GAME_END_FRAME_RESET:
 
-INCREMENT_GAME_END_COUNTER:
-lbz r3, ODB_GAME_OVER_COUNTER(REG_ODB_ADDRESS)
-addi r3, r3, 1
-stb r3, ODB_GAME_OVER_COUNTER(REG_ODB_ADDRESS)
+lwz r3, ODB_GAME_END_FRAME(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne SKIP_SET_GAME_END_FRAME
+stw REG_FRAME_INDEX, ODB_GAME_END_FRAME(REG_ODB_ADDRESS)
+SKIP_SET_GAME_END_FRAME:
 
+lwz r3, ODB_GAME_END_FRAME(REG_ODB_ADDRESS)
+sub r3, REG_FRAME_INDEX, r3
 cmpwi r3, ROLLBACK_MAX_FRAME_COUNT
 ble CHECK_GAME_END_END # Not sure if this could be blt instead... ble is safer
 
