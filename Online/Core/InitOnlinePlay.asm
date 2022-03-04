@@ -128,7 +128,7 @@ bne SKIP_TIEBREAK_OVERWRITE
 # For ranked, in the case of a tiebreak, overwrite stock count and timer
 loadwz r5, 0x803dad40 # Load minor scene data array ptr
 lwz r5, 0x88(r5) # Load game prep minor scene data
-lbz r3, 0x5(r5) # Load is_tiebreak
+lbz r3, GPDO_TIEBREAK_GAME_NUM(r5) # Load is_tiebreak
 cmpwi r3, 0
 beq SKIP_TIEBREAK_OVERWRITE # If not a tiebreak, do nothing
 
@@ -142,6 +142,10 @@ stb r3, 0x62 + 0x24 * 2(REG_GAME_INFO_START)
 stb r3, 0x62 + 0x24 * 3(REG_GAME_INFO_START)
 
 SKIP_TIEBREAK_OVERWRITE:
+
+# Test code to force the timer to 15 seconds
+# li r3, 15
+# stw r3, 0x10(REG_GAME_INFO_START)
 
 # For teams, overwrite the colors in the game info block with the proper color for the given team ID
 lbz r3, OFST_R13_ONLINE_MODE(r13)
@@ -257,7 +261,7 @@ blr
 ################################################################################
 # Routine: HandleGameCompleted
 # ------------------------------------------------------------------------------
-# Description: Function called when game if confirmed over (no more rollbacks)
+# Description: Function called when game is confirmed over (no more rollbacks)
 ################################################################################
 FN_HandleGameCompleted:
 blrl
@@ -266,19 +270,18 @@ blrl
 .set REG_RGB_ADDR, 30
 .set REG_RGPB_ADDR, 29
 .set REG_ODB_ADDRESS, 28
+.set REG_GPD_ADDR, 27
 
 backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
+loadwz r5, 0x803dad40 # Load minor scene data array ptr
+lwz REG_GPD_ADDR, 0x88(r5) # Load game prep minor scene data
+
 ################################################################################
 # Report game results for unranked
 ################################################################################
-# Ensure that this is an unranked game
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_UNRANKED
-bne REPORT_GAME_EXIT
-
 # Prepare buffer for EXI transfer
 li r3, RGB_SIZE
 branchl r12, HSD_MemAlloc
@@ -288,8 +291,17 @@ mr REG_RGB_ADDR, r3
 li r3, CONST_SlippiCmdReportMatch
 stb r3, RGB_COMMAND(REG_RGB_ADDR)
 
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+stw r3, RGB_ONLINE_MODE(REG_RGB_ADDR)
+
 lwz r3, ODB_GAME_END_FRAME(REG_ODB_ADDRESS)
 stw r3, RGB_FRAME_LENGTH(REG_RGB_ADDR) # Store frame length
+
+lbz r3, GPDO_CUR_GAME(REG_GPD_ADDR)
+stw r3, RGB_GAME_INDEX(REG_RGB_ADDR)
+
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD_ADDR)
+stw r3, RGB_TIEBREAKER_INDEX(REG_RGB_ADDR)
 
 PLAYER_LOOP_INIT:
 li REG_IDX, 0
@@ -297,11 +309,11 @@ addi REG_RGPB_ADDR, REG_RGB_ADDR, RGB_P1_RGPB
 
 PLAYER_LOOP:
 mr r3, REG_IDX
-branchl r12, 0x80031724
+branchl r12, PlayerBlock_LoadStaticBlock
 
 # Store isActive
-li r4, 1
-stb r4, RGPB_IS_ACTIVE(REG_RGPB_ADDR)
+lwz r4, 0x8(r3)
+stb r4, RGPB_SLOT_TYPE(REG_RGPB_ADDR)
 
 # Store stocks remaining
 lbz r4, 0x8E(r3)
@@ -316,7 +328,7 @@ addi REG_IDX, REG_IDX, 1
 addi REG_RGPB_ADDR, REG_RGPB_ADDR, RGPB_SIZE
 
 PLAYER_LOOP_CHECK:
-cmpwi REG_IDX, 2
+cmpwi REG_IDX, 4
 blt PLAYER_LOOP
 
 # Execute match reporting

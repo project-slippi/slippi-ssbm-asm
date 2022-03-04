@@ -335,23 +335,7 @@ blrl
 GamePrepData_BLRL:
 blrl
 GamePrepData:
-.set GPDO_MAX_GAMES, 0
-.byte 0x0 # max games
-.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1
-.byte 0x0 # current game
-.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 1
-.fill 2, 1, 0
-.set GPDO_PREV_WINNER, GPDO_SCORE_BY_PLAYER + 2 * 1
-.byte 0x0 # previous winner
-.set GPDO_IS_TIEBREAK, GPDO_PREV_WINNER + 1
-.byte 0x0 # Referenced directly in InitOnlinePlay.asm, if moved, must change reference
-.set GPDO_GAME_RESULTS, GPDO_IS_TIEBREAK + 1
-.set MAX_RESULT_COUNT, 9
-.fill MAX_RESULT_COUNT, 1, 0 # Take space for 9 bytes
-.set GPDO_LAST_STAGE_WIN_BY_PLAYER, GPDO_GAME_RESULTS + MAX_RESULT_COUNT
-.fill 2, 2, 0
-.set GPDO_SIZE, GPDO_LAST_STAGE_WIN_BY_PLAYER + 2 * 2
-.align 2
+createGamePrepStaticBlock
 
 #region CSSScenePrep
 CSSScenePrep:
@@ -594,8 +578,9 @@ bge VSSceneDecide_SkipTieHandler # If winner is not -1, it is not a tie
 bl GamePrepData_BLRL
 mflr r6
 
-li r3, 1
-stb r3, GPDO_IS_TIEBREAK(r6)
+lbz r3, GPDO_TIEBREAK_GAME_NUM(r6)
+addi r3, r3, 1
+stb r3, GPDO_TIEBREAK_GAME_NUM(r6)
 
 # Go to the game prep scene, with is tiebreak set to true, it will start a new game
 b VSSceneDecide_MoveToGamePrep
@@ -636,7 +621,7 @@ addi r3, r3, 1
 stb r3, GPDO_CUR_GAME(REG_GPD)
 
 li r3, 0
-stb r3, GPDO_IS_TIEBREAK(REG_GPD)
+stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 
 VSSceneDecide_MoveToGamePrep:
 # Go back to game prep, there are more games
@@ -1349,7 +1334,7 @@ backup
 lwz REG_GPD, 0x10(r3) # Grabs load data
 
 # Check if there was a tie last game and a tiebreak is needed
-lbz r3, GPDO_IS_TIEBREAK(REG_GPD)
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 cmpwi r3, 0
 beq GamePrepSceneDecide_DisplaySplash
 

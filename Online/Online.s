@@ -401,16 +401,47 @@
 ################################################################################
 # Define report game buffer offsets and length
 ################################################################################
-.set RGPB_IS_ACTIVE, 0 # bool, is player active
-.set RGPB_STOCKS_REMAINING, RGPB_IS_ACTIVE + 1 # byte
+.set RGPB_SLOT_TYPE, 0 # u8, 0 = Human, 1 = CPU, 2 = Demo, 3 = Empty
+.set RGPB_STOCKS_REMAINING, RGPB_SLOT_TYPE + 1 # byte
 .set RGPB_DAMAGE_DONE, RGPB_STOCKS_REMAINING + 1 # float
 .set RGPB_SIZE, RGPB_DAMAGE_DONE + 4
 
 .set RGB_COMMAND, 0 # byte
-.set RGB_FRAME_LENGTH, RGB_COMMAND + 1 # s32, number of frames in game
-.set RGB_P1_RGPB, RGB_FRAME_LENGTH + 4 # RGPB_SIZE
+.set RGB_ONLINE_MODE, RGB_COMMAND + 1 # u8
+.set RGB_FRAME_LENGTH, RGB_ONLINE_MODE + 1 # u32, number of frames in game
+.set RGB_GAME_INDEX, RGB_FRAME_LENGTH + 4 # u32, 1-indexed
+.set RGB_TIEBREAKER_INDEX, RGB_GAME_INDEX + 4 # u32, 1-indexed, 0 = not tiebreak
+.set RGB_P1_RGPB, RGB_TIEBREAKER_INDEX + 4 # RGPB_SIZE
 .set RGB_P2_RGPB, RGB_P1_RGPB + RGPB_SIZE # RGPB_SIZE
-.set RGB_SIZE, RGB_P2_RGPB + RGPB_SIZE
+.set RGB_P3_RGPB, RGB_P2_RGPB + RGPB_SIZE # RGPB_SIZE
+.set RGB_P4_RGPB, RGB_P3_RGPB + RGPB_SIZE # RGPB_SIZE
+.set RGB_SIZE, RGB_P4_RGPB + RGPB_SIZE
+
+################################################################################
+# Define game prep data and include macro to create static data
+################################################################################
+.set GPDO_MAX_GAMES, 0 # u8
+.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1 # u8
+.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 1 # u8[2]
+.set GPDO_PREV_WINNER, GPDO_SCORE_BY_PLAYER + 2 * 1 # u8
+.set GPDO_TIEBREAK_GAME_NUM, GPDO_PREV_WINNER + 1 # u8
+.set GAME_PREP_MAX_RESULT_COUNT, 9
+.set GPDO_GAME_RESULTS, GPDO_TIEBREAK_GAME_NUM + 1 # u8[GAME_PREP_MAX_RESULT_COUNT]
+.set GPDO_LAST_STAGE_WIN_BY_PLAYER, GPDO_GAME_RESULTS + GAME_PREP_MAX_RESULT_COUNT # u16[2]
+.set GPDO_SIZE, GPDO_LAST_STAGE_WIN_BY_PLAYER + 2 * 2
+
+# Warning: When making changes, ensure the offsets above are synced with below
+
+.macro createGamePrepStaticBlock
+.byte 0x0 # GPDO_MAX_GAMES, max games
+.byte 0x0 # GPDO_CUR_GAME, current game
+.fill 2, 1, 0 # GPDO_SCORE_BY_PLAYER
+.byte 0x0 # GPDO_PREV_WINNER, previous winner
+.byte 0x0 # GPDO_TIEBREAK_GAME_NUM
+.fill GAME_PREP_MAX_RESULT_COUNT, 1, 0 # GPDO_GAME_RESULTS, Take space for 9 bytes
+.fill 2, 2, 0 # GPDO_LAST_STAGE_WIN_BY_PLAYER
+.align 2
+.endm
 
 ################################################################################
 # slpCSS Symbol Structure
