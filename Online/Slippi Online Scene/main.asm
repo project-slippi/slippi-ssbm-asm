@@ -421,6 +421,8 @@ li r3, 3
 stb r3, GPDO_MAX_GAMES(REG_GAME_PREP_DATA)
 li r3, 1
 stb r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
+li r3, 0
+stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
 
 # Set next scene as game prep
 load r4, 0x80479d30
@@ -632,8 +634,6 @@ b VSSceneDecide_ModeHandlerEnd
 
 VSSceneDecide_RankedSetOver:
 # Disconnect from opponent
-# TODO: Figure out where to report result? It is likely someone rages and exits client by
-# TODO: this point. Or someone just kills the client early even after winning.
 # Prepare buffer for EXI transfer
 li r3, 1
 branchl r12, HSD_MemAlloc
@@ -1320,9 +1320,22 @@ blr
 #endregion
 
 GamePrepScenePrep:
+.set REG_GPD, 31
+
 backup
+
+lwz REG_GPD, 0x10(r3) # Grabs load data
+
+# Check if this is a tiebreak. If it is a tiebreak, we don't want to invalidate since the same
+# characters will be loaded
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
+cmpwi r3, 0
+bne SKIP_PRELOAD_INVALIDATE
+
 # Invalidate pre-load cache otherwise changing one character mid-set crashes
 branchl r12, 0x800174bc
+SKIP_PRELOAD_INVALIDATE:
+
 restore
 blr
 
