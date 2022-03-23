@@ -423,6 +423,7 @@ li r3, 1
 stb r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
 li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
+stb r3, GPDO_COLOR_BAN_ACTIVE(REG_GAME_PREP_DATA)
 
 # Set next scene as game prep
 load r4, 0x80479d30
