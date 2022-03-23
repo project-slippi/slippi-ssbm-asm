@@ -34,9 +34,22 @@ mr REG_SSCB_ADDR, r5
 # Determine the SSDB Ptr to read from
 lbz r6, SSCB_WRITE_INDEX(REG_SSCB_ADDR)
 
+.set REG_LOOP_COUNT, REG_VARIOUS_1
+
+li REG_LOOP_COUNT, 0
+
 # This loop will find the savestate we want to load. Currently there really
-# isn't anything useful in the ASM-side savestates but eventually there will be
+# isn't anything useful in the ASM-side savestates so currently this logic only really exists
+# to ensure we saved a state for the frame requested
 FIND_FRAME_LOOP_START:
+addi REG_LOOP_COUNT, REG_LOOP_COUNT, 1
+cmpwi REG_LOOP_COUNT, ROLLBACK_MAX_FRAME_COUNT
+ble LIMIT_NOT_REACHED
+# If we get here, the frame requested has not been saved. Perhaps the correct thing to do here
+# is to end the game similar to DISCONNECTED but for now let's just assert
+logf LOG_LEVEL_NOTICE, "Load state requested for frame %d but frame was not found.", "mr r5, REG_FRAME_INDEX"
+b 0
+LIMIT_NOT_REACHED:
 subi r6, r6, 1
 cmpwi r6, 0
 bge SKIP_IDX_ADJUST

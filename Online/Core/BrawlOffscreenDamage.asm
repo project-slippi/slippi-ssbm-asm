@@ -14,6 +14,11 @@
 
 backup
 
+# The Sandbag in vanilla melee doesn't take damage when offscreen
+getMinorMajor r3
+cmpwi r3, SCENE_HOMERUN_IN_GAME
+beq RETURN_FALSE
+
 # First check if the player is dead
 lbz r3, 0x221F(REG_FIGHTERDATA)
 rlwinm. r3,r3,0,0x40
@@ -56,5 +61,3 @@ li r3, 1
 
 RESTORE_AND_EXIT:
 restore
-
-EXIT:
