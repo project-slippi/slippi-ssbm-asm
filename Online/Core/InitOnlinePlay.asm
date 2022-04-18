@@ -271,6 +271,7 @@ blrl
 .set REG_RGPB_ADDR, 29
 .set REG_ODB_ADDRESS, 28
 .set REG_GPD_ADDR, 27
+.set REG_GAME_END_STRUCT_ADDR, 26
 
 backup
 
@@ -279,8 +280,28 @@ lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 loadwz r5, 0x803dad40 # Load minor scene data array ptr
 lwz REG_GPD_ADDR, 0x88(r5) # Load game prep minor scene data
 
+load REG_GAME_END_STRUCT_ADDR, 0x80479da4
+
 ################################################################################
-# Report game results for unranked
+# Initialize the MatchEndData early. Normally his happens on scene transition
+# around 0x8016ea1c but we need it earlier (now) to determine the result of
+# the match
+################################################################################
+mr r3, REG_GAME_END_STRUCT_ADDR # dest
+load r4, 0x8046b8ec # source
+li r5, 8824 # size
+branchl r12, memcpy
+
+load r4, 0x8046b6a0
+mr r3, REG_GAME_END_STRUCT_ADDR
+lbz r0, 0x24D0(r4)
+stb r0, 0x6(r3)
+lbz r0, 0x0008(r4)
+stb r0, 0x4(r3)
+branchl r12, 0x80166378 # CreateMatchEndData (struct @ 80479da4)
+
+################################################################################
+# Report game results
 ################################################################################
 # Prepare buffer for EXI transfer
 li r3, RGB_SIZE
@@ -294,7 +315,7 @@ stb r3, RGB_COMMAND(REG_RGB_ADDR)
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 stb r3, RGB_ONLINE_MODE(REG_RGB_ADDR)
 
-lwz r3, ODB_GAME_END_FRAME(REG_ODB_ADDRESS)
+branchl r12, 0x801a4ba8 # MenuController_LoadTimer1
 stw r3, RGB_FRAME_LENGTH(REG_RGB_ADDR) # Store frame length
 
 lbz r3, GPDO_CUR_GAME(REG_GPD_ADDR)
@@ -302,6 +323,11 @@ stw r3, RGB_GAME_INDEX(REG_RGB_ADDR)
 
 lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD_ADDR)
 stw r3, RGB_TIEBREAKER_INDEX(REG_RGB_ADDR)
+
+lwz r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GPD_ADDR)
+mtctr r3
+bctrl
+stb r3, RGB_WINNER_IDX(REG_RGB_ADDR)
 
 PLAYER_LOOP_INIT:
 li REG_IDX, 0

@@ -425,6 +425,10 @@ li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
 stb r3, GPDO_COLOR_BAN_ACTIVE(REG_GAME_PREP_DATA)
 
+bl SinglesDetermineWinner_BLRL
+mflr r3
+stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GAME_PREP_DATA)
+
 # Set next scene as game prep
 load r4, 0x80479d30
 li r3, 0x06
@@ -1156,6 +1160,8 @@ blr
 # Output:
 # r3: winnderIndex # Index of the winner, -1 if tie
 ################################################################################
+SinglesDetermineWinner_BLRL:
+blrl
 .set REG_MATCH_END, 31
 .set REG_MATCH_END_P1, 30
 .set REG_MATCH_END_P2, 29
@@ -1175,8 +1181,8 @@ beq SinglesDetermineWinner_HANDLE_TIMEOUT
 cmpwi r3, 2
 beq SinglesDetermineWinner_HANDLE_COMPLETION
 
-# We can only handle GAME and TIME atm. For LRAS (or something else?), stall
-b 0
+# We can only handle GAME and TIME atm. For LRAS (or something else?), return a tie
+b SinglesDetermineWinner_TIE
 
 SinglesDetermineWinner_HANDLE_TIMEOUT:
 li r3, 0
