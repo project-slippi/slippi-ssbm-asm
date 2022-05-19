@@ -139,10 +139,18 @@ add   REG_MatchEndPlayerStruct,REG_MatchEndPlayerStruct,REG_MatchEndStruct
   cmpwi r3,0x0
   beq  FN_GetPlayerPlacementReturn
 
+  lbz r3,0x58(REG_MatchEndPlayerStruct)
+  cmpwi r3,3
+  beq FN_GetPlayerPlacementPlayerMissing
+
 #Check if player partook in last game
   lbz r3,0x5D(REG_MatchEndPlayerStruct) # offset to player standing
   lbz r4,0x5F(REG_MatchEndPlayerStruct) # offset to player team id (if any)
   b FN_GetPlayerPlacementReturn
+
+FN_GetPlayerPlacementPlayerMissing:
+  li r3,-1
+  li r4,-1
 
 FN_GetPlayerPlacementReturn:
 restore
