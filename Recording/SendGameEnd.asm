@@ -16,6 +16,11 @@
 .set REG_SceneThinkStruct,25
 .set REG_RDB,24
 
+# TODO: confirm that these are safe to use under this context
+.set REG_MatchEndStruct,23
+.set REG_MatchEndPlayerStruct,22
+.set REG_PlayerSlot,21
+
 backup
 
 # check if VS Mode
@@ -72,6 +77,32 @@ NoLRAStart:
 StoreLRAStarter:
   stb r3,0x2(REG_Buffer)
 
+# What this is going to do is add an array of team+placements for each port. 
+# T1P1T2P2T3P3T4P4 T=Team ID, P = Placement
+PlayerPlacements:
+ 
+PlayerPlacementsLoopInit:
+li PlayerSlot, 1 # Start at slot 1
+PlayerPlacementsLoopStart:
+  # find player placement for this slot
+  mr r3, PlayerSlot
+  bl FN_GetPlayerPlacement
+
+  # format data
+  slwi r4, r4, 0x4 # move team to the left => TX
+  add r3, r4, r3  # add team and placement together => TP
+
+  # write placement result to buffer
+  addi r4, PlayerSlot, 0x2 # offset from LRAStarter based on current slot
+  stbx r3, r4, REG_Buffer # Write placement to buffer
+
+PlayerPlacementsLoopCheck:
+  addi PlayerSlot,PlayerSlot,0x1
+  cmpwi r3,4
+  ble PlayerPlacementsLoopStart
+PlayerPlacementsLoopEnd:
+PlayerPlacementsEnd:
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,GAME_END_PAYLOAD_LENGTH+1
@@ -82,6 +113,41 @@ StoreLRAStarter:
   li r3, 1
   stb r3, RDB_GAME_END_SENT(REG_RDB)
   #logf LOG_LEVEL_NOTICE, "Wrote game end sent"
+  b Injection_Exit
+
+################################################################################
+# Function: FN_GetPlayerPlacement
+################################################################################
+# Determines the player standing in last match for a given player slot
+# TODO: move to a static fn (maybe?)
+# Inputs:
+# r3: Player slot (starting at 1)
+# Outputs:
+# r3: Player placement 
+# r4: Player team 
+################################################################################
+FN_GetPlayerPlacement:
+backup
+
+mr  REG_PlayerSlot,r3
+load  REG_MatchEndStruct,0x80479da4
+mulli REG_MatchEndPlayerStruct,REG_PlayerSlot,0xA8
+add   REG_MatchEndPlayerStruct,REG_MatchEndPlayerStruct,REG_MatchEndStruct
+
+#Check if last game data exists (is this necessary?)
+  lbz r3,0x4(REG_MatchEndStruct)
+  cmpwi r3,0x0
+  beq  FN_GetPlayerPlacementReturn
+
+#Check if player partook in last game
+  lbz r3,0x5D(REG_MatchEndPlayerStruct) # offset to player standing
+  lbz r4,0x5F(REG_MatchEndPlayerStruct) # offset to player team id (if any)
+  b FN_GetPlayerPlacementReturn
+
+FN_GetPlayerPlacementReturn:
+restore
+blr
+
 
 Injection_Exit:
   restore
