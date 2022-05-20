@@ -357,6 +357,12 @@ PLAYER_LOOP_CHECK:
 cmpwi REG_IDX, 4
 blt PLAYER_LOOP
 
+# Copy over game info
+addi r3, REG_RGB_ADDR, RGB_GAME_INFO_BLOCK # Destination
+load r4, 0x80480530 # Game info block source
+li r5, MATCH_STRUCT_LEN
+branchl r12, memcpy
+
 # Execute match reporting
 mr r3, REG_RGB_ADDR
 li r4, RGB_SIZE

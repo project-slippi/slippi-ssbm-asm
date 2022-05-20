@@ -416,7 +416,8 @@
 .set RGB_P2_RGPB, RGB_P1_RGPB + RGPB_SIZE # RGPB_SIZE
 .set RGB_P3_RGPB, RGB_P2_RGPB + RGPB_SIZE # RGPB_SIZE
 .set RGB_P4_RGPB, RGB_P3_RGPB + RGPB_SIZE # RGPB_SIZE
-.set RGB_SIZE, RGB_P4_RGPB + RGPB_SIZE
+.set RGB_GAME_INFO_BLOCK, RGB_P4_RGPB + RGPB_SIZE # MATCH_STRUCT_LEN
+.set RGB_SIZE, RGB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
 
 ################################################################################
 # Define game prep data and include macro to create static data
