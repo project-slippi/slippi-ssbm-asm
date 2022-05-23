@@ -80,25 +80,36 @@ StoreLRAStarter:
 # What this is going to do is add an array of team+placements for each port. 
 # T1P1T2P2T3P3T4P4 T=Team ID, P = Placement
 PlayerPlacements:
+
+# initialize match end struct
+backup
+load  REG_MatchEndStruct,0x80479da4
+mr r3, REG_MatchEndStruct
+branchl r12, 0x80166378 #(create match end data)(r3 = 80479da4)
+restore
  
 PlayerPlacementsLoopInit:
-li PlayerSlot, 1 # Start at slot 1
+li REG_PlayerSlot, 0 # Start at slot 1
 PlayerPlacementsLoopStart:
   # find player placement for this slot
-  mr r3, PlayerSlot
+  mr r3, REG_PlayerSlot
   bl FN_GetPlayerPlacement
+  
+  cmpwi r3, -1
+  beq PlayerPlacementsLoopSkipFormat
 
   # format data
   slwi r4, r4, 0x4 # move team to the left => TX
   add r3, r4, r3  # add team and placement together => TP
+  PlayerPlacementsLoopSkipFormat:
 
   # write placement result to buffer
-  addi r4, PlayerSlot, 0x2 # offset from LRAStarter based on current slot
+  addi r4, REG_PlayerSlot, 0x3 # offset from LRAStarter based on current slot
   stbx r3, r4, REG_Buffer # Write placement to buffer
 
 PlayerPlacementsLoopCheck:
-  addi PlayerSlot,PlayerSlot,0x1
-  cmpwi r3,4
+  addi REG_PlayerSlot,REG_PlayerSlot,0x1
+  cmpwi REG_PlayerSlot,3
   ble PlayerPlacementsLoopStart
 PlayerPlacementsLoopEnd:
 PlayerPlacementsEnd:
@@ -137,14 +148,14 @@ add   REG_MatchEndPlayerStruct,REG_MatchEndPlayerStruct,REG_MatchEndStruct
 #Check if last game data exists (is this necessary?)
   lbz r3,0x4(REG_MatchEndStruct)
   cmpwi r3,0x0
-  beq  FN_GetPlayerPlacementReturn
+  beq FN_GetPlayerPlacementPlayerMissing
 
   lbz r3,0x58(REG_MatchEndPlayerStruct)
   cmpwi r3,3
   beq FN_GetPlayerPlacementPlayerMissing
 
 #Check if player partook in last game
-  lbz r3,0x5D(REG_MatchEndPlayerStruct) # offset to player standing
+  lbz r3,0x5E(REG_MatchEndPlayerStruct) # offset to player standing
   lbz r4,0x5F(REG_MatchEndPlayerStruct) # offset to player team id (if any)
   b FN_GetPlayerPlacementReturn
 
