@@ -494,6 +494,22 @@
           "isRecursive": true
         }
       ]
+    },
+    {
+      "name": "Optional: Japanese Language",
+      "authors": [
+        "walz"
+      ],
+      "description": [
+        "Sets game to Japanese language mode"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/JapaneseLanguage",
+          "isRecursive": true
+        }
+      ]
     }
   ]
 }
