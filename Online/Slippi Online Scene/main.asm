@@ -153,6 +153,13 @@ load r4, 0x8045abf0
 lbz r3, -0x5108(r13) # player index
 stb r3, 0x6(r4)
 
+# Set the callback to determine winner at the end of the match
+bl GamePrepData_BLRL
+mflr r4
+bl SinglesDetermineWinner_BLRL
+mflr r3
+stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(r4)
+
 ################################################################################
 # Set up Zelda to select Sheik as default
 ################################################################################
@@ -424,10 +431,6 @@ stb r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
 li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
 stb r3, GPDO_COLOR_BAN_ACTIVE(REG_GAME_PREP_DATA)
-
-bl SinglesDetermineWinner_BLRL
-mflr r3
-stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GAME_PREP_DATA)
 
 # Set next scene as game prep
 load r4, 0x80479d30
