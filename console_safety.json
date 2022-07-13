@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_safety.bin"
+    },
+    {
+      "file": "Output/Console/g_safety.txt"
     }
   ],
   "codes": [

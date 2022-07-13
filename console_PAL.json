@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_pal.bin"
+    },
+    {
+      "file": "Output/Console/g_pal.txt"
     }
   ],
   "codes": [
