@@ -68,10 +68,18 @@ InitializeEXI:
   branchl r12, EXISelect
 
 # Step 2 - Write
+
+# First we write 0x00 to the byte following all the messages, this will be used as a "terminate"
+# command, to indicate there is no more data. Must be cautious that the buffer is allocated to
+# have room for this
+  li r3, 0
+  stbx r3, REG_BufferPointer, REG_BufferLength
+
 # Prepare to call EXIDma (80345e60)
   li r3, STG_EXIIndex # slot
   mr r4, REG_BufferPointer    #buffer location
   mr r5, REG_BufferLength     #length
+  byteAlign32 r5 # make sure the length passed over EXI is 32 byte aligned. required for hardware dma
   mr r6, REG_TransferBehavior # write mode input. 1 is write
   li r7, 0                # r7 is a callback address. Dunno what to use so just set to 0
   branchl r12, EXIDma
