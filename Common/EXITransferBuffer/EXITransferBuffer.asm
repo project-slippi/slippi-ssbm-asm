@@ -19,6 +19,7 @@
 .set REG_BufferPointer, 30
 .set REG_BufferLength, 29
 .set REG_InterruptIdx, 28
+.set REG_AlignedLength, 27
 
 ExiTransferBuffer:
 # Store stack frame
@@ -30,6 +31,9 @@ ExiTransferBuffer:
   mr REG_BufferLength,r4
 # Backup EXI transfer behavior
   mr REG_TransferBehavior,r5
+
+# Calculate aligned boundary for transfer buffer. Required for hardware EXI DMA transfer
+  byteAlign32 REG_AlignedLength, REG_BufferLength
 
 # Disable interrupts. I think perhaps we can have EXI transfer issues when
 # this process is interrupted?
@@ -69,17 +73,19 @@ InitializeEXI:
 
 # Step 2 - Write
 
-# First we write 0x00 to the byte following all the messages, this will be used as a "terminate"
-# command, to indicate there is no more data. Must be cautious that the buffer is allocated to
-# have room for this
-  li r3, 0
-  stbx r3, REG_BufferPointer, REG_BufferLength
+# First we write 0x00 to the bytes following all the messages up to the 32 byte boundary. This will
+# be used as a "nop" command, for which the receiver can skip to next byte. This needs to be done
+# because on hardware, DMA sends must be sent as 32 byte chunks. Currently I think allocated buffers
+# should always reserve a size up to the 32 byte boundary so this should be safe as long as the
+# addressed passed in is of a buffer allocated with HSD_MemAlloc
+  add r3, REG_BufferPointer, REG_BufferLength
+  sub r4, REG_AlignedLength, REG_BufferLength
+  branchl r12, Zero_AreaLength
 
 # Prepare to call EXIDma (80345e60)
   li r3, STG_EXIIndex # slot
   mr r4, REG_BufferPointer    #buffer location
-  mr r5, REG_BufferLength     #length
-  byteAlign32 r5 # make sure the length passed over EXI is 32 byte aligned. required for hardware dma
+  mr r5, REG_AlignedLength     #length
   mr r6, REG_TransferBehavior # write mode input. 1 is write
   li r7, 0                # r7 is a callback address. Dunno what to use so just set to 0
   branchl r12, EXIDma

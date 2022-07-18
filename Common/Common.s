@@ -59,8 +59,8 @@ addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
 mtlr r0
 .endm
 
-.macro byteAlign32 reg
-addi \reg, \reg, 31
+.macro byteAlign32 reg, source
+addi \reg, \source, 31
 rlwinm \reg, \reg, 0, 0xFFFFFFE0
 .endm
 
