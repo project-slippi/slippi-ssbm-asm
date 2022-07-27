@@ -424,6 +424,12 @@ mr r3, REG_GAME_PREP_DATA
 li r4, GPDO_SIZE
 branchl r12, Zero_AreaLength
 
+# Set the callback to determine winner at the end of the match,
+# we just zero'd it so we have to set it again
+bl SinglesDetermineWinner_BLRL
+mflr r3
+stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GAME_PREP_DATA)
+
 li r3, 3
 stb r3, GPDO_MAX_GAMES(REG_GAME_PREP_DATA)
 li r3, 1
