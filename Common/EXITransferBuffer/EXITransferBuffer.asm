@@ -43,6 +43,15 @@ ExiTransferBuffer:
   cmpwi REG_TransferBehavior,CONST_ExiRead
   beq FLUSH_WRITE_LOOP_END # Only flush before write when writing
 
+# First we write 0x00 to the bytes following all the messages up to the 32 byte boundary. This will
+# be used as a "nop" command, for which the receiver can skip to next byte. This needs to be done
+# because on hardware, DMA sends must be sent as 32 byte chunks. Currently I think allocated buffers
+# should always reserve a size up to the 32 byte boundary so this should be safe as long as the
+# addressed passed in is of a buffer allocated with HSD_MemAlloc
+  add r3, REG_BufferPointer, REG_BufferLength
+  sub r4, REG_AlignedLength, REG_BufferLength
+  branchl r12, Zero_AreaLength
+
   # Start flush loop to write the data in buf through to RAM.
   # Cache blocks are 32 bytes in length and the buffer obtained from malloc
   # should be guaranteed to be aligned at the start of a cache block.
@@ -72,15 +81,6 @@ InitializeEXI:
   branchl r12, EXISelect
 
 # Step 2 - Write
-
-# First we write 0x00 to the bytes following all the messages up to the 32 byte boundary. This will
-# be used as a "nop" command, for which the receiver can skip to next byte. This needs to be done
-# because on hardware, DMA sends must be sent as 32 byte chunks. Currently I think allocated buffers
-# should always reserve a size up to the 32 byte boundary so this should be safe as long as the
-# addressed passed in is of a buffer allocated with HSD_MemAlloc
-  add r3, REG_BufferPointer, REG_BufferLength
-  sub r4, REG_AlignedLength, REG_BufferLength
-  branchl r12, Zero_AreaLength
 
 # Prepare to call EXIDma (80345e60)
   li r3, STG_EXIIndex # slot
