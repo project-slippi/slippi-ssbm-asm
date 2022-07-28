@@ -241,7 +241,10 @@ blrl # FN_InitUserDisplay
 ################################################################################
 # Queue up per-frame CSS text update function
 ################################################################################
-.set REG_GOBJ, REG_VARIOUS_1
+# Using REG_GOBJ_1 because REG_GOBJ is set to that later in the file. A newer assembler seems
+# to be using the last value in the file instead of the most recent... so this will make the
+# outputs match
+.set REG_GOBJ_1, REG_VARIOUS_1
 .set REG_USERDATA, REG_VARIOUS_2
 
 # Create GObj (input values stolen from CSS_BigFunc... GObj)
@@ -249,7 +252,7 @@ li r3, 0x4
 li r4, 0x5
 li r5, 0x80
 branchl r12, GObj_Create
-mr REG_GOBJ, r3
+mr REG_GOBJ_1, r3
 
 # Alloc userdata
 li r3, TEXTGOBJDATA_SIZE
@@ -257,14 +260,14 @@ branchl r12,HSD_MemAlloc
 mr REG_USERDATA, r3
 
 # Add userdata
-addi r3, REG_GOBJ,0
+addi r3, REG_GOBJ_1,0
 li r4, 4
 load r5, HSD_Free
 addi r6, REG_USERDATA, 0
 branchl r12, GObj_AddUserData
 
 # Schedule Function
-addi r3, REG_GOBJ,0
+addi r3, REG_GOBJ_1,0
 bl CSS_ONLINE_TEXT_THINK
 mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
