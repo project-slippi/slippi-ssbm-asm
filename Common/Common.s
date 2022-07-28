@@ -48,14 +48,25 @@ branchl r12, 0x8021b2d8
 .macro backup space=0x78
 mflr r0
 stw r0, 0x4(r1)
-stwu r1,-(BKP_FREE_SPACE_OFFSET + \space)(r1)	# make space for 12 registers
+# Stack allocation has to be 4-byte aligned otherwise it crashes on console
+.if \space % 4 == 0
+  stwu r1,-(BKP_FREE_SPACE_OFFSET + \space)(r1)	# make space for 12 registers
+.else
+  stwu r1,-(BKP_FREE_SPACE_OFFSET + \space + (4 - \space % 4))(r1)	# make space for 12 registers
+.endif
 stmw r20,0x8(r1)
 .endm
 
 .macro restore space=0x78
 lmw r20,0x8(r1)
-lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space)(r1)
-addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
+# Stack allocation has to be 4-byte aligned otherwise it crashes on console
+.if \space % 4 == 0
+  lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space)(r1)
+  addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
+.else
+  lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space + (4 - \space % 4))(r1)
+  addi r1,r1,BKP_FREE_SPACE_OFFSET + \space + (4 - \space % 4)	# release the space
+.endif
 mtlr r0
 .endm
 
