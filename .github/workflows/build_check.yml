@@ -1,0 +1,29 @@
+name: Build Check
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+    branches:
+      - "**"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+    branches:
+      - "**"
+
+jobs:  
+  ubuntu64:
+    name: "Build Check"
+    runs-on: ubuntu-18.04
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: "Build"
+        if: success()
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo docker run --volume=${PWD}:/work --workdir=/work nikhilnarayana/devkitpro-slippi make
+      - uses: numtide/clean-git-action@v1
