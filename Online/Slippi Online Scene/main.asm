@@ -1362,6 +1362,8 @@ GamePrepSceneDecide:
 
 backup
 
+lwz REG_GPD, 0x10(r3) # Grabs load data
+
 # Get match state info
 li r3, 0
 branchl r12, FN_LoadMatchState
@@ -1380,8 +1382,6 @@ stb r3, 0x5(r4)
 b GamePrepSceneDecide_RestoreAndExit
 
 GamePrepSceneDecide_ExecNormal:
-lwz REG_GPD, 0x10(r3) # Grabs load data
-
 # Check if there was a tie last game and a tiebreak is needed
 lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 cmpwi r3, 0
