@@ -584,6 +584,11 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_RANKED
 bne VSSceneDecide_SkipRankedHandler
 
+# If connection is not active, just go back to CSS
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_IDLE
+beq VSSceneDecide_SkipRankedHandler
+
 # Get the winner of last game
 bl SinglesDetermineWinner
 mr REG_WINNER_IDX, r3
@@ -666,13 +671,9 @@ branchl r12, FN_EXITransferBuffer
 mr r3, REG_TXB_ADDR
 branchl r12, HSD_Free
 
-# Return to CSS since ranked set is over
-load r4, 0x80479d30
-li r3, 0x01
-stb r3, 0x5(r4)
-b VSSceneDecide_ModeHandlerEnd
-VSSceneDecide_SkipRankedHandler:
+# Allow to return to CSS since ranked set is over
 
+VSSceneDecide_SkipRankedHandler:
 # Go back to CSS
 load r4, 0x80479d30
 li r3, 0x01
@@ -1320,7 +1321,7 @@ CheckIfWonLastGame_CheckForTeams:
 CheckIfWonLastGame_FFA:
 #Check If Player Won
   lbz   r3,0x5D(MatchEndPlayerStruct)
-   #if so return 1, if not return 0
+   # . if so return 1, if not return 0
    cmpwi  r3,0
    beq  CheckIfWonLastGame_Won
    b CheckIfWonLastGame_DidNotWin
@@ -1342,7 +1343,7 @@ backup
 
 lwz REG_GPD, 0x10(r3) # Grabs load data
 
-# Check if this is a tiebreak. If it is a tiebreak, we don't want to invalidate since the same
+# Check if this is a tiebreak. If it is a tiebreak, we dont want to invalidate since the same
 # characters will be loaded
 lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 cmpwi r3, 0
@@ -1357,9 +1358,28 @@ blr
 
 GamePrepSceneDecide:
 .set REG_GPD, 31
+.set REG_MSRB_ADDR, 30
 
 backup
 
+# Get match state info
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
+# If connection is active, do the normal execution
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+beq GamePrepSceneDecide_ExecNormal
+
+# Here we have disconnected from opponent, go back to CSS
+# Go back to CSS
+load r4, 0x80479d30
+li r3, 0x01
+stb r3, 0x5(r4)
+b GamePrepSceneDecide_RestoreAndExit
+
+GamePrepSceneDecide_ExecNormal:
 lwz REG_GPD, 0x10(r3) # Grabs load data
 
 # Check if there was a tie last game and a tiebreak is needed

@@ -329,6 +329,19 @@ mtctr r3
 bctrl
 stb r3, RGB_WINNER_IDX(REG_RGB_ADDR)
 
+# Output the game end method and lras initiator
+load r4, 0x8046b6a0
+lbz r3, 0x8(r4)
+stb r3, RGB_GAME_END_METHOD(REG_RGB_ADDR)
+cmpwi r3, 0x7
+bne NO_LRAS
+lbz r3, 0x1(r4)
+b STORE_LRAS_INITIATOR
+NO_LRAS:
+li r3, -1
+STORE_LRAS_INITIATOR:
+stb r3, RGB_LRAS_INITIATOR(REG_RGB_ADDR)
+
 PLAYER_LOOP_INIT:
 li REG_IDX, 0
 addi REG_RGPB_ADDR, REG_RGB_ADDR, RGB_P1_RGPB
