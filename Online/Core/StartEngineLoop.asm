@@ -7,6 +7,7 @@
 
 .set REG_FRAME_INDEX, 31
 .set REG_ODB_ADDRESS, 30
+.set REG_DESYNC_ENTRY_ADDRESS, 29
 .set REG_INPUTS_TO_PROCESS, 27 # From parent
 .set REG_INPUT_PROCESS_COUNTER, 26 # From parent
 .set REG_INTERRUPT_IDX, 25
@@ -36,6 +37,60 @@ blrl
 .set DOFST_TEXT_STRING, DOFST_TEXT_COLOR + 4
 .string "DISCONNECTED"
 .align 2
+
+################################################################################
+# Computes checksum from game state
+################################################################################
+.set REG_PLAYER_STATIC_ADDRESS, 31
+.set REG_CHECKSUM, 30
+.set REG_LAST_PLAYER_ADDRESS, 29
+
+FN_COMPUTE_CHECKSUM:
+backup
+
+load REG_PLAYER_STATIC_ADDRESS, 0x80453080
+load REG_LAST_PLAYER_ADDRESS, 0x80455C30
+li REG_CHECKSUM, 0
+
+FN_COMPUTE_CHECKSUM_LOOP_START:
+# The helper function will do nothing if the player entity obj's are zero, so missing players
+# will be ignored correctly in the checksum
+mr r3, REG_CHECKSUM
+lwz r4, 0xB0(REG_PLAYER_STATIC_ADDRESS) # Get player entity obj (gobj?)
+bl FN_COMPUTE_CHECKSUM_HELPER
+lwz r4, 0xB4(REG_PLAYER_STATIC_ADDRESS) # Get secondary player entity obj (gobj?) (sheik/nana)
+bl FN_COMPUTE_CHECKSUM_HELPER
+mr REG_CHECKSUM, r3
+FN_COMPUTE_CHECKSUM_LOOP_CONTINUE:
+addi REG_PLAYER_STATIC_ADDRESS, REG_PLAYER_STATIC_ADDRESS, 0xE90
+cmpw REG_PLAYER_STATIC_ADDRESS, REG_LAST_PLAYER_ADDRESS
+ble FN_COMPUTE_CHECKSUM_LOOP_START # Loops until we have processed all 4 potential players
+
+mr r3, REG_CHECKSUM
+restore
+blr
+
+################################################################################
+# Helper function for computing checksum
+# ------------------------------------------------------------------------------
+# Inputs: [r3] Checksum, [r4] PlayerEntityGobj
+# ------------------------------------------------------------------------------
+# Output: Checksum
+################################################################################
+FN_COMPUTE_CHECKSUM_HELPER:
+cmpwi r4, 0
+beq FN_COMPUTE_CHECKSUM_HELPER_EXIT
+lwz r5, 0x2C(r4) # Fetch char data
+lwz r4, 0x10(r5) # ActionStateID
+xor r3, r3, r4
+lwz r4, 0xB0(r5) # Position X
+xor r3, r3, r4
+lwz r4, 0xB4(r5) # Position Y
+xor r3, r3, r4
+lwz r4, 0x1830(r5) # Percent damage
+xor r3, r3, r4
+FN_COMPUTE_CHECKSUM_HELPER_EXIT:
+blr
 
 CODE_START:
 # backup registers and sp
@@ -276,6 +331,40 @@ ble SKIP_STABLE_FINALIZED_UPDATE
 # logf LOG_LEVEL_WARN, "[SEL] [%d] Stable finalized value updated to %d. Volatile: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 stw r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 SKIP_STABLE_FINALIZED_UPDATE:
+
+####################################################################################################
+# Write checksum for this frame, overwrite if there is an existing entry for this frame,
+# we won't send any checksums to the opponent that are past the finalized frame
+####################################################################################################
+# Start working towards fetching the entry where we are going to write
+lwz r3, ODB_LOCAL_DESYNC_LAST_FRAME(REG_ODB_ADDRESS)
+addi r3, r3, 1
+sub. r3, REG_FRAME_INDEX, r3
+lbz r4, ODB_LOCAL_DESYNC_WRITE_IDX(REG_ODB_ADDRESS)
+blt SKIP_DESYNC_WRITE_IDX_ADJUST
+# If we get here, this is a new frame we haven't seen yet, store that frame as the last frame
+# and also increment the write index
+incrementByteInBuf r6, REG_ODB_ADDRESS, ODB_LOCAL_DESYNC_WRITE_IDX, DESYNC_ENTRY_COUNT
+stw REG_FRAME_INDEX, ODB_LOCAL_DESYNC_LAST_FRAME(REG_ODB_ADDRESS)
+SKIP_DESYNC_WRITE_IDX_ADJUST:
+
+# Here r3 is equal to the offset from the write index where we want to write our checksum, r4 is
+# equal to the current write index, let's fetch the address to that entry
+li r5, DESYNC_ENTRY_COUNT
+adjustCircularIndex r4, r4, r3, r5, r6
+# logf LOG_LEVEL_NOTICE, "Writing checksum for frame %d. Write idx: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 4"
+mulli r4, r4, DESYNC_ENTRY_SIZE
+addi r3, r4, ODB_LOCAL_DESYNC_ARR
+add REG_DESYNC_ENTRY_ADDRESS, REG_ODB_ADDRESS, r3
+
+# Write the frame
+stw REG_FRAME_INDEX, DESYNC_ENTRY_FRAME(REG_DESYNC_ENTRY_ADDRESS)
+
+# Compute and write the checksum
+bl FN_COMPUTE_CHECKSUM
+stw r3, DESYNC_ENTRY_CHECKSUM(REG_DESYNC_ENTRY_ADDRESS)
+# logf LOG_LEVEL_ERROR, "Checksum value: %08x", "mr r5, 3"
+SKIP_TAKE_CHECKSUM:
 
 ################################################################################
 # Check if we should capture state. We need to do this after the rollback

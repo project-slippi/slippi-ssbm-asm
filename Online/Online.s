@@ -191,6 +191,15 @@
 .set SFXDB_SIZE, SFXDB_FRAMES + SFXS_FRAME_SIZE * ROLLBACK_MAX_FRAME_COUNT
 
 ################################################################################
+# Desync Detection
+################################################################################
+.set DESYNC_ENTRY_FRAME, 0 # s32, frame of the checksum
+.set DESYNC_ENTRY_CHECKSUM, DESYNC_ENTRY_FRAME + 4 # u32
+.set DESYNC_ENTRY_SIZE, DESYNC_ENTRY_CHECKSUM + 4
+
+.set DESYNC_ENTRY_COUNT, ROLLBACK_MAX_FRAME_COUNT + 2 # Just add a couple to make sure there's no off-by-1
+
+################################################################################
 # Online Data Buffer Offsets
 ################################################################################
 .set ODB_LOCAL_PLAYER_INDEX, 0 # u8
@@ -237,7 +246,12 @@
 .set ODB_PAUSE_COUNTER, ODB_HUD_CANVAS + 4 # u32
 .set ODB_FINALIZED_FRAME, ODB_PAUSE_COUNTER + 4 # u32
 .set ODB_REST_STICK_CHANGE_COUNTER, ODB_FINALIZED_FRAME + 4 # u32
-.set ODB_SIZE, ODB_REST_STICK_CHANGE_COUNTER + 4
+.set ODB_LOCAL_DESYNC_LAST_FRAME, ODB_REST_STICK_CHANGE_COUNTER + 4 # u32
+.set ODB_LOCAL_DESYNC_WRITE_IDX, ODB_LOCAL_DESYNC_LAST_FRAME + 4 # u8
+.set ODB_LOCAL_DESYNC_ARR, ODB_LOCAL_DESYNC_WRITE_IDX + 1  # DESYNC_ENTRY_SIZE * DESYNC_ENTRY_COUNT
+.set ODB_OPNT_DESYNC_WRITE_IDX, ODB_LOCAL_DESYNC_ARR + DESYNC_ENTRY_SIZE * DESYNC_ENTRY_COUNT # u8
+.set ODB_OPNT_DESYNC_ARR, ODB_OPNT_DESYNC_WRITE_IDX + 1 # DESYNC_ENTRY_SIZE * DESYNC_ENTRY_COUNT
+.set ODB_SIZE, ODB_OPNT_DESYNC_ARR + DESYNC_ENTRY_SIZE * DESYNC_ENTRY_COUNT
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
