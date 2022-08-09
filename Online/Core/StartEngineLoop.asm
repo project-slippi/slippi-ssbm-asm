@@ -8,6 +8,7 @@
 .set REG_FRAME_INDEX, 31
 .set REG_ODB_ADDRESS, 30
 .set REG_DESYNC_ENTRY_ADDRESS, 29
+.set REG_REMOTE_RXB, 28
 .set REG_INPUTS_TO_PROCESS, 27 # From parent
 .set REG_INPUT_PROCESS_COUNTER, 26 # From parent
 .set REG_INTERRUPT_IDX, 25
@@ -89,6 +90,7 @@ lwz r4, 0xB4(r5) # Position Y
 xor r3, r3, r4
 lwz r4, 0x1830(r5) # Percent damage
 xor r3, r3, r4
+# logf LOG_LEVEL_INFO, "[SEL] Checksum Values: %08x | %08x | %08x | %08x", "lwz r8, 0x1830(r5)", "lwz r7, 0xB4(r5)", "lwz r6, 0xB0(r5)", "lwz r5, 0x10(r5)"
 FN_COMPUTE_CHECKSUM_HELPER_EXIT:
 blr
 
@@ -115,6 +117,7 @@ bne EXIT
 # fetch data to use throughout function
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 loadGlobalFrame REG_FRAME_INDEX
+lwz REG_REMOTE_RXB, ODB_RXB_ADDR(REG_ODB_ADDRESS)
 
 branchl r12, OSDisableInterrupts
 mr REG_INTERRUPT_IDX, r3
@@ -363,8 +366,52 @@ stw REG_FRAME_INDEX, DESYNC_ENTRY_FRAME(REG_DESYNC_ENTRY_ADDRESS)
 # Compute and write the checksum
 bl FN_COMPUTE_CHECKSUM
 stw r3, DESYNC_ENTRY_CHECKSUM(REG_DESYNC_ENTRY_ADDRESS)
-# logf LOG_LEVEL_ERROR, "Checksum value: %08x", "mr r5, 3"
+# logf LOG_LEVEL_INFO, "Local checksum value %d: %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
 SKIP_TAKE_CHECKSUM:
+
+####################################################################################################
+# Check local checksums against the remote checksums to see if we have a desync
+####################################################################################################
+li r12, 0 # Player index
+CHECKSUM_CHECK_PLAYER_LOOP_START:
+mulli r3, r12, DESYNC_ENTRY_SIZE
+addi r3, r3, RXB_OPNT_DESYNC_ENTRY
+add r11, REG_REMOTE_RXB, r3 # r11 now stores desync entry address for this remote player
+lwz r10, DESYNC_ENTRY_FRAME(r11) # r10 now contains the desync entry frame
+lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
+cmpw r10, r3 # If this checksum frame is greater than our stable finalized frame, skip for now
+bgt CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
+cmpwi r10, UNFREEZE_INPUTS_FRAME
+ble CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
+
+# Now we loop through all of our local frames to find the entry that matches
+li r9, 0
+FIND_CHECKSUM_LOOP_START:
+mulli r3, r9, DESYNC_ENTRY_SIZE
+addi r3, r3, ODB_LOCAL_DESYNC_ARR
+add r8, REG_ODB_ADDRESS, r3 # r8 now contains the desync entry for our local player
+lwz r3, DESYNC_ENTRY_FRAME(r8)
+cmpw r10, r3
+bne FIND_CHECKSUM_LOOP_CONTINUE
+# Here we have found the desync entry for the latest finalized frame
+lwz r3, DESYNC_ENTRY_CHECKSUM(r8)
+lwz r4, DESYNC_ENTRY_CHECKSUM(r11)
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Comparing Checksums. RemoteIdx: %d, Frame: %d, %08x vs %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 10", "mr r8, 3", "mr r9, 4"
+cmpw r3, r4
+beq FIND_CHECKSUM_LOOP_EXIT
+logf LOG_LEVEL_NOTICE, "Desync detected!"
+b FIND_CHECKSUM_LOOP_EXIT
+FIND_CHECKSUM_LOOP_CONTINUE:
+addi r9, r9, 1
+cmpwi r9, DESYNC_ENTRY_COUNT
+blt FIND_CHECKSUM_LOOP_START
+FIND_CHECKSUM_LOOP_EXIT:
+
+CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE:
+addi r12, r12, 1
+lbz r3, RXB_OPNT_COUNT(REG_REMOTE_RXB)
+cmpw r12, r3
+blt CHECKSUM_CHECK_PLAYER_LOOP_START
 
 ################################################################################
 # Check if we should capture state. We need to do this after the rollback

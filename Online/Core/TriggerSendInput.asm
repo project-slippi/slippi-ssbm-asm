@@ -181,6 +181,27 @@ stw REG_FRAME_INDEX, TXB_FRAME(REG_TXB_ADDRESS)
 lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 stw r3, TXB_FINALIZED_FRAME(REG_TXB_ADDRESS)
 
+# Start a for loop to iterate through the DESYNC_ENTRY_ARR values in order to find the checksum
+# from the latest finalized frame to send to the opponent
+lwz r12, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
+li r11, 0
+FIND_CHECKSUM_LOOP_START:
+mulli r3, r11, DESYNC_ENTRY_SIZE
+addi r3, r3, ODB_LOCAL_DESYNC_ARR
+add r10, REG_ODB_ADDRESS, r3 
+lwz r3, DESYNC_ENTRY_FRAME(r10)
+cmpw r3, r12
+bne FIND_CHECKSUM_LOOP_CONTINUE
+# Here we have found the desync entry for the latest finalized frame
+lwz r3, DESYNC_ENTRY_CHECKSUM(r10)
+stw r3, TXB_FINALIZED_FRAME_CHECKSUM(REG_TXB_ADDRESS)
+b FIND_CHECKSUM_LOOP_EXIT
+FIND_CHECKSUM_LOOP_CONTINUE:
+addi r11, r11, 1
+cmpwi r11, DESYNC_ENTRY_COUNT
+blt FIND_CHECKSUM_LOOP_START
+FIND_CHECKSUM_LOOP_EXIT:
+
 # Transfer delay amount
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 stb r3, TXB_DELAY(REG_TXB_ADDRESS)

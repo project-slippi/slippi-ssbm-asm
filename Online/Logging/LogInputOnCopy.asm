@@ -27,7 +27,7 @@ lbz	r3, 0x0041(r26)
 extsb. r0, r3
 beq EXIT
 
-logf LOG_LEVEL_INFO, "Input detected with non-zero status: %d", "extsb r5, 3"
+logf LOG_LEVEL_ERROR, "Input detected with non-zero status: %d", "extsb r5, 3"
 
 EXIT:
 # Re-loads overwritten data, must run right before extsb. r0, r3
