@@ -39,6 +39,31 @@ ori \reg, \reg, \address @l
 lbz \reg, 0(\reg)
 .endm
 
+.macro incrementByteInBuf reg, reg_address, offset, limit
+lbz \reg, \offset(\reg_address)
+addi \reg, \reg, 1
+cmpwi \reg, \limit
+blt 0f
+li \reg, 0
+0:
+stb \reg, \offset(\reg_address)
+.endm
+
+# Compiled from the following:
+# int func(int current, int change, int limit) {
+#     return (((current + change) % limit) + limit) % limit;
+# }
+.macro adjustCircularIndex reg, reg_current, reg_change, reg_limit, reg_temp=r0
+add \reg, \reg_current, \reg_change
+divw \reg_temp, \reg, \reg_limit
+mullw \reg_temp, \reg_temp, \reg_limit
+subf \reg_temp, \reg_temp, \reg
+add \reg, \reg_limit, \reg_temp
+divw \reg_temp, \reg, \reg_limit
+mullw \reg_temp, \reg_temp, \reg_limit
+subf \reg, \reg_temp, \reg
+.endm
+
 .macro bp
 branchl r12, 0x8021b2d8
 .endm

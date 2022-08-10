@@ -7,11 +7,11 @@
 
 .set REG_FRAME_INDEX, 31
 .set REG_ODB_ADDRESS, 30
+.set REG_DESYNC_ENTRY_ADDRESS, 29
+.set REG_REMOTE_RXB, 28
 .set REG_INPUTS_TO_PROCESS, 27 # From parent
 .set REG_INPUT_PROCESS_COUNTER, 26 # From parent
 .set REG_INTERRUPT_IDX, 25
-.set REG_TEXT_STRUCT, 24
-.set REG_DATA_ADDR, 23
 
 # Replaced code
 branchl r12, HSD_PerfSetStartTime
@@ -19,23 +19,134 @@ b CODE_START
 
 DATA_BLRL:
 blrl
-.set DOFST_TEXT_BASE_Z, 0
-.float 0
-.set DOFST_TEXT_BASE_CANVAS_SCALING, DOFST_TEXT_BASE_Z + 4
-.float 1
+.set TEXT_ENTRY_X, 0
+.set TEXT_ENTRY_Y, TEXT_ENTRY_X + 4
+.set TEXT_ENTRY_SIZE, TEXT_ENTRY_Y + 4
+.set TEXT_ENTRY_COLOR, TEXT_ENTRY_SIZE + 4
+.set TEXT_ENTRY_STRING, TEXT_ENTRY_COLOR + 4
 
-.set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 1.3
-.set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float -45
-.set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 0.07
-.set DOFST_TEXT_COLOR, DOFST_TEXT_SIZE + 4
-.long 0xFF0000FF
+# Text entry for disconnect text
+.set DOFST_DISCONNECT_TEXT_ENTRY, 0
+.float 1.3 # x-pos
+.float -45 # y-pos
+.float 0.07 # text size
+.long 0xFF0000FF # text color
+.string "DISCONNECTED" # text
+.set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 13
 
-.set DOFST_TEXT_STRING, DOFST_TEXT_COLOR + 4
-.string "DISCONNECTED"
+# Text entry for desync text
+.set DOFST_DESYNC_TEXT_ENTRY, DOFST_DISCONNECT_TEXT_ENTRY + DOFST_DISCONNECT_TEXT_ENTRY_SIZE
+.float 1.3 # x-pos
+.float -43 # y-pos
+.float 0.05 # text size
+.long 0xFFB800FF # text color
+.string "DESYNC DETECTED" # text
+.set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 16
+
 .align 2
+
+################################################################################
+# Computes checksum from game state
+################################################################################
+.set REG_PLAYER_STATIC_ADDRESS, 31
+.set REG_CHECKSUM, 30
+.set REG_LAST_PLAYER_ADDRESS, 29
+
+FN_COMPUTE_CHECKSUM:
+backup
+
+load REG_PLAYER_STATIC_ADDRESS, 0x80453080
+load REG_LAST_PLAYER_ADDRESS, 0x80455C30
+li REG_CHECKSUM, 0
+
+FN_COMPUTE_CHECKSUM_LOOP_START:
+# The helper function will do nothing if the player entity obj's are zero, so missing players
+# will be ignored correctly in the checksum
+mr r3, REG_CHECKSUM
+lwz r4, 0xB0(REG_PLAYER_STATIC_ADDRESS) # Get player entity obj (gobj?)
+bl FN_COMPUTE_CHECKSUM_HELPER
+lwz r4, 0xB4(REG_PLAYER_STATIC_ADDRESS) # Get secondary player entity obj (gobj?) (sheik/nana)
+bl FN_COMPUTE_CHECKSUM_HELPER
+mr REG_CHECKSUM, r3
+FN_COMPUTE_CHECKSUM_LOOP_CONTINUE:
+addi REG_PLAYER_STATIC_ADDRESS, REG_PLAYER_STATIC_ADDRESS, 0xE90
+cmpw REG_PLAYER_STATIC_ADDRESS, REG_LAST_PLAYER_ADDRESS
+ble FN_COMPUTE_CHECKSUM_LOOP_START # Loops until we have processed all 4 potential players
+
+mr r3, REG_CHECKSUM
+restore
+blr
+
+################################################################################
+# Helper function for computing checksum
+# ------------------------------------------------------------------------------
+# Inputs: [r3] Checksum, [r4] PlayerEntityGobj
+# ------------------------------------------------------------------------------
+# Output: [r3] Checksum
+################################################################################
+FN_COMPUTE_CHECKSUM_HELPER:
+cmpwi r4, 0
+beq FN_COMPUTE_CHECKSUM_HELPER_EXIT
+lwz r5, 0x2C(r4) # Fetch char data
+lwz r4, 0x10(r5) # ActionStateID
+xor r3, r3, r4
+lwz r4, 0xB0(r5) # Position X
+xor r3, r3, r4
+lwz r4, 0xB4(r5) # Position Y
+xor r3, r3, r4
+lwz r4, 0x1830(r5) # Percent damage
+xor r3, r3, r4
+lwz r4, 0x8(r5) # Spawn #. Starts as 1 and 2 then after someone respawns they become 3 and so on
+xor r3, r3, r4
+# logf LOG_LEVEL_INFO, "[SEL] Checksum Values: %08x | %08x | %08x | %08x | %08x", "lwz r9, 0x8(r5)", "lwz r8, 0x1830(r5)", "lwz r7, 0xB4(r5)", "lwz r6, 0xB0(r5)", "lwz r5, 0x10(r5)"
+FN_COMPUTE_CHECKSUM_HELPER_EXIT:
+blr
+
+################################################################################
+# Creates a subtext
+# ------------------------------------------------------------------------------
+# Inputs: [r3] TextStruct, [r4] DOFST for Text Entry
+# ------------------------------------------------------------------------------
+# Output: [r3] SubtextId
+################################################################################
+.set REG_TEXT_CONFIG_ADDR, 31
+.set REG_SUBTEXT_ID, 30
+.set REG_TEXT_STRUCT, 29
+
+FN_CREATE_HUD_SUBTEXT:
+backup
+
+mr REG_TEXT_STRUCT, r3
+
+bl DATA_BLRL
+mflr REG_TEXT_CONFIG_ADDR
+add REG_TEXT_CONFIG_ADDR, REG_TEXT_CONFIG_ADDR, r4
+
+# Initialize header
+lfs f1, TEXT_ENTRY_X(REG_TEXT_CONFIG_ADDR)
+lfs f2, TEXT_ENTRY_Y(REG_TEXT_CONFIG_ADDR)
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_CONFIG_ADDR, TEXT_ENTRY_STRING
+branchl r12, Text_InitializeSubtext
+mr REG_SUBTEXT_ID, r3
+
+# Set header text size
+mr r3, REG_TEXT_STRUCT
+mr r4, REG_SUBTEXT_ID
+lfs f1, TEXT_ENTRY_SIZE(REG_TEXT_CONFIG_ADDR)
+lfs f2, TEXT_ENTRY_SIZE(REG_TEXT_CONFIG_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+# Set text color
+mr r3, REG_TEXT_STRUCT
+mr r4, REG_SUBTEXT_ID
+addi r5, REG_TEXT_CONFIG_ADDR, TEXT_ENTRY_COLOR
+branchl r12, Text_ChangeTextColor
+
+mr r3, REG_SUBTEXT_ID
+
+restore
+blr
 
 CODE_START:
 # backup registers and sp
@@ -60,6 +171,7 @@ bne EXIT
 # fetch data to use throughout function
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 loadGlobalFrame REG_FRAME_INDEX
+lwz REG_REMOTE_RXB, ODB_RXB_ADDR(REG_ODB_ADDRESS)
 
 branchl r12, OSDisableInterrupts
 mr REG_INTERRUPT_IDX, r3
@@ -82,52 +194,10 @@ beq DISPLAY_DISCONNECT_END # If not disconnected, do nothing
 li r3, 3
 branchl r12, SFX_Menu_CommonSound
 
-################################################################################
-# Start prepping text display
-################################################################################
-bl DATA_BLRL
-mflr REG_DATA_ADDR
-
-li r3, 2
-lwz r4, ODB_HUD_CANVAS(REG_ODB_ADDRESS) # HUD canvas used for names and delay (does not stretch in widescreen)
-branchl r12, Text_CreateStruct
-mr REG_TEXT_STRUCT, r3
-
-# Set text kerning to close
-li r4, 0x1
-stb r4, 0x49(REG_TEXT_STRUCT)
-# Set text to align center
-li r4, 0x1
-stb r4, 0x4A(REG_TEXT_STRUCT)
-
-# Store Base Z Offset
-lfs f1, DOFST_TEXT_BASE_Z(REG_DATA_ADDR) #Z offset
-stfs f1, 0x8(REG_TEXT_STRUCT)
-
-# Scale Canvas Down
-lfs f1, DOFST_TEXT_BASE_CANVAS_SCALING(REG_DATA_ADDR)
-stfs f1, 0x24(REG_TEXT_STRUCT)
-stfs f1, 0x28(REG_TEXT_STRUCT)
-
-# Initialize header
-lfs f1, DOFST_TEXT_X_POS(REG_DATA_ADDR)
-lfs f2, DOFST_TEXT_Y_POS(REG_DATA_ADDR)
-mr r3, REG_TEXT_STRUCT
-addi r4, REG_DATA_ADDR, DOFST_TEXT_STRING
-branchl r12, Text_InitializeSubtext
-
-# Set header text size
-mr r3, REG_TEXT_STRUCT
-li r4, 0
-lfs f1, DOFST_TEXT_SIZE(REG_DATA_ADDR)
-lfs f2, DOFST_TEXT_SIZE(REG_DATA_ADDR)
-branchl r12, Text_UpdateSubtextSize
-
-# Set text color
-mr r3, REG_TEXT_STRUCT
-li r4, 0
-addi r5, REG_DATA_ADDR, DOFST_TEXT_COLOR
-branchl r12, Text_ChangeTextColor
+# Create subtext
+lwz r3, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
+li r4, DOFST_DISCONNECT_TEXT_ENTRY
+bl FN_CREATE_HUD_SUBTEXT
 
 # Indicate we have displayed disconnect message. Dont worry, we can't rollback
 # if disconnected so we dont have to worry about things getting reset
@@ -276,6 +346,107 @@ ble SKIP_STABLE_FINALIZED_UPDATE
 # logf LOG_LEVEL_WARN, "[SEL] [%d] Stable finalized value updated to %d. Volatile: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "lwz r7, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 stw r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 SKIP_STABLE_FINALIZED_UPDATE:
+
+####################################################################################################
+# Write checksum for this frame, overwrite if there is an existing entry for this frame,
+# we won't send any checksums to the opponent that are past the finalized frame
+####################################################################################################
+# Start working towards fetching the entry where we are going to write
+lwz r3, ODB_LOCAL_DESYNC_LAST_FRAME(REG_ODB_ADDRESS)
+addi r3, r3, 1
+sub. r3, REG_FRAME_INDEX, r3
+lbz r4, ODB_LOCAL_DESYNC_WRITE_IDX(REG_ODB_ADDRESS)
+blt SKIP_DESYNC_WRITE_IDX_ADJUST
+# If we get here, this is a new frame we haven't seen yet, store that frame as the last frame
+# and also increment the write index
+incrementByteInBuf r6, REG_ODB_ADDRESS, ODB_LOCAL_DESYNC_WRITE_IDX, DESYNC_ENTRY_COUNT
+stw REG_FRAME_INDEX, ODB_LOCAL_DESYNC_LAST_FRAME(REG_ODB_ADDRESS)
+SKIP_DESYNC_WRITE_IDX_ADJUST:
+
+# Here r3 is equal to the offset from the write index where we want to write our checksum, r4 is
+# equal to the current write index, let's fetch the address to that entry
+li r5, DESYNC_ENTRY_COUNT
+adjustCircularIndex r4, r4, r3, r5, r6
+# logf LOG_LEVEL_NOTICE, "Writing checksum for frame %d. Write idx: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 4"
+mulli r4, r4, DESYNC_ENTRY_SIZE
+addi r3, r4, ODB_LOCAL_DESYNC_ARR
+add REG_DESYNC_ENTRY_ADDRESS, REG_ODB_ADDRESS, r3
+
+# Write the frame
+stw REG_FRAME_INDEX, DESYNC_ENTRY_FRAME(REG_DESYNC_ENTRY_ADDRESS)
+
+# Compute and write the checksum
+bl FN_COMPUTE_CHECKSUM
+stw r3, DESYNC_ENTRY_CHECKSUM(REG_DESYNC_ENTRY_ADDRESS)
+# logf LOG_LEVEL_INFO, "Local checksum value %d: %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
+SKIP_TAKE_CHECKSUM:
+
+####################################################################################################
+# Check local checksums against the remote checksums to see if we have a desync
+####################################################################################################
+lbz r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne CHECKSUM_CHECK_PLAYER_LOOP_EXIT
+
+li r12, 0 # Player index
+CHECKSUM_CHECK_PLAYER_LOOP_START:
+mulli r3, r12, DESYNC_ENTRY_SIZE
+addi r3, r3, RXB_OPNT_DESYNC_ENTRY
+add r11, REG_REMOTE_RXB, r3 # r11 now stores desync entry address for this remote player
+lwz r10, DESYNC_ENTRY_FRAME(r11) # r10 now contains the desync entry frame
+lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Checksum for Idx %d. StableFinalized: %d. Looking for %d -> %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 3", "mr r8, 10", "lwz r9, DESYNC_ENTRY_CHECKSUM(r11)"
+cmpw r10, r3 # If this checksum frame is greater than our stable finalized frame, skip for now
+bgt CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
+cmpwi r10, UNFREEZE_INPUTS_FRAME
+ble CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
+
+# Now we loop through all of our local frames to find the entry that matches
+li r9, 0
+FIND_CHECKSUM_LOOP_START:
+mulli r3, r9, DESYNC_ENTRY_SIZE
+addi r3, r3, ODB_LOCAL_DESYNC_ARR
+add r8, REG_ODB_ADDRESS, r3 # r8 now contains the desync entry for our local player
+lwz r3, DESYNC_ENTRY_FRAME(r8)
+cmpw r10, r3
+bne FIND_CHECKSUM_LOOP_CONTINUE
+# Here we have found the desync entry for the latest finalized frame
+lwz r3, DESYNC_ENTRY_CHECKSUM(r8)
+lwz r4, DESYNC_ENTRY_CHECKSUM(r11)
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Comparing Checksums. RemoteIdx: %d, Frame: %d, %08x vs %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 10", "mr r8, 3", "mr r9, 4"
+cmpw r3, r4
+beq FIND_CHECKSUM_LOOP_EXIT
+
+# Here we have detected a desync, It's okay that we're calling functions here and clobbering the
+# volatile registers because we're about to exit the loops anyway
+
+# Play error sound
+li r3, 3
+branchl r12, SFX_Menu_CommonSound
+
+# Create subtext
+lwz r3, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
+li r4, DOFST_DESYNC_TEXT_ENTRY
+bl FN_CREATE_HUD_SUBTEXT
+
+# Indicate desync has been detected so we don't continue looking. It might be worth being able
+# to clear the desync status display.. in the case we get a spurious value? Not sure yet
+li r3, 1
+stb r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
+
+b CHECKSUM_CHECK_PLAYER_LOOP_EXIT
+FIND_CHECKSUM_LOOP_CONTINUE:
+addi r9, r9, 1
+cmpwi r9, DESYNC_ENTRY_COUNT
+blt FIND_CHECKSUM_LOOP_START
+FIND_CHECKSUM_LOOP_EXIT:
+
+CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE:
+addi r12, r12, 1
+lbz r3, RXB_OPNT_COUNT(REG_REMOTE_RXB)
+cmpw r12, r3
+blt CHECKSUM_CHECK_PLAYER_LOOP_START
+CHECKSUM_CHECK_PLAYER_LOOP_EXIT:
 
 ################################################################################
 # Check if we should capture state. We need to do this after the rollback
