@@ -197,7 +197,10 @@
 .set DESYNC_ENTRY_CHECKSUM, DESYNC_ENTRY_FRAME + 4 # u32
 .set DESYNC_ENTRY_SIZE, DESYNC_ENTRY_CHECKSUM + 4
 
-.set DESYNC_ENTRY_COUNT, ROLLBACK_MAX_FRAME_COUNT + 2 # Just add a couple to make sure there's no off-by-1
+# I'm not exactly sure how many local entries we need to keep but our local entries will get
+# compared with the opponents' last stabilized frame which with a lot of ping can come pretty late.
+# My guess would be we could so 2 * ROLLBACK_MAX_FRAME_COUNT but 3 should definitely be safe
+.set DESYNC_ENTRY_COUNT, ROLLBACK_MAX_FRAME_COUNT * 3
 
 ################################################################################
 # Online Data Buffer Offsets
@@ -211,7 +214,8 @@
 .set ODB_IS_GAME_OVER, ODB_GAME_END_FRAME + 4 # bool
 .set ODB_IS_DISCONNECTED, ODB_IS_GAME_OVER + 1  # bool
 .set ODB_IS_DISCONNECT_STATE_DISPLAYED, ODB_IS_DISCONNECTED + 1 # bool
-.set ODB_IS_FRAME_ADVANCE, ODB_IS_DISCONNECT_STATE_DISPLAYED + 1 # bool
+.set ODB_IS_DESYNC_STATE_DISPLAYED, ODB_IS_DISCONNECT_STATE_DISPLAYED + 1 # bool
+.set ODB_IS_FRAME_ADVANCE, ODB_IS_DESYNC_STATE_DISPLAYED + 1 # bool
 .set ODB_LAST_LOCAL_INPUTS, ODB_IS_FRAME_ADVANCE + 1 # PAD_REPORT_SIZE
 .set ODB_DELAY_FRAMES, ODB_LAST_LOCAL_INPUTS + PAD_REPORT_SIZE # u8
 .set ODB_DELAY_BUFFER_INDEX, ODB_DELAY_FRAMES + 1 # u8
@@ -243,7 +247,8 @@
 .set ODB_STABLE_FINALIZED_FRAME, ODB_STABLE_SAVESTATE_FRAME + 4 # s32
 .set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_FINALIZED_FRAME + 4 # bool
 .set ODB_HUD_CANVAS, ODB_SHOULD_FORCE_PAD_RENEW + 1 # u32
-.set ODB_PAUSE_COUNTER, ODB_HUD_CANVAS + 4 # u32
+.set ODB_HUD_TEXT_STRUCT, ODB_HUD_CANVAS + 4 # u32
+.set ODB_PAUSE_COUNTER, ODB_HUD_TEXT_STRUCT + 4  # u32
 .set ODB_FINALIZED_FRAME, ODB_PAUSE_COUNTER + 4 # u32
 .set ODB_REST_STICK_CHANGE_COUNTER, ODB_FINALIZED_FRAME + 4 # u32
 .set ODB_LOCAL_DESYNC_LAST_FRAME, ODB_REST_STICK_CHANGE_COUNTER + 4 # u32
