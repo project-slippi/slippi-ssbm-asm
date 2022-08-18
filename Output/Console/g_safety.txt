@@ -1,0 +1,13 @@
+$Tournament safety codes [Fizzi]
+*Codes to ensure integrity of tournament matches
+C222F958 00000004 #External/FixedDamageRatio/SkipInputHandling.asm
+2C050003 40820014
+3D808022 618CFB68
+7D8903A6 4E800420
+28050005 00000000
+C2167F40 00000005 #External/PreventPauseSoftLocks/ForcePauseOn.asm
+881E0002 2C000001
+40820018 881E0004
+2C000004 4181000C
+881E000A 48000008
+38000001 00000000

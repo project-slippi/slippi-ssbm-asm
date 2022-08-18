@@ -341,10 +341,9 @@
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
         },
         {
-          "type": "injectFolder",
-          "sourceFolder": "Common/CompatibilityHooks",
-          "isRecursive": true,
-          "annotation": "Functions that can be externally modified"
+          "type": "binary",
+          "sourceFile": "Binary/m-ex.bin",
+          "annotation": "m-ex codeset"
         },
         {
           "type": "injectFolder",

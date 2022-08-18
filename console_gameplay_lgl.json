@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_gameplay_lgl.bin"
+    },
+    {
+      "file": "Output/Console/g_gameplay_lgl.txt"
     }
   ],
   "codes": [

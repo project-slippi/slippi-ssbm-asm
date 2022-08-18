@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_ucf_stealth.bin"
+    },
+    {
+      "file": "Output/Console/g_ucf_stealth.txt"
     }
   ],
   "codes": [

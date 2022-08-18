@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_stages_all.bin"
+    },
+    {
+      "file": "Output/Console/g_stages_all.txt"
     }
   ],
   "codes": [

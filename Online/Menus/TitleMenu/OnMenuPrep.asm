@@ -309,9 +309,8 @@ b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 # Option Selected Handlers
 ################################################################################
 FN_OnlineSubmenuThink_HANDLE_RANKED:
-li	r3, 3
-branchl r12, SFX_Menu_CommonSound
-b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
+li r3, ONLINE_MODE_RANKED
+b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_UNRANKED:
 li r3, ONLINE_MODE_UNRANKED
