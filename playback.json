@@ -126,6 +126,12 @@
         },
         {
           "type": "injectFolder",
+          "sourceFolder": "Online/Core/EXIFileLoad",
+          "isRecursive": true,
+          "annotation": "File load functions"
+        },
+        {
+          "type": "injectFolder",
           "sourceFolder": "Common/CompatibilityHooks",
           "isRecursive": true,
           "annotation": "Functions that can be externally modified"

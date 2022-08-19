@@ -1,13 +1,46 @@
 ################################################################################
 # Address: 801a6348
 ################################################################################
-.include "Common/Common.s"
+.include "Online/Core/EXIFileLoad/TransferFile.asm"
 .include "Playback/Playback.s"
 
 .set REG_Floats, 30
 .set REG_BufferPointer, 29
-.set REG_Text,28
-.set REG_FrameCount,27
+.set REG_Text, 28
+.set REG_FrameCount, 27
+.set REG_LOCAL_DATA_ADDR, 25
+.set REG_CAM_GOBJ, 22
+.set REG_LOGO_JOBJ, 21
+.set REG_SLPLOGO, 19
+.set REG_LOGO_GOBJ, 18
+
+# symbol offsets
+.set SLPLOGO_LOGO_JOBJDESC, 0x0
+.set SLPLOGO_CAMDESC, 0x4
+.set COBJ_LINKS, 0x24
+.set LOGO_GXLINK, 9
+.set JOBJ_XSCALE_OFST, 0x2c
+.set JOBJ_XPOS_OFST, 0x38
+
+  bl DATA_BLRL
+  mflr REG_LOCAL_DATA_ADDR
+  b FBegin
+
+
+DATA_BLRL:
+  blrl
+# File related strings
+.string "slpLogo.dat"
+.set DO_STRING_SLPLOGO_FILENAME, 0
+.string "slplogo_scene_data"
+.set DO_STRING_SLPLOGO_SYMBOLNAME, DO_STRING_SLPLOGO_FILENAME + 12
+.float 1.48410099
+.set WIDESCREEN_XSCALE_FACTOR, DO_STRING_SLPLOGO_SYMBOLNAME + 19
+.float -1.7
+.set WIDESCREEN_XPOS_OFFSET, WIDESCREEN_XSCALE_FACTOR + 4
+.align 2
+
+FBegin:
 
 #############################
 # Create Per Frame Function #
@@ -19,16 +52,94 @@
   cmpwi r3,0xE          #DebugMelee
   bne Original
 
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
+#Create Cam GObj
+  li  r3, 19
+  li  r4, 20
+  li  r5, 0
   branchl r12, GObj_Create
+  mr REG_CAM_GOBJ, r3
+
+#Create Logo GObj
+  li  r3, 4
+  li  r4, 5
+  li  r5, 0x80
+  branchl r12, GObj_Create
+  mr REG_LOGO_GOBJ, r3
+
+# Load LOGO file
+  addi r3, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_FILENAME
+  branchl r12,0x80016be0 # File_Load
+
+# Retrieve symbol from file data
+  addi r4, REG_LOCAL_DATA_ADDR, DO_STRING_SLPLOGO_SYMBOLNAME
+  branchl r12,0x80380358 # HSD_ArchiveGetPublicAddress
+  mr REG_SLPLOGO, r3 # Remember symbol pointer
+
+# Load camdesc
+  lwz r3, SLPLOGO_CAMDESC (REG_SLPLOGO)
+  lwz r3, 0x0 (r3)
+  branchl r12,0x8036a590 # CObj_LoadDesc (i assume it returns into r3)
+
+# Add COBJ to GOBJ
+  mr r5, r3 # Move COBJ pointer to r5
+  lbz r4, -0x3E55(r13)
+  mr r3, REG_CAM_GOBJ
+  branchl r12, GObj_AddToObj # void GObj_AddObject(GOBJ *gobj, u8 unk, void *object)
+
+# Initialize camera
+  mr r3, REG_CAM_GOBJ # Might be redundant, but it's unclear whether GObj_AddToObj backs-up/restores register 3
+  load r4, 0x803910D8 # CObjThink_Common
+  li r5, 1 # gx_pri. this might need to be 7
+  branchl r12, 0x8039075C # void GObj_InitCamera(GOBJ* gobj, void (*render_cb)(GOBJ*, s32), u32 priority)
+
+# set gobj->cobj_links (0x20) to 1 << gx link index (9)
+# cobj_links is a 64 bit bitfield starting at 0x20, so to set the low bits (the lower word) we stw at 0x24
+  load r4, 1 << LOGO_GXLINK
+  stw r4, COBJ_LINKS(REG_CAM_GOBJ)
+
+# Load logo JOBJ
+  lwz r3, 0x0 (REG_SLPLOGO)
+  lwz r3, SLPLOGO_LOGO_JOBJDESC (r3)
+  lwz r3, 0x0 (r3)
+  branchl r12, JObj_LoadJoint # (jobj_desc_ptr)
+  mr REG_LOGO_JOBJ,r3
+
+# if widescreen, fix x scale
+  lbz r3, isWidescreen(r13)
+  cmpwi r3, 0
+  beq skipWidescreenFix
+
+# Fix xscale
+  lfs f1, 0x2c(REG_LOGO_JOBJ) # 0x2c = x scale in jobj
+  lfs f2, WIDESCREEN_XSCALE_FACTOR(REG_LOCAL_DATA_ADDR)
+  fmuls f3, f1, f2
+  stfs f3, JOBJ_XSCALE_OFST(REG_LOGO_JOBJ)
+
+# Fix xpos (shift left)
+  lfs f1, 0x38(REG_LOGO_JOBJ) # 0x38 = x pos in jobj
+  lfs f2, WIDESCREEN_XPOS_OFFSET(REG_LOCAL_DATA_ADDR)
+  fadds f3, f1, f2
+  stfs f3, JOBJ_XPOS_OFST(REG_LOGO_JOBJ)
+
+skipWidescreenFix:
+# Add logo JOBJ to GOBJ
+  mr r3, REG_LOGO_GOBJ
+  li r4, 3 # Stolen from training mode
+  mr r5, REG_LOGO_JOBJ
+  branchl r12,0x80390a70 # void GObj_AddObject
+
+# Add GX link that draws the logo
+  mr r3, REG_LOGO_GOBJ
+  load r4, 0x80391070 # GXLink_Common
+  li r5, LOGO_GXLINK # index
+  li r6, 17 # gx_pri
+  branchl r12, GObj_SetupGXLink # void GObj_AddGXLink
 
 #Schedule Function
   bl  PlaybackThink
+  mr r3, REG_LOGO_GOBJ
   mflr  r4      #Function to Run
-  li  r5,0      #Priority
+  li  r5, 0      #Priority
   branchl r12, GObj_AddProc
 
 b Exit
@@ -148,6 +259,8 @@ blrl
     li  r3,0x0
     mr  r4,REG_Text
     branchl r12, Text_DrawEachFrame
+
+    branchl r12, GObj_RunGXLinkMaxCallbacks
   skipDraw:
     li  r3,0x0
     branchl r12, HSD_VICopyXFBASync

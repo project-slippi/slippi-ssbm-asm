@@ -1,6 +1,11 @@
 ################################################################################
 # Macros
 ################################################################################
+.macro loadGlobalFrame reg
+lis \reg, 0x8048
+lwz \reg, -0x62A0(\reg)
+.endm
+
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -191,11 +196,6 @@ lis \reg, 0x8048 # load address to offset from for scene controller
 lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 .endm
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
 # This macro takes in an address that is expected to have a branch instruction. It will set
 # r3 to the address being branched to. This will overwrite r3 and r4
 .macro computeBranchTargetAddress reg address
@@ -272,6 +272,7 @@ add \reg, r3, r4
 .set GObj_RemoveProc,0x8038fed4
 .set GObj_AddToObj,0x80390A70 #(gboj,obj_kind,obj_ptr)
 .set GObj_SetupGXLink, 0x8039069c #(gobj,function,gx_link,priority)
+.set GObj_RunGXLinkMaxCallbacks, 0x80390fc0 #void GObj_RunGXLinkMaxCallbacks(void)
 
 ## AObj Functions
 .set AObj_SetEndFrame, 0x8036532C #(aobj, frame)
