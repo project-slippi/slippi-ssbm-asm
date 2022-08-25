@@ -131,6 +131,9 @@ lwz r5, 0x88(r5) # Load game prep minor scene data
 lbz r3, GPDO_TIEBREAK_GAME_NUM(r5) # Load is_tiebreak
 cmpwi r3, 0
 beq SKIP_TIEBREAK_OVERWRITE # If not a tiebreak, do nothing
+lbz r3, GPDO_LAST_GAME_END_MODE(r5)
+cmpwi r3, 0x7
+beq SKIP_TIEBREAK_OVERWRITE # If last game ended with exit, desync recovery values will be used (set by dolphin)
 
 li r3, 180
 stw r3, 0x10(REG_GAME_INFO_START)
@@ -329,6 +332,20 @@ mtctr r3
 bctrl
 stb r3, RGB_WINNER_IDX(REG_RGB_ADDR)
 
+# Change winner idx to -3 if disconnect detected, -2 if desync detected
+lbz r3, ODB_IS_DISCONNECT_STATE_DISPLAYED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+li r4, -3
+bne OVERWRITE_WINNER_IDX
+lbz r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+li r4, -2
+bne OVERWRITE_WINNER_IDX
+b SKIP_OVERWRITE_WINNER_IDX
+OVERWRITE_WINNER_IDX:
+stb r4, RGB_WINNER_IDX(REG_RGB_ADDR)
+SKIP_OVERWRITE_WINNER_IDX:
+
 # Output the game end method and lras initiator
 load r4, 0x8046b6a0
 lbz r3, 0x8(r4)
@@ -341,6 +358,10 @@ NO_LRAS:
 li r3, -1
 STORE_LRAS_INITIATOR:
 stb r3, RGB_LRAS_INITIATOR(REG_RGB_ADDR)
+
+# Write synced timer for desync recovery
+lwz r4, ODB_DESYNC_RECOVERY_TIMER(REG_ODB_ADDRESS)
+stw r4, RGB_SYNCED_TIMER(REG_RGB_ADDR)
 
 PLAYER_LOOP_INIT:
 li REG_IDX, 0
@@ -361,6 +382,15 @@ stb r4, RGPB_STOCKS_REMAINING(REG_RGPB_ADDR)
 # Store damage done
 lwz r4, 0xC6C+188(r3)
 stw r4, RGPB_DAMAGE_DONE(REG_RGPB_ADDR)
+
+# Write synced stocks and percents for desync recovery
+mulli r5, REG_IDX, DFRE_SIZE
+addi r4, r5, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_STOCKS_REMAINING
+lbzx r4, REG_ODB_ADDRESS, r4
+stb r4, RGPB_SYNCED_STOCKS(REG_RGPB_ADDR)
+addi r4, r5, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_PERCENT
+lhzx r4, REG_ODB_ADDRESS, r4
+sth r4, RGPB_SYNCED_DAMAGE(REG_RGPB_ADDR)
 
 PLAYER_LOOP_INC:
 addi REG_IDX, REG_IDX, 1

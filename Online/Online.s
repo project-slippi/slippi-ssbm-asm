@@ -191,11 +191,27 @@
 .set SFXDB_SIZE, SFXDB_FRAMES + SFXS_FRAME_SIZE * ROLLBACK_MAX_FRAME_COUNT
 
 ################################################################################
+# Desync Recovery
+################################################################################
+# Desync Fighter Recovery Entry
+.set DFRE_STOCKS_REMAINING, 0 # byte
+.set DFRE_PERCENT, DFRE_STOCKS_REMAINING + 1 # u16
+.set DFRE_SIZE, DFRE_PERCENT + 2
+
+################################################################################
 # Desync Detection
 ################################################################################
-.set DESYNC_ENTRY_FRAME, 0 # s32, frame of the checksum
-.set DESYNC_ENTRY_CHECKSUM, DESYNC_ENTRY_FRAME + 4 # u32
-.set DESYNC_ENTRY_SIZE, DESYNC_ENTRY_CHECKSUM + 4
+# Desync Detection Remote Entry
+.set DDRE_FRAME, 0 # s32, frame of the checksum
+.set DDRE_CHECKSUM, DDRE_FRAME + 4 # u32
+.set DDRE_SIZE, DDRE_CHECKSUM + 4
+
+# Desync Detection Local Entry
+.set DDLE_FRAME, 0 # s32, frame of the checksum
+.set DDLE_CHECKSUM, DDLE_FRAME + 4 # u32
+.set DDLE_RECOVERY_TIMER, DDLE_CHECKSUM + 4 # u32. Seconds
+.set DDLE_RECOVERY_FIGHTER_ARR, DDLE_RECOVERY_TIMER + 4 # DFRE_SIZE * 4
+.set DDLE_SIZE, DDLE_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4
 
 # I'm not exactly sure how many local entries we need to keep but our local entries will get
 # compared with the opponents' last stabilized frame which with a lot of ping can come pretty late.
@@ -253,8 +269,10 @@
 .set ODB_REST_STICK_CHANGE_COUNTER, ODB_FINALIZED_FRAME + 4 # u32
 .set ODB_LOCAL_DESYNC_LAST_FRAME, ODB_REST_STICK_CHANGE_COUNTER + 4 # u32
 .set ODB_LOCAL_DESYNC_WRITE_IDX, ODB_LOCAL_DESYNC_LAST_FRAME + 4 # u8
-.set ODB_LOCAL_DESYNC_ARR, ODB_LOCAL_DESYNC_WRITE_IDX + 1  # DESYNC_ENTRY_SIZE * DESYNC_ENTRY_COUNT
-.set ODB_SIZE, ODB_LOCAL_DESYNC_ARR + DESYNC_ENTRY_SIZE * DESYNC_ENTRY_COUNT
+.set ODB_LOCAL_DESYNC_ARR, ODB_LOCAL_DESYNC_WRITE_IDX + 1  # DDLE_SIZE * DESYNC_ENTRY_COUNT
+.set ODB_DESYNC_RECOVERY_TIMER, ODB_LOCAL_DESYNC_ARR + DDLE_SIZE * DESYNC_ENTRY_COUNT # u32
+.set ODB_DESYNC_RECOVERY_FIGHTER_ARR, ODB_DESYNC_RECOVERY_TIMER + 4 # DFRE_SIZE * 4
+.set ODB_SIZE, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
@@ -266,8 +284,8 @@
 
 .set RXB_RESULT, 0 # u8
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
-.set RXB_OPNT_DESYNC_ENTRY, RXB_OPNT_COUNT + 1 # DESYNC_ENTRY_SIZE[3]
-.set RXB_OPNT_FRAME_NUMS, RXB_OPNT_DESYNC_ENTRY + DESYNC_ENTRY_SIZE*3 # s32[3]
+.set RXB_OPNT_DESYNC_ENTRY, RXB_OPNT_COUNT + 1 # DDRE_SIZE[3]
+.set RXB_OPNT_FRAME_NUMS, RXB_OPNT_DESYNC_ENTRY + DDRE_SIZE*3 # s32[3]
 .set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
 .set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
 .set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
@@ -423,7 +441,9 @@
 .set RGPB_SLOT_TYPE, 0 # u8, 0 = Human, 1 = CPU, 2 = Demo, 3 = Empty
 .set RGPB_STOCKS_REMAINING, RGPB_SLOT_TYPE + 1 # byte
 .set RGPB_DAMAGE_DONE, RGPB_STOCKS_REMAINING + 1 # float
-.set RGPB_SIZE, RGPB_DAMAGE_DONE + 4
+.set RGPB_SYNCED_STOCKS, RGPB_DAMAGE_DONE + 4 # byte. confirmed synced frame last stocks
+.set RGPB_SYNCED_DAMAGE, RGPB_SYNCED_STOCKS + 1 # u16. confirmed synced frame last damage
+.set RGPB_SIZE, RGPB_SYNCED_DAMAGE + 2
 
 .set RGB_COMMAND, 0 # byte
 .set RGB_ONLINE_MODE, RGB_COMMAND + 1 # u8
@@ -433,7 +453,8 @@
 .set RGB_WINNER_IDX, RGB_TIEBREAKER_INDEX + 4 # s8
 .set RGB_GAME_END_METHOD, RGB_WINNER_IDX + 1 # u8
 .set RGB_LRAS_INITIATOR, RGB_GAME_END_METHOD + 1 # s8
-.set RGB_P1_RGPB, RGB_LRAS_INITIATOR + 1  # RGPB_SIZE
+.set RGB_SYNCED_TIMER, RGB_LRAS_INITIATOR + 1 # u32
+.set RGB_P1_RGPB, RGB_SYNCED_TIMER + 4 # RGPB_SIZE
 .set RGB_P2_RGPB, RGB_P1_RGPB + RGPB_SIZE # RGPB_SIZE
 .set RGB_P3_RGPB, RGB_P2_RGPB + RGPB_SIZE # RGPB_SIZE
 .set RGB_P4_RGPB, RGB_P3_RGPB + RGPB_SIZE # RGPB_SIZE
@@ -454,7 +475,8 @@
 .set GPDO_COLOR_BAN_ACTIVE, GPDO_LAST_STAGE_WIN_BY_PLAYER + 2 * 2 # bool
 .set GPDO_COLOR_BAN_CHAR, GPDO_COLOR_BAN_ACTIVE + 1 # u8
 .set GPDO_COLOR_BAN_COLOR, GPDO_COLOR_BAN_CHAR + 1 # u8
-.set GPDO_FN_COMPUTE_RANKED_WINNER, GPDO_COLOR_BAN_COLOR + 1 # u32
+.set GPDO_LAST_GAME_END_MODE, GPDO_COLOR_BAN_COLOR + 1 # u8
+.set GPDO_FN_COMPUTE_RANKED_WINNER, GPDO_LAST_GAME_END_MODE + 1 # u32
 .set GPDO_SIZE, GPDO_FN_COMPUTE_RANKED_WINNER + 4
 
 # Warning: When making changes, ensure the offsets above are synced with below
@@ -470,6 +492,7 @@
 .byte 0x0 # GPDO_COLOR_BAN_ACTIVE
 .byte 0x0 # GPDO_COLOR_BAN_CHAR
 .byte 0x0 # GPDO_COLOR_BAN_COLOR
+.byte 0x0 # GPDO_LAST_GAME_END_MODE
 .long 0x0 # GPDO_FN_COMPUTE_RANKED_WINNER
 .align 2
 .endm
