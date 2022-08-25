@@ -186,14 +186,14 @@ stw r3, TXB_FINALIZED_FRAME(REG_TXB_ADDRESS)
 lwz r12, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 li r11, 0
 FIND_CHECKSUM_LOOP_START:
-mulli r3, r11, DESYNC_ENTRY_SIZE
+mulli r3, r11, DDLE_SIZE
 addi r3, r3, ODB_LOCAL_DESYNC_ARR
 add r10, REG_ODB_ADDRESS, r3 
-lwz r3, DESYNC_ENTRY_FRAME(r10)
+lwz r3, DDLE_FRAME(r10)
 cmpw r3, r12
 bne FIND_CHECKSUM_LOOP_CONTINUE
 # Here we have found the desync entry for the latest finalized frame
-lwz r3, DESYNC_ENTRY_CHECKSUM(r10)
+lwz r3, DDLE_CHECKSUM(r10)
 stw r3, TXB_FINALIZED_FRAME_CHECKSUM(REG_TXB_ADDRESS)
 b FIND_CHECKSUM_LOOP_EXIT
 FIND_CHECKSUM_LOOP_CONTINUE:
@@ -262,6 +262,13 @@ stb r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
 b RESP_RES_CONTINUE
 
 SKIP_INPUT:
+# Don't stall the game if the game has already been confirmed to be over. I'm not sure why but
+# sometimes the game end can stall and hopefully this will fix it. Logs look something like:
+# Halting for one frame due to rollback limit (frame: 968 | latest: 0 | finalized: 967)...
+lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)
+cmpwi r3, 1
+beq RESP_RES_CONTINUE
+
 # If we get here that means we are skipping this input. Skipping an input
 # will cause the global frame timer to not increment, allowing for the numbers
 # to sync up between players

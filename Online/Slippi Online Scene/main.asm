@@ -589,6 +589,14 @@ lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_IDLE
 beq VSSceneDecide_SkipRankedHandler
 
+bl GamePrepData_BLRL
+mflr REG_GPD
+
+# Store the result of the last game
+load r4, 0x8046b6a0
+lbz r3, 0x8(r4)
+stb r3, GPDO_LAST_GAME_END_MODE(REG_GPD)
+
 # Get the winner of last game
 bl SinglesDetermineWinner
 mr REG_WINNER_IDX, r3
@@ -596,21 +604,15 @@ cmpwi REG_WINNER_IDX, 0
 bge VSSceneDecide_SkipTieHandler # If winner is not -1, it is not a tie
 
 # Here we have a tie, we want to start a new one-stock, 3 min game
-bl GamePrepData_BLRL
-mflr r6
-
-lbz r3, GPDO_TIEBREAK_GAME_NUM(r6)
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 addi r3, r3, 1
-stb r3, GPDO_TIEBREAK_GAME_NUM(r6)
+stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 
 # Go to the game prep scene, with is tiebreak set to true, it will start a new game
 b VSSceneDecide_MoveToGamePrep
 VSSceneDecide_SkipTieHandler:
 
 # Here we have a conclusive game. Increment game prep game count and scores
-bl GamePrepData_BLRL
-mflr REG_GPD
-
 stb REG_WINNER_IDX, GPDO_PREV_WINNER(REG_GPD) # Store winner index
 
 # Set winner ID at game index
