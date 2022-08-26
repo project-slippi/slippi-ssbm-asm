@@ -100,9 +100,8 @@ branchl r12, SFX_Menu_CommonSound
 
 SOUND_PLAY_END:
 
-
-# uncomment to debug the chat window
-bl FN_CHECK_CHAT_INPUTS
+# comment to disable chat
+#bl FN_CHECK_CHAT_INPUTS
 
 ################################################################################
 # Fork logic based on current connection state
