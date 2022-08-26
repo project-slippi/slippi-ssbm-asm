@@ -349,7 +349,7 @@
         {
           "type": "binary",
           "sourceFile": "Binary/m-ex.bin",
-          "annotation": "m-ex codeset"
+          "annotation": "m-ex codeset generated from https://github.com/JLaferri/m-ex/tree/support%2Fslippi"
         },
         {
           "type": "injectFolder",
