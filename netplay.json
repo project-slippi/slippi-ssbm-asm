@@ -341,6 +341,12 @@
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
         },
         {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CompatibilityHooks/WithMexBase",
+          "isRecursive": true,
+          "annotation": "Our m-ex binary does not include these hooks, so we have to"
+        },
+        {
           "type": "binary",
           "sourceFile": "Binary/m-ex.bin",
           "annotation": "m-ex codeset"

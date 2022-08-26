@@ -608,7 +608,7 @@ lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 addi r3, r3, 1
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
 
-# Go to the game prep scene, with is tiebreak set to true, it will start a new game
+# Go to the game prep scene, when tiebreak num is greater than zero it will redirect to game
 b VSSceneDecide_MoveToGamePrep
 VSSceneDecide_SkipTieHandler:
 
