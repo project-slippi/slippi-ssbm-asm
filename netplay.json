@@ -325,7 +325,7 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Online/Logging",
+          "sourceFolder": "Online/Debugging",
           "isRecursive": true,
           "annotation": "Log injections [Fizzi]"
         },
@@ -339,6 +339,12 @@
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CompatibilityHooks/WithMexBase",
+          "isRecursive": true,
+          "annotation": "Our m-ex binary does not include these hooks, so we have to"
         },
         {
           "type": "binary",

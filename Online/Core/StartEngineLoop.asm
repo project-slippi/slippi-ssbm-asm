@@ -12,6 +12,7 @@
 .set REG_INPUTS_TO_PROCESS, 27 # From parent
 .set REG_INPUT_PROCESS_COUNTER, 26 # From parent
 .set REG_INTERRUPT_IDX, 25
+.set REG_LOOP_IDX, 24
 
 # Replaced code
 branchl r12, HSD_PerfSetStartTime
@@ -148,6 +149,37 @@ mr r3, REG_SUBTEXT_ID
 restore
 blr
 
+################################################################################
+# End game if we are in ranked mode
+################################################################################
+FN_END_GAME_IF_RANKED:
+# Check if we should end game (ranked mode), could maybe check if pause is fully off instead
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+bne FN_END_GAME_IF_RANKED_EXIT
+
+# ASM Notes. Match struct at 0x8046b6a0 has info about the game. The early values seem to be control
+# values. Here are notes on offsets:
+# 0x0 (u8): Control byte. 0 during game, 1 during GAME!, 3 to transition to next scene
+# 0x1 (u8): Stores index of last person that paused
+# 0x8 (u8): Stores type of game exit, instructs which text to show on GAME! screen?
+# 0x30 (u8): Counter that counts up during GAME! screen until it is greater than timeout
+# 0x24D5 (u8): Max time to stay on GAME! screen
+
+lwz r12, OFST_R13_ODB_ADDR(r13) # data buffer address
+
+# Write values which will cause line at 0x8016d2c8 to detect game has ended
+load r3, 0x8046b6a0 # Some static match state struct
+lbz r4, ODB_ONLINE_PLAYER_INDEX(r12)
+stb r4, 0x1(r3) # Write "pauser" index
+li r4, 0x7
+stb r4, 0x8(r3) # Write that the game is exiting as an LRAS
+li r4, 0x37 # Default value for this is 0x6e
+stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it shorter
+
+FN_END_GAME_IF_RANKED_EXIT:
+blr
+
 CODE_START:
 # backup registers and sp
 backup
@@ -204,30 +236,8 @@ bl FN_CREATE_HUD_SUBTEXT
 li r3, 1
 stb r3, ODB_IS_DISCONNECT_STATE_DISPLAYED(REG_ODB_ADDRESS)
 
-# Check if we should end game (ranked mode), could maybe check if pause is fully off instead
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_RANKED
-bne DISPLAY_DISCONNECT_END
-
-# ASM Notes. Match struct at 0x8046b6a0 has info about the game. The early values seem to be control
-# values. Here are notes on offsets:
-# 0x0 (u8): Control byte. 0 during game, 1 during GAME!, 3 to transition to next scene
-# 0x1 (u8): Stores index of last person that paused
-# 0x8 (u8): Stores type of game exit, instructs which text to show on GAME! screen?
-# 0x30 (u8): Counter that counts up during GAME! screen until it is greater than timeout
-# 0x24D5 (u8): Max time to stay on GAME! screen
-
-# Write values which will cause line at 0x8016d2c8 to detect game has ended
-load r3, 0x8046b6a0 # Some static match state struct
-lbz r4, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS)
-stb r4, 0x1(r3) # Write "pauser" index
-li r4, 0x7
-stb r4, 0x8(r3) # Write that the game is exiting as an LRAS
-li r4, 0x37 # Default value for this is 0x6e
-stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it shorter
-
-# Hide HUD
-# branchl r12, 0x802f3394 # Pause_HideHUD
+# This will terminate the game if we're in ranked mode
+bl FN_END_GAME_IF_RANKED
 
 DISPLAY_DISCONNECT_END:
 
@@ -368,34 +378,68 @@ SKIP_DESYNC_WRITE_IDX_ADJUST:
 li r5, DESYNC_ENTRY_COUNT
 adjustCircularIndex r4, r4, r3, r5, r6
 # logf LOG_LEVEL_NOTICE, "Writing checksum for frame %d. Write idx: %d", "mr r5, REG_FRAME_INDEX", "mr r6, 4"
-mulli r4, r4, DESYNC_ENTRY_SIZE
+mulli r4, r4, DDLE_SIZE
 addi r3, r4, ODB_LOCAL_DESYNC_ARR
 add REG_DESYNC_ENTRY_ADDRESS, REG_ODB_ADDRESS, r3
 
 # Write the frame
-stw REG_FRAME_INDEX, DESYNC_ENTRY_FRAME(REG_DESYNC_ENTRY_ADDRESS)
+stw REG_FRAME_INDEX, DDLE_FRAME(REG_DESYNC_ENTRY_ADDRESS)
 
 # Compute and write the checksum
 bl FN_COMPUTE_CHECKSUM
-stw r3, DESYNC_ENTRY_CHECKSUM(REG_DESYNC_ENTRY_ADDRESS)
+stw r3, DDLE_CHECKSUM(REG_DESYNC_ENTRY_ADDRESS)
 # logf LOG_LEVEL_INFO, "Local checksum value %d: %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
+
+# Write timer
+loadwz r3, 0x8046B6C8 # Seconds remaining
+stw r3, DDLE_RECOVERY_TIMER(REG_DESYNC_ENTRY_ADDRESS)
+
+# Write player percents and stocks
+li REG_LOOP_IDX, 0
+
+DESYNC_RECOVERY_STORE_FIGHTER_LOOP_START:
+mr r3, REG_LOOP_IDX
+branchl r12, 0x800342b4 # PlayerBlock_LoadDamage
+mulli r4, REG_LOOP_IDX, DFRE_SIZE
+addi r4, r4, DDLE_RECOVERY_FIGHTER_ARR + DFRE_PERCENT
+sthx r3, REG_DESYNC_ENTRY_ADDRESS, r4
+
+mr r3, REG_LOOP_IDX
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+mulli r4, REG_LOOP_IDX, DFRE_SIZE
+addi r4, r4, DDLE_RECOVERY_FIGHTER_ARR + DFRE_STOCKS_REMAINING
+stbx r3, REG_DESYNC_ENTRY_ADDRESS, r4
+
+addi REG_LOOP_IDX, REG_LOOP_IDX, 1
+cmpwi REG_LOOP_IDX, 4
+blt DESYNC_RECOVERY_STORE_FIGHTER_LOOP_START
+
 SKIP_TAKE_CHECKSUM:
 
 ####################################################################################################
 # Check local checksums against the remote checksums to see if we have a desync
 ####################################################################################################
+# If frame 0, we skip to where desync recovery state is written to ODB using the local state
+# that was just written in the previous section. This is here in case inputs never come in
+# from the opponent for some reason, we want to still do a desync recovery to something that isn't
+# all zeroes
+cmpwi REG_FRAME_INDEX, 0
+beq CHECKSUM_CHECK_PLAYER_LOOP_EXIT
+
+li REG_DESYNC_ENTRY_ADDRESS, 0 # Will be used to store latest confirmed frame
+
 lbz r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
 cmpwi r3, 0
-bne CHECKSUM_CHECK_PLAYER_LOOP_EXIT
+bne DESYNC_CHECK_EXIT
 
 li r12, 0 # Player index
 CHECKSUM_CHECK_PLAYER_LOOP_START:
-mulli r3, r12, DESYNC_ENTRY_SIZE
+mulli r3, r12, DDRE_SIZE
 addi r3, r3, RXB_OPNT_DESYNC_ENTRY
 add r11, REG_REMOTE_RXB, r3 # r11 now stores desync entry address for this remote player
-lwz r10, DESYNC_ENTRY_FRAME(r11) # r10 now contains the desync entry frame
+lwz r10, DDRE_FRAME(r11) # r10 now contains the desync entry frame
 lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
-# logf LOG_LEVEL_ERROR, "[SEL] [%d] Checksum for Idx %d. StableFinalized: %d. Looking for %d -> %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 3", "mr r8, 10", "lwz r9, DESYNC_ENTRY_CHECKSUM(r11)"
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Checksum for Idx %d. StableFinalized: %d. Looking for %d -> %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 3", "mr r8, 10", "lwz r9, DDRE_CHECKSUM(r11)"
 cmpw r10, r3 # If this checksum frame is greater than our stable finalized frame, skip for now
 bgt CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
 cmpwi r10, UNFREEZE_INPUTS_FRAME
@@ -404,21 +448,34 @@ ble CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
 # Now we loop through all of our local frames to find the entry that matches
 li r9, 0
 FIND_CHECKSUM_LOOP_START:
-mulli r3, r9, DESYNC_ENTRY_SIZE
+mulli r3, r9, DDLE_SIZE
 addi r3, r3, ODB_LOCAL_DESYNC_ARR
 add r8, REG_ODB_ADDRESS, r3 # r8 now contains the desync entry for our local player
-lwz r3, DESYNC_ENTRY_FRAME(r8)
+lwz r3, DDLE_FRAME(r8)
 cmpw r10, r3
 bne FIND_CHECKSUM_LOOP_CONTINUE
+
 # Here we have found the desync entry for the latest finalized frame
-lwz r3, DESYNC_ENTRY_CHECKSUM(r8)
-lwz r4, DESYNC_ENTRY_CHECKSUM(r11)
+# Store this desync entry if it is the first encountered
+cmpwi REG_DESYNC_ENTRY_ADDRESS, 0
+beq CONFIRMED_SYNC_SET
+lwz r3, DDLE_FRAME(r8)
+cmpwi r10, r3 # If the current frame is later than the stored one, don't switch
+bge SKIP_CONFIRMED_SYNC_SET
+CONFIRMED_SYNC_SET:
+mr REG_DESYNC_ENTRY_ADDRESS, r8
+SKIP_CONFIRMED_SYNC_SET:
+# Compare remote and local checksums
+lwz r3, DDLE_CHECKSUM(r8)
+lwz r4, DDRE_CHECKSUM(r11)
 # logf LOG_LEVEL_ERROR, "[SEL] [%d] Comparing Checksums. RemoteIdx: %d, Frame: %d, %08x vs %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 10", "mr r8, 3", "mr r9, 4"
+
 cmpw r3, r4
 beq FIND_CHECKSUM_LOOP_EXIT
 
 # Here we have detected a desync, It's okay that we're calling functions here and clobbering the
 # volatile registers because we're about to exit the loops anyway
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, 10"
 
 # Play error sound
 li r3, 3
@@ -434,7 +491,10 @@ bl FN_CREATE_HUD_SUBTEXT
 li r3, 1
 stb r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
 
-b CHECKSUM_CHECK_PLAYER_LOOP_EXIT
+# This will terminate the game if we're in ranked mode
+bl FN_END_GAME_IF_RANKED
+
+b DESYNC_CHECK_EXIT
 FIND_CHECKSUM_LOOP_CONTINUE:
 addi r9, r9, 1
 cmpwi r9, DESYNC_ENTRY_COUNT
@@ -447,6 +507,23 @@ lbz r3, RXB_OPNT_COUNT(REG_REMOTE_RXB)
 cmpw r12, r3
 blt CHECKSUM_CHECK_PLAYER_LOOP_START
 CHECKSUM_CHECK_PLAYER_LOOP_EXIT:
+
+# If we get here, we have not yet desynced, let's then keep track of the latest player damage
+# and percent
+cmpwi REG_DESYNC_ENTRY_ADDRESS, 0
+beq COPY_RECOVERY_VALUES_EXIT
+lwz r3, DDLE_RECOVERY_TIMER(REG_DESYNC_ENTRY_ADDRESS)
+stw r3, ODB_DESYNC_RECOVERY_TIMER(REG_ODB_ADDRESS)
+addi r3, REG_ODB_ADDRESS, ODB_DESYNC_RECOVERY_FIGHTER_ARR
+addi r4, REG_DESYNC_ENTRY_ADDRESS, DDLE_RECOVERY_FIGHTER_ARR
+li r5, DFRE_SIZE * 4
+branchl r12, memcpy
+# logf LOG_LEVEL_NOTICE, "[SEL] [%d] Stored Synced State from frame %d. Timer: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, DDLE_FRAME(REG_DESYNC_ENTRY_ADDRESS)", "lwz r7, ODB_DESYNC_RECOVERY_TIMER(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "[SEL] F1: %d (%d%%), F2: %d (%d%%)", "lbz r5, ODB_DESYNC_RECOVERY_FIGHTER_ARR+0*DFRE_SIZE+DFRE_STOCKS_REMAINING(REG_ODB_ADDRESS)", "lhz r6, ODB_DESYNC_RECOVERY_FIGHTER_ARR+0*DFRE_SIZE+DFRE_PERCENT(REG_ODB_ADDRESS)", "lbz r7, ODB_DESYNC_RECOVERY_FIGHTER_ARR+1*DFRE_SIZE+DFRE_STOCKS_REMAINING(REG_ODB_ADDRESS)", "lhz r8, ODB_DESYNC_RECOVERY_FIGHTER_ARR+1*DFRE_SIZE+DFRE_PERCENT(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "[SEL] F3: %d (%d%%), F4: %d (%d%%)", "lbz r5, ODB_DESYNC_RECOVERY_FIGHTER_ARR+2*DFRE_SIZE+DFRE_STOCKS_REMAINING(REG_ODB_ADDRESS)", "lhz r6, ODB_DESYNC_RECOVERY_FIGHTER_ARR+2*DFRE_SIZE+DFRE_PERCENT(REG_ODB_ADDRESS)", "lbz r7, ODB_DESYNC_RECOVERY_FIGHTER_ARR+3*DFRE_SIZE+DFRE_STOCKS_REMAINING(REG_ODB_ADDRESS)", "lhz r8, ODB_DESYNC_RECOVERY_FIGHTER_ARR+3*DFRE_SIZE+DFRE_PERCENT(REG_ODB_ADDRESS)"
+COPY_RECOVERY_VALUES_EXIT:
+
+DESYNC_CHECK_EXIT:
 
 ################################################################################
 # Check if we should capture state. We need to do this after the rollback

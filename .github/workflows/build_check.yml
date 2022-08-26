@@ -2,13 +2,9 @@ name: Build Check
 
 on:
   push:
-    paths-ignore:
-      - "**.md"
     branches:
       - "**"
   pull_request:
-    paths-ignore:
-      - "**.md"
     branches:
       - "**"
 
