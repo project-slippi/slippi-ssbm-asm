@@ -76,6 +76,7 @@ INIT_BUTTON:
 .set REG_ICON_JOBJ, 21
 .set REG_DATA_BUFFER, 23
 backup
+fbackup 2
 
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 
@@ -225,6 +226,8 @@ lwz r3, 0x08(r3) # offset to Dobj's mobj
 fmr f1, REG_F_0 # float 0.0
 branchl r12, 0x80363C2C # HSD_MObjSetAlpha(mobj, float alpha)
 
+
+frestore 2
 restore
 b EXIT
 ################################################################################

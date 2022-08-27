@@ -22,6 +22,7 @@
 .set REG_LABEL_STRING, 20
 .set REG_CUR_SUBTEXT_IDX, 21
 
+# float registers
 .set REG_POS_X_START, 31
 .set REG_POS_Y_START, 30
 
@@ -282,6 +283,7 @@ b EXIT
 ################################################################################
 INIT_PLAYER_TEXT:
 backup
+fbackup 1
 
 fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
@@ -349,6 +351,7 @@ blt INIT_PLAYER_NAME_LOOP_START
 
 
 INIT_PLAYER_TEXT_EXIT:
+frestore 1
 restore
 blr
 

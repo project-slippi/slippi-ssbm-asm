@@ -26,8 +26,8 @@
 .set REG_JOBJ_DESC_SHAPE_JOINT_ADDR, REG_JOBJ_DESC_MAT_JOINT_ADDR+1
 
 # float registers
-.set REG_F_0, 22
-.set REG_F_1, 23
+.set REG_F_0, 31
+.set REG_F_1, 30
 
 # Dialog Constants
 .set DLG_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
@@ -524,6 +524,7 @@ blrl
 FN_CREATE_DIALOG:
 
 backup
+fbackup 2
 
 # load jobjects in memory
 lwz r3, archiveDataBuffer(r13)
@@ -683,6 +684,7 @@ mflr r4 # Function
 li r5, 15 # Priority
 branchl	r12, GObj_AddProc
 
+frestore 2
 restore
 blr
 
@@ -695,6 +697,7 @@ blr
 FN_LogoutDialogThink: #801978fc
 blrl
 backup
+fbackup 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -847,6 +850,8 @@ b FN_LogoutDialogThink_Exit
 
 FN_LogoutDialogThink_Exit:
 
+
+frestore 2
 restore
 blr
 
