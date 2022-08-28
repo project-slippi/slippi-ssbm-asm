@@ -385,7 +385,7 @@ b EXIT
 # Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
-.set SP_OFST_Y_POS, 0x38
+.set SP_OFST_Y_POS, BKP_FREE_SPACE_OFFSET
 backup
 stfs f3, SP_OFST_Y_POS(sp)
 
