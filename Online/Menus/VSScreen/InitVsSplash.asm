@@ -283,7 +283,7 @@ b EXIT
 ################################################################################
 INIT_PLAYER_TEXT:
 backup
-fbackup 1
+fbackup 2
 
 fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
@@ -351,7 +351,7 @@ blt INIT_PLAYER_NAME_LOOP_START
 
 
 INIT_PLAYER_TEXT_EXIT:
-frestore 1
+frestore 2
 restore
 blr
 
