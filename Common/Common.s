@@ -68,167 +68,150 @@ subf \reg, \reg_temp, \reg
 branchl r12, 0x8021b2d8
 .endm
 
-.set BKP_FREE_SPACE_OFFSET, 0x38 # This is where the free space in our stack starts
+# This is where the free space in our stack starts when using the default args. Note that if you
+# use a custom arg for num_reg, you will have to calculate your own free space offset
+# using the function: 8 + (num_reg * 4)
+.set BKP_DEFAULT_FREE_SPACE_OFFSET, 8 + (12 * 4)
 
-.macro backup space=0x78
+# backup is used to set up a stack frame in which LR and non-volatile registers will be stored.
+# It also sets up some free space on the stack for the function to use if needed.
+# More info: https://docs.google.com/document/d/1QJOQzy933fxpfzIJlq6xopcviZ5tALKQvi_OOqpjehE
+.macro backup free_space=0x78, num_freg=0, num_reg=12
 mflr r0
 stw r0, 0x4(r1)
-# Stack allocation has to be 4-byte aligned otherwise it crashes on console
-.if \space % 4 == 0
-  stwu r1,-(BKP_FREE_SPACE_OFFSET + \space)(r1)	# make space for 12 registers
-.else
-  stwu r1,-(BKP_FREE_SPACE_OFFSET + \space + (4 - \space % 4))(r1)	# make space for 12 registers
-.endif
-stmw r20,0x8(r1)
-.endm
-
-.macro restore space=0x78
-lmw r20,0x8(r1)
-# Stack allocation has to be 4-byte aligned otherwise it crashes on console
-.if \space % 4 == 0
-  lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space)(r1)
-  addi r1,r1,BKP_FREE_SPACE_OFFSET + \space	# release the space
-.else
-  lwz r0, (BKP_FREE_SPACE_OFFSET + 0x4 + \space + (4 - \space % 4))(r1)
-  addi r1,r1,BKP_FREE_SPACE_OFFSET + \space + (4 - \space % 4)	# release the space
-.endif
-mtlr r0
-.endm
-
-.set F_BKP_FREE_SPACE_OFFSET, 0xE0 # This is where the free space in our stack starts
-
-# fbackup can be used to backup/restore float registers and also does normal registers from r14
-# instead of normal backup for which registers 14-19 are unsafe to use
-.macro fbackup num_freg=0, free_space=0x10
-mflr r0
-stw r0, 0x4(r1)
-# Stack allocation has to be 4-byte aligned otherwise it crashes on console
+# Stack allocation has to be 4-byte aligned otherwise it crashes on console. This section
+# makes space for the back chain, LR, non-volatile registers, and free space
 .if \free_space % 4 == 0
-  stwu r1,-(F_BKP_FREE_SPACE_OFFSET + \free_space)(r1)	# make space for 12 registers
+  .set ALIGNED_FREE_SPACE, \free_space
 .else
-  stwu r1,-(F_BKP_FREE_SPACE_OFFSET + \free_space + (4 - \free_space % 4))(r1)	# make space for 12 registers
+  .set ALIGNED_FREE_SPACE, \free_space + (4 - \free_space % 4)
 .endif
-stmw r14,0x8(r1)
+stwu r1,-(0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg)(r1)
+.if \num_reg > 0
+  stmw 32 - \num_reg, 0x8(r1)
+.endif
 .if \num_freg > 0
-  stfd f31, 0x50(r1)
+  stfd f31, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 0)(r1)
 .endif
 .if \num_freg > 1
-  stfd f30, 0x58(r1)
+  stfd f30, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 1)(r1)
 .endif
 .if \num_freg > 2
-  stfd f29, 0x60(r1)
+  stfd f29, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 2)(r1)
 .endif
 .if \num_freg > 3
-  stfd f28, 0x68(r1)
+  stfd f28, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 3)(r1)
 .endif
 .if \num_freg > 4
-  stfd f27, 0x70(r1)
+  stfd f27, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 4)(r1)
 .endif
 .if \num_freg > 5
-  stfd f26, 0x78(r1)
+  stfd f26, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 5)(r1)
 .endif
 .if \num_freg > 6
-  stfd f25, 0x80(r1)
+  stfd f25, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 6)(r1)
 .endif
 .if \num_freg > 7
-  stfd f24, 0x88(r1)
+  stfd f24, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 7)(r1)
 .endif
 .if \num_freg > 8
-  stfd f23, 0x90(r1)
+  stfd f23, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 8)(r1)
 .endif
 .if \num_freg > 9
-  stfd f22, 0x98(r1)
+  stfd f22, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 9)(r1)
 .endif
 .if \num_freg > 10
-  stfd f21, 0xA0(r1)
+  stfd f21, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 10)(r1)
 .endif
 .if \num_freg > 11
-  stfd f20, 0xA8(r1)
+  stfd f20, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 11)(r1)
 .endif
 .if \num_freg > 12
-  stfd f19, 0xB0(r1)
+  stfd f19, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 12)(r1)
 .endif
 .if \num_freg > 13
-  stfd f18, 0xB8(r1)
+  stfd f18, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 13)(r1)
 .endif
 .if \num_freg > 14
-  stfd f17, 0xC0(r1)
+  stfd f17, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 14)(r1)
 .endif
 .if \num_freg > 15
-  stfd f16, 0xC8(r1)
+  stfd f16, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 15)(r1)
 .endif
 .if \num_freg > 16
-  stfd f15, 0xD0(r1)
+  stfd f15, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 16)(r1)
 .endif
 .if \num_freg > 17
-  stfd f14, 0xD8(r1)
+  stfd f14, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 17)(r1)
 .endif
 .endm
 
-.macro frestore num_freg=0, free_space=0x10
-lmw r14,0x8(r1)
-.if \num_freg > 0
-  lfd f31, 0x50(r1)
-.endif
-.if \num_freg > 1
-  lfd f30, 0x58(r1)
-.endif
-.if \num_freg > 2
-  lfd f29, 0x60(r1)
-.endif
-.if \num_freg > 3
-  lfd f28, 0x68(r1)
-.endif
-.if \num_freg > 4
-  lfd f27, 0x70(r1)
-.endif
-.if \num_freg > 5
-  lfd f26, 0x78(r1)
-.endif
-.if \num_freg > 6
-  lfd f25, 0x80(r1)
-.endif
-.if \num_freg > 7
-  lfd f24, 0x88(r1)
-.endif
-.if \num_freg > 8
-  lfd f23, 0x90(r1)
-.endif
-.if \num_freg > 9
-  lfd f22, 0x98(r1)
-.endif
-.if \num_freg > 10
-  lfd f21, 0xA0(r1)
-.endif
-.if \num_freg > 11
-  lfd f20, 0xA8(r1)
-.endif
-.if \num_freg > 12
-  lfd f19, 0xB0(r1)
-.endif
-.if \num_freg > 13
-  lfd f18, 0xB8(r1)
-.endif
-.if \num_freg > 14
-  lfd f17, 0xC0(r1)
-.endif
-.if \num_freg > 15
-  lfd f16, 0xC8(r1)
-.endif
-.if \num_freg > 16
-  lfd f15, 0xD0(r1)
-.endif
-.if \num_freg > 17
-  lfd f14, 0xD8(r1)
-.endif
+.macro restore free_space=0x78, num_freg=0, num_reg=12
 # Stack allocation has to be 4-byte aligned otherwise it crashes on console
 .if \free_space % 4 == 0
-  lwz r0, (F_BKP_FREE_SPACE_OFFSET + 0x4 + \free_space)(r1)
-  addi r1,r1,F_BKP_FREE_SPACE_OFFSET + \free_space	# release the space
+  .set ALIGNED_FREE_SPACE, \free_space
 .else
-  lwz r0, (F_BKP_FREE_SPACE_OFFSET + 0x4 + \free_space + (4 - \free_space % 4))(r1)
-  addi r1,r1,F_BKP_FREE_SPACE_OFFSET + \free_space + (4 - \free_space % 4)	# release the space
+  .set ALIGNED_FREE_SPACE, \free_space + (4 - \free_space % 4)
 .endif
+.if \num_reg > 0
+  lmw 32 - \num_reg, 0x8(r1)
+.endif
+.if \num_freg > 0
+  lfd f31, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 0)(r1)
+.endif
+.if \num_freg > 1
+  lfd f30, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 1)(r1)
+.endif
+.if \num_freg > 2
+  lfd f29, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 2)(r1)
+.endif
+.if \num_freg > 3
+  lfd f28, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 3)(r1)
+.endif
+.if \num_freg > 4
+  lfd f27, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 4)(r1)
+.endif
+.if \num_freg > 5
+  lfd f26, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 5)(r1)
+.endif
+.if \num_freg > 6
+  lfd f25, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 6)(r1)
+.endif
+.if \num_freg > 7
+  lfd f24, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 7)(r1)
+.endif
+.if \num_freg > 8
+  lfd f23, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 8)(r1)
+.endif
+.if \num_freg > 9
+  lfd f22, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 9)(r1)
+.endif
+.if \num_freg > 10
+  lfd f21, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 10)(r1)
+.endif
+.if \num_freg > 11
+  lfd f20, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 11)(r1)
+.endif
+.if \num_freg > 12
+  lfd f19, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 12)(r1)
+.endif
+.if \num_freg > 13
+  lfd f18, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 13)(r1)
+.endif
+.if \num_freg > 14
+  lfd f17, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 14)(r1)
+.endif
+.if \num_freg > 15
+  lfd f16, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 15)(r1)
+.endif
+.if \num_freg > 16
+  lfd f15, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 16)(r1)
+.endif
+.if \num_freg > 17
+  lfd f14, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 17)(r1)
+.endif
+lwz r0, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg + 0x4)(r1)
+addi r1, r1, 0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg	# release the space
 mtlr r0
 .endm
 

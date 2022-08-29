@@ -385,7 +385,7 @@ b EXIT
 # Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
-.set SP_OFST_Y_POS, BKP_FREE_SPACE_OFFSET
+.set SP_OFST_Y_POS, BKP_DEFAULT_FREE_SPACE_OFFSET
 backup
 stfs f3, SP_OFST_Y_POS(sp)
 
@@ -1169,8 +1169,7 @@ blr
 CSS_ONLINE_CHAT_THINK:
 blrl
 mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
-backup
-fbackup 2
+backup 0x78, 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -1387,8 +1386,7 @@ stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 CSS_ONLINE_CHAT_CHECK_EXIT:
 
 
-frestore 2
-restore
+restore 0x78, 2
 blr
 
 
