@@ -46,7 +46,7 @@
 .set JOBJ_DESC_DLG_ANIM_JOINT, 0x803efa24 # archive memory address of dialog anim joint
 .set JOBJ_DESC_DLG_MAT_JOINT, 0x803efa40 # archive memory address of dialog mat joint
 .set JOBJ_DESC_DLG_SHAPE_JOINT, 0x803efa60 # archive memory address of dialog shape joint
-.set JOBJ_CHILD_OFFSET, BKP_DEFAULT_FREE_SPACE_OFFSET # Pointer to store Child JOBJ on the SP
+.set JOBJ_CHILD_OFFSET, BKP_FREE_SPACE_OFFSET # Pointer to store Child JOBJ on the SP
 
 # Offset from submenu gobj where we are storing dialog user data buffer when
 # open

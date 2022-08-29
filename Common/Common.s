@@ -61,15 +61,14 @@ subf \reg, \reg_temp, \reg
 branchl r12, 0x8021b2d8
 .endm
 
-# This is where the free space in our stack starts when using the default args. Note that if you
-# use a custom arg for num_reg, you will have to calculate your own free space offset
-# using the function: 8 + (num_reg * 4)
-.set BKP_DEFAULT_FREE_SPACE_OFFSET, 8 + (12 * 4)
+# This is where the free space in our stack frame starts
+.set BKP_FREE_SPACE_OFFSET, 8
+.set BKP_DEFAULT_STACK_FRAME_SIZE, 0xE0
 
 # backup is used to set up a stack frame in which LR and non-volatile registers will be stored.
 # It also sets up some free space on the stack for the function to use if needed.
 # More info: https://docs.google.com/document/d/1QJOQzy933fxpfzIJlq6xopcviZ5tALKQvi_OOqpjehE
-.macro backup free_space=0x78, num_freg=0, num_reg=12
+.macro backup free_space=0xA8, num_freg=0, num_reg=12
 mflr r0
 stw r0, 0x4(r1)
 # Stack allocation has to be 4-byte aligned otherwise it crashes on console. This section
@@ -81,7 +80,7 @@ stw r0, 0x4(r1)
 .endif
 stwu r1,-(0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg)(r1)
 .if \num_reg > 0
-  stmw 32 - \num_reg, 0x8(r1)
+  stmw 32 - \num_reg, (0x8 + ALIGNED_FREE_SPACE)(r1)
 .endif
 .if \num_freg > 0
   stfd f31, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 0)(r1)
@@ -139,7 +138,7 @@ stwu r1,-(0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg)(r1)
 .endif
 .endm
 
-.macro restore free_space=0x78, num_freg=0, num_reg=12
+.macro restore free_space=0xA8, num_freg=0, num_reg=12
 # Stack allocation has to be 4-byte aligned otherwise it crashes on console
 .if \free_space % 4 == 0
   .set ALIGNED_FREE_SPACE, \free_space
@@ -147,7 +146,7 @@ stwu r1,-(0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg)(r1)
   .set ALIGNED_FREE_SPACE, \free_space + (4 - \free_space % 4)
 .endif
 .if \num_reg > 0
-  lmw 32 - \num_reg, 0x8(r1)
+  lmw 32 - \num_reg, (0x8 + ALIGNED_FREE_SPACE)(r1)
 .endif
 .if \num_freg > 0
   lfd f31, (0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * 0)(r1)

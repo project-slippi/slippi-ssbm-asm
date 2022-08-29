@@ -32,7 +32,7 @@ bne EXIT
 .set REG_IGDB_ADDR, 31
 .set REG_CUR_REPORT_IGDB_OFST, 30
 
-.set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
+.set CONST_BACKUP_BYTES, BKP_DEFAULT_STACK_FRAME_SIZE # Maybe add this to Common.s
 .set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
 
 backup
@@ -48,7 +48,7 @@ ble RESTORE_EXIT
 ################################################################################
 # Copy current inputs to temporary location
 ################################################################################
-addi r3, sp, BKP_DEFAULT_FREE_SPACE_OFFSET
+addi r3, sp, BKP_FREE_SPACE_OFFSET
 addi r4, sp, P1_PAD_OFFSET
 li r5, PADS_REPORT_SIZE
 branchl r12, memcpy
@@ -71,7 +71,7 @@ branchl r12, memcpy
 # Store current inputs to use X frames later
 ################################################################################
 add r3, REG_IGDB_ADDR, REG_CUR_REPORT_IGDB_OFST
-addi r4, sp, BKP_DEFAULT_FREE_SPACE_OFFSET
+addi r4, sp, BKP_FREE_SPACE_OFFSET
 li r5, PADS_REPORT_SIZE
 branchl r12, memcpy
 

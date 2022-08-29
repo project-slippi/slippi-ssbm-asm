@@ -5,7 +5,7 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
+.set CONST_BACKUP_BYTES, BKP_DEFAULT_STACK_FRAME_SIZE # Maybe add this to Common.s
 .set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
 
 .set REG_LOCAL_SOURCE_INPUT, 29
