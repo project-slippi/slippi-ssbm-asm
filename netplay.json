@@ -17,6 +17,7 @@
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
         "$Recommended: Apply Delay to all In-Game Scenes",
+        "$Recommended: Lagless FoD",
         "",
         "[Gecko]"
       ]
@@ -38,6 +39,7 @@
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
         "$Recommended: Apply Delay to all In-Game Scenes",
+        "$Recommended: Lagless FoD",
         "",
         "[Gecko]"
       ]
@@ -175,11 +177,6 @@
           "sourceFolder": "External/DPad Down at CSS for Random Stage",
           "isRecursive": true,
           "annotation": "DPad Down at CSS for Random Stage"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
-          "annotation": "Lagless FoD [Achilles, Myougi, Dan Salvato]"
         },
         {
           "type": "binary",
@@ -401,6 +398,24 @@
           "sourceFolder": "Common/GetCommonMinorID",
           "isRecursive": true,
           "annotation": "Static function for obtaining common minor ID"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Lagless FoD",
+      "authors": [
+        "Achilles",
+        "Myougi",
+        "Dan Salvato"
+      ],
+      "description": [
+        "Disables particles and reflection on FoD to improve performance"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
+          "annotation": "Lagless FoD"
         }
       ]
     },
