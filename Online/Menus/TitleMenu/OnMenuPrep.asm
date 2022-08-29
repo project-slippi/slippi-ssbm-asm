@@ -26,8 +26,8 @@
 .set REG_JOBJ_DESC_SHAPE_JOINT_ADDR, REG_JOBJ_DESC_MAT_JOINT_ADDR+1
 
 # float registers
-.set REG_F_0, 22
-.set REG_F_1, 23
+.set REG_F_0, 31
+.set REG_F_1, 30
 
 # Dialog Constants
 .set DLG_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
@@ -46,7 +46,7 @@
 .set JOBJ_DESC_DLG_ANIM_JOINT, 0x803efa24 # archive memory address of dialog anim joint
 .set JOBJ_DESC_DLG_MAT_JOINT, 0x803efa40 # archive memory address of dialog mat joint
 .set JOBJ_DESC_DLG_SHAPE_JOINT, 0x803efa60 # archive memory address of dialog shape joint
-.set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
+.set JOBJ_CHILD_OFFSET, BKP_FREE_SPACE_OFFSET # Pointer to store Child JOBJ on the SP
 
 # Offset from submenu gobj where we are storing dialog user data buffer when
 # open
@@ -522,8 +522,7 @@ blrl
 .short 0x0000
 
 FN_CREATE_DIALOG:
-
-backup
+backup 0x78, 2
 
 # load jobjects in memory
 lwz r3, archiveDataBuffer(r13)
@@ -683,7 +682,7 @@ mflr r4 # Function
 li r5, 15 # Priority
 branchl	r12, GObj_AddProc
 
-restore
+restore 0x78, 2
 blr
 
 
@@ -694,7 +693,7 @@ blr
 ################################################################################
 FN_LogoutDialogThink: #801978fc
 blrl
-backup
+backup 0x78, 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -847,7 +846,8 @@ b FN_LogoutDialogThink_Exit
 
 FN_LogoutDialogThink_Exit:
 
-restore
+
+restore 0x78, 2
 blr
 
 ################################################################################
