@@ -592,7 +592,7 @@ bl FN_UPDATE_TEXT
 # Manage Chat Messages: If there's a new message, then initialize a
 # disappearing text
 ################################################################################
-
+b SKIP_CHAT_MESSAGES
 .set REG_MSG_ID, REG_VARIOUS_1 # REG_MSG_ID will store chat message id
 .set REG_USER_STRING, REG_VARIOUS_2 # REG_USER_STRING will store the user name string memory address
 
