@@ -385,9 +385,9 @@ b EXIT
 # Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
+.set SP_OFST_Y_POS, BKP_DEFAULT_FREE_SPACE_OFFSET
 backup
-
-fmr f13, f3
+stfs f3, SP_OFST_Y_POS(sp)
 
 # Init line text
 mr r3, REG_TEXT_STRUCT
@@ -405,7 +405,7 @@ addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE
 li r5, 0
 lfs f1, TPO_SPINNER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
-fmr f3, f13
+lfs f3, SP_OFST_Y_POS(sp)
 addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, FG_CreateSubtext
 
@@ -592,7 +592,7 @@ bl FN_UPDATE_TEXT
 # Manage Chat Messages: If there's a new message, then initialize a
 # disappearing text
 ################################################################################
-
+b SKIP_CHAT_MESSAGES
 .set REG_MSG_ID, REG_VARIOUS_1 # REG_MSG_ID will store chat message id
 .set REG_USER_STRING, REG_VARIOUS_2 # REG_USER_STRING will store the user name string memory address
 
@@ -1160,8 +1160,8 @@ blr
 .set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
 .set REG_CHATMSG_PLAYER_INDEX, REG_CHATMSG_MSG_STRING_ADDR+1
 # float registers
-.set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
-.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
+.set REG_CHATMSG_TEXT_X_POS, 31
+.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS-1
 
 # offsets
 .set JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
@@ -1169,7 +1169,7 @@ blr
 CSS_ONLINE_CHAT_THINK:
 blrl
 mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
-backup
+backup 0x78, 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -1384,7 +1384,9 @@ li r3, 0
 stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 
 CSS_ONLINE_CHAT_CHECK_EXIT:
-restore
+
+
+restore 0x78, 2
 blr
 
 

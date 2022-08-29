@@ -158,8 +158,8 @@ HANDLE_C2:
   sub r3, r4, REG_TargetDataPtr
   rlwinm r3, r3, 0, 6, 29
   oris r3, r3, 0x4800
-  stw r3, BKP_FREE_SPACE_OFFSET(sp)
-  addi REG_SourceDataPtr, sp, BKP_FREE_SPACE_OFFSET
+  stw r3, BKP_DEFAULT_FREE_SPACE_OFFSET(sp)
+  addi REG_SourceDataPtr, sp, BKP_DEFAULT_FREE_SPACE_OFFSET
 
   # C2 Step 2: Replace branch instruction in gecko code to return to correct loc
   lwz r3, 0x4(REG_CodeAddress)

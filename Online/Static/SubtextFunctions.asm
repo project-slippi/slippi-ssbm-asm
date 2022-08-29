@@ -49,15 +49,12 @@
 .set TEXT_LAST_INDEX, 0
 
 # Stack pointer offsets
-.set SPO_STRING_PTR_1, F_BKP_FREE_SPACE_OFFSET
+.set SPO_STRING_PTR_1, BKP_DEFAULT_FREE_SPACE_OFFSET
 .set SPO_STRING_PTR_2, SPO_STRING_PTR_1 + 4
 .set SPO_STRING_PTR_3, SPO_STRING_PTR_2 + 4
 .set SPO_STRING_PTR_4, SPO_STRING_PTR_3 + 4
 .set SPO_STRING_PTR_5, SPO_STRING_PTR_4 + 4
 .set SPO_STRING_PTR_6, SPO_STRING_PTR_5 + 4
-
-# Request an extra 0x10. It shouldn't be required but im scared of grabbing the exact amount
-.set STACK_SPACE_NEEDED, 0x10 + (SPO_STRING_PTR_6 + 4) - F_BKP_FREE_SPACE_OFFSET
 
 # check which function to run
 cmpwi r5, 2
@@ -67,8 +64,7 @@ beq FN_CREATE_PREMADE_TEXT
 # FN_CREATE_SUBTEXT
 ################################################################################
 FN_CREATE_SUBTEXT:
-
-fbackup 6, STACK_SPACE_NEEDED
+backup 0x78, 6
 
 # Save arguments
 mr REG_TEXT_STRUCT_ADDR, r3
@@ -224,14 +220,14 @@ FN_CREATE_SUBTEXT_END:
 
 # Return subtext index
 mr r3, REG_SUBTEXT_INDEX
-frestore 6, STACK_SPACE_NEEDED
+restore 0x78, 6
 blr
 
 ################################################################################
 # FN_CREATE_PREMADE_TEXT
 ################################################################################
 FN_CREATE_PREMADE_TEXT:
-fbackup 4
+backup 0x78, 4
 
 # Save arguments
 mr REG_TEXT_ID, r3
@@ -279,7 +275,7 @@ branchl r12, Text_CopyPremadeTextDataToStruct
 # return text struct address
 mr r3, REG_TEXT_STRUCT_ADDR
 
-frestore 4
+restore 0x78, 4
 blr
 
 ################################################################################
