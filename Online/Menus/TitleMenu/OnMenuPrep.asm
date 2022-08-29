@@ -522,7 +522,6 @@ blrl
 .short 0x0000
 
 FN_CREATE_DIALOG:
-
 backup 0x78, 2
 
 # load jobjects in memory
