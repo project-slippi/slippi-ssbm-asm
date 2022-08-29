@@ -20,13 +20,6 @@ lis \reg, \address @h
 ori \reg, \reg, \address @l
 .endm
 
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
-
 .macro loadwz reg, address
 lis \reg, \address @h
 ori \reg, \reg, \address @l
