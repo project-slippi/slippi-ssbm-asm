@@ -63,7 +63,6 @@ branchl r12, 0x8021b2d8
 
 # This is where the free space in our stack frame starts
 .set BKP_FREE_SPACE_OFFSET, 8
-.set BKP_DEFAULT_STACK_FRAME_SIZE, 0xE0
 
 # backup is used to set up a stack frame in which LR and non-volatile registers will be stored.
 # It also sets up some free space on the stack for the function to use if needed.
