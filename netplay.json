@@ -17,6 +17,7 @@
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
         "$Recommended: Apply Delay to all In-Game Scenes",
+        "$Recommended: Lagless FoD",
         "",
         "[Gecko]"
       ]
@@ -38,6 +39,7 @@
         "$Required: Slippi Online",
         "$Recommended: Normal Lag Reduction",
         "$Recommended: Apply Delay to all In-Game Scenes",
+        "$Recommended: Lagless FoD",
         "",
         "[Gecko]"
       ]
@@ -175,11 +177,6 @@
           "sourceFolder": "External/DPad Down at CSS for Random Stage",
           "isRecursive": true,
           "annotation": "DPad Down at CSS for Random Stage"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
-          "annotation": "Lagless FoD [Achilles, Myougi, Dan Salvato]"
         },
         {
           "type": "binary",
@@ -325,7 +322,7 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Online/Logging",
+          "sourceFolder": "Online/Debugging",
           "isRecursive": true,
           "annotation": "Log injections [Fizzi]"
         },
@@ -342,9 +339,14 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/CompatibilityHooks",
+          "sourceFolder": "Common/CompatibilityHooks/WithMexBase",
           "isRecursive": true,
-          "annotation": "Functions that can be externally modified"
+          "annotation": "Our m-ex binary does not include these hooks, so we have to"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/m-ex.bin",
+          "annotation": "m-ex codeset generated from https://github.com/JLaferri/m-ex/tree/support%2Fslippi"
         },
         {
           "type": "injectFolder",
@@ -396,6 +398,24 @@
           "sourceFolder": "Common/GetCommonMinorID",
           "isRecursive": true,
           "annotation": "Static function for obtaining common minor ID"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Lagless FoD",
+      "authors": [
+        "Achilles",
+        "Myougi",
+        "Dan Salvato"
+      ],
+      "description": [
+        "Disables particles and reflection on FoD to improve performance"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
+          "annotation": "Lagless FoD"
         }
       ]
     },

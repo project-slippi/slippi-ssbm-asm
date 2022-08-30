@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_gameplay_wobbling.bin"
+    },
+    {
+      "file": "Output/Console/g_gameplay_wobbling.txt"
     }
   ],
   "codes": [

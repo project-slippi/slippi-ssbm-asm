@@ -31,11 +31,16 @@ bne EXIT
 ################################################################################
 .set REG_IGDB_ADDR, 31
 .set REG_CUR_REPORT_IGDB_OFST, 30
+.set REG_PARENT_STACK_FRAME, 29
 
-.set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
-.set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
+
+# This is the offset of P1's inputs from the start of the parent's stack frame
+.set P1_PAD_OFFSET, 0x2C
 
 backup
+
+# Load the address of the parent's stack frame
+lwz REG_PARENT_STACK_FRAME, 0(sp)
 
 computeBranchTargetAddress r3, INJ_InitInGameDelay
 lwz REG_IGDB_ADDR, 0x8(r3) # Loads the address of the buffer
@@ -49,7 +54,7 @@ ble RESTORE_EXIT
 # Copy current inputs to temporary location
 ################################################################################
 addi r3, sp, BKP_FREE_SPACE_OFFSET
-addi r4, sp, P1_PAD_OFFSET
+addi r4, REG_PARENT_STACK_FRAME, P1_PAD_OFFSET
 li r5, PADS_REPORT_SIZE
 branchl r12, memcpy
 
@@ -62,7 +67,7 @@ mulli r3, r3, PADS_REPORT_SIZE
 addi REG_CUR_REPORT_IGDB_OFST, r3, IGDB_PAD_BUFFER
 
 # Overwrite
-addi r3, sp, P1_PAD_OFFSET
+addi r3, REG_PARENT_STACK_FRAME, P1_PAD_OFFSET
 add r4, REG_IGDB_ADDR, REG_CUR_REPORT_IGDB_OFST
 li r5, PADS_REPORT_SIZE
 branchl r12, memcpy

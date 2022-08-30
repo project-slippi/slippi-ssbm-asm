@@ -26,25 +26,25 @@ mr REG_CostumeID,r5
 mr REG_isNull,r6
 
 # get CSS icon data
-branchl r12,FN_GetCSSIconData
-mr r5,r3
+  branchl r12,FN_GetCSSIconData
+  mr r5,r3
 # get port's icon ID
-mulli r3,REG_PlayerID,36   # port index
-load r4,0x803f0a48
-add r4,r3,r4
-lbz	r3, 0x03C2(r4)         # get selected icon
+  mulli r3,REG_PlayerID,36   # port index
+  load r4,0x803f0a48
+  add r4,r3,r4
+  lbz	r3, 0x03C2(r4)         # get selected icon
 # get icon ID's UI ID
-mulli	r3, r3, 28
-add	r4, r3, r5
-lbz	REG_ExternalID, 0x00DC (r4) # UI char id
+  mulli	r3, r3, 28
+  add	r4, r3, r5
+  lbz	REG_ExternalID, 0x00DC (r4) # UI char id
 
 # Calculate Costume ID from costume Index
-mulli	r5, REG_CostumeID, 30
-add	r4, REG_ExternalID, r5
+  mulli	r5, REG_CostumeID, 30
+  add	r4, REG_ExternalID, r5
 #
-mr r3,REG_PlayerID
-mr r5,REG_isNull
-branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
+  mr r3,REG_PlayerID
+  mr r5,REG_isNull
+  branchl r12, 0x8025D5AC # CSS_UpdateCharCostume?
 
 EXIT:
 restore

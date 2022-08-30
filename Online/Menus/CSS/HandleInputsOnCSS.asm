@@ -100,9 +100,8 @@ branchl r12, SFX_Menu_CommonSound
 
 SOUND_PLAY_END:
 
-
-# uncomment to debug the chat window
-bl FN_CHECK_CHAT_INPUTS
+# comment to disable chat
+#bl FN_CHECK_CHAT_INPUTS
 
 ################################################################################
 # Fork logic based on current connection state
@@ -159,6 +158,8 @@ beq SKIP_START_MATCH
 
 # Check which mode we are playing. direct mode should launch text entry
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT

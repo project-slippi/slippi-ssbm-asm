@@ -5,9 +5,10 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
-.set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
+# This is the offset of P1's inputs from the start of the parent's stack frame
+.set P1_PAD_OFFSET, 0x2C
 
+.set REG_PARENT_STACK_FRAME, 30
 .set REG_LOCAL_SOURCE_INPUT, 29
 .set REG_VARIOUS_3, 28
 .set REG_ODB_ADDRESS, 27
@@ -40,6 +41,9 @@ bne EXIT
 # Initialize
 ################################################################################
 
+# Load the address of the parent's stack frame
+lwz REG_PARENT_STACK_FRAME, 0(sp)
+
 # fetch data to use throughout function
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
@@ -55,7 +59,7 @@ lwz REG_FRAME_INDEX, ODB_FRAME(REG_ODB_ADDRESS)
 lbz r4, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS) # index to grab inputs from
 mulli r4, r4, PAD_REPORT_SIZE
 addi r3, r4, P1_PAD_OFFSET # offset from sp where local player pad report is
-add REG_LOCAL_SOURCE_INPUT, sp, r3 # get ptr to local input
+add REG_LOCAL_SOURCE_INPUT, REG_PARENT_STACK_FRAME, r3 # get ptr to local input
 
 # Check if we have an active rollback, if so, we don't want to fetch
 # new data from Slippi, we just want to operate on the existing data
@@ -84,7 +88,7 @@ sub r3, r4, r3
 cmpwi REG_FRAME_INDEX, r3 # Frame 84 +/- 1 (not sure) is first unfrozen frame
 bge SKIP_FROZEN_INPUT_CLEAR
 
-addi r3, sp, P1_PAD_OFFSET
+addi r3, REG_PARENT_STACK_FRAME, P1_PAD_OFFSET
 li r4, CONTROLLER_COUNT * PAD_REPORT_SIZE
 branchl r12, Zero_AreaLength
 
@@ -144,7 +148,7 @@ lbz r12, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 mr r11, REG_FRAME_INDEX
 add r11, r11, r12
 addi r12, r4, P1_PAD_OFFSET
-add r12, sp, r12
+add r12, REG_PARENT_STACK_FRAME, r12
 bl FN_PrintInputs
 .endif
 
@@ -180,6 +184,27 @@ stw REG_FRAME_INDEX, TXB_FRAME(REG_TXB_ADDRESS)
 # has actually been processed by the game engine
 lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
 stw r3, TXB_FINALIZED_FRAME(REG_TXB_ADDRESS)
+
+# Start a for loop to iterate through the DESYNC_ENTRY_ARR values in order to find the checksum
+# from the latest finalized frame to send to the opponent
+lwz r12, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
+li r11, 0
+FIND_CHECKSUM_LOOP_START:
+mulli r3, r11, DDLE_SIZE
+addi r3, r3, ODB_LOCAL_DESYNC_ARR
+add r10, REG_ODB_ADDRESS, r3 
+lwz r3, DDLE_FRAME(r10)
+cmpw r3, r12
+bne FIND_CHECKSUM_LOOP_CONTINUE
+# Here we have found the desync entry for the latest finalized frame
+lwz r3, DDLE_CHECKSUM(r10)
+stw r3, TXB_FINALIZED_FRAME_CHECKSUM(REG_TXB_ADDRESS)
+b FIND_CHECKSUM_LOOP_EXIT
+FIND_CHECKSUM_LOOP_CONTINUE:
+addi r11, r11, 1
+cmpwi r11, DESYNC_ENTRY_COUNT
+blt FIND_CHECKSUM_LOOP_START
+FIND_CHECKSUM_LOOP_EXIT:
 
 # Transfer delay amount
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
@@ -241,6 +266,13 @@ stb r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
 b RESP_RES_CONTINUE
 
 SKIP_INPUT:
+# Don't stall the game if the game has already been confirmed to be over. I'm not sure why but
+# sometimes the game end can stall and hopefully this will fix it. Logs look something like:
+# Halting for one frame due to rollback limit (frame: 968 | latest: 0 | finalized: 967)...
+lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)
+cmpwi r3, 1
+beq RESP_RES_CONTINUE
+
 # If we get here that means we are skipping this input. Skipping an input
 # will cause the global frame timer to not increment, allowing for the numbers
 # to sync up between players
@@ -268,7 +300,7 @@ mulli r3, r3, PAD_REPORT_SIZE
 addi r3, r3, P1_PAD_OFFSET # offset from sp where pad report we want is
 
 # copy data
-add r3, sp, r3 # destination
+add r3, REG_PARENT_STACK_FRAME, r3 # destination
 add r4, REG_ODB_ADDRESS, r4 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
@@ -291,13 +323,13 @@ addi r4, r4, P1_PAD_OFFSET # offset from sp where pad report we want is
 # TEMP: Print inputs for debugging
 li r10, 3
 mr r11, REG_FRAME_INDEX
-add r12, sp, r4
+add r12, REG_PARENT_STACK_FRAME, r4
 bl FN_PrintInputs
 .endif
 
 # copy data
 add r3, REG_ODB_ADDRESS, r3 # destination
-add r4, sp, r4 # source
+add r4, REG_PARENT_STACK_FRAME, r4 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
@@ -842,7 +874,7 @@ mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
 addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
 
 # copy opponent pad data to stack
-add r3, sp, r3 # destination
+add r3, REG_PARENT_STACK_FRAME, r3 # destination
 add r4, REG_RXB_ADDRESS, r5 # source
 li r5, PAD_REPORT_SIZE
 
@@ -915,7 +947,7 @@ bl FN_PrintInputs
 .endif
 
 # copy data
-add r3, sp, r3 # destination
+add r3, REG_PARENT_STACK_FRAME, r3 # destination
 add r4, REG_ODB_ADDRESS, r4 # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
