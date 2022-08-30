@@ -522,7 +522,7 @@ blrl
 .short 0x0000
 
 FN_CREATE_DIALOG:
-backup 0x78, 2
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 # load jobjects in memory
 lwz r3, archiveDataBuffer(r13)
@@ -682,7 +682,7 @@ mflr r4 # Function
 li r5, 15 # Priority
 branchl	r12, GObj_AddProc
 
-restore 0x78, 2
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 
@@ -693,7 +693,7 @@ blr
 ################################################################################
 FN_LogoutDialogThink: #801978fc
 blrl
-backup 0x78, 2
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -847,7 +847,7 @@ b FN_LogoutDialogThink_Exit
 FN_LogoutDialogThink_Exit:
 
 
-restore 0x78, 2
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 ################################################################################

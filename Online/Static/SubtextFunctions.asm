@@ -64,7 +64,7 @@ beq FN_CREATE_PREMADE_TEXT
 # FN_CREATE_SUBTEXT
 ################################################################################
 FN_CREATE_SUBTEXT:
-backup 0x78, 6
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 6
 
 # Save arguments
 mr REG_TEXT_STRUCT_ADDR, r3
@@ -220,14 +220,14 @@ FN_CREATE_SUBTEXT_END:
 
 # Return subtext index
 mr r3, REG_SUBTEXT_INDEX
-restore 0x78, 6
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 6
 blr
 
 ################################################################################
 # FN_CREATE_PREMADE_TEXT
 ################################################################################
 FN_CREATE_PREMADE_TEXT:
-backup 0x78, 4
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 4
 
 # Save arguments
 mr REG_TEXT_ID, r3
@@ -275,7 +275,7 @@ branchl r12, Text_CopyPremadeTextDataToStruct
 # return text struct address
 mr r3, REG_TEXT_STRUCT_ADDR
 
-restore 0x78, 4
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 4
 blr
 
 ################################################################################

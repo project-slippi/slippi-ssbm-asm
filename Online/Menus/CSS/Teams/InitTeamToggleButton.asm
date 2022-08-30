@@ -75,7 +75,7 @@ INIT_BUTTON:
 .set REG_ICON_GOBJ, 20
 .set REG_ICON_JOBJ, 21
 .set REG_DATA_BUFFER, 23
-backup 0x78, 2
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 
@@ -226,7 +226,7 @@ fmr f1, REG_F_0 # float 0.0
 branchl r12, 0x80363C2C # HSD_MObjSetAlpha(mobj, float alpha)
 
 
-restore 0x78, 2
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 b EXIT
 ################################################################################
 # Function: Handles per frame updates of Custom Team Button

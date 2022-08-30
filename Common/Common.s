@@ -64,10 +64,17 @@ branchl r12, 0x8021b2d8
 # This is where the free space in our stack frame starts
 .set BKP_FREE_SPACE_OFFSET, 8
 
+# The default free space such that we don't break any legacy codes, includes the location where
+# the non-volatile registers were stored as well as the 0x78 of free space that used to exist.
+# Now it's all just free space
+.set BKP_DEFAULT_FREE_SPACE_SIZE, 0xA8
+.set BKP_DEFAULT_FREG, 0
+.set BKP_DEFAULT_REG, 12
+
 # backup is used to set up a stack frame in which LR and non-volatile registers will be stored.
 # It also sets up some free space on the stack for the function to use if needed.
 # More info: https://docs.google.com/document/d/1QJOQzy933fxpfzIJlq6xopcviZ5tALKQvi_OOqpjehE
-.macro backup free_space=0xA8, num_freg=0, num_reg=12
+.macro backup free_space=BKP_DEFAULT_FREE_SPACE_SIZE, num_freg=BKP_DEFAULT_FREG, num_reg=BKP_DEFAULT_REG
 mflr r0
 stw r0, 0x4(r1)
 # Stack allocation has to be 4-byte aligned otherwise it crashes on console. This section
@@ -137,7 +144,7 @@ stwu r1,-(0x8 + ALIGNED_FREE_SPACE + 0x4 * \num_reg + 0x8 * \num_freg)(r1)
 .endif
 .endm
 
-.macro restore free_space=0xA8, num_freg=0, num_reg=12
+.macro restore free_space=BKP_DEFAULT_FREE_SPACE_SIZE, num_freg=BKP_DEFAULT_FREG, num_reg=BKP_DEFAULT_REG
 # Stack allocation has to be 4-byte aligned otherwise it crashes on console
 .if \free_space % 4 == 0
   .set ALIGNED_FREE_SPACE, \free_space

@@ -1169,7 +1169,7 @@ blr
 CSS_ONLINE_CHAT_THINK:
 blrl
 mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
-backup 0x78, 2
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -1386,7 +1386,7 @@ stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 CSS_ONLINE_CHAT_CHECK_EXIT:
 
 
-restore 0x78, 2
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 
