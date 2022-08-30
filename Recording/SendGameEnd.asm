@@ -16,10 +16,10 @@
 .set REG_SceneThinkStruct,25
 .set REG_RDB,24
 
-# TODO: confirm that these are safe to use under this context
 .set REG_MatchEndStruct,23
 .set REG_MatchEndPlayerStruct,22
 .set REG_PlayerSlot,21
+.set REG_GAME_END_STRUCT_ADDR, 20
 
 backup
 
@@ -60,10 +60,10 @@ StartWrite:
 
 # request game information from slippi
   li r3, CMD_GAME_END
-  stb r3,0x0(REG_Buffer)
+  stb r3, GAME_END_TXB_COMMAND(REG_Buffer)
 
 # store byte that will tell us whether the game was won by stock loss or by ragequit (2 = stock loss, 7 = no contest)
-  stb REG_GameEndID,0x1(REG_Buffer)
+  stb REG_GameEndID, GAME_END_TXB_END_METHOD(REG_Buffer)
 
 LRAStartCheck:
 # check if LRA start
@@ -75,18 +75,30 @@ LRAStartCheck:
 NoLRAStart:
   li  r3,-1
 StoreLRAStarter:
-  stb r3,0x2(REG_Buffer)
+  stb r3, GAME_END_TXB_LRAS_INITIATOR(REG_Buffer)
 
-# What this is going to do is add an array of team+placements for each port. 
-# T1P1T2P2T3P3T4P4 T=Team ID, P = Placement
+# What this is going to do is add an array of placement u8s for each port
 PlayerPlacements:
 
-# initialize match end struct
-backup
-load  REG_MatchEndStruct,0x80479da4
-mr r3, REG_MatchEndStruct
-branchl r12, 0x80166378 #(create match end data)(r3 = 80479da4)
-restore
+load REG_GAME_END_STRUCT_ADDR, 0x80479da4
+
+################################################################################
+# Initialize the MatchEndData early. Normally his happens on scene transition
+# around 0x8016ea1c but we need it earlier (now) to determine the result of
+# the match
+################################################################################
+mr r3, REG_GAME_END_STRUCT_ADDR # dest
+load r4, 0x8046b8ec # source
+li r5, 8824 # size
+branchl r12, memcpy
+
+load r4, 0x8046b6a0
+mr r3, REG_GAME_END_STRUCT_ADDR
+lbz r0, 0x24D0(r4)
+stb r0, 0x6(r3)
+lbz r0, 0x0008(r4)
+stb r0, 0x4(r3)
+branchl r12, 0x80166378 # CreateMatchEndData (struct @ 80479da4)
  
 PlayerPlacementsLoopInit:
 li REG_PlayerSlot, 0 # Start at slot 1
@@ -94,17 +106,9 @@ PlayerPlacementsLoopStart:
   # find player placement for this slot
   mr r3, REG_PlayerSlot
   bl FN_GetPlayerPlacement
-  
-  cmpwi r3, -1
-  beq PlayerPlacementsLoopSkipFormat
-
-  # format data
-  slwi r4, r4, 0x4 # move team to the left => TX
-  add r3, r4, r3  # add team and placement together => TP
-  PlayerPlacementsLoopSkipFormat:
 
   # write placement result to buffer
-  addi r4, REG_PlayerSlot, 0x3 # offset from LRAStarter based on current slot
+  addi r4, REG_PlayerSlot, GAME_END_TXB_PLACEMENTS
   stbx r3, r4, REG_Buffer # Write placement to buffer
 
 PlayerPlacementsLoopCheck:
@@ -116,7 +120,7 @@ PlayerPlacementsEnd:
 
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
-  li  r4,GAME_END_PAYLOAD_LENGTH+1
+  li  r4,GAME_END_TXB_SIZE
   li  r5,CONST_ExiWrite
   branchl r12,FN_EXITransferBuffer
 
@@ -130,41 +134,29 @@ PlayerPlacementsEnd:
 # Function: FN_GetPlayerPlacement
 ################################################################################
 # Determines the player standing in last match for a given player slot
-# TODO: move to a static fn (maybe?)
 # Inputs:
 # r3: Player slot (starting at 1)
 # Outputs:
-# r3: Player placement 
-# r4: Player team 
+# r3: Player placement
 ################################################################################
 FN_GetPlayerPlacement:
-backup
 
-mr  REG_PlayerSlot,r3
-load  REG_MatchEndStruct,0x80479da4
-mulli REG_MatchEndPlayerStruct,REG_PlayerSlot,0xA8
-add   REG_MatchEndPlayerStruct,REG_MatchEndPlayerStruct,REG_MatchEndStruct
-
-#Check if last game data exists (is this necessary?)
-  lbz r3,0x4(REG_MatchEndStruct)
-  cmpwi r3,0x0
-  beq FN_GetPlayerPlacementPlayerMissing
-
-  lbz r3,0x58(REG_MatchEndPlayerStruct)
-  cmpwi r3,3
-  beq FN_GetPlayerPlacementPlayerMissing
+load r12, 0x80479da4 # MatchEndStruct
+mulli r11, r3, 0xA8
+add r11, r11, r12 # MatchEndPlayerStruct
 
 #Check if player partook in last game
-  lbz r3,0x5E(REG_MatchEndPlayerStruct) # offset to player standing
-  lbz r4,0x5F(REG_MatchEndPlayerStruct) # offset to player team id (if any)
-  b FN_GetPlayerPlacementReturn
+lbz r3, 0x58(r11)
+cmpwi r3, 3
+beq FN_GetPlayerPlacementPlayerMissing
+
+lbz r3, 0x5E(r11) # offset to player standing
+b FN_GetPlayerPlacementReturn
 
 FN_GetPlayerPlacementPlayerMissing:
-  li r3,-1
-  li r4,-1
+li r3, -1
 
 FN_GetPlayerPlacementReturn:
-restore
 blr
 
 
