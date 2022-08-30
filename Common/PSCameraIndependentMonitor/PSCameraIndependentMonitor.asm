@@ -1,5 +1,6 @@
 ################################################################################
 # Address: 0x801d24fc # PokemonStadium_Main replaces normal function call
+# Playback: Include
 ################################################################################
 
 .include "Common/Common.s"

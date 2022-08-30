@@ -1,5 +1,6 @@
 ################################################################################
 # Address: 801d45ec
+# Playback: Include
 ################################################################################
 .include "Common/Common.s"
 .include "Common/Preload Stadium Transformations/Transformation.s"
