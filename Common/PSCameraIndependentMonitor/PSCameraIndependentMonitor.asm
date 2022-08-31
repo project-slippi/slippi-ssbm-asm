@@ -1,6 +1,6 @@
 ################################################################################
 # Address: 0x801d24fc # PokemonStadium_Main replaces normal function call
-# Tags: [alters-gameplay]
+# Tags: [affects-gameplay]
 ################################################################################
 
 .include "Common/Common.s"

@@ -1,6 +1,6 @@
 ################################################################################
 # Address: 801d45ec
-# Tags: [alters-gameplay]
+# Tags: [affects-gameplay]
 ################################################################################
 .include "Common/Common.s"
 .include "Common/Preload Stadium Transformations/Transformation.s"
