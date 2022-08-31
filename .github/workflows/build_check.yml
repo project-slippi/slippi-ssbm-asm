@@ -21,5 +21,5 @@ jobs:
         if: success()
         working-directory: ${{ github.workspace }}
         run: |
-          sudo docker run --volume=${PWD}:/work --workdir=/work nikhilnarayana/devkitpro-slippi make
+          sudo docker run --volume=${PWD}:/work --workdir=/work nikhilnarayana/devkitpro-slippi:latest make ini list
       - uses: numtide/clean-git-action@v1
