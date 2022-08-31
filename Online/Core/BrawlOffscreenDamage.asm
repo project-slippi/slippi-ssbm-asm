@@ -1,5 +1,6 @@
 ################################################################################
 # Address: 0x8006a880 # PlayerThink_Animation. Function call determines if player is in bubble normally
+# Tags: [affects-gameplay]
 ################################################################################
 # This function needs to return 1 or 0 determining whether a player is in the
 # damage zone for offscreen damage. 1 means we are offscreen
