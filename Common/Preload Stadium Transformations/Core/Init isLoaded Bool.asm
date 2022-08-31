@@ -1,6 +1,6 @@
 ################################################################################
 # Address: 801d14c8
-# Playback: Include
+# Tags: [alters-gameplay]
 ################################################################################
 .include "Common/Common.s"
 .include "Common/Preload Stadium Transformations/Transformation.s"

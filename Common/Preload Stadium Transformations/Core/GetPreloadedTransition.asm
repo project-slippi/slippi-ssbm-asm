@@ -1,6 +1,6 @@
 ################################################################################
 # Address: 0x801d460c
-# Playback: Include
+# Tags: [alters-gameplay]
 ################################################################################
 .include "Common/Preload Stadium Transformations/Transformation.s"
 
