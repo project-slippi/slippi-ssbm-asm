@@ -18,6 +18,7 @@
         "$Recommended: Normal Lag Reduction",
         "$Recommended: Apply Delay to all In-Game Scenes",
         "$Recommended: Lagless FoD",
+        "$Recommended: Disable FD Background Transitions",
         "",
         "[Gecko]"
       ]
@@ -40,6 +41,7 @@
         "$Recommended: Normal Lag Reduction",
         "$Recommended: Apply Delay to all In-Game Scenes",
         "$Recommended: Lagless FoD",
+        "$Recommended: Disable FD Background Transitions",
         "",
         "[Gecko]"
       ]
@@ -139,11 +141,6 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/FasterCssLoad.bin",
           "annotation": "Faster CSS Load [UnclePunch]"
-        },
-        {
-          "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/DisableFdTransitions.bin",
-          "annotation": "Disable FD Background Transitions [Achilles, Dan Salvato]"
         },
         {
           "type": "binary",
@@ -416,6 +413,24 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
           "annotation": "Lagless FoD"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Disable FD Background Transitions",
+      "authors": [
+        "Achilles",
+        "Dan Salvato"
+      ],
+      "description": [
+        "Disables transitions in the background on Final Destination"
+      ],
+      "build": [
+        {
+          
+            "type": "binary",
+            "sourceFile": "Binary/FasterMeleeSettings/DisableFdTransitions.bin",
+            "annotation": "Disable FD Background Transitions [Achilles, Dan Salvato]"
         }
       ]
     },
