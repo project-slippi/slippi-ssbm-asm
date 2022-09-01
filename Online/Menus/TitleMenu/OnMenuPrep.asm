@@ -229,6 +229,7 @@ blr
 # Description: Think function for online submenu
 ################################################################################
 .set REG_FG_USER_DISPLAY, 27
+.set REG_UNLOCKED_COUNT, 21
 .set REG_SM_GOBJ, 19
 
 FN_OnlineSubmenuThink:
@@ -246,6 +247,22 @@ mr REG_SM_GOBJ, r3
 lwz r3, MENU_DLG_USER_DATA_OFFSET(REG_SM_GOBJ)
 cmpwi r3, 0
 bne FN_OnlineSubmenuThink_INPUT_HANDLERS_END
+
+# Check if all options are disabled, and if they are, don't allow browsing
+.set REG_LOOP_INDEX, 20
+li REG_LOOP_INDEX, 0
+li REG_UNLOCKED_COUNT, 0
+FN_OnlineSubmenuThink_COUNT_OPTIONS_LOOP_START:
+li r3, 0x8
+mr r4, REG_LOOP_INDEX
+branchl r12, 0x80229938 # MainMenu_CheckIfOptionIsUnlocked
+cmpwi r3, 0
+beq FN_OnlineSubmenuThink_COUNT_OPTIONS_LOOP_CONTINUE # If locked, dont count
+addi REG_UNLOCKED_COUNT, REG_UNLOCKED_COUNT, 1
+FN_OnlineSubmenuThink_COUNT_OPTIONS_LOOP_CONTINUE:
+addi REG_LOOP_INDEX, REG_LOOP_INDEX, 1
+cmpwi REG_LOOP_INDEX, ONLINE_SUBMENU_OPTION_COUNT
+blt FN_OnlineSubmenuThink_COUNT_OPTIONS_LOOP_START
 
 ################################################################################
 # Most of the below is ported code from function 8022cc28 (Menus_RegularMatch)
@@ -418,6 +435,10 @@ stb	r0, 0x000D (r3)
 b	FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
 FN_OnlineSubmenuThink_B_PRESS_HANDLER_END:
+
+# If there are less than or equal to 1 unlocked option, don't handle stick changes
+cmpwi REG_UNLOCKED_COUNT, 1
+ble FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 
 rlwinm.	r0, r3, 0, 31, 31
 beq- FN_OnlineSubmenuThink_STICK_UP_HANDLER_END
