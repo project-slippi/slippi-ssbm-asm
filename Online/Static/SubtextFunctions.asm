@@ -64,7 +64,9 @@ beq FN_CREATE_PREMADE_TEXT
 # FN_CREATE_SUBTEXT
 ################################################################################
 FN_CREATE_SUBTEXT:
-backup BKP_DEFAULT_FREE_SPACE_SIZE, 6
+.set NUM_FREG, 6
+.set NUM_GPREG, 18
+backup BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 # Save arguments
 mr REG_TEXT_STRUCT_ADDR, r3
@@ -220,7 +222,7 @@ FN_CREATE_SUBTEXT_END:
 
 # Return subtext index
 mr r3, REG_SUBTEXT_INDEX
-restore BKP_DEFAULT_FREE_SPACE_SIZE, 6
+restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 blr
 
 ################################################################################

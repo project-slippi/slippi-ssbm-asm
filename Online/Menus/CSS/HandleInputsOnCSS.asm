@@ -759,7 +759,10 @@ blrl
 .set CHAT_WINDOW_HEADER_MARGIN_LINES, 0x2 # lines away from which to start drawing messages away from header
 
 mr REG_CHAT_WINDOW_GOBJ, r3 # Store GOBJ pointer 0x801954A4
-backup
+
+.set NUM_FREG, 0
+.set NUM_GPREG, 18
+backup BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 # get gobj and get values for each of the data buffer
 lwz REG_CHAT_WINDOW_GOBJ_DATA_ADDR, CHAT_ENTITY_DATA_OFFSET(REG_CHAT_WINDOW_GOBJ) # get address of data buffer
@@ -1012,7 +1015,7 @@ mr r3, REG_CHAT_WINDOW_TEXT_STRUCT_ADDR
 branchl r12, Text_RemoveText
 
 CSS_ONLINE_CHAT_WINDOW_THINK_EXIT:
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 blr
 
 

@@ -234,7 +234,9 @@ blr
 FN_OnlineSubmenuThink:
 blrl
 
-backup
+.set NUM_FREG, 0
+.set NUM_GPREG, 18
+backup BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 ################################################################################
 # Check if confirm dialog is open or not, and prevent input if it is
@@ -493,7 +495,7 @@ mtctr r3
 bctrl
 
 FN_OnlineSubmenuThink_EXIT:
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 ################################################################################
 # Data: OnlineSubmenuOptions
