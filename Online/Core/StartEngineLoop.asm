@@ -69,6 +69,8 @@ bl FN_COMPUTE_CHECKSUM_HELPER
 lwz r4, 0xB4(REG_PLAYER_STATIC_ADDRESS) # Get secondary player entity obj (gobj?) (sheik/nana)
 bl FN_COMPUTE_CHECKSUM_HELPER
 mr REG_CHECKSUM, r3
+lbz r4, 0x8E(REG_PLAYER_STATIC_ADDRESS) # Load stocks
+xor REG_CHECKSUM, REG_CHECKSUM, r4 # Load stocks in case players start new game with diff values
 FN_COMPUTE_CHECKSUM_LOOP_CONTINUE:
 addi REG_PLAYER_STATIC_ADDRESS, REG_PLAYER_STATIC_ADDRESS, 0xE90
 cmpw REG_PLAYER_STATIC_ADDRESS, REG_LAST_PLAYER_ADDRESS
@@ -85,22 +87,60 @@ blr
 # ------------------------------------------------------------------------------
 # Output: [r3] Checksum
 ################################################################################
+.set REG_CHAR_DATA, 31
+.set REG_CHECKSUM, 30
+
+.set SPO_10, 0 # Float
+.set SPO_FLOAT_TX_HIGH, SPO_10 + 4 # Double High
+.set SPO_FLOAT_TX_LOW, SPO_FLOAT_TX_HIGH + 4 # Double Low
+.set SPACE_NEEDED, SPO_FLOAT_TX_LOW + 4
+
 FN_COMPUTE_CHECKSUM_HELPER:
+backup SPACE_NEEDED
+mr REG_CHECKSUM, r3
 cmpwi r4, 0
 beq FN_COMPUTE_CHECKSUM_HELPER_EXIT
-lwz r5, 0x2C(r4) # Fetch char data
-lwz r4, 0x10(r5) # ActionStateID
-xor r3, r3, r4
-lwz r4, 0xB0(r5) # Position X
-xor r3, r3, r4
-lwz r4, 0xB4(r5) # Position Y
-xor r3, r3, r4
-lwz r4, 0x1830(r5) # Percent damage
-xor r3, r3, r4
-lwz r4, 0x8(r5) # Spawn #. Starts as 1 and 2 then after someone respawns they become 3 and so on
-xor r3, r3, r4
-# logf LOG_LEVEL_INFO, "[SEL] Checksum Values: %08x | %08x | %08x | %08x | %08x", "lwz r9, 0x8(r5)", "lwz r8, 0x1830(r5)", "lwz r7, 0xB4(r5)", "lwz r6, 0xB0(r5)", "lwz r5, 0x10(r5)"
+lwz REG_CHAR_DATA, 0x2C(r4) # Fetch char data
+
+# Store floating point 10 in the stack
+load r4, 0x41200000
+stw r4, SPO_10(sp)
+
+# Load some character data and xor into the checksum
+lwz r4, 0x10(REG_CHAR_DATA) # ActionStateID
+xor REG_CHECKSUM, REG_CHECKSUM, r4
+lfs f1, 0xB0(REG_CHAR_DATA) # Position X
+lfs f2, SPO_10(sp)
+fmuls f1, f1, f2
+fctiwz f1, f1
+stfd f1, SPO_FLOAT_TX_HIGH(sp)
+lwz r4, SPO_FLOAT_TX_LOW(sp) # Position X * 10 and cast to int
+xor REG_CHECKSUM, REG_CHECKSUM, r4
+lfs f1, 0xB4(REG_CHAR_DATA) # Position Y
+lfs f2, SPO_10(sp)
+fmuls f1, f1, f2
+fctiwz f1, f1
+stfd f1, SPO_FLOAT_TX_HIGH(sp)
+lwz r4, SPO_FLOAT_TX_LOW(sp) # Position Y * 10 and cast to int
+xor REG_CHECKSUM, REG_CHECKSUM, r4
+lwz r4, 0x1830(REG_CHAR_DATA) # Percent damage
+xor REG_CHECKSUM, REG_CHECKSUM, r4
+lwz r4, 0x8(REG_CHAR_DATA) # Spawn #. Starts as 1 and 2 then after someone respawns they become 3 and so on
+xor REG_CHECKSUM, REG_CHECKSUM, r4
+
+# Logging stuff
+# lfs f1, 0xB0(REG_CHAR_DATA) # Pos X full precision
+# lfs f2, 0xB4(REG_CHAR_DATA) # Pos Y full precision
+# lfs f3, 0x1830(REG_CHAR_DATA) # Percent
+# lwz r5, 0x10(REG_CHAR_DATA) # ActionStateId
+# lwz r6, 0xB0(REG_CHAR_DATA) # Pos X
+# lwz r7, 0xB4(REG_CHAR_DATA) # Pos Y
+# lwz r8, 0x8(REG_CHAR_DATA) # Number of spawns
+# logf LOG_LEVEL_WARN, "[SEL] Checksum Values: %X | %f (%08X) | %f (%08X) | %f | %d"
+
 FN_COMPUTE_CHECKSUM_HELPER_EXIT:
+mr r3, REG_CHECKSUM
+restore SPACE_NEEDED
 blr
 
 ################################################################################
@@ -388,7 +428,7 @@ stw REG_FRAME_INDEX, DDLE_FRAME(REG_DESYNC_ENTRY_ADDRESS)
 # Compute and write the checksum
 bl FN_COMPUTE_CHECKSUM
 stw r3, DDLE_CHECKSUM(REG_DESYNC_ENTRY_ADDRESS)
-# logf LOG_LEVEL_INFO, "Local checksum value %d: %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
+# logf LOG_LEVEL_WARN, "Local checksum value %d: %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 3"
 
 # Write timer
 loadwz r3, 0x8046B6C8 # Seconds remaining
