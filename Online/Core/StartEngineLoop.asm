@@ -90,7 +90,7 @@ blr
 .set REG_CHAR_DATA, 31
 .set REG_CHECKSUM, 30
 
-.set SPO_10, 0 # Float
+.set SPO_10, BKP_FREE_SPACE_OFFSET # Float
 .set SPO_FLOAT_TX_HIGH, SPO_10 + 4 # Double High
 .set SPO_FLOAT_TX_LOW, SPO_FLOAT_TX_HIGH + 4 # Double Low
 .set SPACE_NEEDED, SPO_FLOAT_TX_LOW + 4
