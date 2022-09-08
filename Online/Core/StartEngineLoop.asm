@@ -541,6 +541,7 @@ lhz r4, 2+DDRE_CHECKSUM(REG_REMOTE_DESYNC_ENTRY)
 # Subtract the float sums
 extsb r3, r3
 extsb r4, r4
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Hard Desync Check Values: %d vs %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mr r7, 4"
 sub r3, r3, r4
 
 # Check if the sums are off by more than abs(1), if so, this is a hard desync
@@ -550,7 +551,7 @@ cmpwi r3, 1
 bgt HARD_DESYNC_DETECTED
 b HARD_DESYNC_HANDLER_END
 HARD_DESYNC_DETECTED:
-# logf LOG_LEVEL_ERROR, "[SEL] [%d] Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESYNC_ENTRY_FRAME"
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Hard Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESYNC_ENTRY_FRAME"
 
 # Play error sound
 li r3, 3
@@ -577,8 +578,10 @@ bne SOFT_DESYNC_HANDLER_END
 # Grab checksum values
 lhz r3, DDLE_CHECKSUM(REG_LOCAL_DESYNC_ENTRY)
 lhz r4, DDRE_CHECKSUM(REG_REMOTE_DESYNC_ENTRY)
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Soft Desync Check Values: %04X vs %04X", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mr r7, 4"
 cmpw r3, r4
 beq SOFT_DESYNC_HANDLER_END
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Soft Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESYNC_ENTRY_FRAME"
 
 # Create subtext
 lwz r3, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
