@@ -32,27 +32,27 @@ blrl
 
 # Text entry for disconnect text
 .set DOFST_DISCONNECT_TEXT_ENTRY, 0
-.float 1.3 # x-pos
-.float -45 # y-pos
-.float 0.07 # text size
+.float 9 # x-pos
+.float -162 # y-pos
+.float 0.7 # text size
 .long 0xFF0000FF # text color
 .string "DISCONNECTED" # text
 .set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 13
 
 # Text entry for desync text
 .set DOFST_DESYNC_TEXT_ENTRY, DOFST_DISCONNECT_TEXT_ENTRY + DOFST_DISCONNECT_TEXT_ENTRY_SIZE
-.float 1.3 # x-pos
-.float -43 # y-pos
-.float 0.05 # text size
+.float 9 # x-pos
+.float -140 # y-pos
+.float 0.5 # text size
 .long 0xFFB800FF # text color
 .string "DESYNC DETECTED" # text
 .set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 16
 
 # Text entry for desync risk
 .set DOFST_DESYNC_RISK_TEXT_ENTRY, DOFST_DESYNC_TEXT_ENTRY + DOFST_DISCONNECT_TEXT_ENTRY_SIZE
-.float 5
-.float 5
-.float 0.01 # text size
+.float 228
+.float 194
+.float 0.38 # text size
 .long 0xFFB800FF # text color
 .string "Desync Risk" # text
 .set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 12
