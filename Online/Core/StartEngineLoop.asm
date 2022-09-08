@@ -539,8 +539,8 @@ lhz r3, 2+DDLE_CHECKSUM(REG_LOCAL_DESYNC_ENTRY)
 lhz r4, 2+DDRE_CHECKSUM(REG_REMOTE_DESYNC_ENTRY)
 
 # Subtract the float sums
-extsb r3, r3
-extsb r4, r4
+extsh r3, r3
+extsh r4, r4
 # logf LOG_LEVEL_WARN, "[SEL] [%d] Hard Desync Check Values: %d vs %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mr r7, 4"
 sub r3, r3, r4
 
