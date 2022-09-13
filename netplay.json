@@ -339,7 +339,7 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/CompatibilityHooks/WithMexBase",
+          "sourceFolder": "Common/CompatibilityHooks",
           "isRecursive": true,
           "annotation": "Our m-ex binary does not include these hooks, so we have to"
         },
