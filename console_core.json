@@ -115,6 +115,12 @@
           "sourceFolder": "External/Rumble Off",
           "isRecursive": true,
           "annotation": "Rumble Off [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Debugging/ECBCrashDebug",
+          "isRecursive": true,
+          "annotation": "ECBCrashDebug [UnclePunch]"
         }
       ]
     },
