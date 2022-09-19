@@ -13,6 +13,10 @@
 .set REG_INPUT_PROCESS_COUNTER, 26 # From parent
 .set REG_INTERRUPT_IDX, 25
 .set REG_LOOP_IDX, 24
+.set REG_REMOTE_DESYNC_ENTRY, 23
+.set REG_DESYNC_ENTRY_FRAME, 22
+.set REG_LOOP_IDX_2, 21
+.set REG_LOCAL_DESYNC_ENTRY, 20
 
 # Replaced code
 branchl r12, HSD_PerfSetStartTime
@@ -28,21 +32,30 @@ blrl
 
 # Text entry for disconnect text
 .set DOFST_DISCONNECT_TEXT_ENTRY, 0
-.float 1.3 # x-pos
-.float -45 # y-pos
-.float 0.07 # text size
+.float 9 # x-pos
+.float -162 # y-pos
+.float 0.7 # text size
 .long 0xFF0000FF # text color
 .string "DISCONNECTED" # text
 .set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 13
 
 # Text entry for desync text
 .set DOFST_DESYNC_TEXT_ENTRY, DOFST_DISCONNECT_TEXT_ENTRY + DOFST_DISCONNECT_TEXT_ENTRY_SIZE
-.float 1.3 # x-pos
-.float -43 # y-pos
-.float 0.05 # text size
+.float 9 # x-pos
+.float -140 # y-pos
+.float 0.5 # text size
 .long 0xFFB800FF # text color
 .string "DESYNC DETECTED" # text
 .set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 16
+
+# Text entry for desync risk
+.set DOFST_DESYNC_RISK_TEXT_ENTRY, DOFST_DESYNC_TEXT_ENTRY + DOFST_DISCONNECT_TEXT_ENTRY_SIZE
+.float 228
+.float 194
+.float 0.38 # text size
+.long 0xFFB800FF # text color
+.string "Desync Risk" # text
+.set DOFST_DISCONNECT_TEXT_ENTRY_SIZE, 16 + 12
 
 .align 2
 
@@ -53,80 +66,98 @@ blrl
 .set REG_CHECKSUM, 30
 .set REG_LAST_PLAYER_ADDRESS, 29
 
+.set SPO_CHECKSUM, BKP_FREE_SPACE_OFFSET
+.set SPO_FLOAT_SUM, SPO_CHECKSUM + 4
+.set SPO_FTI_CAST_HIGH, SPO_FLOAT_SUM + 4
+.set SPO_FTI_CAST_LOW, SPO_FTI_CAST_HIGH + 4
+.set SPACE_NEEDED, SPO_FTI_CAST_LOW + 4
+
 FN_COMPUTE_CHECKSUM:
-backup
+backup SPACE_NEEDED
 
 load REG_PLAYER_STATIC_ADDRESS, 0x80453080
 load REG_LAST_PLAYER_ADDRESS, 0x80455C30
-li REG_CHECKSUM, 0
+
+# Initialize checksum and pos to 0
+li r3, 0
+stw r3, SPO_CHECKSUM(sp)
+stw r3, SPO_FLOAT_SUM(sp)
 
 FN_COMPUTE_CHECKSUM_LOOP_START:
 # The helper function will do nothing if the player entity obj's are zero, so missing players
 # will be ignored correctly in the checksum
-mr r3, REG_CHECKSUM
+addi r3, sp, SPO_CHECKSUM
 lwz r4, 0xB0(REG_PLAYER_STATIC_ADDRESS) # Get player entity obj (gobj?)
 bl FN_COMPUTE_CHECKSUM_HELPER
+addi r3, sp, SPO_CHECKSUM
 lwz r4, 0xB4(REG_PLAYER_STATIC_ADDRESS) # Get secondary player entity obj (gobj?) (sheik/nana)
 bl FN_COMPUTE_CHECKSUM_HELPER
-mr REG_CHECKSUM, r3
+lwz REG_CHECKSUM, SPO_CHECKSUM(sp)
 lbz r4, 0x8E(REG_PLAYER_STATIC_ADDRESS) # Load stocks
 xor REG_CHECKSUM, REG_CHECKSUM, r4 # Load stocks in case players start new game with diff values
+stw REG_CHECKSUM, SPO_CHECKSUM(sp)
 FN_COMPUTE_CHECKSUM_LOOP_CONTINUE:
 addi REG_PLAYER_STATIC_ADDRESS, REG_PLAYER_STATIC_ADDRESS, 0xE90
 cmpw REG_PLAYER_STATIC_ADDRESS, REG_LAST_PLAYER_ADDRESS
 ble FN_COMPUTE_CHECKSUM_LOOP_START # Loops until we have processed all 4 potential players
 
-mr r3, REG_CHECKSUM
-restore
+# Now we split the checksum into two parts, the upper two bytes will be the "full"
+# checksum that will serve as a warning. The lower two bytes will only contain the
+# casted sum of positions and percents which can be subtracted to allow for slight
+# tolerances. These lower bytes will be the "hard" desync detection method
+lhz r3, SPO_CHECKSUM(sp)
+lhz r4, 2+SPO_CHECKSUM(sp)
+xor r3, r3, r4 # Combine the first 16 bits and last 16 bits of checksum
+rlwinm r3, r3, 16, 0xFFFFFFFF
+lfs f1, SPO_FLOAT_SUM(sp)
+fctiwz f1, f1 # Casts float to int
+stfd f1, SPO_FTI_CAST_HIGH(sp)
+lhz r4, 2+SPO_FTI_CAST_LOW(sp)
+or r3, r3, r4 # Combined checksum and float sum
+
+restore SPACE_NEEDED
 blr
 
 ################################################################################
 # Helper function for computing checksum
 # ------------------------------------------------------------------------------
-# Inputs: [r3] Checksum, [r4] PlayerEntityGobj
-# ------------------------------------------------------------------------------
-# Output: [r3] Checksum
+# Inputs: [r3] ChecksumAndPosPtr, [r4] PlayerEntityGobj
 ################################################################################
-.set REG_CHAR_DATA, 31
-.set REG_CHECKSUM, 30
-
-.set SPO_10, 0 # Float
-.set SPO_FLOAT_TX_HIGH, SPO_10 + 4 # Double High
-.set SPO_FLOAT_TX_LOW, SPO_FLOAT_TX_HIGH + 4 # Double Low
-.set SPACE_NEEDED, SPO_FLOAT_TX_LOW + 4
+.set REG_CHAR_DATA, 12
+.set REG_CHKSM_FSUM_PTR, 11
+.set REG_CHECKSUM, 10
+.set FREG_SUM, 12
 
 FN_COMPUTE_CHECKSUM_HELPER:
-backup SPACE_NEEDED
-mr REG_CHECKSUM, r3
 cmpwi r4, 0
-beq FN_COMPUTE_CHECKSUM_HELPER_EXIT
+beq FN_COMPUTE_CHECKSUM_HELPER_EXIT # Exit function if no player ptr
 lwz REG_CHAR_DATA, 0x2C(r4) # Fetch char data
 
-# Store floating point 10 in the stack
-load r4, 0x41200000
-stw r4, SPO_10(sp)
+mr REG_CHKSM_FSUM_PTR, r3
 
 # Load some character data and xor into the checksum
+lwz REG_CHECKSUM, 0x0(REG_CHKSM_FSUM_PTR)
 lwz r4, 0x10(REG_CHAR_DATA) # ActionStateID
 xor REG_CHECKSUM, REG_CHECKSUM, r4
-lfs f1, 0xB0(REG_CHAR_DATA) # Position X
-lfs f2, SPO_10(sp)
-fmuls f1, f1, f2
-fctiwz f1, f1
-stfd f1, SPO_FLOAT_TX_HIGH(sp)
-lwz r4, SPO_FLOAT_TX_LOW(sp) # Position X * 10 and cast to int
+lwz r4, 0xB0(REG_CHAR_DATA) # Position X
 xor REG_CHECKSUM, REG_CHECKSUM, r4
-lfs f1, 0xB4(REG_CHAR_DATA) # Position Y
-lfs f2, SPO_10(sp)
-fmuls f1, f1, f2
-fctiwz f1, f1
-stfd f1, SPO_FLOAT_TX_HIGH(sp)
-lwz r4, SPO_FLOAT_TX_LOW(sp) # Position Y * 10 and cast to int
+lwz r4, 0xB4(REG_CHAR_DATA) # Position Y
 xor REG_CHECKSUM, REG_CHECKSUM, r4
 lwz r4, 0x1830(REG_CHAR_DATA) # Percent damage
 xor REG_CHECKSUM, REG_CHECKSUM, r4
 lwz r4, 0x8(REG_CHAR_DATA) # Spawn #. Starts as 1 and 2 then after someone respawns they become 3 and so on
 xor REG_CHECKSUM, REG_CHECKSUM, r4
+stw REG_CHECKSUM, 0x0(REG_CHKSM_FSUM_PTR)
+
+# Load positions/percent and sum them all to keep track of a value that can be compared
+lfs FREG_SUM, 0x4(REG_CHKSM_FSUM_PTR)
+lfs f1, 0xB0(REG_CHAR_DATA) # Position X
+fadds FREG_SUM, FREG_SUM, f1
+lfs f1, 0xB4(REG_CHAR_DATA) # Position Y
+fadds FREG_SUM, FREG_SUM, f1
+lfs f1, 0x1830(REG_CHAR_DATA) # Percent damage
+fadds FREG_SUM, FREG_SUM, f1
+stfs FREG_SUM, 0x4(REG_CHKSM_FSUM_PTR)
 
 # Logging stuff
 # lfs f1, 0xB0(REG_CHAR_DATA) # Pos X full precision
@@ -139,8 +170,6 @@ xor REG_CHECKSUM, REG_CHECKSUM, r4
 # logf LOG_LEVEL_WARN, "[SEL] Checksum Values: %X | %f (%08X) | %f (%08X) | %f | %d"
 
 FN_COMPUTE_CHECKSUM_HELPER_EXIT:
-mr r3, REG_CHECKSUM
-restore SPACE_NEEDED
 blr
 
 ################################################################################
@@ -472,50 +501,57 @@ lbz r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne DESYNC_CHECK_EXIT
 
-li r12, 0 # Player index
+li REG_LOOP_IDX, 0 # Player index
 CHECKSUM_CHECK_PLAYER_LOOP_START:
-mulli r3, r12, DDRE_SIZE
+mulli r3, REG_LOOP_IDX, DDRE_SIZE
 addi r3, r3, RXB_OPNT_DESYNC_ENTRY
-add r11, REG_REMOTE_RXB, r3 # r11 now stores desync entry address for this remote player
-lwz r10, DDRE_FRAME(r11) # r10 now contains the desync entry frame
+add REG_REMOTE_DESYNC_ENTRY, REG_REMOTE_RXB, r3 # now stores desync entry address for this remote player
+lwz REG_DESYNC_ENTRY_FRAME, DDRE_FRAME(REG_REMOTE_DESYNC_ENTRY) # now contains the desync entry frame
 lwz r3, ODB_STABLE_FINALIZED_FRAME(REG_ODB_ADDRESS)
-# logf LOG_LEVEL_ERROR, "[SEL] [%d] Checksum for Idx %d. StableFinalized: %d. Looking for %d -> %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 3", "mr r8, 10", "lwz r9, DDRE_CHECKSUM(r11)"
-cmpw r10, r3 # If this checksum frame is greater than our stable finalized frame, skip for now
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Checksum for Idx %d. StableFinalized: %d. Looking for %d -> %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 3", "mr r8, 10", "lwz r9, DDRE_CHECKSUM(REG_REMOTE_DESYNC_ENTRY)"
+cmpw REG_DESYNC_ENTRY_FRAME, r3 # If this checksum frame is greater than our stable finalized frame, skip for now
 bgt CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
-cmpwi r10, UNFREEZE_INPUTS_FRAME
+cmpwi REG_DESYNC_ENTRY_FRAME, UNFREEZE_INPUTS_FRAME
 ble CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE
 
 # Now we loop through all of our local frames to find the entry that matches
-li r9, 0
+li REG_LOOP_IDX_2, 0
 FIND_CHECKSUM_LOOP_START:
-mulli r3, r9, DDLE_SIZE
+mulli r3, REG_LOOP_IDX_2, DDLE_SIZE
 addi r3, r3, ODB_LOCAL_DESYNC_ARR
-add r8, REG_ODB_ADDRESS, r3 # r8 now contains the desync entry for our local player
-lwz r3, DDLE_FRAME(r8)
-cmpw r10, r3
+add REG_LOCAL_DESYNC_ENTRY, REG_ODB_ADDRESS, r3 # now contains the desync entry for our local player
+lwz r3, DDLE_FRAME(REG_LOCAL_DESYNC_ENTRY)
+cmpw REG_DESYNC_ENTRY_FRAME, r3
 bne FIND_CHECKSUM_LOOP_CONTINUE
 
 # Here we have found the desync entry for the latest finalized frame
 # Store this desync entry if it is the first encountered
 cmpwi REG_DESYNC_ENTRY_ADDRESS, 0
 beq CONFIRMED_SYNC_SET
-lwz r3, DDLE_FRAME(r8)
-cmpwi r10, r3 # If the current frame is later than the stored one, don't switch
+lwz r3, DDLE_FRAME(REG_LOCAL_DESYNC_ENTRY)
+cmpwi REG_DESYNC_ENTRY_FRAME, r3 # If the current frame is later than the stored one, don't switch
 bge SKIP_CONFIRMED_SYNC_SET
 CONFIRMED_SYNC_SET:
-mr REG_DESYNC_ENTRY_ADDRESS, r8
+mr REG_DESYNC_ENTRY_ADDRESS, REG_LOCAL_DESYNC_ENTRY
 SKIP_CONFIRMED_SYNC_SET:
-# Compare remote and local checksums
-lwz r3, DDLE_CHECKSUM(r8)
-lwz r4, DDRE_CHECKSUM(r11)
-# logf LOG_LEVEL_ERROR, "[SEL] [%d] Comparing Checksums. RemoteIdx: %d, Frame: %d, %08x vs %08x", "mr r5, REG_FRAME_INDEX", "mr r6, 12", "mr r7, 10", "mr r8, 3", "mr r9, 4"
+# Grab float sums from the clients
+lhz r3, 2+DDLE_CHECKSUM(REG_LOCAL_DESYNC_ENTRY)
+lhz r4, 2+DDRE_CHECKSUM(REG_REMOTE_DESYNC_ENTRY)
 
-cmpw r3, r4
-beq FIND_CHECKSUM_LOOP_EXIT
+# Subtract the float sums
+extsh r3, r3
+extsh r4, r4
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Hard Desync Check Values: %d vs %d", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mr r7, 4"
+sub r3, r3, r4
 
-# Here we have detected a desync, It's okay that we're calling functions here and clobbering the
-# volatile registers because we're about to exit the loops anyway
-# logf LOG_LEVEL_ERROR, "[SEL] [%d] Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, 10"
+# Check if the sums are off by more than abs(1), if so, this is a hard desync
+cmpwi r3, -1
+blt HARD_DESYNC_DETECTED
+cmpwi r3, 1
+bgt HARD_DESYNC_DETECTED
+b HARD_DESYNC_HANDLER_END
+HARD_DESYNC_DETECTED:
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Hard Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESYNC_ENTRY_FRAME"
 
 # Play error sound
 li r3, 3
@@ -526,8 +562,7 @@ lwz r3, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
 li r4, DOFST_DESYNC_TEXT_ENTRY
 bl FN_CREATE_HUD_SUBTEXT
 
-# Indicate desync has been detected so we don't continue looking. It might be worth being able
-# to clear the desync status display.. in the case we get a spurious value? Not sure yet
+# Indicate desync has been detected so we don't continue looking.
 li r3, 1
 stb r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
 
@@ -535,16 +570,41 @@ stb r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
 bl FN_END_GAME_IF_RANKED
 
 b DESYNC_CHECK_EXIT
+HARD_DESYNC_HANDLER_END:
+lbz r3, ODB_IS_DESYNC_RISK_DISPLAYED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne SOFT_DESYNC_HANDLER_END
+
+# Grab checksum values
+lhz r3, DDLE_CHECKSUM(REG_LOCAL_DESYNC_ENTRY)
+lhz r4, DDRE_CHECKSUM(REG_REMOTE_DESYNC_ENTRY)
+# logf LOG_LEVEL_WARN, "[SEL] [%d] Soft Desync Check Values: %04X vs %04X", "mr r5, REG_FRAME_INDEX", "mr r6, 3", "mr r7, 4"
+cmpw r3, r4
+beq SOFT_DESYNC_HANDLER_END
+# logf LOG_LEVEL_ERROR, "[SEL] [%d] Soft Desync detected on frame %d", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESYNC_ENTRY_FRAME"
+
+# Create subtext
+lwz r3, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
+li r4, DOFST_DESYNC_RISK_TEXT_ENTRY
+bl FN_CREATE_HUD_SUBTEXT
+
+# Indicate desync risk has been displayed so we dont display it again
+li r3, 1
+stb r3, ODB_IS_DESYNC_RISK_DISPLAYED(REG_ODB_ADDRESS)
+
+SOFT_DESYNC_HANDLER_END:
+b FIND_CHECKSUM_LOOP_EXIT
+
 FIND_CHECKSUM_LOOP_CONTINUE:
-addi r9, r9, 1
-cmpwi r9, DESYNC_ENTRY_COUNT
+addi REG_LOOP_IDX_2, REG_LOOP_IDX_2, 1
+cmpwi REG_LOOP_IDX_2, DESYNC_ENTRY_COUNT
 blt FIND_CHECKSUM_LOOP_START
 FIND_CHECKSUM_LOOP_EXIT:
 
 CHECKSUM_CHECK_PLAYER_LOOP_CONTINUE:
-addi r12, r12, 1
+addi REG_LOOP_IDX, REG_LOOP_IDX, 1
 lbz r3, RXB_OPNT_COUNT(REG_REMOTE_RXB)
-cmpw r12, r3
+cmpw REG_LOOP_IDX, r3
 blt CHECKSUM_CHECK_PLAYER_LOOP_START
 CHECKSUM_CHECK_PLAYER_LOOP_EXIT:
 
