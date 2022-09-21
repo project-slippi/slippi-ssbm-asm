@@ -98,9 +98,6 @@ DesyncDetected:
 
 RestoreData:
 # Restore data
-  lis r4,0x804D
-  lwz r3,RNGSeed(PlayerBackup)
-  stw r3,0x5F90(r4) #RNG seed
   lwz r3,AnalogX(PlayerBackup)
   stw r3,0x620(PlayerData) #analog X
   lwz r3,AnalogY(PlayerBackup)
@@ -120,6 +117,9 @@ RestoreData:
   cmpwi r3, 0
   beq SKIP_RESYNC
 
+  lis r4,0x804D
+  lwz r3,RNGSeed(PlayerBackup)
+  stw r3,0x5F90(r4) #RNG seed
   lwz r3,XPos(PlayerBackup)
   stw r3,0xB0(PlayerData) #x position
   lwz r3,YPos(PlayerBackup)
