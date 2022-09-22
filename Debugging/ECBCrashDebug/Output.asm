@@ -9,6 +9,10 @@
 backup
 mr REG_CollData,r3
 
+  bl Text_revision
+  mflr r3
+  branchl r12,0x803456a8 # OSReport
+
 #Determine type of object
   lwz r12,0x0(REG_CollData)
   cmpwi r12,0
@@ -142,6 +146,11 @@ blrl
 Text_left:
 blrl
 .string " Left : X: 0x%08x  Y: 0x%08x\n"
+.align 2
+
+Text_revision:
+blrl
+.string "ECB Debugging Rev: 2\n"
 .align 2
 
 
