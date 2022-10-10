@@ -96,6 +96,19 @@ ECB_Output:
   lwz r5,0xC0(REG_CollData)
   branchl r12,0x803456a8
 
+  # Print version and runtime
+  bl Text_version
+  mflr r3
+  branchl r12,0x803456a8
+  bl Text_consoleFrames
+  mflr r3
+  loadwz r4,0x804d7420 # Console runtime frame count
+  branchl r12,0x803456a8
+  bl Text_sceneFrames
+  mflr r3
+  loadGlobalFrame r4 # Scene runtime frame count
+  branchl r12,0x803456a8
+
 b Exit
 
 
@@ -142,6 +155,21 @@ blrl
 Text_left:
 blrl
 .string " Left : X: 0x%08x  Y: 0x%08x\n"
+.align 2
+
+Text_version:
+blrl
+.string "\nVersion: X (replace-me)\n"
+.align 2
+
+Text_consoleFrames:
+blrl
+.string " Console runtime: %d frames\n"
+.align 2
+
+Text_sceneFrames:
+blrl
+.string " Scene runtime: %d frames\n\n"
 .align 2
 
 
