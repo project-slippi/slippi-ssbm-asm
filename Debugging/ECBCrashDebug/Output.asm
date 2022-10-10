@@ -159,7 +159,7 @@ blrl
 
 Text_version:
 blrl
-.string "\nVersion: X (replace-me)\n"
+.string "\nVersion: A (control)\n"
 .align 2
 
 Text_consoleFrames:
