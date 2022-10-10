@@ -1,0 +1,28 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Debug/force-ecb-crash.gct"
+    },
+    {
+      "file": "Output/Debug/force-ecb-crash.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Force crash",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Forces ecb crash 3 seconds into game"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Debugging/ForceECBCrash",
+          "isRecursive": true
+        }
+      ]
+    }
+  ]
+}
