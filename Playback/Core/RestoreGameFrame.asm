@@ -40,6 +40,14 @@
   branchl r12,FN_GetIsFollower
   mr  r20,r3
 
+# If we are not resyncing, let the follower's inputs be calculated by the game
+  cmpwi r20, 0
+  beq SKIP_FOLLOWER_RESYNC_CHECK
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq Injection_Exit
+  SKIP_FOLLOWER_RESYNC_CHECK:
+
 # Get players offset in buffer ()
   addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
   lbz r5,0xC(PlayerData)                  #get player number
