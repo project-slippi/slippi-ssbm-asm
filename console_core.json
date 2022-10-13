@@ -119,24 +119,23 @@
       ]
     },
     {
-      "name": "Slippi Recording",
+      "name": "Required: Slippi Playback",
       "authors": [
         "Fizzi",
-        "Achilles",
         "UnclePunch",
-        "Nikki",
-        "jmlee337",
+        "Achilles",
+        "tauKhan",
         "Krohnos"
       ],
       "description": [
-        "Used in conjunction with Slippi plugged into PortB to extract game data"
+        "Used to play back a .slp file",
+        "Will play replay configured in playback.txt"
       ],
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "Recording",
-          "isRecursive": true,
-          "annotation": "Slippi Recording [Fizzi, Achilles, UnclePunch]"
+          "sourceFolder": "PlaybackConsole/Core",
+          "isRecursive": true
         },
         {
           "type": "injectFolder",
@@ -168,13 +167,9 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "Common/Gecko",
-          "annotation": "Static function to process Gecko codes [Fizzi]"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "Common/ConsoleOverrides",
-          "annotation": "Forces values for proper console operation [Fizzi]"
+          "sourceFolder": "Common/FastForward",
+          "isRecursive": true,
+          "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
         },
         {
           "type": "injectFolder",
