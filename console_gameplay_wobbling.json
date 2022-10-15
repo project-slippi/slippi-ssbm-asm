@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_gameplay_wobbling.bin"
+    },
+    {
+      "file": "Output/Console/g_gameplay_wobbling.txt"
     }
   ],
   "codes": [
@@ -15,8 +18,9 @@
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/PreventWobbling.bin",
+          "type": "injectFolder",
+          "sourceFolder": "External/PreventWobbling",
+          "isRecursive": true,
           "annotation": "Disable wobbling"
         }
       ]

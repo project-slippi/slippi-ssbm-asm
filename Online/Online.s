@@ -191,6 +191,34 @@
 .set SFXDB_SIZE, SFXDB_FRAMES + SFXS_FRAME_SIZE * ROLLBACK_MAX_FRAME_COUNT
 
 ################################################################################
+# Desync Recovery
+################################################################################
+# Desync Fighter Recovery Entry
+.set DFRE_STOCKS_REMAINING, 0 # byte
+.set DFRE_PERCENT, DFRE_STOCKS_REMAINING + 1 # u16
+.set DFRE_SIZE, DFRE_PERCENT + 2
+
+################################################################################
+# Desync Detection
+################################################################################
+# Desync Detection Remote Entry
+.set DDRE_FRAME, 0 # s32, frame of the checksum
+.set DDRE_CHECKSUM, DDRE_FRAME + 4 # u32
+.set DDRE_SIZE, DDRE_CHECKSUM + 4
+
+# Desync Detection Local Entry
+.set DDLE_FRAME, 0 # s32, frame of the checksum
+.set DDLE_CHECKSUM, DDLE_FRAME + 4 # u32
+.set DDLE_RECOVERY_TIMER, DDLE_CHECKSUM + 4 # u32. Seconds
+.set DDLE_RECOVERY_FIGHTER_ARR, DDLE_RECOVERY_TIMER + 4 # DFRE_SIZE * 4
+.set DDLE_SIZE, DDLE_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4
+
+# I'm not exactly sure how many local entries we need to keep but our local entries will get
+# compared with the opponents' last stabilized frame which with a lot of ping can come pretty late.
+# My guess would be we could so 2 * ROLLBACK_MAX_FRAME_COUNT but 3 should definitely be safe
+.set DESYNC_ENTRY_COUNT, ROLLBACK_MAX_FRAME_COUNT * 3
+
+################################################################################
 # Online Data Buffer Offsets
 ################################################################################
 .set ODB_LOCAL_PLAYER_INDEX, 0 # u8
@@ -198,11 +226,13 @@
 .set ODB_INPUT_SOURCE_INDEX, ODB_ONLINE_PLAYER_INDEX + 1 # u8
 .set ODB_FRAME, ODB_INPUT_SOURCE_INDEX + 1 # u32
 .set ODB_RNG_OFFSET, ODB_FRAME + 4 # u32
-.set ODB_GAME_OVER_COUNTER, ODB_RNG_OFFSET + 4 # u8
-.set ODB_IS_GAME_OVER, ODB_GAME_OVER_COUNTER + 1 # bool
-.set ODB_IS_DISCONNECTED, ODB_IS_GAME_OVER + 1 # bool
+.set ODB_GAME_END_FRAME, ODB_RNG_OFFSET + 4 # u32
+.set ODB_IS_GAME_OVER, ODB_GAME_END_FRAME + 4 # bool
+.set ODB_IS_DISCONNECTED, ODB_IS_GAME_OVER + 1  # bool
 .set ODB_IS_DISCONNECT_STATE_DISPLAYED, ODB_IS_DISCONNECTED + 1 # bool
-.set ODB_IS_FRAME_ADVANCE, ODB_IS_DISCONNECT_STATE_DISPLAYED + 1 # bool
+.set ODB_IS_DESYNC_STATE_DISPLAYED, ODB_IS_DISCONNECT_STATE_DISPLAYED + 1 # bool
+.set ODB_IS_DESYNC_RISK_DISPLAYED, ODB_IS_DESYNC_STATE_DISPLAYED + 1 # bool
+.set ODB_IS_FRAME_ADVANCE, ODB_IS_DESYNC_RISK_DISPLAYED + 1 # bool
 .set ODB_LAST_LOCAL_INPUTS, ODB_IS_FRAME_ADVANCE + 1 # PAD_REPORT_SIZE
 .set ODB_DELAY_FRAMES, ODB_LAST_LOCAL_INPUTS + PAD_REPORT_SIZE # u8
 .set ODB_DELAY_BUFFER_INDEX, ODB_DELAY_FRAMES + 1 # u8
@@ -234,21 +264,29 @@
 .set ODB_STABLE_FINALIZED_FRAME, ODB_STABLE_SAVESTATE_FRAME + 4 # s32
 .set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_FINALIZED_FRAME + 4 # bool
 .set ODB_HUD_CANVAS, ODB_SHOULD_FORCE_PAD_RENEW + 1 # u32
-.set ODB_PAUSE_COUNTER, ODB_HUD_CANVAS + 4 # u32
+.set ODB_HUD_TEXT_STRUCT, ODB_HUD_CANVAS + 4 # u32
+.set ODB_PAUSE_COUNTER, ODB_HUD_TEXT_STRUCT + 4  # u32
 .set ODB_FINALIZED_FRAME, ODB_PAUSE_COUNTER + 4 # u32
 .set ODB_REST_STICK_CHANGE_COUNTER, ODB_FINALIZED_FRAME + 4 # u32
-.set ODB_SIZE, ODB_REST_STICK_CHANGE_COUNTER + 4
+.set ODB_LOCAL_DESYNC_LAST_FRAME, ODB_REST_STICK_CHANGE_COUNTER + 4 # u32
+.set ODB_LOCAL_DESYNC_WRITE_IDX, ODB_LOCAL_DESYNC_LAST_FRAME + 4 # u8
+.set ODB_LOCAL_DESYNC_ARR, ODB_LOCAL_DESYNC_WRITE_IDX + 1  # DDLE_SIZE * DESYNC_ENTRY_COUNT
+.set ODB_DESYNC_RECOVERY_TIMER, ODB_LOCAL_DESYNC_ARR + DDLE_SIZE * DESYNC_ENTRY_COUNT # u32
+.set ODB_DESYNC_RECOVERY_FIGHTER_ARR, ODB_DESYNC_RECOVERY_TIMER + 4 # DFRE_SIZE * 4
+.set ODB_SIZE, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
 .set TXB_FINALIZED_FRAME, TXB_FRAME + 4 # s32
-.set TXB_DELAY, TXB_FINALIZED_FRAME + 4  # u8 TODO: Delay should be part of some init message or something at start of game
+.set TXB_FINALIZED_FRAME_CHECKSUM, TXB_FINALIZED_FRAME + 4 # u32
+.set TXB_DELAY, TXB_FINALIZED_FRAME_CHECKSUM + 4 # u8 TODO: Delay should be part of some init message or something at start of game
 .set TXB_PAD, TXB_DELAY + 1 # PAD_REPORT_SIZE
 .set TXB_SIZE, TXB_PAD + PAD_REPORT_SIZE
 
 .set RXB_RESULT, 0 # u8
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
-.set RXB_OPNT_FRAME_NUMS, RXB_OPNT_COUNT + 1 # s32[3]
+.set RXB_OPNT_DESYNC_ENTRY, RXB_OPNT_COUNT + 1 # DDRE_SIZE[3]
+.set RXB_OPNT_FRAME_NUMS, RXB_OPNT_DESYNC_ENTRY + DDRE_SIZE*3 # s32[3]
 .set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
 .set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
 .set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
@@ -276,15 +314,15 @@
 .set MSRB_USER_CHATMSG_ID, MSRB_DELAY_FRAMES + 1 # u8
 .set MSRB_OPP_CHATMSG_ID, MSRB_USER_CHATMSG_ID + 1 # u8
 .set MSRB_CHATMSG_PLAYER_INDEX, MSRB_OPP_CHATMSG_ID + 1 # u8
-.set MSRB_VS_LEFT_PLAYERS, MSRB_CHATMSG_PLAYER_INDEX + 1 # u8 player ports 0xP1P2P3PN
-.set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u8 player ports 0xP1P2P3PN
+.set MSRB_VS_LEFT_PLAYERS, MSRB_CHATMSG_PLAYER_INDEX + 1 # u32 player ports 0xP1P2P3PN
+.set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u32 player ports 0xP1P2P3PN
 .set MSRB_LOCAL_NAME, MSRB_VS_RIGHT_PLAYERS + 4 # string (31)
 .set MSRB_P1_NAME, MSRB_LOCAL_NAME + 31 # string (31)
 .set MSRB_P2_NAME, MSRB_P1_NAME + 31 # string (31)
 .set MSRB_P3_NAME, MSRB_P2_NAME + 31 # string (31)
 .set MSRB_P4_NAME, MSRB_P3_NAME + 31 # string (31)
-.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (63)
-.set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 63 # string (10) hashtag is shift-jis
+.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (31)
+.set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 31 # string (10) hashtag is shift-jis
 .set MSRB_P2_CONNECT_CODE, MSRB_P1_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
 .set MSRB_P3_CONNECT_CODE, MSRB_P2_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
 .set MSRB_P4_CONNECT_CODE, MSRB_P3_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
@@ -401,16 +439,64 @@
 ################################################################################
 # Define report game buffer offsets and length
 ################################################################################
-.set RGPB_IS_ACTIVE, 0 # bool, is player active
-.set RGPB_STOCKS_REMAINING, RGPB_IS_ACTIVE + 1 # byte
+.set RGPB_SLOT_TYPE, 0 # u8, 0 = Human, 1 = CPU, 2 = Demo, 3 = Empty
+.set RGPB_STOCKS_REMAINING, RGPB_SLOT_TYPE + 1 # byte
 .set RGPB_DAMAGE_DONE, RGPB_STOCKS_REMAINING + 1 # float
-.set RGPB_SIZE, RGPB_DAMAGE_DONE + 4
+.set RGPB_SYNCED_STOCKS, RGPB_DAMAGE_DONE + 4 # byte. confirmed synced frame last stocks
+.set RGPB_SYNCED_DAMAGE, RGPB_SYNCED_STOCKS + 1 # u16. confirmed synced frame last damage
+.set RGPB_SIZE, RGPB_SYNCED_DAMAGE + 2
 
 .set RGB_COMMAND, 0 # byte
-.set RGB_FRAME_LENGTH, RGB_COMMAND + 1 # s32, number of frames in game
-.set RGB_P1_RGPB, RGB_FRAME_LENGTH + 4 # RGPB_SIZE
+.set RGB_ONLINE_MODE, RGB_COMMAND + 1 # u8
+.set RGB_FRAME_LENGTH, RGB_ONLINE_MODE + 1 # u32, number of frames in game
+.set RGB_GAME_INDEX, RGB_FRAME_LENGTH + 4 # u32, 1-indexed
+.set RGB_TIEBREAKER_INDEX, RGB_GAME_INDEX + 4 # u32, 1-indexed, 0 = not tiebreak
+.set RGB_WINNER_IDX, RGB_TIEBREAKER_INDEX + 4 # s8
+.set RGB_GAME_END_METHOD, RGB_WINNER_IDX + 1 # u8
+.set RGB_LRAS_INITIATOR, RGB_GAME_END_METHOD + 1 # s8
+.set RGB_SYNCED_TIMER, RGB_LRAS_INITIATOR + 1 # u32
+.set RGB_P1_RGPB, RGB_SYNCED_TIMER + 4 # RGPB_SIZE
 .set RGB_P2_RGPB, RGB_P1_RGPB + RGPB_SIZE # RGPB_SIZE
-.set RGB_SIZE, RGB_P2_RGPB + RGPB_SIZE
+.set RGB_P3_RGPB, RGB_P2_RGPB + RGPB_SIZE # RGPB_SIZE
+.set RGB_P4_RGPB, RGB_P3_RGPB + RGPB_SIZE # RGPB_SIZE
+.set RGB_GAME_INFO_BLOCK, RGB_P4_RGPB + RGPB_SIZE # MATCH_STRUCT_LEN
+.set RGB_SIZE, RGB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
+
+################################################################################
+# Define game prep data and include macro to create static data
+################################################################################
+.set GPDO_MAX_GAMES, 0 # u8
+.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1 # u8
+.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 1 # u8[2]
+.set GPDO_PREV_WINNER, GPDO_SCORE_BY_PLAYER + 2 * 1 # u8
+.set GPDO_TIEBREAK_GAME_NUM, GPDO_PREV_WINNER + 1 # u8
+.set GAME_PREP_MAX_RESULT_COUNT, 9
+.set GPDO_GAME_RESULTS, GPDO_TIEBREAK_GAME_NUM + 1 # u8[GAME_PREP_MAX_RESULT_COUNT]
+.set GPDO_LAST_STAGE_WIN_BY_PLAYER, GPDO_GAME_RESULTS + GAME_PREP_MAX_RESULT_COUNT # u16[2]
+.set GPDO_COLOR_BAN_ACTIVE, GPDO_LAST_STAGE_WIN_BY_PLAYER + 2 * 2 # bool
+.set GPDO_COLOR_BAN_CHAR, GPDO_COLOR_BAN_ACTIVE + 1 # u8
+.set GPDO_COLOR_BAN_COLOR, GPDO_COLOR_BAN_CHAR + 1 # u8
+.set GPDO_LAST_GAME_END_MODE, GPDO_COLOR_BAN_COLOR + 1 # u8
+.set GPDO_FN_COMPUTE_RANKED_WINNER, GPDO_LAST_GAME_END_MODE + 1 # u32
+.set GPDO_SIZE, GPDO_FN_COMPUTE_RANKED_WINNER + 4
+
+# Warning: When making changes, ensure the offsets above are synced with below
+
+.macro createGamePrepStaticBlock
+.byte 0x0 # GPDO_MAX_GAMES, max games
+.byte 0x0 # GPDO_CUR_GAME, current game
+.fill 2, 1, 0 # GPDO_SCORE_BY_PLAYER
+.byte 0x0 # GPDO_PREV_WINNER, previous winner
+.byte 0x0 # GPDO_TIEBREAK_GAME_NUM
+.fill GAME_PREP_MAX_RESULT_COUNT, 1, 0 # GPDO_GAME_RESULTS, Take space for 9 bytes
+.fill 2, 2, 0 # GPDO_LAST_STAGE_WIN_BY_PLAYER
+.byte 0x0 # GPDO_COLOR_BAN_ACTIVE
+.byte 0x0 # GPDO_COLOR_BAN_CHAR
+.byte 0x0 # GPDO_COLOR_BAN_COLOR
+.byte 0x0 # GPDO_LAST_GAME_END_MODE
+.long 0x0 # GPDO_FN_COMPUTE_RANKED_WINNER
+.align 2
+.endm
 
 ################################################################################
 # slpCSS Symbol Structure

@@ -184,6 +184,11 @@
           "sourceFolder": "External/Widescreen",
           "isRecursive": true,
           "annotation": "Widescreen 16:9"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "Binary/NormalLagReduction.bin",
+          "annotation": "Normal Lag Reduction [Hannes Mann]"
         }
       ]
     },

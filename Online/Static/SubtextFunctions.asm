@@ -38,15 +38,23 @@
 .set REG_TEXT_ID, REG_USE_SLIPPI_ID + 1
 
 # float registers
-.set REG_SCALE, REG_TEXT_STRUCT_ADDR
-.set REG_X, REG_SCALE+1
-.set REG_Y, REG_X+1
-.set REG_Z, REG_Y + 1
-.set REG_OUTLINE_SIZE, REG_Z+1
-.set REG_OUTLINE_OFFSET, REG_OUTLINE_SIZE+1 # outlines offsets to create size
+.set REG_SCALE, 31
+.set REG_X, REG_SCALE-1
+.set REG_Y, REG_X-1
+.set REG_Z, REG_Y-1
+.set REG_OUTLINE_SIZE, REG_Z-1
+.set REG_OUTLINE_OFFSET, REG_OUTLINE_SIZE-1 # outlines offsets to create size
 
 .set REG_LOOP_INDEX, 15
 .set TEXT_LAST_INDEX, 0
+
+# Stack pointer offsets
+.set SPO_STRING_PTR_1, BKP_FREE_SPACE_OFFSET
+.set SPO_STRING_PTR_2, SPO_STRING_PTR_1 + 4
+.set SPO_STRING_PTR_3, SPO_STRING_PTR_2 + 4
+.set SPO_STRING_PTR_4, SPO_STRING_PTR_3 + 4
+.set SPO_STRING_PTR_5, SPO_STRING_PTR_4 + 4
+.set SPO_STRING_PTR_6, SPO_STRING_PTR_5 + 4
 
 # check which function to run
 cmpwi r5, 2
@@ -56,7 +64,9 @@ beq FN_CREATE_PREMADE_TEXT
 # FN_CREATE_SUBTEXT
 ################################################################################
 FN_CREATE_SUBTEXT:
-backup
+.set NUM_FREG, 6
+.set NUM_GPREG, 18
+backup BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 # Save arguments
 mr REG_TEXT_STRUCT_ADDR, r3
@@ -65,12 +75,12 @@ mr REG_OUTLINE, r5
 mr REG_OUTLINE_COLOR_ADDR, r6
 
 # Save string pointers
-stw  r7,0x38(sp)
-stw  r8,0x3C(sp)
-stw  r9,0x40(sp)
-stw  r10,0x44(sp)
-stw  r11,0x48(sp)
-stw  r12,0x4C(sp)
+stw  r7,SPO_STRING_PTR_1(sp)
+stw  r8,SPO_STRING_PTR_2(sp)
+stw  r9,SPO_STRING_PTR_3(sp)
+stw  r10,SPO_STRING_PTR_4(sp)
+stw  r11,SPO_STRING_PTR_5(sp)
+stw  r12,SPO_STRING_PTR_6(sp)
 
 fmr REG_SCALE, f1
 fmr REG_X, f2
@@ -118,7 +128,7 @@ b TEXT_LOOP_INITIALIZE_SUBTEXT
 TEXT_LOOP_INITIALIZE_SUBTEXT:
 # Initialize subtext
 mr r3, REG_TEXT_STRUCT_ADDR
-lwz r4, 0x38(sp)
+lwz r4, SPO_STRING_PTR_1(sp)
 branchl r12, Text_InitializeSubtext
 mr REG_SUBTEXT_INDEX, r3 # SubText Index
 
@@ -152,12 +162,12 @@ branchl r12, Text_ChangeTextColor
 # Update text with passed format if any
 mr r3, REG_TEXT_STRUCT_ADDR
 mr r4, REG_SUBTEXT_INDEX
-lwz  r5,0x38(sp)
-lwz  r6,0x3C(sp)
-lwz  r7,0x40(sp)
-lwz  r8,0x44(sp)
-lwz  r9,0x48(sp)
-lwz  r10,0x4C(sp)
+lwz  r5,SPO_STRING_PTR_1(sp)
+lwz  r6,SPO_STRING_PTR_2(sp)
+lwz  r7,SPO_STRING_PTR_3(sp)
+lwz  r8,SPO_STRING_PTR_4(sp)
+lwz  r9,SPO_STRING_PTR_5(sp)
+lwz  r10,SPO_STRING_PTR_6(sp)
 branchl r12, Text_UpdateSubtextContents
 
 # if reached last index, then end the loop, else increment and go back
@@ -176,7 +186,7 @@ b FN_CREATE_SUBTEXT_END
 INIT_SINGLE_TEXT_START:
 # Initialize subtext
 mr r3, REG_TEXT_STRUCT_ADDR
-lwz r4,0x38(sp)
+lwz r4,SPO_STRING_PTR_1(sp)
 fmr f1, REG_X
 fmr f2, REG_Y
 branchl r12, Text_InitializeSubtext
@@ -199,12 +209,12 @@ FN_CREATE_SUBTEXT_UPDATE_TEXT:
 # Update text with passed format if any
 mr r3, REG_TEXT_STRUCT_ADDR
 mr r4, REG_SUBTEXT_INDEX
-lwz  r5,0x38(sp)
-lwz  r6,0x3C(sp)
-lwz  r7,0x40(sp)
-lwz  r8,0x44(sp)
-lwz  r9,0x48(sp)
-lwz  r10,0x4C(sp)
+lwz  r5,SPO_STRING_PTR_1(sp)
+lwz  r6,SPO_STRING_PTR_2(sp)
+lwz  r7,SPO_STRING_PTR_3(sp)
+lwz  r8,SPO_STRING_PTR_4(sp)
+lwz  r9,SPO_STRING_PTR_5(sp)
+lwz  r10,SPO_STRING_PTR_6(sp)
 branchl r12, Text_UpdateSubtextContents
 
 INIT_SINGLE_TEXT_END:
@@ -212,14 +222,14 @@ FN_CREATE_SUBTEXT_END:
 
 # Return subtext index
 mr r3, REG_SUBTEXT_INDEX
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 blr
 
 ################################################################################
 # FN_CREATE_PREMADE_TEXT
 ################################################################################
 FN_CREATE_PREMADE_TEXT:
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 4
 
 # Save arguments
 mr REG_TEXT_ID, r3
@@ -267,7 +277,7 @@ branchl r12, Text_CopyPremadeTextDataToStruct
 # return text struct address
 mr r3, REG_TEXT_STRUCT_ADDR
 
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 4
 blr
 
 ################################################################################

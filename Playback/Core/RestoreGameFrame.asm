@@ -40,6 +40,14 @@
   branchl r12,FN_GetIsFollower
   mr  r20,r3
 
+# If we are not resyncing, let the follower's inputs be calculated by the game
+  cmpwi r20, 0
+  beq SKIP_FOLLOWER_RESYNC_CHECK
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq Injection_Exit
+  SKIP_FOLLOWER_RESYNC_CHECK:
+
 # Get players offset in buffer ()
   addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
   lbz r5,0xC(PlayerData)                  #get player number
@@ -98,9 +106,6 @@ DesyncDetected:
 
 RestoreData:
 # Restore data
-  lis r4,0x804D
-  lwz r3,RNGSeed(PlayerBackup)
-  stw r3,0x5F90(r4) #RNG seed
   lwz r3,AnalogX(PlayerBackup)
   stw r3,0x620(PlayerData) #analog X
   lwz r3,AnalogY(PlayerBackup)
@@ -120,6 +125,9 @@ RestoreData:
   cmpwi r3, 0
   beq SKIP_RESYNC
 
+  lis r4,0x804D
+  lwz r3,RNGSeed(PlayerBackup)
+  stw r3,0x5F90(r4) #RNG seed
   lwz r3,XPos(PlayerBackup)
   stw r3,0xB0(PlayerData) #x position
   lwz r3,YPos(PlayerBackup)

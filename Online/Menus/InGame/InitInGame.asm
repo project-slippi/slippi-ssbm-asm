@@ -20,9 +20,11 @@ blrl
 .float 0
 .set DOFST_TEXT_BASE_CANVAS_SCALING, DOFST_TEXT_BASE_Z + 4
 .float 0.1
+.set DOFST_TEXT_BASE_CANVAS_SCALING_1, DOFST_TEXT_BASE_CANVAS_SCALING + 4
+.float 0.1
 
 # delay values
-.set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
+.set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING_1 + 4
 .float 270
 .set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
 .float 207
@@ -150,7 +152,6 @@ li  r10, COBJ_GXPRI
 branchl r12, 0x803a611c
 mr  REG_Canvas, r3
 
-
 .set REG_ODB_ADDRESS, 30
 .set REG_TEXT_STRUCT, 29
 .set REG_DATA_ADDR, 28
@@ -164,6 +165,30 @@ stw REG_Canvas, ODB_HUD_CANVAS(REG_ODB_ADDRESS)
 
 bl DATA_BLRL
 mflr REG_DATA_ADDR
+
+# Create and store text struct that will be used for disconnect, desync, and other info texts
+li r3, 2
+mr r4, REG_Canvas # HUD canvas used for names and delay (does not stretch in widescreen)
+branchl r12, Text_CreateStruct
+mr REG_TEXT_STRUCT, r3
+
+# Set text kerning to close
+li r4, 0x1
+stb r4, 0x49(REG_TEXT_STRUCT)
+# Set text to align center
+li r4, 0x1
+stb r4, 0x4A(REG_TEXT_STRUCT)
+
+# Store Base Z Offset
+lfs f1, DOFST_TEXT_BASE_Z(REG_DATA_ADDR) #Z offset
+stfs f1, 0x8(REG_TEXT_STRUCT)
+
+# Scale Canvas Down
+lfs f1, DOFST_TEXT_BASE_CANVAS_SCALING_1(REG_DATA_ADDR)
+stfs f1, 0x24(REG_TEXT_STRUCT)
+stfs f1, 0x28(REG_TEXT_STRUCT)
+
+stw REG_TEXT_STRUCT, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
 
 # Get player names
 li r3, 0

@@ -241,7 +241,10 @@ blrl # FN_InitUserDisplay
 ################################################################################
 # Queue up per-frame CSS text update function
 ################################################################################
-.set REG_GOBJ, REG_VARIOUS_1
+# Using REG_GOBJ_1 because REG_GOBJ is set to that later in the file. A newer assembler seems
+# to be using the last value in the file instead of the most recent... so this will make the
+# outputs match
+.set REG_GOBJ_1, REG_VARIOUS_1
 .set REG_USERDATA, REG_VARIOUS_2
 
 # Create GObj (input values stolen from CSS_BigFunc... GObj)
@@ -249,7 +252,7 @@ li r3, 0x4
 li r4, 0x5
 li r5, 0x80
 branchl r12, GObj_Create
-mr REG_GOBJ, r3
+mr REG_GOBJ_1, r3
 
 # Alloc userdata
 li r3, TEXTGOBJDATA_SIZE
@@ -257,14 +260,14 @@ branchl r12,HSD_MemAlloc
 mr REG_USERDATA, r3
 
 # Add userdata
-addi r3, REG_GOBJ,0
+addi r3, REG_GOBJ_1,0
 li r4, 4
 load r5, HSD_Free
 addi r6, REG_USERDATA, 0
 branchl r12, GObj_AddUserData
 
 # Schedule Function
-addi r3, REG_GOBJ,0
+addi r3, REG_GOBJ_1,0
 bl CSS_ONLINE_TEXT_THINK
 mflr r4 # Function to Run
 li r5, 4 # Priority. 4 runs after CSS_LoadButtonInputs (3)
@@ -382,9 +385,9 @@ b EXIT
 # Expects f3 to be set to y position of line
 ################################################################################
 INIT_LINE_SUBTEXT:
+.set SP_OFST_Y_POS, BKP_FREE_SPACE_OFFSET
 backup
-
-fmr f13, f3
+stfs f3, SP_OFST_Y_POS(sp)
 
 # Init line text
 mr r3, REG_TEXT_STRUCT
@@ -402,7 +405,7 @@ addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE
 li r5, 0
 lfs f1, TPO_SPINNER_SIZE(REG_TEXT_PROPERTIES)
 lfs f2, TPO_HEADER_X(REG_TEXT_PROPERTIES)
-fmr f3, f13
+lfs f3, SP_OFST_Y_POS(sp)
 addi r7, REG_TEXT_PROPERTIES, TPO_EMPTY_STRING
 branchl r12, FG_CreateSubtext
 
@@ -589,7 +592,7 @@ bl FN_UPDATE_TEXT
 # Manage Chat Messages: If there's a new message, then initialize a
 # disappearing text
 ################################################################################
-
+b SKIP_CHAT_MESSAGES
 .set REG_MSG_ID, REG_VARIOUS_1 # REG_MSG_ID will store chat message id
 .set REG_USER_STRING, REG_VARIOUS_2 # REG_USER_STRING will store the user name string memory address
 
@@ -1030,10 +1033,12 @@ cmpwi r3, MM_STATE_OPPONENT_CONNECTING
 beq UPDATE_CONNECTING_TO_OPPONENT
 
 # Prep "searching" text to use
-lbz r5, OFST_R13_ONLINE_MODE(r13)
-cmpwi r5, ONLINE_MODE_UNRANKED
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_SEARCHING_FOR
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_OPPONENT
+lbz r11, OFST_R13_ONLINE_MODE(r13)
+cmpwi r11, ONLINE_MODE_UNRANKED
+beq UPDATE_WAITING
+cmpwi r11, ONLINE_MODE_RANKED
 beq UPDATE_WAITING
 
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_SEARCHING_FOR
@@ -1042,10 +1047,12 @@ b UPDATE_WAITING
 
 UPDATE_CONNECTING_TO_OPPONENT:
 # Prep "connecting" text to use
-lbz r5, OFST_R13_ONLINE_MODE(r13)
-cmpwi r5, ONLINE_MODE_UNRANKED
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CONNECTING_TO
 addi r6, REG_TEXT_PROPERTIES, TPO_STRING_OPPONENT
+lbz r11, OFST_R13_ONLINE_MODE(r13)
+cmpwi r11, ONLINE_MODE_UNRANKED
+beq UPDATE_WAITING
+cmpwi r11, ONLINE_MODE_RANKED
 beq UPDATE_WAITING
 
 addi r5, REG_TEXT_PROPERTIES, TPO_STRING_CONNECTING_TO
@@ -1153,16 +1160,18 @@ blr
 .set REG_CHATMSG_MSG_STRING_ADDR, REG_CHATMSG_MSG_TEXT_STRUCT_ADDR+1
 .set REG_CHATMSG_PLAYER_INDEX, REG_CHATMSG_MSG_STRING_ADDR+1
 # float registers
-.set REG_CHATMSG_TEXT_X_POS, REG_CHATMSG_GOBJ
-.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS+1
+.set REG_CHATMSG_TEXT_X_POS, 31
+.set REG_CHATMSG_TEXT_Y_POS, REG_CHATMSG_TEXT_X_POS-1
 
 # offsets
 .set JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
 
 CSS_ONLINE_CHAT_THINK:
 blrl
+.set NUM_FREG, 2
+.set NUM_GPREG, 18
+backup BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 mr REG_CHATMSG_GOBJ, r3 # Store GOBJ pointer
-backup
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -1377,7 +1386,9 @@ li r3, 0
 stb r3, CSSDT_LAST_CHAT_MSG_INDEX(REG_CSSDT_ADDR) # store the new message index
 
 CSS_ONLINE_CHAT_CHECK_EXIT:
-restore
+
+
+restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 blr
 
 

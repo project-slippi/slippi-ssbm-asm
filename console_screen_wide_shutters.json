@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_screen_wide_shutters.bin"
+    },
+    {
+      "file": "Output/Console/g_screen_wide_shutters.txt"
     }
   ],
   "codes": [

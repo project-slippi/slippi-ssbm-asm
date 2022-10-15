@@ -1,6 +1,17 @@
 .set MAX_ITEMS, 15
 
-# Command Bytes
+################################################################################
+# Game End Transfer Buffer
+################################################################################
+.set GAME_END_TXB_COMMAND, 0 # u8
+.set GAME_END_TXB_END_METHOD, GAME_END_TXB_COMMAND + 1 # u8
+.set GAME_END_TXB_LRAS_INITIATOR, GAME_END_TXB_END_METHOD + 1 # u8
+.set GAME_END_TXB_PLACEMENTS, GAME_END_TXB_LRAS_INITIATOR + 1 # u8[4]
+.set GAME_END_TXB_SIZE, GAME_END_TXB_PLACEMENTS + 4
+
+################################################################################
+# Command bytes
+################################################################################
 .set CMD_SPLIT_MESSAGE, 0x10 # Used for splitting up a large command into smaller messages
 .set CMD_DESCRIPTIONS, 0x35
 .set CMD_GAME_INFO, 0x36
@@ -13,7 +24,9 @@
 .set CMD_GAME_END, 0x39
 .set COMMAND_COUNT, 10 # number of possible commands
 
-# Payload lengths, if any additional data is added, these must be incremented
+################################################################################
+# Payload lengths
+################################################################################
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 701 # byte count
 .set GAME_FRAME_START_PAYLOAD_LENGTH, 12 #byte count
@@ -21,7 +34,7 @@
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 80 # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 42 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
-.set GAME_END_PAYLOAD_LENGTH, 2 # byte count
+.set GAME_END_PAYLOAD_LENGTH, GAME_END_TXB_SIZE - 1 # byte count
 .set SPLIT_MESSAGE_PAYLOAD_LENGTH, 516 # byte count
 
 .set SPLIT_MESSAGE_INTERNAL_DATA_LEN, 512
@@ -52,8 +65,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.12.0
-.set CURRENT_VERSION,0x030C0000
+# current version: 3.13.0
+.set CURRENT_VERSION,0x030D0000
 
 ################################################################################
 # Static Function Locations
