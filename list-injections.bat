@@ -18,6 +18,7 @@ set list=%list%;console_lag_pdhalfvb.json
 set list=%list%;console_screen_wide.json
 set list=%list%;console_screen_wide_shutters.json
 set list=%list%;console_safety.json
+set list=%list%;console_crash_output.json
 
 for %%a in (%list%) do (
   echo Listing %%a...
