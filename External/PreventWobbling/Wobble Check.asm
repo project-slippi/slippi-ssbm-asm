@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 8008F748
+# Address: 8008F090
 # Tags: [affects-gameplay]
 ################################################################################
 .include "Common/Common.s"
@@ -22,6 +22,8 @@
 .set AS_218_CatchCut,0x800da698
 .set AS_CaptureJump,0x800dc070
 .set ActionStateChange,0x800693ac
+.set AirStoreBoolLoseGroundJump,0x8007d5d4
+.set PlayerBlock_LoadDataOffset,0x8003418C
 
 .set Wobbling_Exit,0x8008F0C8
 
@@ -124,7 +126,7 @@
   AerialBreak:
   #Aerial nana enters capturejump (800dc070)
     lwz r3,0x2c(REG_FollowerGObj)
-    branchl r12,AS_CaptureJump #0x8007d5d4
+    branchl r12,AirStoreBoolLoseGroundJump #0x8007d5d4
   # give velocity
     lwz r3,0x2c(REG_FollowerGObj)
     lwz	r5, -0x514C (r13)
