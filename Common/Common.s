@@ -361,8 +361,7 @@ add \reg, r3, r4
 .set FN_CSSUpdateCSP,0x800056bc
 .set FN_RequestSSM,0x800056a8
 .set FN_GetCommonMinorID,0x8000561c
-# available addresses for static functions
-# 0x8000568C
+.set FN_GetCharName,0x8000568c
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
