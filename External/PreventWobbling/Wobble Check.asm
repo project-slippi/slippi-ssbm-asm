@@ -10,12 +10,15 @@
 .set ASID_CaptureDamageLw, 0xE4
 .set ASID_CaptureJump, 0xE6
 
-
 .set OFST_IsLeader,0x2222
 .set Bitflag_IsLeader,0x4
+.set OFST_IsDead,0x221f
+.set Bitflag_IsDead,0x40
+.set OFST_IsFrozen,0x2219
+.set Bitflag_IsFrozen,0x04
 
-.set OFST_WobbleCounter,0x2350
-.set OFST_LastMoveID,0x2352
+.set OFST_WobbleCounter,0x2384
+.set OFST_LastMoveID,0x2386
 .set MaxWobbles,3
 
 .set Match_CheckIfTeams,0x8016B168
@@ -24,6 +27,7 @@
 .set ActionStateChange,0x800693ac
 .set AirStoreBoolLoseGroundJump,0x8007d5d4
 .set PlayerBlock_LoadDataOffset,0x8003418C
+.set IceClimbers_CheckNanaAliveAndActionable, 0x8012300c
 
 .set Wobbling_Exit,0x8008F0C8
 
@@ -110,11 +114,24 @@
     cmpwi r3,0
     beq SkipBreak
     mr REG_FollowerGObj,r3
-    lwz r4,0x2c(REG_FollowerGObj)
   #Check if her AI is in follow mode
     #lbz r5, 0x1a88 + 0xFA (r4)
     #rlwinm. r5,r5,0,0x01
     #beq SkipBreak
+  #Ensure that she is alive and actionable
+    lwz r4,0x2c(REG_FollowerGObj)
+    lbz	r0, OFST_IsDead (r4) # dead flag
+    rlwinm.	r0, r0, 0, Bitflag_IsDead
+    bne SkipBreak
+    lbz	r0, OFST_IsFrozen (r4) # frozen flag
+    rlwinm.	r0, r0, 0, Bitflag_IsFrozen
+    bne SkipBreak
+    lbz	r0, 0x2071 (r4) # state kind
+    rlwinm	r0, r0, 28, 28, 31
+    cmpwi r0, 13 # star and screen KOs
+    beq SkipBreak
+CheckGroundState:
+  #Check grounded/airborne
     lwz r5, 0xE0 (r4)
     cmpwi r5,0
     bne AerialBreak

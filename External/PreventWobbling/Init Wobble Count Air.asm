@@ -6,8 +6,8 @@
 
 .set  REG_DefenderData,29
 
-.set  OFST_WobbleCounter,0x2350
-.set  OFST_LastMoveID,0x2352
+.set OFST_WobbleCounter,0x2384
+.set OFST_LastMoveID,0x2386
 
 #Init count
   li  r3,0
