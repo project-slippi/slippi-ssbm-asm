@@ -359,6 +359,12 @@
           "sourceFolder": "Common/PSCameraIndependentMonitor",
           "isRecursive": true,
           "annotation": "Avoids PS + Widescreen desyncs [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/CPUInitSeedReset",
+          "isRecursive": true,
+          "annotation": "Resets seed prior to Nana CPU logic counter init [Fizzi, UnclePunch]"
         }
       ]
     },

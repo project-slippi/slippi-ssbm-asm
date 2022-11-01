@@ -1525,6 +1525,12 @@
    "Tags": "[affects-gameplay]"
   },
   {
+   "InjectionAddress": "8016E2DC",
+   "Codetype": "Auto",
+   "Annotation": "",
+   "Tags": "[affects-gameplay]"
+  },
+  {
    "InjectionAddress": "803761EC",
    "Codetype": "04",
    "Annotation": "",
