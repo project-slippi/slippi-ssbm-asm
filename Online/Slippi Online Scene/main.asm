@@ -433,7 +433,7 @@ stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GAME_PREP_DATA)
 li r3, 3
 stb r3, GPDO_MAX_GAMES(REG_GAME_PREP_DATA)
 li r3, 1
-stb r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
+sth r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
 li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
 stb r3, GPDO_COLOR_BAN_ACTIVE(REG_GAME_PREP_DATA)
@@ -616,7 +616,7 @@ VSSceneDecide_SkipTieHandler:
 stb REG_WINNER_IDX, GPDO_PREV_WINNER(REG_GPD) # Store winner index
 
 # Set winner ID at game index
-lbz r4, GPDO_CUR_GAME(REG_GPD)
+lhz r4, GPDO_CUR_GAME(REG_GPD)
 addi r4, r4, GPDO_GAME_RESULTS - 1 # Move offset to index in array (cur_game is 1-indexed)
 stbx REG_WINNER_IDX, REG_GPD, r4
 
@@ -639,9 +639,9 @@ divwu r4, r4, r3 # Calculate number of wins needed
 cmpw r5, r4
 bge VSSceneDecide_RankedSetOver
 
-lbz r3, GPDO_CUR_GAME(REG_GPD)
+lhz r3, GPDO_CUR_GAME(REG_GPD)
 addi r3, r3, 1
-stb r3, GPDO_CUR_GAME(REG_GPD)
+sth r3, GPDO_CUR_GAME(REG_GPD)
 
 li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)

@@ -466,8 +466,8 @@
 # Define game prep data and include macro to create static data
 ################################################################################
 .set GPDO_MAX_GAMES, 0 # u8
-.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1 # u8
-.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 1 # u8[2]
+.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1 # u16
+.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 2 # u8[2]
 .set GPDO_PREV_WINNER, GPDO_SCORE_BY_PLAYER + 2 * 1 # u8
 .set GPDO_TIEBREAK_GAME_NUM, GPDO_PREV_WINNER + 1 # u8
 .set GAME_PREP_MAX_RESULT_COUNT, 9
@@ -484,7 +484,7 @@
 
 .macro createGamePrepStaticBlock
 .byte 0x0 # GPDO_MAX_GAMES, max games
-.byte 0x0 # GPDO_CUR_GAME, current game
+.hword 0x0 # GPDO_CUR_GAME, current game
 .fill 2, 1, 0 # GPDO_SCORE_BY_PLAYER
 .byte 0x0 # GPDO_PREV_WINNER, previous winner
 .byte 0x0 # GPDO_TIEBREAK_GAME_NUM
