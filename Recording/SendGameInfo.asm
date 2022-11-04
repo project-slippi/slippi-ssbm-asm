@@ -365,6 +365,9 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 .set REG_MSRB,25
 .set REG_MSRB_DisplayNameStart,26
 
+# Init MSRB reg to zero so we know if we have to free it or not
+  li REG_MSRB, 0
+
 # Before trying to load match state, make sure we are in an online scene
   getMinorMajor r3
   cmpwi r3, SCENE_ONLINE_IN_GAME
@@ -526,9 +529,6 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   cmpwi REG_LoopCount,4
   blt SLIPPI_UID_LOOP
 
-# Free MSRB
-  mr r3,REG_MSRB
-  branchl r12,HSD_Free
   b SEND_SLIPPI_UID_END
 
   DISPLAY_CC_UID_WRITE_ZERO:
@@ -545,6 +545,52 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 # fetch and write current language setting
   branchl r12, 0x8000adf4 # Language_GetLanguage
   stb r3, LanguageStart+0x0(REG_Buffer)
+
+  #------------- MATCH ID AND GAME INDEX -------------
+.set MatchIdStart, (LanguageStart + LanguageLength)
+.set MatchIdLength, 51
+.set GameIndexStart, (MatchIdStart + MatchIdLength)
+.set GameIndexLength, 4
+.set TiebreakIndexStart, (GameIndexStart + GameIndexLength)
+.set TiebreakIndexLength, 4
+
+# If MSRB is not 0, this is an online match
+  cmpwi REG_MSRB, 0
+  beq ZERO_MATCH_ID_AND_GAME_INDEX
+
+# copy match ID
+  addi r3, REG_Buffer, MatchIdStart
+  addi r4, REG_MSRB, MSRB_MATCH_ID
+  li r5, MatchIdLength
+  branchl r12, memcpy
+
+# write game index and tiebreak index
+  loadwz r3, 0x803dad40 # Load minor scene data array ptr
+  lwz r12, 0x88(r3) # Load game prep minor scene data
+  lhz r3, GPDO_CUR_GAME(r12)
+  stw r3, GameIndexStart(REG_Buffer)
+  lbz r3, GPDO_TIEBREAK_GAME_NUM(r12)
+  stw r3, TiebreakIndexStart(REG_Buffer)
+
+  b MATCH_ID_GAME_INDEX_END
+
+ZERO_MATCH_ID_AND_GAME_INDEX:
+# TODO: It might be possible to do something else here when playing offline. Maybe we could generate
+# TODO: a console or dolphin instance ID and just increment the game index every local game.
+# TODO: Tiebreaks could also be used for sudden death mode? Or tiebreak can just stay 0 forever
+  addi r3, REG_Buffer, MatchIdStart
+  li r4, MatchIdLength + GameIndexLength + TiebreakIndexLength
+  branchl r12, Zero_AreaLength
+
+MATCH_ID_GAME_INDEX_END:
+
+#------------- Free MSRB if it was created ------------
+  cmpwi REG_MSRB, 0
+  beq SKIP_MSRB_FREE
+# Free MSRB
+  mr r3,REG_MSRB
+  branchl r12,HSD_Free
+  SKIP_MSRB_FREE:
 
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
