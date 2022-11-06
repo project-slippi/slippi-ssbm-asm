@@ -291,6 +291,14 @@ lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
 cmpwi r3, 0
 beq DISPLAY_DISCONNECT_END # If not disconnected, do nothing
 
+# Sometimes I think it's possible to get a disconnect signal after the game has ended on both
+# games. Atm I'm not sure why but it makes it possible for DISCONNECTED to show up for a frame
+# or two on one client before the scene transition. So I added this to make it just not show the
+# message if the game is already over
+lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne DISPLAY_DISCONNECT_END
+
 # We are disconnected, display text and play sound
 li r3, 3
 branchl r12, SFX_Menu_CommonSound
