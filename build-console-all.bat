@@ -1,8 +1,13 @@
 @echo off
+echo Building console_core.json for Port A...
+gecko build -c console_core.json -defsym "STG_EXIIndex=0" -o "Output/Console/g_core_porta.bin"
+echo.
 
-set list=netplay.json
-set list=%list%;console_core.json
-set list=%list%;console_UCF.json
+echo Building console_core.json...
+gecko build -c console_core.json -defsym "STG_EXIIndex=1" -o "Output/Console/g_core.bin"
+echo.
+
+set list=console_UCF.json
 set list=%list%;console_UCF_stealth.json
 set list=%list%;console_mods_stealth.json
 set list=%list%;console_mods_tournament.json
@@ -21,8 +26,8 @@ set list=%list%;console_safety.json
 set list=%list%;console_crash_output.json
 
 for %%a in (%list%) do (
-  echo Listing %%a...
-  gecko list -i %%a -o Output/InjectionLists/list_%%a
+  echo Building %%a...
+  gecko build -c %%a
   echo.
 )
 

@@ -221,6 +221,8 @@ pip-log.txt
 
 .vscode
 
+Output/Console/install.bat
+Output/Console/install-core-only.bat
 Output/Netplay/install.bat
 Output/Netplay/build-netplay.bat - Shortcut.lnk
 Output/Playback/install.bat

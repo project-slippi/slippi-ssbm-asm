@@ -14,7 +14,7 @@
         "UnclePunch"
       ],
       "description": [
-        "Break out of grab after three Nana hits"
+        "Breaks Popo's grab after four pummels if the victim has not left hitstun since the first pummel."
       ],
       "build": [
         {
