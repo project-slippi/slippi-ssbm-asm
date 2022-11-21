@@ -379,50 +379,42 @@ blrl
 
   FrameText:
   blrl
-  .string "P%d Frame: %d // Original // Restored
-"
+  .string "P%d Frame: %d // Original // Restored\n"
   .align 2
 
   RNGText:
   blrl
-  .string "RNG Seed: 0x%X // 0x%X
-"
+  .string "RNG Seed: 0x%X // 0x%X\n"
   .align 2
 
   XPosText:
   blrl
-  .string "X Position: %f // %f
-"
+  .string "X Position: %f // %f\n"
   .align 2
 
   YPosText:
   blrl
-  .string "Y Position: %f // %f
-"
+  .string "Y Position: %f // %f\n"
   .align 2
 
   FacingText:
   blrl
-  .string "Facing Direction: %1.0f // %1.0f
-"
+  .string "Facing Direction: %1.0f // %1.0f\n"
   .align 2
 
   ASText:
   blrl
-  .string "Action State: 0x%X %s // 0x%X %s
-"
+  .string "Action State: 0x%X %s // 0x%X %s\n"
   .align 2
 
   PercentText:
   blrl
-  .string "Percent: %1.2f //  %1.2f
-"
+  .string "Percent: %1.2f //  %1.2f\n"
   .align 2
 
   DividerText:
   blrl
-  .string "------Desync Detected--------
-"
+  .string "------Desync Detected--------\n"
   .align 2
 
 .endif

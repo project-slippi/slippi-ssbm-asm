@@ -13,7 +13,7 @@ b CODE_START
 STATIC_MEMORY_TABLE_BLRL:
 blrl
 b FN_FetchSuggestion # IDO_FN_FetchSuggestion
-.long 0x0, # IDO_ACB_ADDR, address to buffer
+.long 0x0 # IDO_ACB_ADDR, address to buffer
 
 CODE_START:
 # Original line - checks for an L or R press.

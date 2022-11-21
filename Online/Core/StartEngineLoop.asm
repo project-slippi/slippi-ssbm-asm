@@ -537,7 +537,7 @@ bne FIND_CHECKSUM_LOOP_CONTINUE
 cmpwi REG_DESYNC_ENTRY_ADDRESS, 0
 beq CONFIRMED_SYNC_SET
 lwz r3, DDLE_FRAME(REG_LOCAL_DESYNC_ENTRY)
-cmpwi REG_DESYNC_ENTRY_FRAME, r3 # If the current frame is later than the stored one, don't switch
+cmpw REG_DESYNC_ENTRY_FRAME, r3 # If the current frame is later than the stored one, don't switch
 bge SKIP_CONFIRMED_SYNC_SET
 CONFIRMED_SYNC_SET:
 mr REG_DESYNC_ENTRY_ADDRESS, REG_LOCAL_DESYNC_ENTRY

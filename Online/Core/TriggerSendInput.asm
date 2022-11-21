@@ -85,7 +85,7 @@ PROCESS_NOT_ROLLBACK:
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 li r4, UNFREEZE_INPUTS_FRAME
 sub r3, r4, r3
-cmpwi REG_FRAME_INDEX, r3 # Frame 84 +/- 1 (not sure) is first unfrozen frame
+cmpw REG_FRAME_INDEX, r3 # Frame 84 +/- 1 (not sure) is first unfrozen frame
 bge SKIP_FROZEN_INPUT_CLEAR
 
 addi r3, REG_PARENT_STACK_FRAME, P1_PAD_OFFSET
