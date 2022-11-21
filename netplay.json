@@ -514,24 +514,6 @@
           "isRecursive": true
         }
       ]
-    },
-    {
-      "name": "Optional: Port Priority Fixes",
-      "authors": [
-        "Punkline",
-        "Achilles",
-        "PKFreeZZy"
-      ],
-      "description": [
-        "Removes the most flagrant instances of port priority in the game"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/PortPriority",
-          "isRecursive": true
-        }
-      ]
     }
   ]
 }
