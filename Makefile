@@ -48,25 +48,25 @@ ini: $(INI_TARGETS)
 
 # PORT B is the general use case, PORT A is for debugging
 $(CONSOLE_CORE_PORTB): console_core.json
-	gecko build -defsym "STG_EXIIndex=1" -o "Output/Console/g_core.bin" -c $<
+	gecko build -batched -defsym "STG_EXIIndex=1" -o "Output/Console/g_core.bin" -c $<
 	@echo ""
 
 $(CONSOLE_CORE_PORTA): console_core.json
-	gecko build -defsym "STG_EXIIndex=0" -o "Output/Console/g_core_porta.bin" -c $<
+	gecko build -batched -defsym "STG_EXIIndex=0" -o "Output/Console/g_core_porta.bin" -c $<
 	@echo ""
 
 $(CONSOLE):
-	gecko build -c $@
+	gecko build -batched -c $@
 	@echo ""
 
 # -----------------------------------------------------------------------------
 # Targets for Dolphin's {netplay,playback} .ini configuration files
 
 $(NETPLAY_INI): $(NETPLAY)
-	@gecko build -defsym "STG_EXIIndex=1" -c $<
+	@gecko build -batched -defsym "STG_EXIIndex=1" -c $<
 	@echo ""
 $(PLAYBACK_INI): $(PLAYBACK)
-	@gecko build -defsym "STG_EXIIndex=1" -c $<
+	@gecko build -batched -defsym "STG_EXIIndex=1" -c $<
 	@echo ""
 
 # -----------------------------------------------------------------------------
