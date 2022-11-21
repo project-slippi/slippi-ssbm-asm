@@ -1,3 +1,5 @@
+.ifndef HEADER_COMMON
+
 ################################################################################
 # Macros
 ################################################################################
@@ -612,3 +614,6 @@ add \reg, r3, r4
 .set LOG_LEVEL_WARN, 3
 .set LOG_LEVEL_ERROR, 2
 .set LOG_LEVEL_NOTICE, 1
+
+.endif
+.set HEADER_COMMON, 1
