@@ -35,6 +35,21 @@ branchl r12, Zero_AreaLength
 
 stw REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13)
 
+# We use game prep minor scene data as a convenient place to store game index such that it persists
+# between games even when not in ranked
+loadwz r3, 0x803dad40 # Load minor scene data array ptr
+lwz r12, 0x88(r3) # Load game prep minor scene data
+
+# If not in ranked mode, let's increment the game index before the game start. Ranked mode manages
+# this in its scene logic
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq SKIP_GAME_INDEX_INCR
+lhz r3, GPDO_CUR_GAME(r12)
+addi r3, r3, 1
+sth r3, GPDO_CUR_GAME(r12)
+SKIP_GAME_INDEX_INCR:
+
 # Indicate that the first frame is frame 1
 li r3, 1
 stw r3, ODB_FRAME(REG_ODB_ADDRESS)
@@ -321,7 +336,7 @@ stb r3, RGB_ONLINE_MODE(REG_RGB_ADDR)
 branchl r12, 0x801a4ba8 # MenuController_LoadTimer1
 stw r3, RGB_FRAME_LENGTH(REG_RGB_ADDR) # Store frame length
 
-lbz r3, GPDO_CUR_GAME(REG_GPD_ADDR)
+lhz r3, GPDO_CUR_GAME(REG_GPD_ADDR)
 stw r3, RGB_GAME_INDEX(REG_RGB_ADDR)
 
 lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD_ADDR)
