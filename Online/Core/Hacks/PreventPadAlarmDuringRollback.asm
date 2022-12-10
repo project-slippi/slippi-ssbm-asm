@@ -30,7 +30,7 @@ stb r3, ODB_IS_FRAME_ADVANCE(r5)
 # function for the RenewInputs_Prefunction call and setting that as the
 # VI callback, but then I'd need to use non-standard lag reduction code
 load r3, 0x80375e00
-cmpwi r0, r3
+cmpw r0, r3
 bne EXIT
 
 # Check if a rollback is active, if a rollback is active, do not renew inputs
