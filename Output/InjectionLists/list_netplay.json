@@ -1779,6 +1779,27 @@
    "Tags": "[affects-gameplay]"
   },
   {
+   "InjectionAddress": "800DB880",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "External/PreventWobbling/Init Wobble Count Air.asm",
+   "Tags": "[affects-gameplay]"
+  },
+  {
+   "InjectionAddress": "800DBBD4",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "External/PreventWobbling/Init Wobble Count Ground.asm",
+   "Tags": "[affects-gameplay]"
+  },
+  {
+   "InjectionAddress": "8008F090",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "External/PreventWobbling/Wobble Check.asm",
+   "Tags": "[affects-gameplay]"
+  },
+  {
    "InjectionAddress": "803761EC",
    "Name": "Recommended: Normal Lag Reduction",
    "Codetype": "04",

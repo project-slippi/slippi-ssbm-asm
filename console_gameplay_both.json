@@ -36,7 +36,7 @@
         {
           "type": "injectFolder",
           "sourceFolder": "External/PreventWobbling",
-          "isRecursive": true,
+          "isRecursive": false,
           "annotation": "Disable wobbling"
         }
       ]
