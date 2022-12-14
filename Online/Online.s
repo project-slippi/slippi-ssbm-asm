@@ -58,6 +58,11 @@
 
 .set UNFREEZE_INPUTS_FRAME, 84
 
+# Inputs before freeze time are important because if they get zero'd out, inputs on the first
+# actionable frame will be treated as new inputs rather than held inputs.
+# Think 5 should be more than enough (pad buffer size), 6 to be safe
+.set START_SYNC_FRAME, UNFREEZE_INPUTS_FRAME - 6
+
 .set STATIC_PLAYER_BLOCK_P1, 0x80453080
 .set STATIC_PLAYER_BLOCK_LEN, 0xE90
 

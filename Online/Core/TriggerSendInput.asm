@@ -83,7 +83,7 @@ PROCESS_NOT_ROLLBACK:
 # both replays are identical when considering only finalized frames
 ################################################################################
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
-li r4, UNFREEZE_INPUTS_FRAME
+li r4, START_SYNC_FRAME
 sub r3, r4, r3
 cmpw REG_FRAME_INDEX, r3 # Frame 84 +/- 1 (not sure) is first unfrozen frame
 bge SKIP_FROZEN_INPUT_CLEAR
@@ -767,7 +767,7 @@ logf LOG_LEVEL_NOTICE, "[TSI] [%d] (Opp) P%d Needs Prediction"
 # Don't save any states at the start of the game, it's frozen anyway
 # and there might still be stuff loading
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
-li r4, UNFREEZE_INPUTS_FRAME
+li r4, START_SYNC_FRAME
 sub r3, r4, r3
 cmpw REG_FRAME_INDEX, r3 # Frame 84 +/- 1 (not sure) is first unfrozen frame
 blt LOAD_STALE_INPUTS
