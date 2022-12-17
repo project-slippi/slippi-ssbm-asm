@@ -563,7 +563,7 @@ FN_ReportSetCompletion:
 backup
 mr r31, r3
 
-li r3, 1
+li r3, 2
 branchl r12, HSD_MemAlloc
 
 # Write tx data
@@ -576,6 +576,7 @@ li r4, 1
 li r5, CONST_ExiWrite
 branchl r12, FN_EXITransferBuffer
 
+restore
 blr
 
 #region VSSceneDecide
