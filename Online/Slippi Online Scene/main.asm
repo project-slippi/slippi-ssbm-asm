@@ -559,6 +559,25 @@ restore
 blr
 #endregion
 
+FN_ReportSetCompletion:
+backup
+mr r31, r3
+
+li r3, 1
+branchl r12, HSD_MemAlloc
+
+# Write tx data
+li r4, CONST_SlippiCmdReportSetCompletion
+stb r4, 0(r3)
+stb r31, 1(r3)
+
+# Transfer completion
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+blr
+
 #region VSSceneDecide
 VSSceneDecide:
 .set REG_MSRB_ADDR, 31
@@ -587,7 +606,12 @@ bne VSSceneDecide_SkipRankedHandler
 # If connection is not active, just go back to CSS
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_IDLE
-beq VSSceneDecide_SkipRankedHandler
+bne VSSceneDecide_ConnectionActive
+# Report disconnect
+li r3, 1
+bl FN_ReportSetCompletion
+b VSSceneDecide_SkipRankedHandler
+VSSceneDecide_ConnectionActive:
 
 bl GamePrepData_BLRL
 mflr REG_GPD
@@ -654,6 +678,10 @@ stb r3, 0x5(r4)
 b VSSceneDecide_ModeHandlerEnd
 
 VSSceneDecide_RankedSetOver:
+# Report normal set completion
+li r3, 0
+bl FN_ReportSetCompletion
+
 # Disconnect from opponent
 # Prepare buffer for EXI transfer
 li r3, 1
@@ -1377,6 +1405,11 @@ cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 beq GamePrepSceneDecide_ExecNormal
 
 # Here we have disconnected from opponent, go back to CSS
+
+# I commented the below because the game setup scene itself already sends the communication
+# li r3, 1
+# bl FN_ReportSetCompletion
+
 # Go back to CSS
 load r4, 0x80479d30
 li r3, 0x01
