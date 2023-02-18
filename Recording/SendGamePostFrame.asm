@@ -154,6 +154,12 @@ backup
   lwz r3,0x14(REG_PlayerData)
   stw r3,0x4d(REG_Buffer)
 
+  # send instance information
+  lhz r3,0x18ec(REG_PlayerData)
+  sth r3,0x51(REG_Buffer)
+  lhz r3,0x2088(REG_PlayerData)
+  sth r3,0x53(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
