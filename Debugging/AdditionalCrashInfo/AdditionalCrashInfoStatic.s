@@ -1,3 +1,5 @@
+.ifndef HEADER_ADDITIONAL_CRASH_INFO_STATIC
+
 # Define additional crash info static mem offsets, these must be synced with the static mem
 # defined below
 .set ACISMO_VERSION_STR, 0 # char[64]
@@ -15,3 +17,6 @@
 
 .align 2
 .endm
+
+.endif
+.set HEADER_ADDITIONAL_CRASH_INFO_STATIC, 1

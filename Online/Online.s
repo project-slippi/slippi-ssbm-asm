@@ -1,3 +1,5 @@
+.ifndef HEADER_ONLINE
+
 ################################################################################
 # TODO List
 ################################################################################
@@ -55,6 +57,11 @@
 .set RXB_INPUTS_COUNT, ROLLBACK_MAX_FRAME_COUNT
 
 .set UNFREEZE_INPUTS_FRAME, 84
+
+# Inputs before freeze time are important because if they get zero'd out, inputs on the first
+# actionable frame will be treated as new inputs rather than held inputs.
+# Think 5 should be more than enough (pad buffer size), 6 to be safe
+.set START_SYNC_FRAME, UNFREEZE_INPUTS_FRAME - 6
 
 .set STATIC_PLAYER_BLOCK_P1, 0x80453080
 .set STATIC_PLAYER_BLOCK_LEN, 0xE90
@@ -316,24 +323,25 @@
 .set MSRB_CHATMSG_PLAYER_INDEX, MSRB_OPP_CHATMSG_ID + 1 # u8
 .set MSRB_VS_LEFT_PLAYERS, MSRB_CHATMSG_PLAYER_INDEX + 1 # u32 player ports 0xP1P2P3PN
 .set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u32 player ports 0xP1P2P3PN
-.set MSRB_LOCAL_NAME, MSRB_VS_RIGHT_PLAYERS + 4 # string (31)
-.set MSRB_P1_NAME, MSRB_LOCAL_NAME + 31 # string (31)
-.set MSRB_P2_NAME, MSRB_P1_NAME + 31 # string (31)
-.set MSRB_P3_NAME, MSRB_P2_NAME + 31 # string (31)
-.set MSRB_P4_NAME, MSRB_P3_NAME + 31 # string (31)
-.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # string (31)
-.set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 31 # string (10) hashtag is shift-jis
-.set MSRB_P2_CONNECT_CODE, MSRB_P1_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
-.set MSRB_P3_CONNECT_CODE, MSRB_P2_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
-.set MSRB_P4_CONNECT_CODE, MSRB_P3_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
-.set MSRB_P1_SLIPPI_UID, MSRB_P4_CONNECT_CODE + 10 # string (29)
-.set MSRB_P2_SLIPPI_UID, MSRB_P1_SLIPPI_UID + 29 # string (29)
-.set MSRB_P3_SLIPPI_UID, MSRB_P2_SLIPPI_UID + 29 # string (29)
-.set MSRB_P4_SLIPPI_UID, MSRB_P3_SLIPPI_UID + 29 # string (29)
-.set MSRB_ERROR_MSG, MSRB_P4_SLIPPI_UID + 29 # string (241)
+.set MSRB_LOCAL_NAME, MSRB_VS_RIGHT_PLAYERS + 4 # char[31]
+.set MSRB_P1_NAME, MSRB_LOCAL_NAME + 31 # char[31]
+.set MSRB_P2_NAME, MSRB_P1_NAME + 31 # char[31]
+.set MSRB_P3_NAME, MSRB_P2_NAME + 31 # char[31]
+.set MSRB_P4_NAME, MSRB_P3_NAME + 31 # char[31]
+.set MSRB_OPP_NAME, MSRB_P4_NAME + 31 # char[31]
+.set MSRB_P1_CONNECT_CODE, MSRB_OPP_NAME + 31 # char[10] hashtag is shift-jis
+.set MSRB_P2_CONNECT_CODE, MSRB_P1_CONNECT_CODE + 10 # char[10] hashtag is shift-jis
+.set MSRB_P3_CONNECT_CODE, MSRB_P2_CONNECT_CODE + 10 # char[10] hashtag is shift-jis
+.set MSRB_P4_CONNECT_CODE, MSRB_P3_CONNECT_CODE + 10 # char[10] hashtag is shift-jis
+.set MSRB_P1_SLIPPI_UID, MSRB_P4_CONNECT_CODE + 10 # char[29]
+.set MSRB_P2_SLIPPI_UID, MSRB_P1_SLIPPI_UID + 29 # char[29]
+.set MSRB_P3_SLIPPI_UID, MSRB_P2_SLIPPI_UID + 29 # char[29]
+.set MSRB_P4_SLIPPI_UID, MSRB_P3_SLIPPI_UID + 29 # char[29]
+.set MSRB_ERROR_MSG, MSRB_P4_SLIPPI_UID + 29 # char[241]
 .set ERROR_MESSAGE_LEN, 241
 .set MSRB_GAME_INFO_BLOCK, MSRB_ERROR_MSG + ERROR_MESSAGE_LEN # MATCH_STRUCT_LEN
-.set MSRB_SIZE, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
+.set MSRB_MATCH_ID, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN # char[51]
+.set MSRB_SIZE, MSRB_MATCH_ID + 51
 
 ################################################################################
 # Player Selections Transfer Buffer
@@ -361,7 +369,7 @@
 ################################################################################
 .set FMTB_CMD, 0 # u8
 .set FMTB_ONLINE_MODE, FMTB_CMD + 1 # u8
-.set FMTB_OPP_CONNECT_CODE, FMTB_ONLINE_MODE + 1 # string (18) shift-jis
+.set FMTB_OPP_CONNECT_CODE, FMTB_ONLINE_MODE + 1 # char[18] shift-jis
 .set FMTB_SIZE, FMTB_OPP_CONNECT_CODE + 18
 
 ################################################################################
@@ -432,8 +440,8 @@
 # Online status buffer offsets
 ################################################################################
 .set OSB_APP_STATE, 0 # 0 = not logged in, 1 = logged in, 2 = update required
-.set OSB_PLAYER_NAME, OSB_APP_STATE + 1 # string (31)
-.set OSB_CONNECT_CODE, OSB_PLAYER_NAME + 31 # string (10) hashtag is shift-jis
+.set OSB_PLAYER_NAME, OSB_APP_STATE + 1 # char[31]
+.set OSB_CONNECT_CODE, OSB_PLAYER_NAME + 31 # char[10] hashtag is shift-jis
 .set OSB_SIZE, OSB_CONNECT_CODE + 10
 
 ################################################################################
@@ -466,8 +474,8 @@
 # Define game prep data and include macro to create static data
 ################################################################################
 .set GPDO_MAX_GAMES, 0 # u8
-.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1 # u8
-.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 1 # u8[2]
+.set GPDO_CUR_GAME, GPDO_MAX_GAMES + 1 # u16
+.set GPDO_SCORE_BY_PLAYER, GPDO_CUR_GAME + 2 # u8[2]
 .set GPDO_PREV_WINNER, GPDO_SCORE_BY_PLAYER + 2 * 1 # u8
 .set GPDO_TIEBREAK_GAME_NUM, GPDO_PREV_WINNER + 1 # u8
 .set GAME_PREP_MAX_RESULT_COUNT, 9
@@ -484,7 +492,7 @@
 
 .macro createGamePrepStaticBlock
 .byte 0x0 # GPDO_MAX_GAMES, max games
-.byte 0x0 # GPDO_CUR_GAME, current game
+.hword 0x0 # GPDO_CUR_GAME, current game
 .fill 2, 1, 0 # GPDO_SCORE_BY_PLAYER
 .byte 0x0 # GPDO_PREV_WINNER, previous winner
 .byte 0x0 # GPDO_TIEBREAK_GAME_NUM
@@ -513,3 +521,6 @@
 .set RESP_SKIP, 2
 .set RESP_DISCONNECTED, 3
 .set RESP_ADVANCE, 4
+
+.endif
+.set HEADER_ONLINE, 1

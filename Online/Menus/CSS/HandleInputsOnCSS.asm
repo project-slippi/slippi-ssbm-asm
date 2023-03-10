@@ -323,6 +323,13 @@ b SKIP_START_MATCH
 FN_TX_FIND_MATCH:
 backup
 
+# When the player starts looking for a match is a good time to reset the game index
+loadwz r3, 0x803dad40 # Load minor scene data array ptr
+lwz r12, 0x88(r3) # Load game prep minor scene data
+li r3, 0
+sth r3, GPDO_CUR_GAME(r12)
+stb r3, GPDO_TIEBREAK_GAME_NUM(r12)
+
 # Prepare buffer for EXI transfer
 li r3, FMTB_SIZE
 branchl r12, HSD_MemAlloc

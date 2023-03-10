@@ -433,7 +433,7 @@ stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GAME_PREP_DATA)
 li r3, 3
 stb r3, GPDO_MAX_GAMES(REG_GAME_PREP_DATA)
 li r3, 1
-stb r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
+sth r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
 li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
 stb r3, GPDO_COLOR_BAN_ACTIVE(REG_GAME_PREP_DATA)
@@ -559,6 +559,26 @@ restore
 blr
 #endregion
 
+FN_ReportSetCompletion:
+backup
+mr r31, r3
+
+li r3, 2
+branchl r12, HSD_MemAlloc
+
+# Write tx data
+li r4, CONST_SlippiCmdReportSetCompletion
+stb r4, 0(r3)
+stb r31, 1(r3)
+
+# Transfer completion
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+restore
+blr
+
 #region VSSceneDecide
 VSSceneDecide:
 .set REG_MSRB_ADDR, 31
@@ -587,7 +607,12 @@ bne VSSceneDecide_SkipRankedHandler
 # If connection is not active, just go back to CSS
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_IDLE
-beq VSSceneDecide_SkipRankedHandler
+bne VSSceneDecide_ConnectionActive
+# Report disconnect
+li r3, 1
+bl FN_ReportSetCompletion
+b VSSceneDecide_SkipRankedHandler
+VSSceneDecide_ConnectionActive:
 
 bl GamePrepData_BLRL
 mflr REG_GPD
@@ -616,7 +641,7 @@ VSSceneDecide_SkipTieHandler:
 stb REG_WINNER_IDX, GPDO_PREV_WINNER(REG_GPD) # Store winner index
 
 # Set winner ID at game index
-lbz r4, GPDO_CUR_GAME(REG_GPD)
+lhz r4, GPDO_CUR_GAME(REG_GPD)
 addi r4, r4, GPDO_GAME_RESULTS - 1 # Move offset to index in array (cur_game is 1-indexed)
 stbx REG_WINNER_IDX, REG_GPD, r4
 
@@ -639,9 +664,9 @@ divwu r4, r4, r3 # Calculate number of wins needed
 cmpw r5, r4
 bge VSSceneDecide_RankedSetOver
 
-lbz r3, GPDO_CUR_GAME(REG_GPD)
+lhz r3, GPDO_CUR_GAME(REG_GPD)
 addi r3, r3, 1
-stb r3, GPDO_CUR_GAME(REG_GPD)
+sth r3, GPDO_CUR_GAME(REG_GPD)
 
 li r3, 0
 stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
@@ -654,6 +679,10 @@ stb r3, 0x5(r4)
 b VSSceneDecide_ModeHandlerEnd
 
 VSSceneDecide_RankedSetOver:
+# Report normal set completion
+li r3, 0
+bl FN_ReportSetCompletion
+
 # Disconnect from opponent
 # Prepare buffer for EXI transfer
 li r3, 1
@@ -1377,6 +1406,11 @@ cmpwi r3, MM_STATE_CONNECTION_SUCCESS
 beq GamePrepSceneDecide_ExecNormal
 
 # Here we have disconnected from opponent, go back to CSS
+
+# I commented the below because the game setup scene itself already sends the communication
+# li r3, 1
+# bl FN_ReportSetCompletion
+
 # Go back to CSS
 load r4, 0x80479d30
 li r3, 0x01
