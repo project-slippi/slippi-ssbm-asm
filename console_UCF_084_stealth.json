@@ -1,0 +1,26 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_ucf_084_stealth.bin"
+    },
+    {
+      "file": "Output/Console/g_ucf_084_stealth.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "UCF 0.84 Slippi",
+      "authors": [
+        "Altimor",
+        "PracticalTAS",
+        "CarVac"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/UCF_0.84.bin"
+        }
+      ]
+    }
+  ]
+}
