@@ -1,0 +1,67 @@
+{
+ "Details": [
+  {
+   "InjectionAddress": "8006B460",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "800C9A44",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "800998A4",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "800908F4",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "8009A0B8",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "800D65EC",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "8008E54C",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "80093294",
+   "Name": "UCF Slippi",
+   "Codetype": "C2",
+   "Annotation": "",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "802662D0",
+   "Name": "UCF Slippi",
+   "Codetype": "Auto",
+   "Annotation": "External/UCF 0.84/Indicator/UCF Text.asm",
+   "Tags": ""
+  }
+ ]
+}
