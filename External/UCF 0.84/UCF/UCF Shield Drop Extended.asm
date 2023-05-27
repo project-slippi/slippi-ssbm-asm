@@ -18,7 +18,7 @@ loc_0x10:
   addi r9, r1, 0x8
   addi r10, r1, 0xC
   fctiwz f0, f0
-  stfiwx f0, r0, r9
+  stfiwx f0, 0, r9
   lfs f0, 4(r3)
   lwz r9, 8(r1)
   fabs f0, f0
@@ -26,7 +26,7 @@ loc_0x10:
   mullw r9, r9, r9
   fmsubs f0, f0, f11, f12
   fctiwz f0, f0
-  stfiwx f0, r0, r10
+  stfiwx f0, 0, r10
   lwz r3, 12(r1)
   addi r1, r1, 0x10
   addi r3, r3, 0x2

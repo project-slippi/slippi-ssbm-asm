@@ -4,18 +4,18 @@
 
 loc_0x0:
   bl loc_0xB0
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
-  .word 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
+  .long 0x00000000
   .float -0.609375
   .float 0.0001
   .float 80
@@ -134,10 +134,10 @@ loc_0x1A0:
   fmsubs f12, f12, f10, f11
   fctiwz f0, f0
   fctiwz f12, f12
-  stfiwx f12, r0, r9
+  stfiwx f12, 0, r9
   addi r9, r1, 0x1C
   lwz r8, 24(r1)
-  stfiwx f0, r0, r9
+  stfiwx f0, 0, r9
   addi r8, r8, 0x2
   lwz r9, 28(r1)
   mullw r8, r8, r8

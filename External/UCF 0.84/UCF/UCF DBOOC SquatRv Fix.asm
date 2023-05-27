@@ -7,8 +7,8 @@ loc_0x0:
   .float 0.59
   .float 80
   .float 0.0001
-  .word 0x00000000
-  .word 0x00000000
+  .long 0x00000000
+  .long 0x00000000
 
 loc_0x18:
   fabs f1, f1
