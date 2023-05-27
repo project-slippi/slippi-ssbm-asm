@@ -67,7 +67,7 @@ loc_0x9C:
 
 loc_0xD4:
   #crclr 2, 2
-  .float 5.08739e+07
+  .float 50873864
 
 loc_0xD8:
   lwz r30, 8(r1)
@@ -81,7 +81,7 @@ loc_0xE8:
   cmpwi r3, 0x0
   beq- loc_0xD4
   #crset 2, 2
-  .float 5.08746e+07
+  .float 50874632
   b loc_0xD8
 
 loc_0x100:
