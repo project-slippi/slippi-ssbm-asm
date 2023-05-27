@@ -17,12 +17,15 @@
         "Fizzi",
         "Altimor",
         "PracticalTAS",
-        "CarVac"
+        "CarVac",
+        "Krohnos"
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/UCF_0.84.bin"
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF 0.84/UCF",
+          "isRecursive": true,
+          "annotation": "UCF v0.84"
         },
         {
           "type": "injectFolder",
