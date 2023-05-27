@@ -1,0 +1,39 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_ucf_084.bin"
+    },
+    {
+      "file": "Output/Console/g_ucf_084.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "UCF Slippi",
+      "authors": [
+        "Dan Salvato",
+        "tauKhan",
+        "UnclePunch",
+        "Fizzi",
+        "Altimor",
+        "PracticalTAS",
+        "CarVac",
+        "Krohnos"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF 0.84/UCF",
+          "isRecursive": true,
+          "annotation": "UCF v0.84"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/UCF 0.84/Indicator",
+          "isRecursive": true,
+          "annotation": "UCF CSS Indicator"
+        }
+      ]
+    }
+  ]
+}
