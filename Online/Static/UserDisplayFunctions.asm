@@ -448,7 +448,7 @@ backup
 # Determine index to select, use first non-locked index
 load r5, 0x803eae68
 lbz	r5, 0x08F4(r5) # Load number of options
-li r4, 0
+li r4, OPTION_UNRANKED_IDX # Start looping from unranked, don't want to select ranked by default
 LOOP_FIND_FIRST_UNLOCKED_START:
 # Function call doesn't overwrite r4, safe to just keep using it
 li r3, 0x8 # Use online menu ID for function calls
