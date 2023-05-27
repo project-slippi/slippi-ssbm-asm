@@ -19,6 +19,7 @@ set list=%list%;console_screen_wide.json
 set list=%list%;console_screen_wide_shutters.json
 set list=%list%;console_safety.json
 set list=%list%;console_crash_output.json
+set list=%list%;debugging.json
 
 for %%a in (%list%) do (
   echo Listing %%a...
