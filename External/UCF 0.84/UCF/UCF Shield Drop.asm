@@ -4,9 +4,9 @@
 
 loc_0x0:
   bl loc_0x3C
-  stmw r26, -13107(r12)
-  bc 21, 0, 0x8
-  subi r6, r17, 0x48E9
+  .float -0.8
+  .float 80
+  .float 0.0001
   .word 0x00000000
   .word 0x00000000
 
@@ -38,7 +38,7 @@ loc_0x3C:
   fcmpo cr0, f1, f0
   ble- loc_0xC4
   lwz r0, 2108(r4)
-  cmpwi r0, 0xFFFF
+  cmpwi r0, -1
   beq- loc_0xC4
   lwz r0, 2112(r4)
   rlwinm. r0, r0, 0, 23, 23

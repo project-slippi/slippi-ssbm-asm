@@ -4,10 +4,10 @@
 
 loc_0x0:
   bl loc_0x9C
-  stmw r24, 0(r28)
-  subi r6, r17, 0x48E9
-  bc 21, 0, 0xc
-
+  .float -0.609375
+  .float 0.0001
+  .float 80
+  
 loc_0x10:
   lfs f0, 0(r3)
   lfs f11, 8(r30)
@@ -66,7 +66,8 @@ loc_0x9C:
   bne- loc_0xE8
 
 loc_0xD4:
-  crclr 2, 2
+  #crclr 2, 2
+  .float 5.08739e+07
 
 loc_0xD8:
   lwz r30, 8(r1)
@@ -79,7 +80,8 @@ loc_0xE8:
   bl loc_0x7C
   cmpwi r3, 0x0
   beq- loc_0xD4
-  crset 2, 2
+  #crset 2, 2
+  .float 5.08746e+07
   b loc_0xD8
 
 loc_0x100:

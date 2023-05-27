@@ -16,9 +16,9 @@ loc_0x0:
   .word 0x00000000
   .word 0x00000000
   .word 0x00000000
-  stmw r24, 0(r28)
-  subi r6, r17, 0x48E9
-  bc 21, 0, 0x3c
+  .float -0.609375
+  .float 0.0001
+  .float 80
 
 loc_0x40:
   addi r9, r3, 0x4F

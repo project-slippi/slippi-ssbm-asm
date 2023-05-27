@@ -4,9 +4,9 @@
 
 loc_0x0:
   bl loc_0x3C
-  addis r24, r23, 2621
-  bc 21, 0, 0x8
-  subi r6, r17, 0x48E9
+  .float 0.59
+  .float 80
+  .float 0.0001
   .word 0x00000000
   .word 0x00000000
 
