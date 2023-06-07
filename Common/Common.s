@@ -351,7 +351,6 @@ add \reg, r3, r4
 .set FN_MultiplyRWithF,0x800055ec
 .set FN_IntToFloat,0x800055f4
 .set FG_CreateSubtext,0x800056b4
-.set FN_LoadChatMessageProperties,0x800056ac
 .set FN_GetTeamCostumeIndex,0x800056b0
 .set FN_GetCSSIconData,0x800056b8
 .set FN_AdjustNullID,0x80005694
