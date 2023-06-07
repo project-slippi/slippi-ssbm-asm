@@ -14,6 +14,8 @@ echo ""
 list=(
     "console_UCF.json"
     "console_UCF_stealth.json"
+    "console_UCF_084.json"
+    "console_UCF_084_stealth.json"
     "console_mods_stealth.json"
     "console_mods_tournament.json"
     "console_mods_friendlies.json"
