@@ -3,60 +3,52 @@
 # Tags: [affects-gameplay]
 ################################################################################
 
-loc_0x0:
-  bl loc_0x3C
-  .float -0.8
-  .float 80
-  .float 0.0001
-  .long 0x00000000
-  .long 0x00000000
-
-loc_0x18:
-  fabs f1, f1
-  lfs f2, 4(r6)
-  lfs f3, 8(r6)
-  fmsubs f1, f1, f2, f3
-  fctiwz f1, f1
-  stfd f1, 12(r6)
-  lwz r7, 16(r6)
-  addi r7, r7, 0x2
-  blr 
-
-loc_0x3C:
-  lwz r4, 44(r3)
-  mflr r6
-  lwz r5, -20812(r13)
-  lfs f0, 1596(r4)
-  lfs f1, 788(r5)
-  fcmpo cr0, f0, f1
-  ble- loc_0xC4
-  lbz r0, 1648(r4)
-  lwz r7, 800(r5)
-  cmpw r0, r7
-  blt- loc_0xC4
-  lfs f1, 1572(r4)
-  lfs f0, 0(r6)
-  fcmpo cr0, f1, f0
-  ble- loc_0xC4
-  lwz r0, 2108(r4)
-  cmpwi r0, -1
-  beq- loc_0xC4
-  lwz r0, 2112(r4)
-  rlwinm. r0, r0, 0, 23, 23
-  beq- loc_0xC4
-  bl loc_0x18
-  mullw r0, r7, r7
-  lfs f1, 1568(r4)
-  bl loc_0x18
-  mullw r7, r7, r7
-  add r0, r0, r7
-  cmpwi r0, 0x1900
-  ble- loc_0xC4
-  lwz r7, 28(r1)
-  addi r1, r1, 0x18
-  addi r7, r7, 0x8
-  mtlr r7
-  blr 
-
-loc_0xC4:
-
+.long 0x4800003D
+.long 0xBF4CCCCD
+.long 0x42A00000
+.long 0x38D1B717
+.long 0x00000000
+.long 0x00000000
+.long 0xFC200A10
+.long 0xC0460004
+.long 0xC0660008
+.long 0xEC2118B8
+.long 0xFC20081E
+.long 0xD826000C
+.long 0x80E60010
+.long 0x38E70002
+.long 0x4E800020
+.long 0x8083002C
+.long 0x7CC802A6
+.long 0x80ADAEB4
+.long 0xC004063C
+.long 0xC0250314
+.long 0xFC000840
+.long 0x40810070
+.long 0x88040670
+.long 0x80E50320
+.long 0x7C003800
+.long 0x41800060
+.long 0xC0240624
+.long 0xC0060000
+.long 0xFC010040
+.long 0x40810050
+.long 0x8004083C
+.long 0x2C00FFFF
+.long 0x41820044
+.long 0x80040840
+.long 0x540005EF
+.long 0x41820038
+.long 0x4BFFFF89
+.long 0x7C0739D6
+.long 0xC0240620
+.long 0x4BFFFF7D
+.long 0x7CE739D6
+.long 0x7C003A14
+.long 0x2C001900
+.long 0x40810018
+.long 0x80E1001C
+.long 0x38210018
+.long 0x38E70008
+.long 0x7CE803A6
+.long 0x4E800020

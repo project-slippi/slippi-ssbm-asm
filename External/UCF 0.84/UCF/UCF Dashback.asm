@@ -3,72 +3,66 @@
 # Tags: [affects-gameplay]
 ################################################################################
 
-loc_0x0:
-  lbz r9, 8735(r31)
-  stfs f0, 44(r31)
-  andi. r9, r9, 0x8
-  bne- loc_0xFC
-  lwz r10, 2196(r31)
-  lis r9, 0x4000
-  cmpw r10, r9
-  bne- loc_0xFC
-  lfs f12, 1568(r31)
-  lwz r9, -20812(r13)
-  fmuls f0, f0, f12
-  lfs f12, 60(r9)
-  fcmpu cr0, f0, f12
-  blt- loc_0xFC
-  lbz r9, 1648(r31)
-  cmplwi r9, 1
-  bgt- loc_0xFC
-  lis r8, 0x8007
-  lbz r10, 1560(r31)
-  subi r8, r8, 0x52F0
-  lwzu r9, 1040(r8)
-  rlwinm r9, r9, 6, 0, 25
-  srawi r9, r9, 6
-  addi r9, r9, 0x4
-  add r9, r9, r8
-  mulli r8, r10, 0xC
-  mulli r10, r10, 0x6
-  add r8, r9, r8
-  lbz r8, 8(r8)
-  add r7, r10, r8
-  subi r8, r8, 0x2
-  rlwinm r8, r8, 0, 30, 31
-  rlwinm r7, r7, 1, 0, 30
-  add r10, r10, r8
-  lbzx r7, r9, r7
-  rlwinm r10, r10, 1, 0, 30
-  lbzx r9, r9, r10
-  extsb r7, r7
-  extsb r9, r9
-  sub r9, r7, r9
-  mullw r9, r9, r9
-  cmpwi r9, 0x15F9
-  ble- loc_0xFC
-  stwu r1, -8(r1)
-  li r9, 0x1
-  li r4, 0x1
-  stw r9, 9024(r31)
-  stw r9, 9048(r31)
-  lis r9, 0x8003
-  addi r9, r9, 0x418C
-  lbz r3, 12(r31)
-  mtctr r9
-  bctrl 
-  cmpwi r3, 0x0
-  beq- loc_0xF8
-  lwz r9, 44(r3)
-  lwz r10, 7884(r9)
-  lwz r9, 44(r31)
-  stw r9, 24(r10)
-  rlwinm r9, r9, 1, 31, 31
-  addi r9, r9, 0x7F
-  stb r9, 6(r10)
-
-loc_0xF8:
-  addi r1, r1, 0x8
-
-loc_0xFC:
-
+.long 0x893F221F
+.long 0xD01F002C
+.long 0x71290008
+.long 0x408200F0
+.long 0x815F0894
+.long 0x3D204000
+.long 0x7C0A4800
+.long 0x408200E0
+.long 0xC19F0620
+.long 0x812DAEB4
+.long 0xEC000332
+.long 0xC189003C
+.long 0xFC006000
+.long 0x418000C8
+.long 0x893F0670
+.long 0x28090001
+.long 0x418100BC
+.long 0x3D008007
+.long 0x895F0618
+.long 0x3908AD10
+.long 0x85280750
+.long 0x55293032
+.long 0x7D293670
+.long 0x39290004
+.long 0x7D294214
+.long 0x1D0A000C
+.long 0x1D4A0006
+.long 0x7D094214
+.long 0x89080008
+.long 0x7CEA4214
+.long 0x3908FFFE
+.long 0x550807BE
+.long 0x54E7083C
+.long 0x7D4A4214
+.long 0x7CE938AE
+.long 0x554A083C
+.long 0x7D2950AE
+.long 0x7CE70774
+.long 0x7D290774
+.long 0x7D293850
+.long 0x7D2949D6
+.long 0x2C0915F9
+.long 0x40810054
+.long 0x9421FFF8
+.long 0x39200001
+.long 0x38800001
+.long 0x913F2340
+.long 0x913F2358
+.long 0x3D208003
+.long 0x3929418C
+.long 0x887F000C
+.long 0x7D2903A6
+.long 0x4E800421
+.long 0x2C030000
+.long 0x41820020
+.long 0x8123002C
+.long 0x81491ECC
+.long 0x813F002C
+.long 0x912A0018
+.long 0x55290FFE
+.long 0x3929007F
+.long 0x992A0006
+.long 0x38210008

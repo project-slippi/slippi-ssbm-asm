@@ -3,46 +3,41 @@
 # Tags: [affects-gameplay]
 ################################################################################
 
-loc_0x0:
-  cmpw r3, r0
-  blt- loc_0x98
-  lbz r9, 1651(r4)
-  lis r6, 0x6000
-  cmplwi r9, 1
-  bgt- loc_0x94
-  lfs f12, 1576(r4)
-  lfs f0, 1200(r5)
-  fcmpu cr0, f12, f0
-  bge- loc_0x94
-  lis r8, 0x8007
-  lbz r10, 1560(r4)
-  subi r8, r8, 0x52F0
-  lwzu r9, 1040(r8)
-  rlwinm r9, r9, 6, 0, 25
-  srawi r9, r9, 6
-  addi r9, r9, 0x4
-  add r9, r9, r8
-  mulli r8, r10, 0xC
-  mulli r10, r10, 0x6
-  add r8, r9, r8
-  lbz r8, 8(r8)
-  add r7, r10, r8
-  subi r8, r8, 0x2
-  rlwinm r8, r8, 0, 30, 31
-  rlwinm r7, r7, 1, 0, 30
-  add r10, r10, r8
-  lbzx r7, r9, r7
-  rlwinm r10, r10, 1, 0, 30
-  lbzx r9, r9, r10
-  extsb r7, r7
-  extsb r9, r9
-  sub r9, r7, r9
-  mullw r9, r9, r9
-  cmpwi r9, 0x15F9
-  ble- loc_0x94
-  lis r6, 0x8000
-
-loc_0x94:
-  .long 0x7cd80120
-
-loc_0x98:
+.long 0x7C030000
+.long 0x41800094
+.long 0x89240673
+.long 0x3CC06000
+.long 0x28090001
+.long 0x41810080
+.long 0xC1840628
+.long 0xC00504B0
+.long 0xFC0C0000
+.long 0x40800070
+.long 0x3D008007
+.long 0x89440618
+.long 0x3908AD10
+.long 0x85280750
+.long 0x55293032
+.long 0x7D293670
+.long 0x39290004
+.long 0x7D294214
+.long 0x1D0A000C
+.long 0x1D4A0006
+.long 0x7D094214
+.long 0x89080008
+.long 0x7CEA4214
+.long 0x3908FFFE
+.long 0x550807BE
+.long 0x54E7083C
+.long 0x7D4A4214
+.long 0x7CE938AE
+.long 0x554A083C
+.long 0x7D2950AE
+.long 0x7CE70774
+.long 0x7D290774
+.long 0x7D293850
+.long 0x7D2949D6
+.long 0x2C090F04
+.long 0x40810008
+.long 0x3CC08000
+.long 0x7CD80120
