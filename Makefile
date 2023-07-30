@@ -6,6 +6,8 @@ PLAYBACK            := playback.json
 NETPLAY_INI         := Output/Netplay/GALE01r2.ini
 PLAYBACK_INI        := Output/Playback/GALE01r2.ini
 ONLINE_INI          := Output/Online/online.txt
+NETPLAY_MAP         := Output/Netplay/GALE01
+PLAYBACK_MAP        := Output/Playback/GALE01
 
 # GCT output for Nintendont
 # to add a new json just create a new var with the json name
@@ -41,6 +43,7 @@ CONSOLE                 := $(CONSOLE_UCF) $(CONSOLE_UCF_STEALTH) $(CONSOLE_UCF_0
 GECKO_INJECTIONS := $(NETPLAY) $(CONSOLE_CORE) $(CONSOLE)
 INI_TARGETS := $(ONLINE_INI) $(NETPLAY_INI) $(PLAYBACK_INI) \
 			$(CONSOLE_CORE_PORTA) $(CONSOLE_CORE_PORTB) $(CONSOLE)
+MAP_TARGETS := $(NETPLAY_MAP) $(PLAYBACK_MAP)
 .PHONY: $(INI_TARGETS) clean
 all: $(INI_TARGETS)
 ini: $(INI_TARGETS)
@@ -74,10 +77,19 @@ $(PLAYBACK_INI): $(PLAYBACK)
 # -----------------------------------------------------------------------------
 # Target for injection lists
 list:
-	for json in $(GECKO_INJECTIONS); do\
+	@for json in $(GECKO_INJECTIONS); do\
         gecko list -i $${json} -o Output/InjectionLists/list_$${json}; \
     done
 	@echo ""
+
+# -----------------------------------------------------------------------------
+# Target for map files
+map:
+	@for map in $(MAP_TARGETS); do\
+        python gecko2map.py $${map}r2.ini -o $${map}.map; \
+        awk -v map="$${map}" 'NR==27720{system("cat " map ".map")}1' Output/Maps/GALX.map > temp.txt && mv temp.txt $${map}.map; \
+    done
+
 
 # -----------------------------------------------------------------------------
 clean:
