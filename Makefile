@@ -86,8 +86,7 @@ list:
 # Target for map files
 map:
 	@for map in $(MAP_TARGETS); do\
-        python gecko2map.py $${map}r2.ini -o $${map}.map; \
-        awk -v map="$${map}" 'NR==27720{system("cat " map ".map")}1' Output/Maps/GALX.map > temp.txt && mv temp.txt $${map}.map; \
+        python gecko2map.py $${map}r2.ini -o $${map}.map -c Output/Maps/GALX.map; \
     done
 
 

@@ -70,12 +70,40 @@ def parse_gecko_code(gecko_code):
     symbol_map_entry = f'{address:08x} {code_size:08x} {address:08x} 0 {function_name}\n'
     return symbol_map_entry
 
+
+def combine_maps(input_file_path, string_to_insert):
+    with open(input_file_path, 'r') as input_file:
+        content = input_file.read().splitlines()
+
+    # Find the index where the ".data section layout" starts
+    data_section_index = next((index for index, line in enumerate(content) if line.strip() == ".data section layout"), None)
+
+    # If the data section is present, insert the given string before it
+    # Otherwise, append the string to the end of the content
+    if data_section_index is not None:
+        # Check if the previous line is empty
+        if content[data_section_index - 1].strip() == "":
+            content[data_section_index - 1] = string_to_insert
+        else:
+            content.insert(data_section_index, string_to_insert)
+    else:
+        # Append the string to the content, ensuring no empty line before it
+        if content[-1].strip() == "":
+            content[-1] = string_to_insert
+        else:
+            content.append(string_to_insert)
+
+    content.append("") # Ensure there is at least one empty line at the end
+
+    return '\n'.join(content)
+
 # Create the parser
 parser = argparse.ArgumentParser(description='Generate a symbol map from a Gecko codes file.')
 
 # Add the arguments
 parser.add_argument('InputFile', metavar='input file', type=str, help='the input file containing Gecko codes',)
 parser.add_argument('-o', '--output', default='./Output/Maps/GALE01r2.map', metavar='output filename', type=str, help='the output map file', required=False)
+parser.add_argument('-c', '--combine', default=None, metavar='combine filename', type=str, help='combines the output of this process with other map file', required=False)
 
 # Parse the arguments
 args = parser.parse_args()
@@ -99,10 +127,15 @@ for line in lines:
             symbol_map += parse_gecko_code(line)
 
 
-# Write the symbol map to a file
+# Create path if it doesn't exist
 if not os.path.exists(os.path.dirname(args.output)):
     os.makedirs(os.path.dirname(args.output))
 
+# combine files if there's an existing map file to merge with
+if args.combine:
+    symbol_map = combine_maps(args.combine, symbol_map)
+
+# Write the symbol map to a file
 with open(args.output, 'w') as f:
     f.write(symbol_map)
 
