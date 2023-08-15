@@ -10,7 +10,6 @@
 # Offsets from r13
 ################################################################################
 .set OFST_R13_ODB_ADDR,-0x49e4 # Online data buffer
-.set OFST_R13_SB_ADDR,-0x503C # Scene buffer, persists throughout scenes
 .set OFST_R13_ONLINE_MODE,-0x5060 # Byte, Selected online mode
 .set OFST_R13_APP_STATE,-0x505F # Byte, App state / online status
 .set OFST_R13_FORCE_MENU_CLEAR,-0x505E # Byte, Force menu clear

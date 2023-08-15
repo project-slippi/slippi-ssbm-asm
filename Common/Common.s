@@ -549,6 +549,9 @@ add \reg, r3, r4
 
 # Misc
 .set CONST_SlippiCmdGetDelay, 0xD5
+.set CONST_SlippiPlayMusic, 0xD6
+.set CONST_SlippiStopMusic, 0xD7
+.set CONST_SlippiChangeMusicVolume, 0xD8
 
 # For Slippi Premade Texts
 .set CONST_SlippiCmdGetPremadeTextLength, 0xE1
@@ -606,6 +609,7 @@ add \reg, r3, r4
 .set frameIndex,-0x49ac
 .set textStructDescriptorBuffer,-0x3D24
 .set isWidescreen,-0x5020
+.set OFST_R13_SB_ADDR,-0x503C # Scene buffer, persists throughout scenes
 
 ################################################################################
 # Log levels
