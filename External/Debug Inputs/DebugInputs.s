@@ -1,3 +1,5 @@
+.ifndef HEADER_DEBUG_INPUTS
+
 ################################################################################
 # Constants
 ################################################################################
@@ -25,15 +27,6 @@
 ################################################################################
 # Macros
 ################################################################################
-.macro incrementByte reg, reg_address, offset, limit
-lbz \reg, \offset(\reg_address)
-addi \reg, \reg, 1
-cmpwi \reg, \limit
-blt 0f
-li \reg, 0
-0:
-stb \reg, \offset(\reg_address)
-.endm
 
 # Calculates us difference from two ticks
 .macro calcDiffUs reg_now, reg_ref
@@ -55,3 +48,6 @@ addi r4, r4, DIB_CIRCULAR_BUFFER
 lwzx r4, \reg_dib, r4
 calcDiffUs r3, r4
 .endm
+
+.endif
+.set HEADER_DEBUG_INPUTS, 1

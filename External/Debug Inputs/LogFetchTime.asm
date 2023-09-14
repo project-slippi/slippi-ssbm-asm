@@ -47,7 +47,7 @@ addi r4, r4, DIB_CIRCULAR_BUFFER
 stwx r3, REG_DIB, r4
 
 # Increment index
-incrementByte r3, REG_DIB, DIB_FETCH_INDEX, CIRCULAR_BUFFER_COUNT
+incrementByteInBuf r3, REG_DIB, DIB_FETCH_INDEX, CIRCULAR_BUFFER_COUNT
 
 # Indicate ready, prevents other functions from running first. Only activate if currently inactive
 lbz r3, DIB_ACTIVE_STATE(REG_DIB)
