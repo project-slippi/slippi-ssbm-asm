@@ -23,7 +23,6 @@
 .set OFST_R13_USE_PREMADE_TEXT,-0x5014 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
 .set OFST_R13_ISWIDESCREEN,-0x5020 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
 # r13 offsets used in tournament mode (not sure if completely safe though)
-# -0x5040 (r13)
 # -0x5068 (r13)
 # -0x7510 (r13)
 
