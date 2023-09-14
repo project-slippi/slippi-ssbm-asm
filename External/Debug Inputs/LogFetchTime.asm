@@ -15,7 +15,7 @@ lwz r3, 0x0(r3) # 0x80479d64 - Believed to be some loading state
 cmpwi r3, 0 # Loading state should be zero when game starts
 bne EXIT
 
-.set CONST_BACKUP_BYTES, 0xB0 # Maybe add this to Common.s
+.set CONST_BACKUP_BYTES, 0xE0 # Maybe add this to Common.s
 .set P1_PAD_OFFSET, CONST_BACKUP_BYTES + 0x2C
 
 .set REG_DIB, 31

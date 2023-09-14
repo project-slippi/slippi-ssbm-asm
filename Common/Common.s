@@ -322,14 +322,14 @@ lwz \reg, -0x62A0(\reg)
 load r3, \address
 lwz r4, 0(r3) # Get branch instruction which contains offset
 
-# Process 3rd byte and extend sign to handle negative branches
-rlwinm r5, r4, 16, 0xFF
-extsb r5, r5
-rlwinm r5, r5, 16, 0xFFFF0000
-
-# Extract last 2 bytes, combine with top half, and then add to base address to get result
-rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
-or r4, r4, r5
+# This extracts the LI portion of the branch instruction and shifts it such
+# that the sign bit is all the way left. Then it does a divide instruction to
+# shift to the right 6 bits while preserving the sign. After that, add to
+# branch instruction location to get result.
+# Credit to taukhan for the divw improvement (saves 2 instructions)
+rlwinm r5, r4, 6, 0xFFFFFF00
+li r4, 64
+divw r4, r5, r4
 add \reg, r3, r4
 .endm
 
