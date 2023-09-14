@@ -22,6 +22,7 @@
 .set REG_LABEL_STRING, 20
 .set REG_CUR_SUBTEXT_IDX, 21
 
+# float registers
 .set REG_POS_X_START, 31
 .set REG_POS_Y_START, 30
 
@@ -199,15 +200,20 @@ INIT_STAGE_TEXT:
 # Initialize Stage Text
 li r3, 0
 li r4, 0
-lfs f1, TPO_STAGE_X_POS(REG_TEXT_PROPERTIES)
-lfs f2, TPO_STAGE_Y_POS(REG_TEXT_PROPERTIES)
-lfs f3, TPO_STAGE_UNK0(REG_TEXT_PROPERTIES) # Width?
-lfs f4, TPO_STAGE_UNK1(REG_TEXT_PROPERTIES) # Unk, 160
-lfs f5, TPO_STAGE_UNK2(REG_TEXT_PROPERTIES) # Unk, 300
-branchl r12, Text_AllocateTextObject
+branchl r12, 0x803a6754
 mr REG_TEXT_STRUCT, r3
 
 # Initialize Struct Stuff
+lfs f1, TPO_STAGE_X_POS(REG_TEXT_PROPERTIES)
+stfs f1,0x0(REG_TEXT_STRUCT)
+lfs f1, TPO_STAGE_Y_POS(REG_TEXT_PROPERTIES)
+stfs f1,0x4(REG_TEXT_STRUCT)
+lfs f1, TPO_STAGE_UNK0(REG_TEXT_PROPERTIES) # Width?
+stfs f1,0x8(REG_TEXT_STRUCT)
+lfs f1, TPO_STAGE_UNK1(REG_TEXT_PROPERTIES) # Unk, 160
+stfs f1,0xC(REG_TEXT_STRUCT)
+lfs f1, TPO_STAGE_UNK2(REG_TEXT_PROPERTIES) # Unk, 300
+stfs f1,0x10(REG_TEXT_STRUCT)
 lfs f1, TPO_BASE_CANVAS_SCALING(REG_TEXT_PROPERTIES)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
@@ -225,6 +231,13 @@ stb r4, 0x49(REG_TEXT_STRUCT)
 # Store Base Z Offset
 lfs f1, TPO_BASE_Z(REG_TEXT_PROPERTIES) #Z offset
 stfs f1, 0x8(REG_TEXT_STRUCT)
+
+# Check to execute alternate stage name logic (non-applicable to vanilla melee))
+mr  r3, REG_TEXT_STRUCT
+lhz r4, MSRB_GAME_INFO_BLOCK + 0xE(REG_MSRB_ADDR) # Stage ExtID
+branchl r12,FN_CheckAltStageName
+cmpwi r3,1
+beq STAGE_NAME_SKIP
 
 # Get random stage select ID from ext ID
 load r5, 0x803B7808 # Start address of SelectID -> ExtID lookup
@@ -248,6 +261,7 @@ add r4, r4, r3
 lbz r4, 0x5C(r4)
 mr r3, REG_TEXT_STRUCT
 branchl r12, Text_CopyPremadeTextDataToStruct
+STAGE_NAME_SKIP:
 
 # Kill SFX
 #branchl r12,0x80023694
@@ -268,7 +282,7 @@ b EXIT
 # f1 - X Pos
 ################################################################################
 INIT_PLAYER_TEXT:
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
@@ -336,7 +350,7 @@ blt INIT_PLAYER_NAME_LOOP_START
 
 
 INIT_PLAYER_TEXT_EXIT:
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 

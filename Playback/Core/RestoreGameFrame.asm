@@ -40,6 +40,14 @@
   branchl r12,FN_GetIsFollower
   mr  r20,r3
 
+# If we are not resyncing, let the follower's inputs be calculated by the game
+  cmpwi r20, 0
+  beq SKIP_FOLLOWER_RESYNC_CHECK
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq Injection_Exit
+  SKIP_FOLLOWER_RESYNC_CHECK:
+
 # Get players offset in buffer ()
   addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
   lbz r5,0xC(PlayerData)                  #get player number
@@ -98,9 +106,6 @@ DesyncDetected:
 
 RestoreData:
 # Restore data
-  lis r4,0x804D
-  lwz r3,RNGSeed(PlayerBackup)
-  stw r3,0x5F90(r4) #RNG seed
   lwz r3,AnalogX(PlayerBackup)
   stw r3,0x620(PlayerData) #analog X
   lwz r3,AnalogY(PlayerBackup)
@@ -120,6 +125,9 @@ RestoreData:
   cmpwi r3, 0
   beq SKIP_RESYNC
 
+  lis r4,0x804D
+  lwz r3,RNGSeed(PlayerBackup)
+  stw r3,0x5F90(r4) #RNG seed
   lwz r3,XPos(PlayerBackup)
   stw r3,0xB0(PlayerData) #x position
   lwz r3,YPos(PlayerBackup)
@@ -150,8 +158,10 @@ SKIP_RESYNC:
   mulli r4, r4, 0xc
   add r20, r3, r4 # move to the correct player position
 # Get backed up input value
-  lbz r3,AnalogRawInput(PlayerBackup)
+  lbz r3,AnalogRawInputX(PlayerBackup)
   stb r3, 0x2(r20) #store raw x analog
+  lbz r3, AnalogRawInputY(PlayerBackup)
+  stb r3, 0x3(r20) #store raw y analog
 
 # If we do not have resync logic enabled, don't try to restore percentage
   lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
@@ -371,50 +381,42 @@ blrl
 
   FrameText:
   blrl
-  .string "P%d Frame: %d // Original // Restored
-"
+  .string "P%d Frame: %d // Original // Restored\n"
   .align 2
 
   RNGText:
   blrl
-  .string "RNG Seed: 0x%X // 0x%X
-"
+  .string "RNG Seed: 0x%X // 0x%X\n"
   .align 2
 
   XPosText:
   blrl
-  .string "X Position: %f // %f
-"
+  .string "X Position: %f // %f\n"
   .align 2
 
   YPosText:
   blrl
-  .string "Y Position: %f // %f
-"
+  .string "Y Position: %f // %f\n"
   .align 2
 
   FacingText:
   blrl
-  .string "Facing Direction: %1.0f // %1.0f
-"
+  .string "Facing Direction: %1.0f // %1.0f\n"
   .align 2
 
   ASText:
   blrl
-  .string "Action State: 0x%X %s // 0x%X %s
-"
+  .string "Action State: 0x%X %s // 0x%X %s\n"
   .align 2
 
   PercentText:
   blrl
-  .string "Percent: %1.2f //  %1.2f
-"
+  .string "Percent: %1.2f //  %1.2f\n"
   .align 2
 
   DividerText:
   blrl
-  .string "------Desync Detected--------
-"
+  .string "------Desync Detected--------\n"
   .align 2
 
 .endif

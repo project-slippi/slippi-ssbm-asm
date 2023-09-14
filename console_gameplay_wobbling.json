@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_gameplay_wobbling.bin"
+    },
+    {
+      "file": "Output/Console/g_gameplay_wobbling.txt"
     }
   ],
   "codes": [
@@ -11,12 +14,13 @@
         "UnclePunch"
       ],
       "description": [
-        "Break out of grab after three Nana hits"
+        "Breaks Popo's grab after four pummels if the victim has not left hitstun since the first pummel."
       ],
       "build": [
         {
-          "type": "binary",
-          "sourceFile": "Binary/PreventWobbling.bin",
+          "type": "injectFolder",
+          "sourceFolder": "External/PreventWobbling",
+          "isRecursive": false,
           "annotation": "Disable wobbling"
         }
       ]

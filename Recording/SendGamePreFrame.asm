@@ -105,14 +105,18 @@ CONTINUE_RAW_X:
   add r3, r3, r4 # move to the correct start index for this index
 
   mulli r4, REG_PlayerSlot, 0xc
-  add r3, r3, r4 # move to the correct player position
+  add r4, r3, r4 # move to the correct player position
 
-  lbz r3, 0x2(r3) #load raw x analog
-  stb r3,0x3B(REG_Buffer)
+  lbz r3, 0x2(r4) #load raw x analog
+  stb r3, 0x3B(REG_Buffer)
+  lbz r3, 0x3(r4) #load raw y analog
+  stb r3, 0x40(REG_Buffer)
 
 # Send player's percent
   lwz r3,0x1830(r31)
   stw r3,0x3C(REG_Buffer)
+
+  # Warning: We wrote to 0x40 above, so the next value should be 0x41
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)

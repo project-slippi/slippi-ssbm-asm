@@ -86,7 +86,7 @@
 # gameframe
 .set GameFrame_Start, InitialRNG_Start + InitialRNG_Length
 # per player offsets
-  .set PlayerDataLength,0x31
+  .set PlayerDataLength,0x32
   .set RNGSeed,0x00
   .set AnalogX,0x04
   .set AnalogY,0x08
@@ -98,8 +98,9 @@
   .set YPos,0x20
   .set FacingDirection,0x24
   .set ActionStateID,0x28
-  .set AnalogRawInput,0x2C
-  .set Percentage,0x2D
+  .set AnalogRawInputX,0x2C
+  .set AnalogRawInputY,0x2D
+  .set Percentage,0x2E
 
 .set GameFrame_Length, PlayerDataLength * 8
 

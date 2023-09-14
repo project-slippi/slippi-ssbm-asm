@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_mods_friendlies.bin"
+    },
+    {
+      "file": "Output/Console/g_mods_friendlies.txt"
     }
   ],
   "codes": [

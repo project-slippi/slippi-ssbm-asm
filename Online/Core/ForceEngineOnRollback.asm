@@ -40,7 +40,10 @@ li r27, 1
 
 PREPARE_ENGINE_LOOPS:
 # Copy the values that get updated in pad alarm to non-volatile locations so
-# that they don't change during the loop iteration
+# that they don't change during the loop iteration. Keep in mind that on a rollback,
+# TriggerSendInput.asm is expected to run and can update certain values. If you need
+# values to update after those calls, either use them directly or update a STABLE version
+# in StartEngineLoop
 lbz r4, ODB_ROLLBACK_IS_ACTIVE(r5)
 stb r4, ODB_STABLE_ROLLBACK_IS_ACTIVE(r5)
 lwz r4, ODB_ROLLBACK_END_FRAME(r5)
@@ -49,9 +52,6 @@ lbz r4, ODB_ROLLBACK_SHOULD_LOAD_STATE(r5)
 stb r4, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE(r5)
 lwz r4, ODB_SAVESTATE_FRAME(r5)
 stw r4, ODB_STABLE_SAVESTATE_FRAME(r5)
-lwz r4, ODB_RXB_ADDR(r5)
-lwz r4, RXB_OPNT_FRAME_NUMS(r4)
-stw r4, ODB_STABLE_OPNT_FRAME_NUMS(r5)
 b RESTORE_AND_EXIT
 
 HANDLE_NO_ROLLBACK_NO_INPUTS:
@@ -76,3 +76,4 @@ bne EXEC_ENGINE
 branch r12, 0x801a4da8 # If no pad inputs, loop to keep waiting
 
 EXEC_ENGINE:
+# logf LOG_LEVEL_NOTICE, "Starting engine loop..."

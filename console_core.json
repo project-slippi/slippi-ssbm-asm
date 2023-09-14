@@ -125,7 +125,8 @@
         "Achilles",
         "UnclePunch",
         "Nikki",
-        "jmlee337"
+        "jmlee337",
+        "Krohnos"
       ],
       "description": [
         "Used in conjunction with Slippi plugged into PortB to extract game data"
@@ -174,6 +175,18 @@
           "type": "injectFolder",
           "sourceFolder": "Common/ConsoleOverrides",
           "annotation": "Forces values for proper console operation [Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/NanaDeterminism",
+          "isRecursive": true,
+          "annotation": "Makes Nana inputs deterministic [UnclePunch, metaconstruct, Fizzi]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/PSCameraIndependentMonitor",
+          "isRecursive": true,
+          "annotation": "Avoids PS + Widescreen desyncs [Fizzi]"
         }
       ]
     },

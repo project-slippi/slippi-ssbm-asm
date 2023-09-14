@@ -1,0 +1,28 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_crash_output.bin"
+    },
+    {
+      "file": "Output/Console/g_crash_output.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Crash Output",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Outputs additional information when the game crashes"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Debugging/AdditionalCrashInfo",
+          "annotation": "Prints crash info [Fizzi]"
+        }
+      ]
+    }
+  ]
+}
