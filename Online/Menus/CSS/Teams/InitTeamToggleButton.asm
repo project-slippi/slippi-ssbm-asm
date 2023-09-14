@@ -354,7 +354,7 @@ lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
 mr REG_INTERNAL_CHAR_ID, r3
 
 lbz REG_TEAM_IDX, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
-# exilogf LOG_LEVEL_NOTICE, "TEAM INDEX %d", "mr r5, 25"
+# logf LOG_LEVEL_NOTICE, "TEAM INDEX %d", "mr r5, 25"
 
 # Animate the team icon based on team index
 cmpwi REG_TEAM_IDX, 3

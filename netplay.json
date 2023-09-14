@@ -328,6 +328,11 @@
           "annotation": "Log injections [Fizzi]"
         },
         {
+          "type": "binary",
+          "sourceFile": "Binary/LagReduction/PD+VB.bin",
+          "annotation": "Polling Drift Fix + VB [tauKhan]"
+        },
+        {
           "type": "injectFolder",
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
@@ -514,77 +519,6 @@
           "type": "injectFolder",
           "sourceFolder": "Online/Optional/ShowAllyIndicator",
           "isRecursive": true
-        }
-      ]
-    },
-    {
-      "name": "Optional: Debug Game-Side Latency",
-      "authors": [
-        "Fizzi"
-      ],
-      "description": [
-        "Shows latency information on screen while in-game"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Debug Inputs",
-          "isRecursive": true,
-          "annotation": "Shows latency information on screen while in-game"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Boot to CSS",
-          "isRecursive": true
-        }
-      ]
-    },
-    {
-      "name": "Optional: PD+VB",
-      "authors": [
-        "taukhan"
-      ],
-      "description": [
-        "PD+VB"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/LagReduction/PD+VB.bin",
-          "annotation": "Polling Drift Fix + VB [tauKhan]"
-        }
-      ]
-    },
-    {
-      "name": "Optional: PD",
-      "authors": [
-        "Dan Salvato"
-      ],
-      "description": [
-        "PD"
-      ],
-      "build": [
-        {
-          "type": "binary",
-          "sourceFile": "Binary/LagReduction/PD.bin",
-          "annotation": "Polling Drift Fix [Dan Salvato]"
-        }
-      ]
-    },
-    {
-      "name": "Optional: 59.94Hz Engine",
-      "authors": [
-        "Fizzi"
-      ],
-      "description": [
-        "Attempts to fix polling drift"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/59.94Hz Engine",
-          "isRecursive": true,
-          "annotation": "59.94Hz Engine"
         }
       ]
     }

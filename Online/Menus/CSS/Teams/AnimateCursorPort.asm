@@ -37,7 +37,7 @@ mulli r6, r6, 0x4
 add REG_TEAM_IDX, REG_TEAM_IDX, r6
 
 mr r3, REG_TEAM_IDX
-#exilogf LOG_LEVEL_NOTICE, "CURSOR COLOR r3: %d", "mr r5, 3", "mr r6, 6"
+#logf LOG_LEVEL_NOTICE, "CURSOR COLOR r3: %d", "mr r5, 3", "mr r6, 6"
 branchl r12, FN_IntToFloat
 
 b EXIT

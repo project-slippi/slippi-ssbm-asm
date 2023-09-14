@@ -189,23 +189,6 @@
           "annotation": "Avoids PS + Widescreen desyncs [Fizzi]"
         }
       ]
-    },
-    {
-      "name": "Optional: Debug Game-Side Latency",
-      "authors": [
-        "Fizzi"
-      ],
-      "description": [
-        "Shows latency information on screen while in-game"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Debug Inputs",
-          "isRecursive": true,
-          "annotation": "Shows latency information on screen while in-game"
-        }
-      ]
     }
   ]
 }

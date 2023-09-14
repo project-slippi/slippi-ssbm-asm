@@ -5,7 +5,7 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-#exilogf LOG_LEVEL_NOTICE, "XFB Status is not 4. Value: %d", "mr r5, 0"
+#logf LOG_LEVEL_NOTICE, "XFB Status is not 4. Value: %d", "mr r5, 0"
 
 # Log XFB status value
 bl STRING

@@ -56,4 +56,4 @@ branch r12, 0x801b136c
 # Code end
 ################################################################################
 EXIT:
-li r3, 0x2 # Load menu first
+li r3, 0x1 # Load menu first

@@ -64,7 +64,7 @@ beq RESTORE_AND_EXIT
 li r4, 0
 stb r4, ODB_SHOULD_FORCE_PAD_RENEW(r5)
 branchl r12, RenewInputs_Prefunction
-#exilogf LOG_LEVEL_NOTICE, "Forced a pad renew..."
+#logf LOG_LEVEL_NOTICE, "Forced a pad renew..."
 
 RESTORE_AND_EXIT:
 mr r3, r26 # We will set r26 to 0 later so it's fine to use here
