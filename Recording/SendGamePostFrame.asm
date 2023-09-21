@@ -165,6 +165,67 @@ backup
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
   stw REG_BufferOffset,bufferOffset(r13)
 
+################################################################################
+# Extract bone positions
+################################################################################
+
+# First let's write the command and player index
+lwz r3, primaryDataBuffer(r13)
+lwz REG_Buffer, RDB_TXB_ADDRESS(r3)
+add r4, REG_Buffer, REG_BufferOffset # Write position
+li r3, CMD_BONES
+stb r3, 0x0(r4) # Write command
+lwz r3, frameIndex(r13)
+stw r3, 0x1(r4) # Write frame index
+stb REG_PlayerSlot, 0x5(r4) # Write player index
+
+# Increment the buffer offset to skip past the command, frame index, and player index
+addi r3, REG_BufferOffset, 0x6
+stw r3, bufferOffset(r13)
+
+# We are going to overwrite the offset after saving all the bones. This will make sure we reserved the fixed length for bones
+addi REG_BufferOffset, REG_BufferOffset, (BONES_PAYLOAD_LENGTH+1)
+
+bl FN_StoreBonePos_BLRL
+mflr r4
+lwz r3, 0x0(REG_PlayerData) # Get Entity from CharData
+lwz r3, 0x28(r3) # Get Root JObj from Entity
+li r5, 0 # no context
+branchl r12, 0x8036f0f0 # HSD_JObjWalkTree
+
+# Update the write offset. The padding should all be zero'd because the whole buffer is zero'd in SendFrameStart
+stw REG_BufferOffset, bufferOffset(r13)
+
+b Injection_Exit
+
+FN_StoreBonePos_BLRL:
+blrl
+backup
+
+# Do this first because r3 is already set to the JObj ptr
+li r4, 0
+addi r5, sp, BKP_FREE_SPACE_OFFSET
+branchl r12, 0x8000b1cc # GetEntityPosition
+
+lwz REG_BufferOffset,bufferOffset(r13)
+lwz r3, primaryDataBuffer(r13)
+lwz REG_Buffer, RDB_TXB_ADDRESS(r3)
+add r4, REG_Buffer, REG_BufferOffset # Write position
+
+lwz r3, BKP_FREE_SPACE_OFFSET(sp) # Get posX
+stw r3, 0x0(r4)
+lwz r3, BKP_FREE_SPACE_OFFSET+4(sp) # Get posY
+stw r3, 0x4(r4)
+lwz r3, BKP_FREE_SPACE_OFFSET+8(sp) # Get posZ
+stw r3, 0x8(r4)
+
+# Update the write offset for the next bone
+addi REG_BufferOffset, REG_BufferOffset, 0xC
+stw REG_BufferOffset, bufferOffset(r13)
+
+restore
+blr
+
 Injection_Exit:
   restore
   lwz r0, 0x001C (sp)

@@ -280,6 +280,23 @@
           "annotation": "Lagless FoD"
         }
       ]
+    },
+    {
+      "name": "Debugging: Print Bones",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Prints bone positions"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Debugging/BonePositions",
+          "isRecursive": true,
+          "annotation": "Print Bones"
+        }
+      ]
     }
   ]
 }

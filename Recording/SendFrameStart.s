@@ -45,6 +45,11 @@ backup
   lwz REG_BufferOffset,bufferOffset(r13)
   add REG_Buffer,REG_Buffer,REG_BufferOffset
 
+# zero out the buffer
+  mr r3, REG_Buffer
+  li r4, FULL_FRAME_DATA_BUF_LENGTH
+  branchl r12, Zero_AreaLength
+
 # initial RNG command byte
   li r3, CMD_INITIAL_RNG
   stb r3,0x0(REG_Buffer)

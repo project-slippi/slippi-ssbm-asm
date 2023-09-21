@@ -22,7 +22,8 @@
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set COMMAND_COUNT, 10 # number of possible commands
+.set CMD_BONES, 0x60
+.set COMMAND_COUNT, 11 # number of possible commands
 
 ################################################################################
 # Payload lengths
@@ -36,6 +37,7 @@
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, GAME_END_TXB_SIZE - 1 # byte count
 .set SPLIT_MESSAGE_PAYLOAD_LENGTH, 516 # byte count
+.set BONES_PAYLOAD_LENGTH, (120 * 12) + 5  # byte count. hopefully nobody ever has more than 120 bones. each bone has X, Y, Z
 
 .set SPLIT_MESSAGE_INTERNAL_DATA_LEN, 512
 
@@ -57,7 +59,7 @@
 .set SUPPORTED_PORTS, 4
 .set MAX_CHARACTERS, SUPPORTED_PORTS * 2 # ICs
 .set TOTAL_FRAME_START_LEN, GAME_FRAME_START_PAYLOAD_LENGTH + 1
-.set TOTAL_CHAR_FRAME_LEN, MAX_CHARACTERS * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1)
+.set TOTAL_CHAR_FRAME_LEN, MAX_CHARACTERS * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (BONES_PAYLOAD_LENGTH + 1)
 .set TOTAL_ITEM_LEN, MAX_ITEMS * (GAME_ITEM_INFO_PAYLOAD_LENGTH + 1)
 .set TOTAL_FRAME_BOOKEND_LEN, GAME_FRAME_BOOKEND_PAYLOAD_LENGTH + 1
 .set TOTAL_GAME_END_LEN, GAME_END_PAYLOAD_LENGTH + 1
@@ -66,7 +68,7 @@
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
 # current version: 3.16.0
-.set CURRENT_VERSION,0x03100000
+.set CURRENT_VERSION,0x031000FF
 
 ################################################################################
 # Static Function Locations
