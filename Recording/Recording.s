@@ -22,7 +22,8 @@
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set COMMAND_COUNT, 10 # number of possible commands
+.set CMD_FOD_INFO, 0x3E
+.set COMMAND_COUNT, 11 # number of possible commands
 
 ################################################################################
 # Payload lengths
@@ -35,6 +36,7 @@
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 44 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, GAME_END_TXB_SIZE - 1 # byte count
+.set FOD_INFO_PAYLOAD_LENGTH, 5 # byte count
 .set SPLIT_MESSAGE_PAYLOAD_LENGTH, 516 # byte count
 
 .set SPLIT_MESSAGE_INTERNAL_DATA_LEN, 512
@@ -65,8 +67,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.16.0
-.set CURRENT_VERSION,0x03100000
+# current version: 3.17.0
+.set CURRENT_VERSION,0x03110000
 
 ################################################################################
 # Static Function Locations

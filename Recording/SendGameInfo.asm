@@ -122,6 +122,11 @@ backup
   li r3, SPLIT_MESSAGE_PAYLOAD_LENGTH
   sth r3, CommandSizesStart+0x1B(REG_Buffer)
 
+  li r3, CMD_FOD_INFO
+  stb r3, CommandSizesStart+0x1D(REG_Buffer)
+  li r3, FOD_INFO_PAYLOAD_LENGTH
+  sth r3, CommandSizesStart+0x1E(REG_Buffer)
+
 #------------- BEGIN GAME INFO COMMAND -------------
 # game information message type
 .set GameInfoCommandStart, (CommandSizesStart + CommandSizesLength)
