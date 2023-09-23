@@ -10,21 +10,14 @@
 # Sends Fount of Dreams platform heights when they change.
 ################################################################################
 
-.set REG_Buffer,29
-.set REG_BufferOffset,28
+.set REG_Buffer,4
+.set REG_BufferOffset,5
 
 # We skip to avoid the two initialization calls at game start
-mflr r0
-load r3, 0x801cc908
-xor. r0, r0, r3
-beq Skip
-
-backup
-
-# Check if VS Mode
-  branchl r12,FN_ShouldRecord
-  cmpwi r3,0x0
-  beq Injection_Exit
+  mflr r0
+  load r3, 0x801cc908
+  xor. r0, r0, r3
+  beq Skip
 
 #------------- INITIALIZE -------------
 # here we want to initalize some variables we plan on using throughout
@@ -55,7 +48,5 @@ backup
   addi REG_BufferOffset,REG_BufferOffset,FOD_INFO_PAYLOAD_LENGTH+1
   stw REG_BufferOffset,bufferOffset(r13)
 
-Injection_Exit:
-  restore
 Skip:
   stfs f31, 0x3c(r27) #execute replaced code line
