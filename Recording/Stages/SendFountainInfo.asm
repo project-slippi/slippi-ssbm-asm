@@ -10,8 +10,8 @@
 # Sends Fount of Dreams platform heights when they change.
 ################################################################################
 
-.set REG_Buffer,4
-.set REG_BufferOffset,5
+.set REG_Buffer,11
+.set REG_BufferOffset,12
 
 # We skip to avoid the two initialization calls at game start
   mflr r0

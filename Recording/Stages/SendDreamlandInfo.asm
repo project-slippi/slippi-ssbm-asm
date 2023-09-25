@@ -10,8 +10,8 @@
 # Sends whispy wind direction when it changes.
 ################################################################################
 
-.set REG_Buffer,6
-.set REG_BufferOffset,7
+.set REG_Buffer,11
+.set REG_BufferOffset,12
 
 b Start
 STATIC_PREVIOUS_VALUE:
