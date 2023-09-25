@@ -10,9 +10,8 @@
 # Sends whispy wind direction when it changes.
 ################################################################################
 
-.set REG_LR,6
-.set REG_Buffer,7
-.set REG_BufferOffset,8
+.set REG_Buffer,6
+.set REG_BufferOffset,7
 
 b Start
 STATIC_PREVIOUS_VALUE:
@@ -20,7 +19,6 @@ STATIC_PREVIOUS_VALUE:
   .long 0x00000000
 
 Start:
-  mtlr REG_LR
   bl STATIC_PREVIOUS_VALUE
   mflr r3
   lwz r4, 0(r3)
@@ -54,6 +52,5 @@ Start:
   stw REG_BufferOffset,bufferOffset(r13)
 
 Skip:
-  mtlr REG_LR
   lmw r26, 0xe8(r1) #execute replaced code line
 
