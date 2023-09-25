@@ -23,7 +23,8 @@
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
 .set CMD_FOD_INFO, 0x3E
-.set COMMAND_COUNT, 11 # number of possible commands
+.set CMD_DL_INFO, 0x3F
+.set COMMAND_COUNT, 12 # number of possible commands
 
 ################################################################################
 # Payload lengths
@@ -37,6 +38,7 @@
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, GAME_END_TXB_SIZE - 1 # byte count
 .set FOD_INFO_PAYLOAD_LENGTH, 9 # byte count
+.set DL_INFO_PAYLOAD_LENGTH, 5 # byte count
 .set SPLIT_MESSAGE_PAYLOAD_LENGTH, 516 # byte count
 
 .set SPLIT_MESSAGE_INTERNAL_DATA_LEN, 512
