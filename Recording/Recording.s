@@ -22,10 +22,11 @@
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set CMD_FOD_INFO, 0x3E
-.set CMD_DL_INFO, 0x3F
-.set CMD_PS_INFO, 0x40
+.set CMD_FOD_INFO, 0x3F
+.set CMD_DL_INFO, 0x40
+.set CMD_PS_INFO, 0x41
 .set COMMAND_COUNT, 13 # number of possible commands
+# .set CMD_MENU_FRAME, 0x3E # not written for recorded game
 
 ################################################################################
 # Payload lengths
