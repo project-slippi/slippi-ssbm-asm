@@ -209,6 +209,12 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   li r5, DisplayNameData_Length                   # length
   branchl r12, memcpy
 
+# Get player connect codes
+  addi r3, REG_DirectoryBuffer, PDB_CONNECT_CODES
+  addi r4, BufferPointer, ConnectCodeData
+  li r5, ConnectCodeData_Length
+  branchl r12, memcpy
+
 #--------------- Apply Dynamic Gecko Codes ---------------------
 # Step 1: Grab size of gecko code list and create a buffer to store them
   # TODO: Make sure that returned size includes the termination sequence (8 bytes)

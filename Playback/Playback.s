@@ -59,7 +59,8 @@
 .set PDB_LATEST_FRAME, PDB_SFXDB_START + SFXDB_SIZE # u32, must follow SFXDB as it is preserved
 .set PDB_SHOULD_RESYNC, PDB_LATEST_FRAME + 4 # bool
 .set PDB_DISPLAY_NAMES, PDB_SHOULD_RESYNC + 1 # string (31)[4]
-.set PDB_SIZE, PDB_DISPLAY_NAMES + 124
+.set PDB_CONNECT_CODES, PDB_DISPLAY_NAMES + 124 # string (10)[4]
+.set PDB_SIZE, PDB_DISPLAY_NAMES + 40
 
 ################################################################################
 # Buffer Offsets
@@ -131,8 +132,10 @@
     .set DisplayNameData_Length,0x7C
   .set GeckoListSize,0x21D
     .set GeckoListSize_Length,0x4
+  .set ConnectCodeData,0x221
+    .set ConnectCodeData_Length,0x28
 
-  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + DisplayNameData_Length + GeckoListSize_Length
+  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + DisplayNameData_Length + GeckoListSize_Length + ConnectCodeData_Length
 
   .if GameInfoLength > Buffer_Length
     .set EXIBufferLength, GameInfoLength
