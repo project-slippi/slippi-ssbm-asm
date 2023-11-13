@@ -17,7 +17,7 @@ bne EXIT
 
 backup
 
-lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
+lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 
 rlwinm REG_SOUND_ID, REG_SOUND_ID, 0, 0xFFFF # extract half word ID

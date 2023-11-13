@@ -134,7 +134,7 @@ bl DATA_BLRL
 mflr REG_DATA_ADDR
 
 # get PDB
-lwz REG_PDB_ADDR, primaryDataBuffer(r13)
+lwz REG_PDB_ADDR, playbackDataBuffer(r13)
 
 ##########################
 ## Display Player Names ##

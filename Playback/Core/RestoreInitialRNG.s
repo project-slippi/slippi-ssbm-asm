@@ -37,7 +37,7 @@ blrl
 backup
 
 # check status of initial RNG
-  lwz r3,primaryDataBuffer(r13)
+  lwz r3,playbackDataBuffer(r13)
   lwz REG_Buffer,PDB_EXI_BUF_ADDR(r3)
   lbz r3,(InitialRNG_Start)+(InitialRNG_Status)(REG_Buffer)
   cmpwi r3,0
