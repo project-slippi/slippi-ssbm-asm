@@ -134,6 +134,29 @@
       ]
     },
     {
+      "name": "Optional: Slippi Recording",
+      "authors": [
+        "Fizzi",
+        "Achilles",
+        "UnclePunch",
+        "Nikki",
+        "jmlee337",
+        "Krohnos"
+      ],
+      "description": [
+        "Allows for outputting new replay data during playback.",
+        "Useful for spectator service or upgrading replay versions."
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Recording",
+          "isRecursive": true,
+          "annotation": "Slippi Recording [Fizzi, Achilles, UnclePunch, Nikki, jmlee337]"
+        }
+      ]
+    },
+    {
       "name": "Optional: Show Player Names",
       "authors": [
         "Fizzi",

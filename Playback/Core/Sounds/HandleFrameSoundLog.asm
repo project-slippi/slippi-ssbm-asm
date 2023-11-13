@@ -33,7 +33,7 @@ backup
 branchl r12, OSDisableInterrupts # Not backing up r3 output, don't use r3 in body
 mr REG_INTERRUPT_IDX, r3
 
-lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
+lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 
 lbz REG_SOUND_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)

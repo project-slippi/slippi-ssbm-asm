@@ -32,7 +32,7 @@
   mr PlayerDataStatic,r3
 
 # get buffer pointer
-  lwz REG_PDB_ADDR,primaryDataBuffer(r13)
+  lwz REG_PDB_ADDR,playbackDataBuffer(r13)
   lwz BufferPointer,PDB_EXI_BUF_ADDR(REG_PDB_ADDR)
 
 #Check if this player is a follower

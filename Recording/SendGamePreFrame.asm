@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 8006b0dc
+# Address: 8006b0e0
 ################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
@@ -125,4 +125,5 @@ CONTINUE_RAW_X:
 
 Injection_Exit:
   restore
-  lbz r0, 0x2219(r31) #execute replaced code line
+  lbz r0, 0x2219(r31) # reload r0 from previous line
+  lwz	r3, 0x065C(r31) # replaced code line
