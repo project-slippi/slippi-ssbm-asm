@@ -15,6 +15,7 @@
         "[Gecko_Enabled]",
         "$Required: General Codes",
         "$Required: Slippi Playback",
+        "$Recommended: Slippi Recording",
         "$Optional: Show Player Names",
         "",
         "[Gecko]"
@@ -34,6 +35,7 @@
         "[Gecko_Enabled]",
         "$Required: General Codes",
         "$Required: Slippi Playback",
+        "$Recommended: Slippi Recording",
         "$Optional: Show Player Names",
         "",
         "[Gecko]"
@@ -130,6 +132,29 @@
           "sourceFolder": "Common/CompatibilityHooks",
           "isRecursive": true,
           "annotation": "Functions that can be externally modified"
+        }
+      ]
+    },
+    {
+      "name": "Recommended: Slippi Recording",
+      "authors": [
+        "Fizzi",
+        "Achilles",
+        "UnclePunch",
+        "Nikki",
+        "jmlee337",
+        "Krohnos"
+      ],
+      "description": [
+        "Allows for outputting new replay data during playback.",
+        "Used to power spectator service and upgrading replay versions."
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Recording",
+          "isRecursive": true,
+          "annotation": "Slippi Recording [Fizzi, Achilles, UnclePunch, Nikki, jmlee337]"
         }
       ]
     },

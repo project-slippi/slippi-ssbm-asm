@@ -16,7 +16,7 @@ addi r30, r3, 0
 
 backup
 
-lwz REG_DirectoryBuffer, primaryDataBuffer(r13)
+lwz REG_DirectoryBuffer, playbackDataBuffer(r13)
 
 ####################################################################################################
 # Step 1: First we need to count how many items there are so we can allocate a buffer

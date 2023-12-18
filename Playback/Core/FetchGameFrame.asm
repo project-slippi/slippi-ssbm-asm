@@ -40,7 +40,7 @@
 FetchGameFrame:
 
 backup
-lwz r3,primaryDataBuffer(r13)
+lwz r3,playbackDataBuffer(r13)
 lwz BufferPointer,PDB_EXI_BUF_ADDR(r3)
 
 FetchFrameInfo_REQUEST_DATA:

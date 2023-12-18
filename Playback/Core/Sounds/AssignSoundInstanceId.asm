@@ -20,7 +20,7 @@ bne EXIT
 
 backup
 
-lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
+lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)

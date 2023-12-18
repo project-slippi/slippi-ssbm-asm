@@ -313,7 +313,7 @@ lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 
 .macro loadGlobalFrame reg
 lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
+lwz \reg, -0x62A0(\reg) # 80479D60
 .endm
 
 # This macro takes in an address that is expected to have a branch instruction. It will set
@@ -603,6 +603,7 @@ add \reg, r3, r4
 # Offsets from r13
 ################################################################################
 .set primaryDataBuffer,-0x49b4
+.set playbackDataBuffer,-0x5040 # From tournament mode line 8019b9d4, seems to be only used in one place
 .set secondaryDmaBuffer,-0x49b0
 .set archiveDataBuffer, -0x4AE8
 .set bufferOffset,-0x49b0
