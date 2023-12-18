@@ -163,13 +163,13 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF 0.8/Logic",
+          "sourceFolder": "External/UCF 0.84/UCF",
           "isRecursive": true,
-          "annotation": "UCF v0.8"
+          "annotation": "UCF v0.84"
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF 0.8/Indicator",
+          "sourceFolder": "External/UCF 0.84/Indicator",
           "isRecursive": true,
           "annotation": "UCF CSS Indicator"
         },
