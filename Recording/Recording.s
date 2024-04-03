@@ -22,7 +22,11 @@
 .set CMD_ITEM, 0x3B
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
-.set COMMAND_COUNT, 10 # number of possible commands
+# I realized after being mostly done with this that there's another bones extract branch... I'll leave this one here
+# regardless because I think it might include rotation and stuff? This branch is untested atm
+# Other branch: https://github.com/project-slippi/slippi-ssbm-asm/commit/e88025b6269714f12d1190beec4f228ee15fe099#diff-933ee24f9d76cf3111e644da95574259e7d4f8f8c40964dbf9a7db35e433e8fdR40
+.set CMD_BONES_EXTRACT, 0x21
+.set COMMAND_COUNT, 11 # number of possible commands
 
 .set BONE_BYTES, 4 * 9 # float for each R/S/T, X/Y/Z
 .set BONE_MAX, 118 # Zelda has the most bones at 118
@@ -35,6 +39,7 @@
 .set GAME_FRAME_START_PAYLOAD_LENGTH, 12 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 64 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 84 # byte count
+.set GAME_BONES_EXTRACT_PAYLOAD_LENGTH, 9 + (BONE_BYTES * BONE_MAX) # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 44 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, GAME_END_TXB_SIZE - 1 # byte count
@@ -60,7 +65,7 @@
 .set SUPPORTED_PORTS, 4
 .set MAX_CHARACTERS, SUPPORTED_PORTS * 2 # ICs
 .set TOTAL_FRAME_START_LEN, GAME_FRAME_START_PAYLOAD_LENGTH + 1
-.set TOTAL_CHAR_FRAME_LEN, MAX_CHARACTERS * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1)
+.set TOTAL_CHAR_FRAME_LEN, MAX_CHARACTERS * (GAME_PRE_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_POST_FRAME_PAYLOAD_LENGTH + 1) + MAX_CHARACTERS * (GAME_BONES_EXTRACT_PAYLOAD_LENGTH + 1)
 .set TOTAL_ITEM_LEN, MAX_ITEMS * (GAME_ITEM_INFO_PAYLOAD_LENGTH + 1)
 .set TOTAL_FRAME_BOOKEND_LEN, GAME_FRAME_BOOKEND_PAYLOAD_LENGTH + 1
 .set TOTAL_GAME_END_LEN, GAME_END_PAYLOAD_LENGTH + 1
