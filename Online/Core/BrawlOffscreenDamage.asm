@@ -1,5 +1,6 @@
 ################################################################################
 # Address: 0x8006a880 # PlayerThink_Animation. Function call determines if player is in bubble normally
+# Tags: [affects-gameplay]
 ################################################################################
 # This function needs to return 1 or 0 determining whether a player is in the
 # damage zone for offscreen damage. 1 means we are offscreen
@@ -13,6 +14,11 @@
 .set SPO_PLAYER_POS_Z, SPO_PLAYER_POS_Y + 4 # float
 
 backup
+
+# The Sandbag in vanilla melee doesn't take damage when offscreen
+getMinorMajor r3
+cmpwi r3, SCENE_HOMERUN_IN_GAME
+beq RETURN_FALSE
 
 # First check if the player is dead
 lbz r3, 0x221F(REG_FIGHTERDATA)
@@ -56,5 +62,3 @@ li r3, 1
 
 RESTORE_AND_EXIT:
 restore
-
-EXIT:

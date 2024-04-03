@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_lag_pd.bin"
+    },
+    {
+      "file": "Output/Console/g_lag_pd.txt"
     }
   ],
   "codes": [

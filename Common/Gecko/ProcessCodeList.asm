@@ -18,12 +18,13 @@
 .set REG_CodeCount, 28
 
 .set REG_NextCodeDistance, 27
-#.set REG_CopyFromAddress, 26
+.set REG_StartAddress, 26
 .set REG_ReplaceSize, 25
 
 backup
 
 mr REG_Cursor, r3
+mr REG_StartAddress, r3
 
 # Move optional callback into reg
 mr REG_Callback, r4
@@ -131,8 +132,7 @@ b LOOP_START
 LOOP_EXIT:
 
 # Prepare return values
-load r3, GeckoCodeSectionStart
-sub r3, REG_Cursor, r3 # Total size
+sub r3, REG_Cursor, REG_StartAddress # Total size
 
 restore
 blr

@@ -5,10 +5,13 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
+.set REG_ZERO, 28
 .set REG_INPUTS, 27
 .set REG_MSRB_ADDR, 26
 .set REG_TXB_ADDR, 25
 .set REG_CSSDT_ADDR, 24
+
+.set DISCONNECT_HOLD_DELAY, 0x30 # 3 seconds
 
 # Deal with replaced codeline
 beq+ START
@@ -28,6 +31,7 @@ bne EXIT # If not online CSS, continue as normal
 mr REG_INPUTS, r7
 loadwz REG_CSSDT_ADDR, CSSDT_BUF_ADDR
 lwz REG_MSRB_ADDR, CSSDT_MSRB_ADDR(REG_CSSDT_ADDR) # Load where buf is stored
+li REG_ZERO, 0 # set to zero just in case :)
 
 ################################################################################
 # Play sound on lock-in state 1 -> 0 transition
@@ -78,12 +82,13 @@ b SOUND_PLAY_END
 PLAY_BACK_SOUND_ON_RESET:
 # Play "back" sound
 li	r3, 0
-branchl r12, SFX_Menu_CommonSound
-b SOUND_PLAY_END
+b PLAY_SOUND
 
 PLAY_ERROR_SOUND_ON_ERROR:
 # Play "error" sound
 li	r3, 3
+
+PLAY_SOUND:
 branchl r12, SFX_Menu_CommonSound
 
 SOUND_PLAY_END:
@@ -107,16 +112,30 @@ b SKIP_START_MATCH
 # Case 1: Handle idle case
 ################################################################################
 HANDLE_IDLE:
+
+# Prevent CSS Actions if chat window is opened
+lbz r3, CSSDT_CHAT_WINDOW_OPENED(REG_CSSDT_ADDR)
+cmpwi r3, 0
+bne SKIP_START_MATCH # skip input if chat window is opened
+
 # When idle, pressing start will start finding match
 # Check if start was pressed
 rlwinm.	r0, REG_INPUTS, 0, 19, 19
 beq SKIP_START_MATCH # Exit if start was not pressed
 
+# Sometimes when returning to the CSS, previously held buttons will stay held,
+# including start. This prevents the start input from locking people in
+# immediately... Doesn't feel like this should be necessary, and if it is,
+# this doesn't feel like the right place for this logic
+loadGlobalFrame r3
+cmpwi r3, 0
+beq SKIP_START_MATCH # Don't search on very first frame
+
 # Initialize ISWINNER (first match)
 li  r3, ISWINNER_NULL
 stb r3, OFST_R13_ISWINNER (r13)
 # Init CHOSESTAGE bool
-li  r3,0
+li r3,  0
 stb r3, OFST_R13_CHOSESTAGE (r13)
 
 # Check if character has been selected, if not, do nothing
@@ -126,10 +145,12 @@ beq SKIP_START_MATCH
 
 # Check which mode we are playing. direct mode should launch text entry
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_IDLE_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beq HANDLE_IDLE_DIRECT
+bge HANDLE_IDLE_DIRECT
 b 0x0
 
 HANDLE_IDLE_UNRANKED:
@@ -157,12 +178,26 @@ b SKIP_START_MATCH
 ################################################################################
 HANDLE_CONNECTED:
 
-# Handle disconnect
-rlwinm.	r0, REG_INPUTS, 0, 0x10
-beq SKIP_DISCONNECT
+# Handle disconnect when input is hold for X seconds
+branchl r12, Inputs_GetPlayerHeldInputs
+rlwinm. r0, r4, 0, 0x10
+beq RESET_HOLD_TIMER # if button is no longer pressed, reset hold timer
 
+# increase time holding Z
+lbz r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
+addi r3, r3, 1
+stb r3, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
+
+# skip disconnect if hold time is less than delay
+cmpwi r3, DISCONNECT_HOLD_DELAY
+ble SKIP_DISCONNECT
+
+# reset disconnect hold timer when disconnecting
+stb REG_ZERO, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 bl FN_RESET_CONNECTIONS
 b SKIP_START_MATCH
+RESET_HOLD_TIMER:
+stb REG_ZERO, CSSDT_Z_BUTTON_HOLD_TIMER(REG_CSSDT_ADDR)
 SKIP_DISCONNECT:
 
 # Handle case where we are not yet locked-in
@@ -176,8 +211,8 @@ bne HANDLE_CONNECTED_ADVANCE
 
 # Check if direct mode && loser && already chose stage
 lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct mode
-bne CHECK_SHOULD_START_MATCH
+cmpwi r3, ONLINE_MODE_DIRECT        # Check if this is direct/teams mode
+blt CHECK_SHOULD_START_MATCH
 lbz r3, OFST_R13_ISWINNER (r13)
 cmpwi r3,ISWINNER_LOST              # Check if this is the loser
 bne CHECK_SHOULD_START_MATCH
@@ -192,12 +227,20 @@ lbz r3, -0x49A9(r13)
 cmpwi r3, 0
 beq CHECK_SHOULD_START_MATCH
 
+# Sometimes when returning to the CSS, previously held buttons will stay held,
+# including start. This prevents the start input from locking people in
+# immediately... Doesn't feel like this should be necessary, and if it is,
+# this doesn't feel like the right place for this logic
+loadGlobalFrame r3
+cmpwi r3, 0
+beq CHECK_SHOULD_START_MATCH # Don't lock-in on the very first frame
+
 # Check which mode we are playing.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq HANDLE_CONNECTED_UNRANKED
 cmpwi r3, ONLINE_MODE_DIRECT
-beq HANDLE_CONNECTED_DIRECT
+bge HANDLE_CONNECTED_DIRECT
 b 0x0                           # stall if neither
 
 # Branch to this mode's behavior
@@ -233,6 +276,15 @@ lhz r3, 0x1E (r3)
 bl FN_TX_LOCK_IN
 b CHECK_SHOULD_START_MATCH
 HANDLE_CONNECTED_DIRECT_LOADSSS:
+# Set teams on/off bit. This is required by the "disable fod during doubles" gecko code
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_TEAMS
+li r3, 0
+bne SET_TEAMS_BOOL
+li r3, 1
+SET_TEAMS_BOOL:
+lwz	r4, -0x49F0(r13)
+stb r3, 0x18(r4)
 # Request scene change
 li  r3,1
 stb	r3, -0x49AA (r13)
@@ -244,6 +296,7 @@ b SKIP_START_MATCH
 
 # Check to see if both players are ready and start match if they are
 CHECK_SHOULD_START_MATCH:
+
 lbz r3, MSRB_IS_LOCAL_PLAYER_READY(REG_MSRB_ADDR)
 lbz r4, MSRB_IS_REMOTE_PLAYER_READY(REG_MSRB_ADDR)
 and. r3, r3, r4
@@ -269,6 +322,13 @@ b SKIP_START_MATCH
 ################################################################################
 FN_TX_FIND_MATCH:
 backup
+
+# When the player starts looking for a match is a good time to reset the game index
+loadwz r3, 0x803dad40 # Load minor scene data array ptr
+lwz r12, 0x88(r3) # Load game prep minor scene data
+li r3, 0
+sth r3, GPDO_CUR_GAME(r12)
+stb r3, GPDO_TIEBREAK_GAME_NUM(r12)
 
 # Prepare buffer for EXI transfer
 li r3, FMTB_SIZE
@@ -347,6 +407,22 @@ stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 
+# Send a blank team ID if this isn't teams mode.
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+beq SEND_TEAM_ID
+li r3, 0
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+b SKIP_SEND_TEAM_ID
+
+SEND_TEAM_ID:
+# Calc/Set Team ID
+loadwz r3, CSSDT_BUF_ADDR
+lbz r3, CSSDT_TEAM_IDX(r3)
+subi r3, r3, 1
+stb r3, PSTB_TEAM_ID(REG_TXB_ADDR)
+
+SKIP_SEND_TEAM_ID:
 # Handle stage
 cmpwi REG_SB, -2
 beq FN_TX_LOCK_IN_STAGE_RAND
@@ -374,7 +450,11 @@ FN_TX_LOCK_IN_STAGE_SEND:
 sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
 stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
-# Start finding opponent
+# Write the online mode we are in
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+stb r3, PSTB_ONLINE_MODE(REG_TXB_ADDR)
+
+# Indicate to Dolphin we want to lock-in
 mr r3, REG_TXB_ADDR
 li r4, PSTB_SIZE
 li r5, CONST_ExiWrite
@@ -397,6 +477,9 @@ FN_LOCK_IN_AND_SEARCH_BLRL:
 blrl
 FN_LOCK_IN_AND_SEARCH:
 backup
+
+lbz r20, CSSDT_TEAM_IDX(REG_CSSDT_ADDR)
+# logf LOG_LEVEL_NOTICE, "TEAM INDEX AFTER %d", "mr r5, 20"
 
 bl FN_TX_LOCK_IN # Lock in character selection
 bl FN_TX_FIND_MATCH # Trigger matchmaking
@@ -456,6 +539,7 @@ branchl r12, HSD_Free
 
 restore
 blr
+
 
 ################################################################################
 # Skip starting match

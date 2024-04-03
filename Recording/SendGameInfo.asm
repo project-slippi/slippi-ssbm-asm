@@ -2,8 +2,9 @@
 # Address: 8016e74c
 ################################################################################
 .include "Common/Common.s"
+.include "Online/Online.s"
 .include "Recording/Recording.s"
-.include "Recording/SendInitialRNG.s"
+.include "Recording/SendFrameStart.s"
 .include "Recording/SendItemInfo.s"
 
 ################################################################################
@@ -15,10 +16,8 @@
 
 .set REG_Buffer,30
 .set REG_BufferOffset,29
-.set REG_GeckoListSize,28
-.set REG_GeckoCopyBuffer,27
-.set REG_GeckoCopyPos,26
-.set REG_RDB,25
+.set REG_GeckoListSize, 28
+.set REG_RDB,27
 
 backup
 
@@ -49,7 +48,8 @@ backup
   stw r3,bufferOffset(r13)
 
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
-  load r3, GeckoCodeSectionStart # Gecko code list start
+  loadwz r3, GeckoHeapPtr # Gecko code list start
+  addi r3, r3, 8 # skip past d0c0de d0c0de
   li r4, 0 # No callback
   branchl r12, FN_ProcessGecko
   mr REG_GeckoListSize, r3
@@ -96,7 +96,7 @@ backup
 # initial rng command
   li  r3,CMD_INITIAL_RNG
   stb r3,CommandSizesStart+0xE(REG_Buffer)
-  li r3, GAME_INITIAL_RNG_PAYLOAD_LENGTH
+  li r3, GAME_FRAME_START_PAYLOAD_LENGTH
   sth r3,CommandSizesStart+0xF(REG_Buffer)
 
 # item data command
@@ -256,11 +256,13 @@ ADJUST_COSTUME_NUMBER_LOOP_INC:
   li  r21,0                 #Init loop
   addi r22,REG_Buffer,UCFToggleStart
 UCF_LOOP:
+# The only reason we still write these is simply because if anyone reads a slp file with a parser,
+# they will know UCF was on
   mulli r23,r21,8
-  lbzx r3,r21,r20           #Get toggle value
+  li r3, 1 # UCF is always on now
   stwx r3,r22,r23
   addi r23,r23,4            #Next offset
-  stwx r3,r22,r23           #send toggle value again for compatibility with old .slp files
+  stwx r3,r22,r23 # Send twice for.. compatibility reasons I guess? Superfluous
   addi  r21,r21,1
   cmpwi r21,4
   blt UCF_LOOP
@@ -286,7 +288,7 @@ UCF_LOOP:
 
 # Init loop
   li  REG_LoopCount,0                               #init loop count
-  addi REG_PlayerDataStart,r31,PlayerDataStart     #player data start in match struct
+  addi REG_PlayerDataStart,r31,PlayerDataStart      #player data start in match struct
   addi r23,REG_Buffer,NametagDataStart              #Start of nametag data in buffer
 SEND_GAME_INFO_NAMETAG_LOOP:
 #Get nametag data in buffer in r24
@@ -345,6 +347,251 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   getMinorMajor r3
   sth r3, MinorMajorStart(REG_Buffer)
 
+#------------- SEND Display Names ------------
+.set DisplayNameStart, (MinorMajorStart + MinorMajorLength)
+.set DisplayNameLength,0x7C
+# Offsets
+.set PlayerDataStart,96       # player data starts in match struct
+.set PlayerDataLength,36      # length of each player's data
+.set PlayerStatus,0x1         # offset of players in-game status
+# Constants
+.set DisplayNameBytesToCopy,31  # 2 bytes per char + 1 byte for null terminator = 31 bytes
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferDisplayNameStart,23
+.set REG_BufferCurrentDisplayName,24
+.set REG_MSRB,25
+.set REG_MSRB_DisplayNameStart,26
+
+# Init MSRB reg to zero so we know if we have to free it or not
+  li REG_MSRB, 0
+
+# Before trying to load match state, make sure we are in an online scene
+  getMinorMajor r3
+  cmpwi r3, SCENE_ONLINE_IN_GAME
+  bne DISPLAY_CC_UID_WRITE_ZERO # If not online in-game, skip normal processing
+
+# Get MSRB address
+  li r3,0
+  branchl r12,FN_LoadMatchState
+  mr REG_MSRB,r3
+  
+# Init loop
+  li REG_LoopCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                 # player data start in match struct
+  addi REG_BufferDisplayNameStart,REG_Buffer,DisplayNameStart  # Start of write buffer
+  addi REG_MSRB_DisplayNameStart,REG_MSRB,MSRB_P1_NAME         # Start of read buffer
+
+  DISPLAY_NAME_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,DisplayNameBytesToCopy
+  add REG_BufferCurrentDisplayName,r3,REG_BufferDisplayNameStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_DISPLAY_NAME_NO_NAME
+
+#Next read offset
+  mulli r3,REG_LoopCount,DisplayNameBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_DisplayNameStart  # src (MSRB_DisplayNameStart + offset)
+  mr r3,REG_BufferCurrentDisplayName   # dest
+  li r5,DisplayNameBytesToCopy         # length
+  branchl r12,memcpy
+  b DISPLAY_NAME_INC_LOOP
+
+  SEND_DISPLAY_NAME_NO_NAME:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentDisplayName
+  li r4,DisplayNameBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  DISPLAY_NAME_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt DISPLAY_NAME_LOOP
+
+#------------- SEND Connect Codes ------------
+.set ConnectCodeStart, (DisplayNameStart + DisplayNameLength)
+.set ConnectCodeLength,0x28
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+# Constants
+.set ConnectCodeBytesToCopy,10  # 1 bytes per char + 2 bytes for hashtag + 1 byte for null terminator = 10 bytes
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferConnectCodeStart,23
+.set REG_BufferCurrentConnectCode,24
+.set REG_MSRB_ConnectCodeStart,26
+  
+# Init loop
+  li REG_LoopCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                  # player data start in match struct
+  addi REG_BufferConnectCodeStart,REG_Buffer,ConnectCodeStart   # Start of write buffer
+  addi REG_MSRB_ConnectCodeStart,REG_MSRB,MSRB_P1_CONNECT_CODE  # Start of read buffer
+
+  CONNECT_CODE_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,ConnectCodeBytesToCopy
+  add REG_BufferCurrentConnectCode,r3,REG_BufferConnectCodeStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_CONNECT_CODE_NO_CODE
+
+#Next read offset
+  mulli r3,REG_LoopCount,ConnectCodeBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_ConnectCodeStart  # src (MSRB_ConnectCodeStart + offset)
+  mr r3,REG_BufferCurrentConnectCode   # dest
+  li r5,ConnectCodeBytesToCopy         # length
+  branchl r12,memcpy
+  b CONNECT_CODE_INC_LOOP
+
+  SEND_CONNECT_CODE_NO_CODE:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentConnectCode
+  li r4,ConnectCodeBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  CONNECT_CODE_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt CONNECT_CODE_LOOP
+
+#------------- SEND Slippi UIDs ------------
+.set SlippiUIDStart, (ConnectCodeStart + ConnectCodeLength)
+.set SlippiUIDLength,0x74
+# Offsets
+.set PlayerDataStart,96       #player data starts in match struct
+.set PlayerDataLength,36      #length of each player's data
+.set PlayerStatus,0x1         #offset of players in-game status
+# Constants
+.set SlippiUIDBytesToCopy,29  # 1 bytes per char + 1 byte for null terminator = 29 bytes
+# Registers
+.set REG_LoopCount,20
+.set REG_PlayerDataStart,21
+.set REG_CurrentPlayerData,22
+.set REG_BufferSlippiUIDStart,23
+.set REG_BufferCurrentSlippiUID,24
+.set REG_MSRB_SlippiUIDStart,26
+  
+# Init loop
+  li REG_LoopCount,0
+  addi REG_PlayerDataStart,r31,PlayerDataStart                # player data start in match struct
+  addi REG_BufferSlippiUIDStart,REG_Buffer,SlippiUIDStart     # Start of write buffer
+  addi REG_MSRB_SlippiUIDStart,REG_MSRB,MSRB_P1_SLIPPI_UID    # Start of read buffer
+
+  SLIPPI_UID_LOOP:
+#Next write position
+  mulli r3,REG_LoopCount,SlippiUIDBytesToCopy
+  add REG_BufferCurrentSlippiUID,r3,REG_BufferSlippiUIDStart
+
+#Check if player exists
+  mulli REG_CurrentPlayerData,REG_LoopCount,PlayerDataLength
+  add REG_CurrentPlayerData,REG_CurrentPlayerData,REG_PlayerDataStart
+  lbz r3,PlayerStatus(REG_CurrentPlayerData)
+  cmpwi r3,0
+  bne SEND_SLIPPI_UID_NO_CODE
+
+#Next read offset
+  mulli r3,REG_LoopCount,SlippiUIDBytesToCopy
+
+#Copy from read position to write position
+  add r4,r3,REG_MSRB_SlippiUIDStart  # src (MSRB_SlippiUIDStart + offset)
+  mr r3,REG_BufferCurrentSlippiUID   # dest
+  li r5,SlippiUIDBytesToCopy         # length
+  branchl r12,memcpy
+  b SLIPPI_UID_INC_LOOP
+
+  SEND_SLIPPI_UID_NO_CODE:
+# Fill with zeroes
+  mr r3,REG_BufferCurrentSlippiUID
+  li r4,SlippiUIDBytesToCopy
+  branchl r12,Zero_AreaLength
+
+  SLIPPI_UID_INC_LOOP:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,4
+  blt SLIPPI_UID_LOOP
+
+  b SEND_SLIPPI_UID_END
+
+  DISPLAY_CC_UID_WRITE_ZERO:
+# We will get here if not online. Just zero out the entire display name, cc, and uid sections
+  addi r3, REG_Buffer, DisplayNameStart
+  li r4, 4 * (DisplayNameBytesToCopy + ConnectCodeBytesToCopy + SlippiUIDBytesToCopy)
+  branchl r12,Zero_AreaLength
+
+  SEND_SLIPPI_UID_END:
+  #------------- LANGUAGE INFO -------------
+.set LanguageStart, (SlippiUIDStart + SlippiUIDLength)
+.set LanguageLength,0x1
+
+# fetch and write current language setting
+  branchl r12, 0x8000adf4 # Language_GetLanguage
+  stb r3, LanguageStart+0x0(REG_Buffer)
+
+  #------------- MATCH ID AND GAME INDEX -------------
+.set MatchIdStart, (LanguageStart + LanguageLength)
+.set MatchIdLength, 51
+.set GameIndexStart, (MatchIdStart + MatchIdLength)
+.set GameIndexLength, 4
+.set TiebreakIndexStart, (GameIndexStart + GameIndexLength)
+.set TiebreakIndexLength, 4
+
+# If MSRB is not 0, this is an online match
+  cmpwi REG_MSRB, 0
+  beq ZERO_MATCH_ID_AND_GAME_INDEX
+
+# copy match ID
+  addi r3, REG_Buffer, MatchIdStart
+  addi r4, REG_MSRB, MSRB_MATCH_ID
+  li r5, MatchIdLength
+  branchl r12, memcpy
+
+# write game index and tiebreak index
+  loadwz r3, 0x803dad40 # Load minor scene data array ptr
+  lwz r12, 0x88(r3) # Load game prep minor scene data
+  lhz r3, GPDO_CUR_GAME(r12)
+  stw r3, GameIndexStart(REG_Buffer)
+  lbz r3, GPDO_TIEBREAK_GAME_NUM(r12)
+  stw r3, TiebreakIndexStart(REG_Buffer)
+
+  b MATCH_ID_GAME_INDEX_END
+
+ZERO_MATCH_ID_AND_GAME_INDEX:
+# TODO: It might be possible to do something else here when playing offline. Maybe we could generate
+# TODO: a console or dolphin instance ID and just increment the game index every local game.
+# TODO: Tiebreaks could also be used for sudden death mode? Or tiebreak can just stay 0 forever
+  addi r3, REG_Buffer, MatchIdStart
+  li r4, MatchIdLength + GameIndexLength + TiebreakIndexLength
+  branchl r12, Zero_AreaLength
+
+MATCH_ID_GAME_INDEX_END:
+
+#------------- Free MSRB if it was created ------------
+  cmpwi REG_MSRB, 0
+  beq SKIP_MSRB_FREE
+# Free MSRB
+  mr r3,REG_MSRB
+  branchl r12,HSD_Free
+  SKIP_MSRB_FREE:
+
 #------------- Transfer Buffer ------------
   mr  r3,REG_Buffer
   li  r4,MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH+1 + GAME_INFO_PAYLOAD_LENGTH+1
@@ -352,10 +599,18 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
   branchl r12,FN_EXITransferBuffer
 
 #-------------- Transfer Gecko List ---------------
+.set REG_GeckoCopyBuffer,21
+.set REG_GeckoCopyPos,22
+.set REG_GeckoSectionStart,23
 # Create copy buffer
   li r3, SPLIT_MESSAGE_BUF_LEN
   branchl r12, HSD_MemAlloc
   mr REG_GeckoCopyBuffer, r3
+
+# Load gecko code section start
+  load r3, GeckoHeapPtr
+  lwz r3, 0 (r3)   # Gecko code list start
+  addi REG_GeckoSectionStart, r3, 8 # skip past d0c0de d0c0de
 
   li r3, CMD_SPLIT_MESSAGE
   stb r3, SPLIT_MESSAGE_OFST_COMMAND(REG_GeckoCopyBuffer)
@@ -389,7 +644,7 @@ CODE_LIST_LOOP_START:
 CODE_LIST_COPY_BLOCK:
   # Copy next gecko list section
   addi r3, REG_GeckoCopyBuffer, SPLIT_MESSAGE_OFST_DATA # destination
-  load r4, GeckoCodeSectionStart
+  mr r4, REG_GeckoSectionStart
   add r4, r4, REG_GeckoCopyPos
   lhz r5, SPLIT_MESSAGE_OFST_SIZE(REG_GeckoCopyBuffer)
   branchl r12, memcpy
@@ -409,8 +664,8 @@ CODE_LIST_CLEANUP:
   mr r3, REG_GeckoCopyBuffer
   branchl r12, HSD_Free
 
-# run macro to create the SendInitialRNG process
-  Macro_SendInitialRNG
+# run macro to create the SendFrameStart process
+  Macro_SendFrameStart
 
 # run macro to create SendProjectileInfo process
   Macro_SendItemInfo

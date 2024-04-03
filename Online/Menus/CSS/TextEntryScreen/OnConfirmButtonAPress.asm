@@ -1,26 +1,11 @@
 ################################################################################
 # Address: 0x8023ca50 # Executed after check to see if tag is empty
+# This now branches to OnConfirmButtonHandler.
 ################################################################################
 
 .include "Common/Common.s"
-.include "Online/Online.s"
 
-lbz r3, OFST_R13_NAME_ENTRY_MODE(r13)
-cmpwi r3, 0
-beq EXIT
+# The A/Start confirm handlers are identical, this just branches the logic for the A handler to
+# the logic for the Start handler to avoid code duplication
 
-# Play success sound
-li	r3, 1
-branchl r12, SFX_Menu_CommonSound
-
-# Execute callback function
-li  r3, SB_RAND     # first stage in direct is always random
-lwz r12, OFST_R13_CALLBACK(r13)
-mtctr r12
-bctrl
-
-# Skip the regular stuff that would run on success (saving the nametag)
-branch r12, 0x8023cabc
-
-EXIT:
-li r0, 0
+branch r12, 0x8023cc14

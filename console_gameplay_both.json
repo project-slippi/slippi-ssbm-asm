@@ -1,0 +1,45 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_gameplay_both.bin"
+    },
+    {
+      "file": "Output/Console/g_gameplay_both.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Ledge Grab Limit",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Enforces ledge grab limit"
+      ],
+      "build": [
+        {
+          "type": "binary",
+          "sourceFile": "Binary/LedgeGrabLimit.bin",
+          "annotation": "Ledge Grab Limit"
+        }
+      ]
+    },
+    {
+      "name": "Disable Wobbling",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Break out of grab after three Nana hits"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/PreventWobbling",
+          "isRecursive": false,
+          "annotation": "Disable wobbling"
+        }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,8 @@
 .set  OFST_METADATA_3,OFST_METADATA_2+0x1
 .set  OFST_METADATA_4,OFST_METADATA_3+0x1
 .set  OFST_OWNER,OFST_METADATA_4+0x1
-.set  ITEM_STRUCT_SIZE,OFST_OWNER+0x1
+.set  OFST_INSTANCE,OFST_OWNER+0x1
+.set  ITEM_STRUCT_SIZE,OFST_INSTANCE+0x2
 
 .macro Macro_SendItemInfo
 
@@ -137,6 +138,9 @@ DontFollowItemOwnerPtr:
   li r3, -1
 SendItemOwner:
   stb r3, OFST_OWNER(REG_Buffer)
+# store item instance
+  lhz r3,0xDA8(REG_ItemData)
+  sth r3,OFST_INSTANCE(REG_Buffer)
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)

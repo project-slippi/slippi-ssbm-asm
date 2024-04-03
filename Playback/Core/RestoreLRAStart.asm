@@ -12,7 +12,7 @@
 
 # Check status of frame received. If a terminate result is received, that means
 # we need to end the game immediately
-  lwz r3,primaryDataBuffer(r13)
+  lwz r3,playbackDataBuffer(r13)
   lwz r3,PDB_EXI_BUF_ADDR(r3)
   lbz r3,(BufferStatus_Start)+(BufferStatus_Status)(r3)
   cmpwi r3, CONST_FrameFetchResult_Terminate

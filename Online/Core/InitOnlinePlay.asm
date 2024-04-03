@@ -5,10 +5,13 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
+.set REG_GAME_INFO_START, 31 # from parent
+
 .set REG_ODB_ADDRESS, 27
 .set REG_RXB_ADDRESS, 26
 .set REG_SSRB_ADDR, 25
 .set REG_MSRB_ADDR, 24
+.set REG_PLAYER_IDX, 23
 
 # Run replaced code
 branchl r12, 0x802254B8
@@ -31,6 +34,21 @@ li r4, ODB_SIZE
 branchl r12, Zero_AreaLength
 
 stw REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13)
+
+# We use game prep minor scene data as a convenient place to store game index such that it persists
+# between games even when not in ranked
+loadwz r3, 0x803dad40 # Load minor scene data array ptr
+lwz r12, 0x88(r3) # Load game prep minor scene data
+
+# If not in ranked mode, let's increment the game index before the game start. Ranked mode manages
+# this in its scene logic
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq SKIP_GAME_INDEX_INCR
+lhz r3, GPDO_CUR_GAME(r12)
+addi r3, r3, 1
+sth r3, GPDO_CUR_GAME(r12)
+SKIP_GAME_INDEX_INCR:
 
 # Indicate that the first frame is frame 1
 li r3, 1
@@ -113,10 +131,68 @@ lis r4, 0x804D
 stw r3, 0x5F90(r4) # overwrite seed
 
 # Copy match struct
-mr r3, r31
+mr r3, REG_GAME_INFO_START
 addi r4, REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK
 li r5, MATCH_STRUCT_LEN
 branchl r12, memcpy
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+bne SKIP_TIEBREAK_OVERWRITE
+
+# For ranked, in the case of a tiebreak, overwrite stock count and timer
+loadwz r5, 0x803dad40 # Load minor scene data array ptr
+lwz r5, 0x88(r5) # Load game prep minor scene data
+lbz r3, GPDO_TIEBREAK_GAME_NUM(r5) # Load is_tiebreak
+cmpwi r3, 0
+beq SKIP_TIEBREAK_OVERWRITE # If not a tiebreak, do nothing
+lbz r3, GPDO_LAST_GAME_END_MODE(r5)
+cmpwi r3, 0x7
+beq SKIP_TIEBREAK_OVERWRITE # If last game ended with exit, desync recovery values will be used (set by dolphin)
+
+li r3, 180
+stw r3, 0x10(REG_GAME_INFO_START)
+
+li r3, 1
+stb r3, 0x62(REG_GAME_INFO_START)
+stb r3, 0x62 + 0x24(REG_GAME_INFO_START)
+stb r3, 0x62 + 0x24 * 2(REG_GAME_INFO_START)
+stb r3, 0x62 + 0x24 * 3(REG_GAME_INFO_START)
+
+SKIP_TIEBREAK_OVERWRITE:
+
+# Test code to force the timer to 15 seconds
+# li r3, 15
+# stw r3, 0x10(REG_GAME_INFO_START)
+
+# For teams, overwrite the colors in the game info block with the proper color for the given team ID
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_CHAR_COLOR_OVERWRITE
+
+li REG_PLAYER_IDX, 0
+
+CHAR_COLOR_OVERWRITE_LOOP_START:
+# Load the team ID + 1 for team index and character ID to pass to function to get costume ID
+mulli r5, REG_PLAYER_IDX, 0x24
+addi r3, r5, 0x69
+lbzx r3, REG_GAME_INFO_START, r3 # Loads team ID
+addi r3, r3, 1
+addi r4, r5, 0x60
+lbzx r4, REG_GAME_INFO_START, r4 # Loads character ID
+branchl r12, FN_GetTeamCostumeIndex # Loads costume ID into r3
+
+# Write costume ID 
+mulli r4, REG_PLAYER_IDX, 0x24
+addi r4, r4, 0x63
+stbx r3, REG_GAME_INFO_START, r4
+
+# Increment port
+addi REG_PLAYER_IDX, REG_PLAYER_IDX, 1
+cmpwi REG_PLAYER_IDX, 4
+blt CHAR_COLOR_OVERWRITE_LOOP_START
+
+SKIP_CHAR_COLOR_OVERWRITE:
 
 ################################################################################
 # Set up number of delay frames
@@ -137,17 +213,6 @@ li r3, MAX_DELAY_FRAMES
 
 SET_DELAY_FRAMES:
 stb r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
-
-################################################################################
-# Initialize everyone to UCF
-################################################################################
-# Back up the controller settings
-lwz r3, -ControllerFixOptions(rtoc)
-stw r3, ODB_CF_OPTION_BACKUP(REG_ODB_ADDRESS)
-
-# Init everyone to UCF
-load r3, 0x01010101
-stw r3, -ControllerFixOptions(rtoc)
 
 ################################################################################
 # Clear A inputs to prevent transformation
@@ -214,20 +279,157 @@ blr
 ################################################################################
 # Routine: HandleGameCompleted
 # ------------------------------------------------------------------------------
-# Description: Function called when game if confirmed over (no more rollbacks)
+# Description: Function called when game is confirmed over (no more rollbacks)
 ################################################################################
 FN_HandleGameCompleted:
 blrl
 
-.set REG_ODB_ADDRESS, 4
+.set REG_IDX, 31
+.set REG_RGB_ADDR, 30
+.set REG_RGPB_ADDR, 29
+.set REG_ODB_ADDRESS, 28
+.set REG_GPD_ADDR, 27
+.set REG_GAME_END_STRUCT_ADDR, 26
+
+backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
-# Restore controller fix states
-lwz r3, ODB_CF_OPTION_BACKUP(REG_ODB_ADDRESS)
-stw r3, -ControllerFixOptions(rtoc)
+loadwz r5, 0x803dad40 # Load minor scene data array ptr
+lwz REG_GPD_ADDR, 0x88(r5) # Load game prep minor scene data
 
-# TODO: Write to EXI that game has ended to confirm there was no desync?
+load REG_GAME_END_STRUCT_ADDR, 0x80479da4
+
+################################################################################
+# Initialize the MatchEndData early. Normally his happens on scene transition
+# around 0x8016ea1c but we need it earlier (now) to determine the result of
+# the match
+################################################################################
+mr r3, REG_GAME_END_STRUCT_ADDR # dest
+load r4, 0x8046b8ec # source
+li r5, 8824 # size
+branchl r12, memcpy
+
+load r4, 0x8046b6a0
+mr r3, REG_GAME_END_STRUCT_ADDR
+lbz r0, 0x24D0(r4)
+stb r0, 0x6(r3)
+lbz r0, 0x0008(r4)
+stb r0, 0x4(r3)
+branchl r12, 0x80166378 # CreateMatchEndData (struct @ 80479da4)
+
+################################################################################
+# Report game results
+################################################################################
+# Prepare buffer for EXI transfer
+li r3, RGB_SIZE
+branchl r12, HSD_MemAlloc
+mr REG_RGB_ADDR, r3
+
+# We can just use the receive buffer to send request command
+li r3, CONST_SlippiCmdReportMatch
+stb r3, RGB_COMMAND(REG_RGB_ADDR)
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+stb r3, RGB_ONLINE_MODE(REG_RGB_ADDR)
+
+branchl r12, 0x801a4ba8 # MenuController_LoadTimer1
+stw r3, RGB_FRAME_LENGTH(REG_RGB_ADDR) # Store frame length
+
+lhz r3, GPDO_CUR_GAME(REG_GPD_ADDR)
+stw r3, RGB_GAME_INDEX(REG_RGB_ADDR)
+
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD_ADDR)
+stw r3, RGB_TIEBREAKER_INDEX(REG_RGB_ADDR)
+
+lwz r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GPD_ADDR)
+mtctr r3
+bctrl
+stb r3, RGB_WINNER_IDX(REG_RGB_ADDR)
+
+# Change winner idx to -3 if disconnect detected, -2 if desync detected
+lbz r3, ODB_IS_DISCONNECT_STATE_DISPLAYED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+li r4, -3
+bne OVERWRITE_WINNER_IDX
+lbz r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
+cmpwi r3, 0
+li r4, -2
+bne OVERWRITE_WINNER_IDX
+b SKIP_OVERWRITE_WINNER_IDX
+OVERWRITE_WINNER_IDX:
+stb r4, RGB_WINNER_IDX(REG_RGB_ADDR)
+SKIP_OVERWRITE_WINNER_IDX:
+
+# Output the game end method and lras initiator
+load r4, 0x8046b6a0
+lbz r3, 0x8(r4)
+stb r3, RGB_GAME_END_METHOD(REG_RGB_ADDR)
+cmpwi r3, 0x7
+bne NO_LRAS
+lbz r3, 0x1(r4)
+b STORE_LRAS_INITIATOR
+NO_LRAS:
+li r3, -1
+STORE_LRAS_INITIATOR:
+stb r3, RGB_LRAS_INITIATOR(REG_RGB_ADDR)
+
+# Write synced timer for desync recovery
+lwz r4, ODB_DESYNC_RECOVERY_TIMER(REG_ODB_ADDRESS)
+stw r4, RGB_SYNCED_TIMER(REG_RGB_ADDR)
+
+PLAYER_LOOP_INIT:
+li REG_IDX, 0
+addi REG_RGPB_ADDR, REG_RGB_ADDR, RGB_P1_RGPB
+
+PLAYER_LOOP:
+mr r3, REG_IDX
+branchl r12, PlayerBlock_LoadStaticBlock
+
+# Store isActive
+lwz r4, 0x8(r3)
+stb r4, RGPB_SLOT_TYPE(REG_RGPB_ADDR)
+
+# Store stocks remaining
+lbz r4, 0x8E(r3)
+stb r4, RGPB_STOCKS_REMAINING(REG_RGPB_ADDR)
+
+# Store damage done
+lwz r4, 0xC6C+188(r3)
+stw r4, RGPB_DAMAGE_DONE(REG_RGPB_ADDR)
+
+# Write synced stocks and percents for desync recovery
+mulli r5, REG_IDX, DFRE_SIZE
+addi r4, r5, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_STOCKS_REMAINING
+lbzx r4, REG_ODB_ADDRESS, r4
+stb r4, RGPB_SYNCED_STOCKS(REG_RGPB_ADDR)
+addi r4, r5, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_PERCENT
+lhzx r4, REG_ODB_ADDRESS, r4
+sth r4, RGPB_SYNCED_DAMAGE(REG_RGPB_ADDR)
+
+PLAYER_LOOP_INC:
+addi REG_IDX, REG_IDX, 1
+addi REG_RGPB_ADDR, REG_RGPB_ADDR, RGPB_SIZE
+
+PLAYER_LOOP_CHECK:
+cmpwi REG_IDX, 4
+blt PLAYER_LOOP
+
+# Copy over game info
+addi r3, REG_RGB_ADDR, RGB_GAME_INFO_BLOCK # Destination
+load r4, 0x80480530 # Game info block source
+li r5, MATCH_STRUCT_LEN
+branchl r12, memcpy
+
+# Execute match reporting
+mr r3, REG_RGB_ADDR
+li r4, RGB_SIZE
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+REPORT_GAME_EXIT:
+
+restore
 
 blr
 

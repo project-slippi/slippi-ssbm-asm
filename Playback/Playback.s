@@ -6,11 +6,6 @@
 
 # None
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
 ################################################################################
 # Const Definitions
 ################################################################################
@@ -63,8 +58,8 @@ lwz \reg, -0x62A0(\reg)
 .set PDB_SFXDB_START, PDB_RESTORE_C2_BRANCH + 4 # SFXDB_SIZE
 .set PDB_LATEST_FRAME, PDB_SFXDB_START + SFXDB_SIZE # u32, must follow SFXDB as it is preserved
 .set PDB_SHOULD_RESYNC, PDB_LATEST_FRAME + 4 # bool
-
-.set PDB_SIZE, PDB_SHOULD_RESYNC + 1
+.set PDB_DISPLAY_NAMES, PDB_SHOULD_RESYNC + 1 # string (31)[4]
+.set PDB_SIZE, PDB_DISPLAY_NAMES + 124
 
 ################################################################################
 # Buffer Offsets
@@ -91,7 +86,7 @@ lwz \reg, -0x62A0(\reg)
 # gameframe
 .set GameFrame_Start, InitialRNG_Start + InitialRNG_Length
 # per player offsets
-  .set PlayerDataLength,0x31
+  .set PlayerDataLength,0x32
   .set RNGSeed,0x00
   .set AnalogX,0x04
   .set AnalogY,0x08
@@ -103,8 +98,9 @@ lwz \reg, -0x62A0(\reg)
   .set YPos,0x20
   .set FacingDirection,0x24
   .set ActionStateID,0x28
-  .set AnalogRawInput,0x2C
-  .set Percentage,0x2D
+  .set AnalogRawInputX,0x2C
+  .set AnalogRawInputY,0x2D
+  .set Percentage,0x2E
 
 .set GameFrame_Length, PlayerDataLength * 8
 
@@ -127,16 +123,16 @@ lwz \reg, -0x62A0(\reg)
     .set PALBool_Length,0x1
   .set PSPreloadBool,0x19E
     .set PSPreloadBool_Length,0x1
-  .set PSPreloadBool,0x19E
-    .set PSPreloadBool_Length,0x1
   .set FrozenPSBool,0x19F
     .set FrozenPSBool_Length,0x1
   .set ShouldResyncBool,0x1A0
     .set ShouldResyncBool_Length,0x1
-  .set GeckoListSize,0x1A1
+  .set DisplayNameData,0x1A1
+    .set DisplayNameData_Length,0x7C
+  .set GeckoListSize,0x21D
     .set GeckoListSize_Length,0x4
 
-  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + GeckoListSize_Length
+  .set GameInfoLength, SuccessBool_Length + InfoRNGSeed_Length + MatchStruct_Length + UCFToggles_Length + NametagData_Length + PALBool_Length + PSPreloadBool_Length + FrozenPSBool_Length + ShouldResyncBool_Length + DisplayNameData_Length + GeckoListSize_Length
 
   .if GameInfoLength > Buffer_Length
     .set EXIBufferLength, GameInfoLength

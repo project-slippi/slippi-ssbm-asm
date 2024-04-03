@@ -1,0 +1,30 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_stages_stadium.bin"
+    },
+    {
+      "file": "Output/Console/g_stages_stadium.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Frozen Stadium",
+      "authors": [
+        "UnclePunch",
+        "Fizzi"
+      ],
+      "description": [
+        "Disables Pokemon Stadium transformations"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/Frozen PS",
+          "isRecursive": true,
+          "annotation": "Disables Pokemon Stadium transformations"
+        }
+      ]
+    }
+  ]
+}
