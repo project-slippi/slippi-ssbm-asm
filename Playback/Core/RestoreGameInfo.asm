@@ -219,6 +219,11 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   mr REG_GeckoBuffer, r3
   stw REG_GeckoBuffer, PDB_DYNAMIC_GECKO_ADDR(REG_DirectoryBuffer)
 
+  # Overwrite the gecko heap location for simultaneous recording + playback
+  load r4, GeckoHeapPtr
+  subi r3, REG_GeckoBuffer, 0x8 # Recording expects d0c0de d0c0de but we dont have that here
+  stw r3, 0(r4)
+
 # Step 2: Ask dolphin for the code list
   li r3, CMD_GET_GECKO_CODES
   stb r3, 0(REG_GeckoBuffer)
