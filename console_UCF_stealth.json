@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_ucf_stealth.bin"
+    },
+    {
+      "file": "Output/Console/g_ucf_stealth.txt"
     }
   ],
   "codes": [
@@ -16,15 +19,9 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "External/UCF + Arduino Toggle UI/UCF",
+          "sourceFolder": "External/UCF 0.8/Logic",
           "isRecursive": true,
-          "annotation": "UCF v0.74"
-        },
-        {
-          "type": "injectFolder",
-          "sourceFolder": "External/Enable UCF Toggles",
-          "isRecursive": true,
-          "annotation": "Enable UCF Toggles [Fizzi]"
+          "annotation": "UCF v0.8"
         }
       ]
     }

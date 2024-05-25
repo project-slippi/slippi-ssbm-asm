@@ -1,0 +1,27 @@
+$Optional: Widescreen 16:9 [Dan Salvato, mirrorbender, Achilles1515, UnclePunch]
+*16:9 codes
+*Will not cause desyncs when playing online
+043BB05C 3EB00000 #External/Widescreen/Fix Screen Flash.asm
+C236A4A8 00000007 #External/Widescreen/Overwrite CObj Values.asm
+38600001 986DAFE0
+C03F0034 4800001D
+7C6802A6 C0430000
+C0630004 EC2100B2
+EC211824 48000010
+4E800021 43A00000
+435B0000 00000000
+044DDB58 3E4CCCCD #External/Widescreen/Adjust Offscreen Scissor/Adjust Bubble Zoom.asm
+04086B24 60000000 #External/Widescreen/Adjust Offscreen Scissor/Draw High Poly Models.asm
+04030C7C 38000064 #External/Widescreen/Adjust Offscreen Scissor/Left Camera Bound.asm
+04030C88 3800021C #External/Widescreen/Adjust Offscreen Scissor/Right Camera Bound.asm
+044DDB30 3F666666 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Adjust Corner Value 1.asm
+044DDB34 BF666666 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Adjust Corner Value 2.asm
+044DDB2C C3660000 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Extend Negative Vertical Bound.asm
+044DDB28 43660000 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Extend Positive Vertical Bound.asm
+044DDB4C 3D916873 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Widen Bubble Region.asm
+C22FCFC4 00000004 #External/Widescreen/Nametag Fixes/Adjust Nametag Background X Scale.asm
+48000011 7C6802A6
+C0030000 4800000C
+4E800021 40DC7AE1
+60000000 00000000
+044DDB84 3E89FEFA #External/Widescreen/Nametag Fixes/Adjust Nametag Text X Scale.asm

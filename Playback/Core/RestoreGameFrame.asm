@@ -12,6 +12,7 @@
 .set PlayerDataStatic,28
 .set BufferPointer,27
 .set PlayerBackup,26
+.set REG_PDB_ADDR,25
 
 ################################################################################
 #                   subroutine: readInputs
@@ -31,13 +32,21 @@
   mr PlayerDataStatic,r3
 
 # get buffer pointer
-  lwz r3,primaryDataBuffer(r13)
-  lwz BufferPointer,PDB_EXI_BUF_ADDR(r3)
+  lwz REG_PDB_ADDR,playbackDataBuffer(r13)
+  lwz BufferPointer,PDB_EXI_BUF_ADDR(REG_PDB_ADDR)
 
 #Check if this player is a follower
   mr  r3,PlayerData
   branchl r12,FN_GetIsFollower
   mr  r20,r3
+
+# If we are not resyncing, let the follower's inputs be calculated by the game
+  cmpwi r20, 0
+  beq SKIP_FOLLOWER_RESYNC_CHECK
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq Injection_Exit
+  SKIP_FOLLOWER_RESYNC_CHECK:
 
 # Get players offset in buffer ()
   addi r4,BufferPointer, GameFrame_Start  #get to player frame data start
@@ -97,9 +106,6 @@ DesyncDetected:
 
 RestoreData:
 # Restore data
-  lis r4,0x804D
-  lwz r3,RNGSeed(PlayerBackup)
-  stw r3,0x5F90(r4) #RNG seed
   lwz r3,AnalogX(PlayerBackup)
   stw r3,0x620(PlayerData) #analog X
   lwz r3,AnalogY(PlayerBackup)
@@ -112,7 +118,16 @@ RestoreData:
   stw r3,0x650(PlayerData) #trigger
   lwz r3,Buttons(PlayerBackup)
   stw r3,0x65C(PlayerData) #buttons
-.if STG_ResyncPlayback==1
+
+# The following logic will overwrite values that will allow for resyncs. It will
+# only run if the resync logic has been enabled
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq SKIP_RESYNC
+
+  lis r4,0x804D
+  lwz r3,RNGSeed(PlayerBackup)
+  stw r3,0x5F90(r4) #RNG seed
   lwz r3,XPos(PlayerBackup)
   stw r3,0xB0(PlayerData) #x position
   lwz r3,YPos(PlayerBackup)
@@ -123,7 +138,7 @@ RestoreData:
   lwz r3,ActionStateID(PlayerBackup)
   stw r3,0x10(PlayerData) #animation state ID
 .endif
-.endif
+SKIP_RESYNC:
 
 # UCF uses raw controller inputs for dashback, restore x analog byte here
   load r3, 0x8046b108 # start location of circular buffer
@@ -143,9 +158,15 @@ RestoreData:
   mulli r4, r4, 0xc
   add r20, r3, r4 # move to the correct player position
 # Get backed up input value
-  lbz r3,AnalogRawInput(PlayerBackup)
+  lbz r3,AnalogRawInputX(PlayerBackup)
   stb r3, 0x2(r20) #store raw x analog
+  lbz r3, AnalogRawInputY(PlayerBackup)
+  stb r3, 0x3(r20) #store raw y analog
 
+# If we do not have resync logic enabled, don't try to restore percentage
+  lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)
+  cmpwi r3, 0
+  beq SkipPercentageRestore
 # Get percentage
   lwz r3,Percentage(PlayerBackup)
   cmpwi r3,-1      #If this value is -1, the slp does not contain the data
@@ -163,9 +184,7 @@ RestoreData:
   lfs f1,0x40(sp)
   lfs f2,0x1830(PlayerData)
   fsubs f1,f1,f2
-.if STG_ResyncPlayback==1
   branchl r12, Damage_UpdatePercent
-.endif
 SkipPercentageRestore:
 
 # Correct spawn points on the first frame
@@ -362,50 +381,42 @@ blrl
 
   FrameText:
   blrl
-  .string "P%d Frame: %d // Original // Restored
-"
+  .string "P%d Frame: %d // Original // Restored\n"
   .align 2
 
   RNGText:
   blrl
-  .string "RNG Seed: 0x%X // 0x%X
-"
+  .string "RNG Seed: 0x%X // 0x%X\n"
   .align 2
 
   XPosText:
   blrl
-  .string "X Position: %f // %f
-"
+  .string "X Position: %f // %f\n"
   .align 2
 
   YPosText:
   blrl
-  .string "Y Position: %f // %f
-"
+  .string "Y Position: %f // %f\n"
   .align 2
 
   FacingText:
   blrl
-  .string "Facing Direction: %1.0f // %1.0f
-"
+  .string "Facing Direction: %1.0f // %1.0f\n"
   .align 2
 
   ASText:
   blrl
-  .string "Action State: 0x%X %s // 0x%X %s
-"
+  .string "Action State: 0x%X %s // 0x%X %s\n"
   .align 2
 
   PercentText:
   blrl
-  .string "Percent: %1.2f //  %1.2f
-"
+  .string "Percent: %1.2f //  %1.2f\n"
   .align 2
 
   DividerText:
   blrl
-  .string "------Desync Detected--------
-"
+  .string "------Desync Detected--------\n"
   .align 2
 
 .endif

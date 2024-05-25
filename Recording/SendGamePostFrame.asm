@@ -146,6 +146,20 @@ backup
   lwz r3,0xec(REG_PlayerData)
   stw r3,0x45(REG_Buffer)
 
+  # send hitlag frames left (stored internally as a float)
+  lwz r3,0x195c(REG_PlayerData)
+  stw r3,0x49(REG_Buffer)
+
+  # send current animation. useful for knowing the current Wait animation
+  lwz r3,0x14(REG_PlayerData)
+  stw r3,0x4d(REG_Buffer)
+
+  # send instance information
+  lhz r3,0x18ec(REG_PlayerData)
+  sth r3,0x51(REG_Buffer)
+  lhz r3,0x2088(REG_PlayerData)
+  sth r3,0x53(REG_Buffer)
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)

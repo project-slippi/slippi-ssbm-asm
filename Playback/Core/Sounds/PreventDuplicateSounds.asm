@@ -15,9 +15,14 @@
 .set REG_SOUND_ID, 27
 .set REG_SOUND_INSTANCE_ID, 26
 
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, SCENE_PLAYBACK_IN_GAME
+bne EXIT
+
 backup
 
-lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
+lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 li REG_IS_SOUND_ACTIVE, 0
 li REG_SOUND_INSTANCE_ID, 0

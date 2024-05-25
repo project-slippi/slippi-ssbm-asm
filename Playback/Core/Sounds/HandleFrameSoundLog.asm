@@ -23,12 +23,17 @@ branch r12, 0x801a5024 # go to where branch would have taken us
 .set REG_LATEST_FRAME, 23
 
 START:
+# Make sure we are in game
+getMinorMajor r3
+cmpwi r3, SCENE_PLAYBACK_IN_GAME
+bne EXIT
+
 backup
 
 branchl r12, OSDisableInterrupts # Not backing up r3 output, don't use r3 in body
 mr REG_INTERRUPT_IDX, r3
 
-lwz REG_PDB_ADDRESS, primaryDataBuffer(r13) # data buffer address
+lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 
 lbz REG_SOUND_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
@@ -87,7 +92,7 @@ PENDING_LOOP_CONTINUE:
 addi r7, r7, 1
 PENDING_LOOP_CONDITION:
 lbz r3, SFXS_LOG_INDEX(r6)
-cmpwi r7, r3
+cmpw r7, r3
 blt PENDING_LOOP_START
 
 # If we exit loop normally, let's stop sound
@@ -147,3 +152,5 @@ mr r3, REG_INTERRUPT_IDX
 branchl r12, OSRestoreInterrupts
 
 restore
+
+EXIT:

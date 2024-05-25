@@ -1,10 +1,13 @@
-#To be inserted at 801a45bc
+#To be inserted at 801a45b8
 .include "../../Common/Common.s"
 .include "Online/Online.s"
 #.include "../Globals.s"
 .include "Header.s"
 
 .set  ExitSceneID,40
+
+# Original codeline
+  addi	r29, r3, 4
 
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
@@ -39,6 +42,8 @@
   li r3, 0
   stb r3, OFST_R13_NAME_ENTRY_MODE(r13)
   stb r3, OFST_R13_ISPAUSE(r13)
+  stb r3, OFST_R13_USE_PREMADE_TEXT(r13)
+  stb r3, isWidescreen(r13)
 
 ################################################################################
 # Set up Slippi major scene
@@ -101,7 +106,8 @@ Major Scene Table:
 
 
 #Get major scene struct
-  branchl r12,0x801a50ac
+  #branchl r12,0x801a50ac
+  load r3,0x803daca4
 GetMajorStruct_Loop:
   lbz	r4, 0x0001 (r3)
   cmpw r4,REG_MajorScene
@@ -125,6 +131,10 @@ InitMinorSceneStruct_Loop:
   bl  PointerConvert
   addi  r3,REG_MinorStructParse,0x8
   bl  PointerConvert
+  addi  r3,REG_MinorStructParse,0x10
+  bl  PointerConvert
+  addi  r3,REG_MinorStructParse,0x14
+  bl  PointerConvert  
   addi  REG_MinorStructParse,REG_MinorStructParse,0x18
   b InitMinorSceneStruct_Loop
 InitMinorSceneStruct_Exit:
@@ -143,12 +153,46 @@ load r4, 0x8045abf0
 lbz r3, -0x5108(r13) # player index
 stb r3, 0x6(r4)
 
+# Set the callback to determine winner at the end of the match
+bl GamePrepData_BLRL
+mflr r4
+bl SinglesDetermineWinner_BLRL
+mflr r3
+stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(r4)
+
 ################################################################################
 # Set up Zelda to select Sheik as default
 ################################################################################
-li r3, 0x13
-load r4, 0x803f0cc8
-stb r3, 0x1(r4)
+.set REG_IconData, 20
+.set REG_IconNum, 21
+.set REG_Count, 22
+
+# get CSS icon data
+  branchl r12,FN_GetCSSIconData
+  mr REG_IconData,r3
+# get icon num
+  branchl r12,FN_GetCSSIconNum
+  mr REG_IconNum,r3
+# init search
+  li REG_Count, 0
+  b ZeldaSearch_Check
+ZeldaSearch_Loop:
+# check for zelda
+  lbz	r3, 0x00DD (REG_IconData) # char id
+  cmpwi r3,0x12
+  bne ZeldaSearch_Inc
+# store sheik's ID
+  li r3,0x13
+  stb	r3, 0x00DD (REG_IconData) # char id
+  b ZeldaSearch_End
+ZeldaSearch_Inc:
+  addi REG_Count,REG_Count,1
+  addi REG_IconData,REG_IconData,28
+ZeldaSearch_Check:
+  cmpw REG_Count,REG_IconNum
+  blt ZeldaSearch_Loop
+ZeldaSearch_End:
+
 
 restore
 blr
@@ -220,6 +264,16 @@ bl SplashSceneDecide
 .align 2
 .long 0x80490880            #Minor Data 1
 .long 0x804d68d0            #Minor Data 2
+#GameSetup
+.byte 5                     #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+bl GamePrepScenePrep      #ScenePrep
+bl GamePrepSceneDecide    #SceneDecide
+.byte 80                  #Common Minor ID (Game Preparation)
+.align 2
+bl GamePrepData           #Minor Data 1
+bl GamePrepData           #Minor Data 2
 #End
 .byte -1
 .align 2
@@ -285,6 +339,11 @@ blrl
 */
 #endregion
 
+GamePrepData_BLRL:
+blrl
+GamePrepData:
+createGamePrepStaticBlock
+
 #region CSSScenePrep
 CSSScenePrep:
 backup
@@ -312,8 +371,9 @@ blr
 CSSSceneDecide:
 .set REG_MSRB_ADDR, 31
 .set REG_MINORSCENE, 30
-.set REG_EVENTCSS_DATA,29
+.set REG_EVENTCSS_DATA, 29
 .set REG_VS_SSS_DATA, 28
+.set REG_GAME_PREP_DATA, 27
 
 backup
 mr  REG_MINORSCENE,r3
@@ -337,12 +397,14 @@ b CSSSceneDecide_Exit
 CSSSceneDecide_Advance:
 # Check for direct mode
 lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq CSSSceneDecide_Adv_IsRanked
 cmpwi r3, ONLINE_MODE_UNRANKED
 beq CSSSceneDecide_Adv_IsUnranked
 cmpwi r3, ONLINE_MODE_DIRECT
 beq CSSSceneDecide_Adv_IsDirect
-cmpwi r3, ONLINE_MODE_RANKED
-beq CSSSceneDecide_Adv_IsRanked
+cmpwi r3, ONLINE_MODE_TEAMS
+beq CSSSceneDecide_Adv_IsDirect
 
 ################################################################################
 # Unranked Mode Logic
@@ -354,7 +416,33 @@ b CSSSceneDecide_LoadSplash
 # Ranked Mode Logic
 ################################################################################
 CSSSceneDecide_Adv_IsRanked:
-b CSSSceneDecide_LoadSplash
+# Initialize ranked mode data
+bl GamePrepData_BLRL
+mflr REG_GAME_PREP_DATA
+
+mr r3, REG_GAME_PREP_DATA
+li r4, GPDO_SIZE
+branchl r12, Zero_AreaLength
+
+# Set the callback to determine winner at the end of the match,
+# we just zero'd it so we have to set it again
+bl SinglesDetermineWinner_BLRL
+mflr r3
+stw r3, GPDO_FN_COMPUTE_RANKED_WINNER(REG_GAME_PREP_DATA)
+
+li r3, 3
+stb r3, GPDO_MAX_GAMES(REG_GAME_PREP_DATA)
+li r3, 1
+sth r3, GPDO_CUR_GAME(REG_GAME_PREP_DATA)
+li r3, 0
+stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GAME_PREP_DATA)
+stb r3, GPDO_COLOR_BAN_ACTIVE(REG_GAME_PREP_DATA)
+
+# Set next scene as game prep
+load r4, 0x80479d30
+li r3, 0x06
+stb r3, 0x5(r4)
+b CSSSceneDecide_Exit
 
 ################################################################################
 # Direct Mode Logic
@@ -471,9 +559,33 @@ restore
 blr
 #endregion
 
+FN_ReportSetCompletion:
+backup
+mr r31, r3
+
+li r3, 2
+branchl r12, HSD_MemAlloc
+
+# Write tx data
+li r4, CONST_SlippiCmdReportSetCompletion
+stb r4, 0(r3)
+stb r31, 1(r3)
+
+# Transfer completion
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+restore
+blr
+
 #region VSSceneDecide
 VSSceneDecide:
-.set REG_MSRB_ADDR,31
+.set REG_MSRB_ADDR, 31
+.set REG_TXB_ADDR, 30
+.set REG_SHOULD_PICK_STAGE, 29
+.set REG_WINNER_IDX, 28
+.set REG_GPD, 27
 
 backup
 
@@ -485,28 +597,243 @@ li r3, 0
 branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
-VSSceneDecide_UpdateWinner:
-#Update ISWINNER static bool
-lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-bl  CheckIfWonLastGame
-cmpwi r3,0
-beq VSSceneDecide_Lost
-VSSceneDecide_Won:
-li  r3,1
-b VSSceneDecide_UpdateWinnerEnd
-VSSceneDecide_Lost:
-li  r3,0
-VSSceneDecide_UpdateWinnerEnd:
-stb r3,OFST_R13_ISWINNER(r13)
+###########################################################################
+# VSSceneDecide: Handle Ranked Mode
+###########################################################################
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+bne VSSceneDecide_SkipRankedHandler
 
-# Reset CHOSESTAGE bool
-li  r3,0
-stb r3, OFST_R13_CHOSESTAGE (r13)
+# If connection is not active, just go back to CSS
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_IDLE
+bne VSSceneDecide_ConnectionActive
+# Report disconnect
+li r3, 1
+bl FN_ReportSetCompletion
+b VSSceneDecide_SkipRankedHandler
+VSSceneDecide_ConnectionActive:
 
+bl GamePrepData_BLRL
+mflr REG_GPD
+
+# Store the result of the last game
+load r4, 0x8046b6a0
+lbz r3, 0x8(r4)
+stb r3, GPDO_LAST_GAME_END_MODE(REG_GPD)
+
+# Get the winner of last game
+bl SinglesDetermineWinner
+mr REG_WINNER_IDX, r3
+cmpwi REG_WINNER_IDX, 0
+bge VSSceneDecide_SkipTieHandler # If winner is not -1, it is not a tie
+
+# Here we have a tie, we want to start a new one-stock, 3 min game
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
+addi r3, r3, 1
+stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
+
+# Go to the game prep scene, when tiebreak num is greater than zero it will redirect to game
+b VSSceneDecide_MoveToGamePrep
+VSSceneDecide_SkipTieHandler:
+
+# Here we have a conclusive game. Increment game prep game count and scores
+stb REG_WINNER_IDX, GPDO_PREV_WINNER(REG_GPD) # Store winner index
+
+# Set winner ID at game index
+lhz r4, GPDO_CUR_GAME(REG_GPD)
+addi r4, r4, GPDO_GAME_RESULTS - 1 # Move offset to index in array (cur_game is 1-indexed)
+stbx REG_WINNER_IDX, REG_GPD, r4
+
+# Increment game score
+addi r3, REG_WINNER_IDX, GPDO_SCORE_BY_PLAYER # Get offset for winner
+lbzx r4, REG_GPD, r3
+addi r5, r4, 1
+stbx r5, REG_GPD, r3 # Store the game score for the winner
+
+# Store stage win
+mulli r4, REG_WINNER_IDX, 2
+addi r4, r4, GPDO_LAST_STAGE_WIN_BY_PLAYER
+lhz r3, MSRB_GAME_INFO_BLOCK + 0xE(REG_MSRB_ADDR) # Load last stage played
+sthx r3, REG_GPD, r4
+
+lbz r4, GPDO_MAX_GAMES(REG_GPD)
+addi r4, r4, 1
+li r3, 2
+divwu r4, r4, r3 # Calculate number of wins needed
+cmpw r5, r4
+bge VSSceneDecide_RankedSetOver
+
+lhz r3, GPDO_CUR_GAME(REG_GPD)
+addi r3, r3, 1
+sth r3, GPDO_CUR_GAME(REG_GPD)
+
+li r3, 0
+stb r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
+
+VSSceneDecide_MoveToGamePrep:
+# Go back to game prep, there are more games
+load r4, 0x80479d30
+li r3, 0x06
+stb r3, 0x5(r4)
+b VSSceneDecide_ModeHandlerEnd
+
+VSSceneDecide_RankedSetOver:
+# Report normal set completion
+li r3, 0
+bl FN_ReportSetCompletion
+
+# Disconnect from opponent
+# Prepare buffer for EXI transfer
+li r3, 1
+branchl r12, HSD_MemAlloc
+mr REG_TXB_ADDR, r3
+
+# Write tx data
+li r3, CONST_SlippiCmdCleanupConnections
+stb r3, 0(REG_TXB_ADDR)
+
+# Reset connections
+mr r3, REG_TXB_ADDR
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+mr r3, REG_TXB_ADDR
+branchl r12, HSD_Free
+
+# Allow to return to CSS since ranked set is over
+
+VSSceneDecide_SkipRankedHandler:
 # Go back to CSS
 load r4, 0x80479d30
 li r3, 0x01
 stb r3, 0x5(r4)
+
+VSSceneDecide_ModeHandlerEnd:
+
+###########################################################################
+# VSSceneDecide: Handle Non-Ranked Modes
+###########################################################################
+VSSceneDecide_UpdateWinner:
+#Update ISWINNER static bool
+lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+bl  CheckIfWonLastGame
+stb r3,OFST_R13_ISWINNER(r13)
+
+# Handle case where there's a draw and both players are "winners"
+SELECTOR_OVERWRITE:
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SELECTOR_OVERWRITE_NON_TEAMS
+
+# If teams, just overwrite it so that P1 always picks
+lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+li r4, 1
+cmpwi r3, 0
+bne SELECTOR_OVERWRITE_TEAMS_EXEC
+li r4, 0
+SELECTOR_OVERWRITE_TEAMS_EXEC:
+stb r4,OFST_R13_ISWINNER(r13) # 1 for all non-0 players
+b SELECTOR_OVERWRITE_END
+
+SELECTOR_OVERWRITE_NON_TEAMS:
+.set  REG_Count,20
+.set  REG_Winners,21
+# Count number of winners
+li  REG_Count,0
+li  REG_Winners,0
+VSSceneDecide_UpdateWinner_Loop:
+mr  r3,REG_Count
+bl  CheckIfWonLastGame
+cmpwi r3,0
+beq VSSceneDecide_UpdateWinner_IncLoop
+addi  REG_Winners,REG_Winners,1
+VSSceneDecide_UpdateWinner_IncLoop:
+addi  REG_Count,REG_Count,1
+cmpwi REG_Count,4
+blt VSSceneDecide_UpdateWinner_Loop
+# ensure game only had 1 winner
+cmpwi REG_Winners,1
+beq SELECTOR_OVERWRITE_END # If only one winner, don't overwrite
+
+# Overwrite to loser to force stage pick from both
+li r3,0
+stb r3,OFST_R13_ISWINNER(r13)
+SELECTOR_OVERWRITE_END:
+
+.set REG_MATCH_END_STRUCT, 20
+
+# Trick gold winner text into working by modifying the values used in calculation
+load REG_MATCH_END_STRUCT, 0x80479da4
+# Check if this player won and decide how to trick gold text
+lbz r3,MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+bl  CheckIfWonLastGame
+cmpwi r3, 0
+beq HACK_GOLD_TEXT_LOSER
+
+HACK_GOLD_TEXT_WINNER:
+li r3, 1
+stb r3, 0x0(REG_MATCH_END_STRUCT) # Trick logic into thinking P2 LRAS'd
+li r3, 0
+stb r3, 0x5D(REG_MATCH_END_STRUCT) # Trick logic into thinking player won
+b HACK_GOLD_TEXT_LOSER_END
+
+HACK_GOLD_TEXT_LOSER:
+li r3, 0
+stb r3, 0x0(REG_MATCH_END_STRUCT) # Trick logic into thinking this player LRAS'd
+li r3, 1
+stb r3, 0x5D(REG_MATCH_END_STRUCT) # Trick logic into thinking player lost
+HACK_GOLD_TEXT_LOSER_END:
+
+# For teams, trick the text into never turning gold (Doesn't work for both LRAS and wins easily)
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+beq HACK_GOLD_TEXT_FORCE_OFF
+cmpwi r3, ONLINE_MODE_RANKED
+bne HACK_GOLD_TEXT_END # Also prevent gold text in ranked
+HACK_GOLD_TEXT_FORCE_OFF:
+li r3, 0
+stb r3, 0x4(REG_MATCH_END_STRUCT)
+HACK_GOLD_TEXT_END:
+
+# Reset CHOSESTAGE bool
+li  r3, 0
+stb r3, OFST_R13_CHOSESTAGE (r13)
+
+# Prepare to reset RNG seed. This fixes the issue where both clients would
+# random the same character following a game
+
+VSSceneDecide_ResetRNG:
+# Prepare buffer for EXI transfer
+li r3, 4
+branchl r12, HSD_MemAlloc
+mr REG_TXB_ADDR, r3
+
+# Write tx data
+li r3, CONST_SlippiCmdGetNewSeed
+stb r3, 0(REG_TXB_ADDR)
+
+# Initiate get new seed command
+mr r3, REG_TXB_ADDR
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+# Read back information
+mr r3, REG_TXB_ADDR
+li r4, 0x4
+li r5, CONST_ExiRead
+branchl r12, FN_EXITransferBuffer
+
+# Copy RNG seed over
+lis r4, 0x804D
+lwz r3, 0(REG_TXB_ADDR)
+stw r3, 0x5F90(r4) #RNG seed
+
+# Free the TX buffer
+mr r3, REG_TXB_ADDR
+branchl r12, HSD_Free
 
 # Free the buffer we allocated to get match state
 mr r3, REG_MSRB_ADDR
@@ -525,12 +852,48 @@ blrl
 .long 0xFF2121EE
 .long 0x0000EE00
 SplashScenePrep:
-.set REG_VS_SSS_DATA,31
+.set REG_VS_SSS_DATA, 31
+.set REG_MSRB_ADDR, 30
+.set REG_PLAYER_IDX, 29
 
 backup
 
+# Load match state
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
 lwz	REG_VS_SSS_DATA, -0x77C0 (r13)
 addi	REG_VS_SSS_DATA, REG_VS_SSS_DATA, 1424 + 0x8   # adding 0x8 to skip past some unk stuff
+
+# Overwrite SSS Data colors for teams
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_CHAR_COLOR_OVERWRITE
+
+li REG_PLAYER_IDX, 0
+
+CHAR_COLOR_OVERWRITE_LOOP_START:
+# Load the team ID + 1 for team index and character ID to pass to function to get costume ID
+mulli r5, REG_PLAYER_IDX, 0x24
+addi r3, r5, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3 # Loads team ID
+addi r3, r3, 1
+addi r4, r5, 0x60
+lbzx r4, REG_VS_SSS_DATA, r4 # Loads character ID
+branchl r12, FN_GetTeamCostumeIndex # Loads costume ID into r3
+
+# Write costume ID 
+mulli r4, REG_PLAYER_IDX, 0x24
+addi r4, r4, 0x63
+stbx r3, REG_VS_SSS_DATA, r4
+
+# Increment port
+addi REG_PLAYER_IDX, REG_PLAYER_IDX, 1
+cmpwi REG_PLAYER_IDX, 4
+blt CHAR_COLOR_OVERWRITE_LOOP_START
+
+SKIP_CHAR_COLOR_OVERWRITE:
 
 #Copy Splash Data
 load  r3,0x80490888
@@ -549,6 +912,126 @@ stb r3,0x8(r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3,0xE(r4)
 
+# Make sure to clear out any special stages setup
+li r3, 0
+stb r3,-0x1(r4) # match event mode
+stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
+cmpwi r3, 0 # 0 = no teams
+beq SKIP_TEAMS_SETUP
+
+TEAMS_SETUP:
+.set REG_COUNT, 29
+.set REG_TEAM_PLAYER_COUNT, 28
+.set REG_TEAM_1_ID, 27
+
+# load local player's team id for team 1
+lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+mulli r3, r3, 0x24
+addi r3, r3, MSRB_GAME_INFO_BLOCK+0x69
+lbzx REG_TEAM_1_ID, REG_MSRB_ADDR, r3
+
+# make it 2vs2 by default
+li r3, 0x2
+stb r3,0x2(r4)
+
+# Initialize bytes for extra players on each team in case of 1v3
+# The 1v3 case requires a char id/color to be set for 3 players on each team,
+# even if some are unused.
+li r3, 1
+stb r3,-0x5(r4) # make announcer say "teams" with value 1
+stb r3,0x6(r4)
+stb r3,0x7(r4)
+stb r3,0x9(r4)
+stb r3,0xA(r4)
+stb r3,0xC(r4)
+stb r3,0xD(r4)
+stb r3,0xF(r4)
+stb r3,0x10(r4)
+
+# Set up left side team
+li REG_COUNT, 0
+li REG_TEAM_PLAYER_COUNT, 0
+
+TEAMS_SETUP_LEFT_SIDE_LOOP:
+# get team id
+mulli r3, REG_COUNT, 0x24
+addi r3, r3, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3
+
+# If this player is on team 1, add their character to the left side display
+cmpw r3, REG_TEAM_1_ID
+bne CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP
+
+# Load char id
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x60
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0x5
+stbx r5, r6, r4
+
+# Load char color
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x63
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0xB
+stbx r5, r6, r4
+
+addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+
+CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP:
+addi REG_COUNT, REG_COUNT, 1
+cmpwi REG_COUNT, 4
+blt TEAMS_SETUP_LEFT_SIDE_LOOP
+
+# Set the player count for team 1
+stb REG_TEAM_PLAYER_COUNT, 0x3(r4)
+
+# Set up right side team
+li REG_COUNT, 0
+li REG_TEAM_PLAYER_COUNT, 0
+
+TEAMS_SETUP_RIGHT_SIDE_LOOP:
+# get team id
+mulli r3, REG_COUNT, 0x24
+addi r3, r3, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3
+
+# If this player isn't on team 1, add their character to the right side display
+cmpw r3, REG_TEAM_1_ID
+beq CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP
+
+# Load char id
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x60
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0x8
+stbx r5, r6, r4
+
+# Load char color
+mulli r5, REG_COUNT, 0x24
+addi r5, r5, 0x63
+lbzx r5, REG_VS_SSS_DATA, r5
+
+addi r6, REG_TEAM_PLAYER_COUNT, 0xE
+stbx r5, r6, r4
+
+addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+
+CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP:
+addi REG_COUNT, REG_COUNT, 1
+cmpwi REG_COUNT, 4
+blt TEAMS_SETUP_RIGHT_SIDE_LOOP
+
+# Set the player count for team 2
+stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
+
+SKIP_TEAMS_SETUP:
+
 # Preload these fighters
 load r4,0x80432078
 lbz r3, 0x60(REG_VS_SSS_DATA) # load p1 char id
@@ -559,6 +1042,21 @@ lbz r3, 0x60 + 0x24(REG_VS_SSS_DATA) # load p2 char id
 stw r3, 0x1C (r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3, 0x20 (r4)
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
+cmpwi r3, 0 # 0 = no teams
+beq SKIP_TEAMS_PRELOAD
+
+lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
+stw r3, 0x24 (r4)
+lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load char color
+stb r3, 0x28 (r4)
+lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
+stw r3, 0x2C (r4)
+lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load char color
+stb r3, 0x30 (r4)
+
+SKIP_TEAMS_PRELOAD:
 # Preload the stage
 lhz r3, 0xE (REG_VS_SSS_DATA)
 stw r3, 0xC (r4)
@@ -570,41 +1068,41 @@ branchl r12,0x80018c2c
 li  r3,4
 branchl r12,0x80017700
 
+# Clear ssm queue
+li	r3, 0x1c  # 0x10 = single player sounds, 0x8 = stage sounds, 0x4 = fighter sounds
+branchl	r12, 0x80026F2C
 
 # Load fighters' ssm files
 .set REG_COUNT,20
-.set REG_SSMBIT1,21
-.set REG_SSMBIT2,22
-.set REG_CURR,23
+.set REG_CURR,21
 li	REG_COUNT, 0
 mulli	r0, REG_COUNT, 36
 mr REG_CURR, REG_VS_SSS_DATA
 add	REG_CURR, REG_CURR, r0
-li	REG_SSMBIT1, 0
-li	REG_SSMBIT2, 0
 CSSSceneDecide_SSMLoop:
-lbz	r3, 0x0060 (REG_CURR)
-extsb	r3, r3
-branchl r12,0x80026E84
+# Get fighter's external ID
+branchl r12,FN_GetFighterNum
+lbz	r4, 0x0060 (REG_CURR)
+extsb	r4, r4
+cmpw r4,r3
+beq CSSSceneDecide_SSMIncLoop
+# Get fighter's ssm ID
+li r3,0   # fighter
+# r4 already contains fighter index
+branchl r12,FN_GetSSMIndex
+branchl r12,FN_RequestSSM   # queue it
+CSSSceneDecide_SSMIncLoop:
 addi	REG_COUNT, REG_COUNT, 1
 cmpwi	REG_COUNT, 6
-or	REG_SSMBIT2, REG_SSMBIT2, r4
-or	REG_SSMBIT1, REG_SSMBIT1, r3
 addi	REG_CURR, REG_CURR, 36
 blt+	 CSSSceneDecide_SSMLoop
-# Load stage's ssm file
+# Get stage's ssm file index
 lhz r3, 0xE (REG_VS_SSS_DATA)
-branchl	r12, 0x80026EBC
-or	REG_SSMBIT1, r3, REG_SSMBIT1
-or	REG_SSMBIT2, r4, REG_SSMBIT2
-# Clear ssm queue
-li	r3, 28
-branchl	r12, 0x80026F2C
-# Queue ssms
-addi	r6, REG_SSMBIT2, 0
-addi	r5, REG_SSMBIT1, 0
-li	r3, 12
-branchl r12, 0x8002702C
+branchl r12,0x8022519c  # get internal ID
+mr r4,r3  # stage index
+li r3,1   # stage
+branchl r12,FN_GetSSMIndex
+branchl r12,FN_RequestSSM   # queue it
 # set to load
 branchl r12, 0x80027168
 
@@ -642,6 +1140,10 @@ mr  r3,REG_VS_SSS_DATA
 addi r4,REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK    #
 li  r5,0x60 + (0x24*6)  #match data + player data
 branchl r12,memcpy
+
+# Adjust null ID
+mr  r3,REG_VS_SSS_DATA
+branchl r12,FN_AdjustNullID
 
 # Write data for left character
 
@@ -687,6 +1189,90 @@ branchl r12, HSD_Free
 restore
 blr
 #endregion
+
+################################################################################
+# Function: SinglesDetermineWinner
+# ------------------------------------------------------------------------------
+# Description: Designed to be used only when playing online (only works with
+# ports 1 + 2). Will output the winner of the match or -1 if it's a tie.
+# 
+# Does not handle LRAS
+# ------------------------------------------------------------------------------
+# Output:
+# r3: winnderIndex # Index of the winner, -1 if tie
+################################################################################
+SinglesDetermineWinner_BLRL:
+blrl
+.set REG_MATCH_END, 31
+.set REG_MATCH_END_P1, 30
+.set REG_MATCH_END_P2, 29
+.set REG_TEMP_VAR, 27
+SinglesDetermineWinner:
+backup
+
+load REG_MATCH_END, 0x80479da4
+
+# The following may be needed if we add LGL but are not needed right now
+# addi REG_MATCH_END_P1, REG_MATCH_END, 0x58 # Start of player array
+# addi REG_MATCH_END_P2, REG_MATCH_END_P1, 0xA8
+
+lbz r3, 0x4(REG_MATCH_END)
+cmpwi r3, 1
+beq SinglesDetermineWinner_HANDLE_TIMEOUT
+cmpwi r3, 2
+beq SinglesDetermineWinner_HANDLE_COMPLETION
+
+# We can only handle GAME and TIME atm. For LRAS (or something else?), return a tie
+b SinglesDetermineWinner_TIE
+
+SinglesDetermineWinner_HANDLE_TIMEOUT:
+li r3, 0
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+mr REG_TEMP_VAR, r3
+li r3, 1
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpw REG_TEMP_VAR, r3
+bgt SinglesDetermineWinner_P1_WIN
+blt SinglesDetermineWinner_P2_WIN
+
+li r3, 0
+branchl r12, 0x800342b4 # PlayerBlock_LoadDamage
+mr REG_TEMP_VAR, r3
+li r3, 1
+branchl r12, 0x800342b4 # PlayerBlock_LoadDamage
+cmpw REG_TEMP_VAR, r3
+blt SinglesDetermineWinner_P1_WIN
+bgt SinglesDetermineWinner_P2_WIN
+
+# We only get here if stock and percent is the same, if so, it's a tie
+b SinglesDetermineWinner_TIE
+
+SinglesDetermineWinner_HANDLE_COMPLETION:
+# Here we check who won by looking at stock counts
+li r3, 0
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+bne SinglesDetermineWinner_P1_WIN
+
+li r3, 1
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
+cmpwi r3, 0
+bne SinglesDetermineWinner_P2_WIN
+
+# If we get here, both players have zero stocks which indicates a same-frame double KO, it's a tie
+b SinglesDetermineWinner_TIE
+
+SinglesDetermineWinner_P1_WIN:
+li r3, 0
+b SinglesDetermineWinner_RESTORE_AND_EXIT
+SinglesDetermineWinner_P2_WIN:
+li r3, 1
+b SinglesDetermineWinner_RESTORE_AND_EXIT
+SinglesDetermineWinner_TIE:
+li r3, -1
+SinglesDetermineWinner_RESTORE_AND_EXIT:
+restore
+blr
 
 #region CheckIfWonLastGame
 CheckIfWonLastGame:
@@ -766,7 +1352,7 @@ CheckIfWonLastGame_CheckForTeams:
 CheckIfWonLastGame_FFA:
 #Check If Player Won
   lbz   r3,0x5D(MatchEndPlayerStruct)
-   #if so return 1, if not return 0
+   # . if so return 1, if not return 0
    cmpwi  r3,0
    beq  CheckIfWonLastGame_Won
    b CheckIfWonLastGame_DidNotWin
@@ -781,9 +1367,82 @@ restore
 blr
 #endregion
 
+GamePrepScenePrep:
+.set REG_GPD, 31
+
+backup
+
+lwz REG_GPD, 0x10(r3) # Grabs load data
+
+# Check if this is a tiebreak. If it is a tiebreak, we dont want to invalidate since the same
+# characters will be loaded
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
+cmpwi r3, 0
+bne SKIP_PRELOAD_INVALIDATE
+
+# Invalidate pre-load cache otherwise changing one character mid-set crashes
+branchl r12, 0x800174bc
+SKIP_PRELOAD_INVALIDATE:
+
+restore
+blr
+
+GamePrepSceneDecide:
+.set REG_GPD, 31
+.set REG_MSRB_ADDR, 30
+
+backup
+
+lwz REG_GPD, 0x10(r3) # Grabs load data
+
+# Get match state info
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
+
+# If connection is active, do the normal execution
+lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
+cmpwi r3, MM_STATE_CONNECTION_SUCCESS
+beq GamePrepSceneDecide_ExecNormal
+
+# Here we have disconnected from opponent, go back to CSS
+
+# I commented the below because the game setup scene itself already sends the communication
+# li r3, 1
+# bl FN_ReportSetCompletion
+
+# Go back to CSS
+load r4, 0x80479d30
+li r3, 0x01
+stb r3, 0x5(r4)
+b GamePrepSceneDecide_RestoreAndExit
+
+GamePrepSceneDecide_ExecNormal:
+# Check if there was a tie last game and a tiebreak is needed
+lbz r3, GPDO_TIEBREAK_GAME_NUM(REG_GPD)
+cmpwi r3, 0
+beq GamePrepSceneDecide_DisplaySplash
+
+# On tiebreak, go right back into VS scene
+load r4, 0x80479d30
+li r3, 0x03
+stb r3, 0x5(r4)
+b GamePrepSceneDecide_RestoreAndExit
+
+GamePrepSceneDecide_DisplaySplash:
+bl  SplashSceneInit
+
+# This will cause the next scene to be the splash screen
+load r4, 0x80479d30
+li r3, 0x05
+stb r3, 0x5(r4)
+
+GamePrepSceneDecide_RestoreAndExit:
+restore
+blr
+
 Injection_Exit:
 #Exit Scene
   restore
   li  r3,ExitSceneID
   stb r3,0x0(r30)
-  li	r31, 0

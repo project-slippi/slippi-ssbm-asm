@@ -9,7 +9,7 @@
 .include "Playback/Playback.s"
 
 # check status for fast forward
-lwz r11,primaryDataBuffer(r13) # directory address
+lwz r11,playbackDataBuffer(r13) # directory address
 lwz r11,PDB_EXI_BUF_ADDR(r11) # EXI buf address
 lbz r11,(RBStatus_Start)+(RBStatus_Status)(r11)
 cmpwi r11, 0

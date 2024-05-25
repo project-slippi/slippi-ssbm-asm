@@ -1,5 +1,5 @@
 ################################################################################
-# Address: 8006b0dc
+# Address: 8006b0e0
 ################################################################################
 .include "Common/Common.s"
 .include "Recording/Recording.s"
@@ -92,6 +92,7 @@ backup
 # get raw x analog input for UCF. The game has a 5 frame circular buffer
 # where it stores raw inputs for previous frames, we must fetch the location
 # where the current frame's value is stored
+# TODO: If we ever switch to 2f dashback, we probably won't need this
   load r3,0x8046b108  # start location of circular buffer
   load r4,0x804c1f78
   lbz r4, 0x0001(r4) # this is the current index in the circular buffer
@@ -104,14 +105,18 @@ CONTINUE_RAW_X:
   add r3, r3, r4 # move to the correct start index for this index
 
   mulli r4, REG_PlayerSlot, 0xc
-  add r3, r3, r4 # move to the correct player position
+  add r4, r3, r4 # move to the correct player position
 
-  lbz r3, 0x2(r3) #load raw x analog
-  stb r3,0x3B(REG_Buffer)
+  lbz r3, 0x2(r4) #load raw x analog
+  stb r3, 0x3B(REG_Buffer)
+  lbz r3, 0x3(r4) #load raw y analog
+  stb r3, 0x40(REG_Buffer)
 
 # Send player's percent
   lwz r3,0x1830(r31)
   stw r3,0x3C(REG_Buffer)
+
+  # Warning: We wrote to 0x40 above, so the next value should be 0x41
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
@@ -120,4 +125,5 @@ CONTINUE_RAW_X:
 
 Injection_Exit:
   restore
-  lbz r0, 0x2219(r31) #execute replaced code line
+  lbz r0, 0x2219(r31) # reload r0 from previous line
+  lwz	r3, 0x065C(r31) # replaced code line

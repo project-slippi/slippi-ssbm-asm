@@ -1,9 +1,9 @@
 ################################################################################
-# Address: 8016e74c
+# Address: 8016e748
 ################################################################################
 
 ################################################################################
-#                      Inject at address 8016e74c
+#                      Inject at address 8016e748
 # Function is StartMelee and we are loading game information right before
 # it gets read to initialize the match
 ################################################################################
@@ -15,6 +15,8 @@
 .set BufferPointer,30
 .set REG_GeckoBuffer,29
 .set REG_DirectoryBuffer,28
+
+branchl r12, 0x802254b8 # Replaced codeline, call function
 
 ################################################################################
 #                   subroutine: gameInfoLoad
@@ -28,7 +30,7 @@
   li r3, PDB_SIZE
   branchl r12, HSD_MemAlloc
   mr REG_DirectoryBuffer, r3
-  stw REG_DirectoryBuffer, primaryDataBuffer(r13) # Store directory buffer location
+  stw REG_DirectoryBuffer, playbackDataBuffer(r13) # Store directory buffer location
   li r4, PDB_SIZE
   branchl r12, Zero_AreaLength
 
@@ -99,6 +101,12 @@ READ_DATA:
 
 #------------- OTHER INFO -------------
 # write UCF toggle bytes
+# This stuff is handled with dynamic gecko codes now but this has to stay
+# here for backward compatibility with old replays from before we got rid
+# of the toggles
+# As of 3/31/2021 this is no longer strictly necessary for new replays but
+# it has to stay here to play back legacy replays, those still use the toggle-based
+# UCF handlers
   subi r23,rtoc,DashbackOptions #Prepare game memory dashback toggle address
   subi r20,rtoc,ShieldDropOptions #Prepare game memory shield drop toggle address
   addi r21,BufferPointer,UCFToggles  #Get UCF toggles in buffer
@@ -193,6 +201,16 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   lbz r3,FrozenPSBool(BufferPointer)
   stb r3,FSToggle(rtoc)
 
+# Get bool for whether resync logic should be used
+  lbz r3,ShouldResyncBool(BufferPointer)
+  stb r3,PDB_SHOULD_RESYNC(REG_DirectoryBuffer)
+
+# Get player display names
+  addi r3, REG_DirectoryBuffer, PDB_DISPLAY_NAMES # destination
+  addi r4, BufferPointer, DisplayNameData         # source
+  li r5, DisplayNameData_Length                   # length
+  branchl r12, memcpy
+
 #--------------- Apply Dynamic Gecko Codes ---------------------
 # Step 1: Grab size of gecko code list and create a buffer to store them
   # TODO: Make sure that returned size includes the termination sequence (8 bytes)
@@ -200,6 +218,11 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   branchl r12, HSD_MemAlloc
   mr REG_GeckoBuffer, r3
   stw REG_GeckoBuffer, PDB_DYNAMIC_GECKO_ADDR(REG_DirectoryBuffer)
+
+  # Overwrite the gecko heap location for simultaneous recording + playback
+  load r4, GeckoHeapPtr
+  subi r3, REG_GeckoBuffer, 0x8 # Recording expects d0c0de d0c0de but we dont have that here
+  stw r3, 0(r4)
 
 # Step 2: Ask dolphin for the code list
   li r3, CMD_GET_GECKO_CODES
@@ -249,7 +272,7 @@ blrl
   cmpwi r5, 0 # If size is 0, either we don't support this codetype or theres nothing to replace
   beq Callback_CalculateSize_End
 
-  lwz r6, primaryDataBuffer(r13)
+  lwz r6, playbackDataBuffer(r13)
   lwz r3, PDB_RESTORE_BUF_SIZE(r6)
   addi r3, r3, 8 # For each new code, we need a target address and length
   add r3, r3, r5 # Add size of the replacement to the total length
@@ -282,7 +305,7 @@ blrl
   rlwinm r5, r5, 0, 0x01FFFFFF
   oris REG_TargetDataPtr, r5, 0x8000 # Injection Address
 
-  lwz REG_DirectoryBuffer2, primaryDataBuffer(r13)
+  lwz REG_DirectoryBuffer2, playbackDataBuffer(r13)
   lwz REG_RestoreBufPos, PDB_RESTORE_BUF_WRITE_POS(REG_DirectoryBuffer2)
 
   # r3 contains the codetype, do a switch statement on it to prepare for memcpys
@@ -375,4 +398,3 @@ GECKO_CLEANUP:
 
 Injection_Exit:
 restore
-lis r3, 0x8017 #execute replaced code line

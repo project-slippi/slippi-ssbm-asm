@@ -17,6 +17,10 @@
   backup
   lwz REG_Buffer,OFST_R13_SB_ADDR(r13)
 
+# Ensure buffer exists
+  cmpwi REG_Buffer,0
+  beq  TransferFile_NO_REPLACEMENT
+
 #########################
 ## Check if file exits ##
 #########################

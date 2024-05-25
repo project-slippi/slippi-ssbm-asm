@@ -1,0 +1,29 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Console/g_gameplay_wobbling.bin"
+    },
+    {
+      "file": "Output/Console/g_gameplay_wobbling.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Disable Wobbling",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Breaks Popo's grab after four pummels if the victim has not left hitstun since the first pummel."
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/PreventWobbling",
+          "isRecursive": false,
+          "annotation": "Disable wobbling"
+        }
+      ]
+    }
+  ]
+}
