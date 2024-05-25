@@ -9,7 +9,6 @@
 ################################################################################
 
 .include "Common/Common.s"
-.include "Recording/Recording.s"
 
 .set PAYLOAD_LEN, 0x40
 .set EXI_BUF_LEN, PAYLOAD_LEN + 1
@@ -22,15 +21,15 @@ backup STACK_FREE_SPACE
 
 # check if NOT VS Mode
 getMinorMajor r8
-cmpwi r8, 0x0202
+cmpwi r8, SCENE_VERSUS_IN_GAME
 beq Injection_Exit
-cmpwi r8, 0x0208
+cmpwi r8, SCENE_ONLINE_IN_GAME
 beq Injection_Exit
 
 addi r3, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
 byteAlign32 r3 # Align to next 32 byte boundary
 
-li r4, CMD_MENU_FRAME # Command byte
+li r4, CONST_SlippiCmdSendMenuFrame # Command byte
 stb r4, 0x0(r3)
 
 # Two bytes for major / minor scene
