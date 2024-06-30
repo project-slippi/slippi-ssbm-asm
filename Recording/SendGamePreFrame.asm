@@ -111,6 +111,10 @@ CONTINUE_RAW_X:
   stb r3, 0x3B(REG_Buffer)
   lbz r3, 0x3(r4) #load raw y analog
   stb r3, 0x40(REG_Buffer)
+  lbz r3, 0x4(r4) #load raw x c-stick
+  stb r3, 0x41(REG_Buffer)
+  lbz r3, 0x5(r4) #load raw y c-stick
+  stb r3, 0x42(REG_Buffer)
 
 # Send player's percent
   lwz r3,0x1830(r31)
