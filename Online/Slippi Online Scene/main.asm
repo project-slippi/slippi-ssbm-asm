@@ -1226,6 +1226,23 @@ beq SinglesDetermineWinner_HANDLE_COMPLETION
 b SinglesDetermineWinner_TIE
 
 SinglesDetermineWinner_HANDLE_TIMEOUT:
+# Handle ledge grab limit
+li r3, 0
+branchl r12, 0x80040af0 # PlayerBlock_GetCliffhangerStat
+mr REG_TEMP_VAR, r3
+li r3, 1
+branchl r12, 0x80040af0 # PlayerBlock_GetCliffhangerStat
+cmpwi REG_TEMP_VAR, LGL_LIMIT
+ble SinglesDetermineWinner_CHECK_LGL_LOSS
+cmpwi r3, LGL_LIMIT
+bgt SinglesDetermineWinner_LGL_EXIT # If we branch here both players have more than 45 so ignore LGL
+SinglesDetermineWinner_CHECK_LGL_LOSS:
+cmpwi REG_TEMP_VAR, LGL_LIMIT
+bgt SinglesDetermineWinner_P2_WIN # If P1 has more than 45 ledge grabs, P2 wins
+cmpwi r3, LGL_LIMIT
+bgt SinglesDetermineWinner_P1_WIN # If P2 has more than 45 ledge grabs, P1 wins
+SinglesDetermineWinner_LGL_EXIT:
+
 li r3, 0
 branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
 mr REG_TEMP_VAR, r3
