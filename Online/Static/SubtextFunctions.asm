@@ -11,11 +11,10 @@
 # r6 = outline color pointer
 # r7... = string pointers
 
-# f1 = scale size x
-# f2 = scale size y
-# f3 = x pos
-# f4 = y pos
-# f5 = inner text y-scale
+# f1 = scale size
+# f2 = x pos
+# f3 = y pos
+# f5 = inner text y-scale (unused?)
 # f6 = outline offset/size
 ################################################################################
 # Output:
@@ -42,7 +41,7 @@
 .set REG_X, REG_SCALE-1
 .set REG_Y, REG_X-1
 .set REG_Z, REG_Y-1
-.set REG_OUTLINE_SIZE, REG_Z-1
+.set REG_OUTLINE_SIZE, REG_Z-1 # looks unused?
 .set REG_OUTLINE_OFFSET, REG_OUTLINE_SIZE-1 # outlines offsets to create size
 
 .set REG_LOOP_INDEX, 15
