@@ -109,13 +109,13 @@ addi REG_FILL_COLOR, REG_DO, DO_COLOR_FILL_LOSS
 addi REG_FIRST_STRING, REG_DO, DO_STRING_YOU
 lfs f3, DO_POS_Y_LOSS(REG_DO)
 
+DISPLAY_LGL_MESSAGE:
 # Make game exit transition longer
 load r3, 0x8046b6a0 # Some static match state struct
 li r4, 0xFD # Default value for this is 0x6e
 stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it longer
 
-DISPLAY_LGL_MESSAGE:
-
+# Print text on screen indicating what happened
 lwz r3, OFST_R13_ODB_ADDR(r13) # data buffer address
 lwz r3, ODB_HUD_TEXT_STRUCT(r3)
 mr r4, REG_FILL_COLOR
