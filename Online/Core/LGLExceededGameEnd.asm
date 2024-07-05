@@ -10,9 +10,8 @@
 .set REG_LGL_LOSER, 26
 .set REG_DISPLAY_MESSAGE_ID, 25
 .set REG_DO, 24
-.set REG_LGL_LOSER_GRAB_COUNT, 23
-.set REG_FILL_COLOR, 22
-.set REG_FIRST_STRING, 21
+.set REG_FILL_COLOR, 23
+.set REG_FIRST_STRING, 22
 
 # This function's main goal is to overwrite the message displayed on an LGL timeout. Here are the options:
 # 0: Time, 1: Sudden Death, 2: Success, 3: Ready, 4: GO!, 5: Game!, 6: Failure, 7: Complete, 8: Nothing, 9: Crash
@@ -25,9 +24,11 @@ blrl
 .float 0.7
 .set DO_POS_X, DO_SCALE + 4
 .float 0
-.set DO_POS_Y, DO_POS_X + 4
+.set DO_POS_Y_WIN, DO_POS_X + 4
 .float 70
-.set DO_STROKE_OFFSET, DO_POS_Y + 4
+.set DO_POS_Y_LOSS, DO_POS_Y_WIN + 4
+.float 60
+.set DO_STROKE_OFFSET, DO_POS_Y_LOSS + 4
 .float 1
 .set DO_COLOR_OUTLINE, DO_STROKE_OFFSET + 4
 .byte 0,0,0,255
@@ -38,9 +39,9 @@ blrl
 .set DO_STRING_YOU, DO_COLOR_FILL_WIN + 4
 .string "You"
 .set DO_STRING_OPP, DO_STRING_YOU + 4
-.string "Opp"
-.set DO_STRING, DO_STRING_OPP + 4
-.string "%s Exceeded Ledge Grab Limit of %d: %d"
+.string "Opponent"
+.set DO_STRING, DO_STRING_OPP + 9
+.string "%s Exceeded Ledge Grab Limit of %d"
 .align 2
 
 
@@ -87,11 +88,9 @@ bgt EXIT # If we branch here both players have more than 45 so ignore LGL
 CHECK_LGL_LOSS:
 cmpwi REG_P1_LEDGE_GRABS, LGL_LIMIT
 li REG_LGL_LOSER, 0
-mr REG_LGL_LOSER_GRAB_COUNT, REG_P1_LEDGE_GRABS
 bgt SET_MODIFIED_MESSAGE # If P1 has more than 45 ledge grabs, P2 wins
 cmpwi REG_P2_LEDGE_GRABS, LGL_LIMIT
 li REG_LGL_LOSER, 1
-mr REG_LGL_LOSER_GRAB_COUNT, REG_P2_LEDGE_GRABS
 bgt SET_MODIFIED_MESSAGE # If P2 has more than 45 ledge grabs, P1 wins
 b EXIT # If neither player has more than 45 ledge grabs, exit
 
@@ -103,10 +102,12 @@ cmpw r3, REG_LGL_LOSER # Compare local player index of winner
 li REG_DISPLAY_MESSAGE_ID, 2 # Set message to "Success" if we won
 addi REG_FILL_COLOR, REG_DO, DO_COLOR_FILL_WIN
 addi REG_FIRST_STRING, REG_DO, DO_STRING_OPP
+lfs f3, DO_POS_Y_WIN(REG_DO)
 bne DISPLAY_LGL_MESSAGE
 li REG_DISPLAY_MESSAGE_ID, 6 # Set message to "Failure" if we lost
 addi REG_FILL_COLOR, REG_DO, DO_COLOR_FILL_LOSS
 addi REG_FIRST_STRING, REG_DO, DO_STRING_YOU
+lfs f3, DO_POS_Y_LOSS(REG_DO)
 
 # Make game exit transition longer
 load r3, 0x8046b6a0 # Some static match state struct
@@ -123,10 +124,8 @@ addi r6, REG_DO, DO_COLOR_OUTLINE # Outline Color
 addi r7, REG_DO, DO_STRING # String
 mr r8, REG_FIRST_STRING
 li r9, LGL_LIMIT # LGL Limit
-mr r10, REG_LGL_LOSER_GRAB_COUNT # Grab Count
 lfs f1, DO_SCALE(REG_DO)
 lfs f2, DO_POS_X(REG_DO)
-lfs f3, DO_POS_Y(REG_DO)
 lfs f6, DO_STROKE_OFFSET(REG_DO)
 branchl r12, FG_CreateSubtext
 
