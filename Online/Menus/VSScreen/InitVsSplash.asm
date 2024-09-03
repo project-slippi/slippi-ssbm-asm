@@ -22,6 +22,7 @@
 .set REG_LABEL_STRING, 20
 .set REG_CUR_SUBTEXT_IDX, 21
 
+# float registers
 .set REG_POS_X_START, 31
 .set REG_POS_Y_START, 30
 
@@ -281,7 +282,7 @@ b EXIT
 # f1 - X Pos
 ################################################################################
 INIT_PLAYER_TEXT:
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 fmr REG_POS_X_START, f1
 mr REG_LABEL_COLOR, r3
@@ -349,7 +350,7 @@ blt INIT_PLAYER_NAME_LOOP_START
 
 
 INIT_PLAYER_TEXT_EXIT:
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 

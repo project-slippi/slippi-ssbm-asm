@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_stages_stadium.bin"
+    },
+    {
+      "file": "Output/Console/g_stages_stadium.txt"
     }
   ],
   "codes": [

@@ -1,0 +1,27 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/Netplay/debugging.txt"
+    }
+  ],
+  "codes": [
+    {
+      "name": "Optional: Normal Functionality in Develop Mode (1.02)",
+      "authors": [
+        "Magus",
+        "Achilles",
+        "UnclePunch"
+      ],
+      "description": [
+        "Enables stale moves and disables cstick camera control"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/NormalDevelopMode",
+          "isRecursive": true
+        }
+      ]
+    }
+  ]
+}

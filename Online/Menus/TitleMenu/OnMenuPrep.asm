@@ -26,8 +26,8 @@
 .set REG_JOBJ_DESC_SHAPE_JOINT_ADDR, REG_JOBJ_DESC_MAT_JOINT_ADDR+1
 
 # float registers
-.set REG_F_0, 22
-.set REG_F_1, 23
+.set REG_F_0, 31
+.set REG_F_1, 30
 
 # Dialog Constants
 .set DLG_JOBJ_OFFSET, 0x28 # offset from GOBJ to HSD Object (Jobj we assigned)
@@ -46,7 +46,7 @@
 .set JOBJ_DESC_DLG_ANIM_JOINT, 0x803efa24 # archive memory address of dialog anim joint
 .set JOBJ_DESC_DLG_MAT_JOINT, 0x803efa40 # archive memory address of dialog mat joint
 .set JOBJ_DESC_DLG_SHAPE_JOINT, 0x803efa60 # archive memory address of dialog shape joint
-.set JOBJ_CHILD_OFFSET, 0x34 # Pointer to store Child JOBJ on the SP
+.set JOBJ_CHILD_OFFSET, BKP_FREE_SPACE_OFFSET # Pointer to store Child JOBJ on the SP
 
 # Offset from submenu gobj where we are storing dialog user data buffer when
 # open
@@ -234,7 +234,9 @@ blr
 FN_OnlineSubmenuThink:
 blrl
 
-backup
+.set NUM_FREG, 0
+.set NUM_GPREG, 18
+backup BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 ################################################################################
 # Check if confirm dialog is open or not, and prevent input if it is
@@ -309,9 +311,8 @@ b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
 # Option Selected Handlers
 ################################################################################
 FN_OnlineSubmenuThink_HANDLE_RANKED:
-li	r3, 3
-branchl r12, SFX_Menu_CommonSound
-b FN_OnlineSubmenuThink_INPUT_HANDLERS_END
+li r3, ONLINE_MODE_RANKED
+b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_UNRANKED:
 li r3, ONLINE_MODE_UNRANKED
@@ -494,7 +495,7 @@ mtctr r3
 bctrl
 
 FN_OnlineSubmenuThink_EXIT:
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
 
 ################################################################################
 # Data: OnlineSubmenuOptions
@@ -523,8 +524,7 @@ blrl
 .short 0x0000
 
 FN_CREATE_DIALOG:
-
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 # load jobjects in memory
 lwz r3, archiveDataBuffer(r13)
@@ -684,7 +684,7 @@ mflr r4 # Function
 li r5, 15 # Priority
 branchl	r12, GObj_AddProc
 
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 
@@ -695,7 +695,7 @@ blr
 ################################################################################
 FN_LogoutDialogThink: #801978fc
 blrl
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 2
 
 # INIT PROPERTIES
 bl TEXT_PROPERTIES
@@ -848,7 +848,8 @@ b FN_LogoutDialogThink_Exit
 
 FN_LogoutDialogThink_Exit:
 
-restore
+
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 2
 blr
 
 ################################################################################

@@ -1,0 +1,27 @@
+################################################################################
+# Address: 0x80376a8c
+################################################################################
+
+.include "Common/Common.s"
+.include "Online/Online.s"
+
+# Check if VS Mode
+getMinorMajor r3
+cmpwi r3, 0x0202
+bne EXIT
+
+load r3, 0x80479d64
+lwz r3, 0x0(r3) # 0x80479d64 - Believed to be some loading state
+cmpwi r3, 0 # Loading state should be zero when game starts
+bne EXIT
+
+loadGlobalFrame r3
+cmpwi r3, 1
+bne EXIT
+
+branchl r12, 0x8034f314 # VIWaitForRetrace
+
+EXIT:
+# Replaced code lines
+lbz	r0, 0x0002 (r31)
+lbz	r4, 0x0003 (r31)

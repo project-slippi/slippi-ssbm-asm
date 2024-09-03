@@ -1,0 +1,58 @@
+$Optional: 16:9 -> 73:60 [Dan Salvato, mirrorbender, Achilles1515, UnclePunch, Fizzi]
+*Set Aspect Ratio to "Force 16:9" in Graphics
+043BB05C 3EB00000 #External/Widescreen/Fix Screen Flash.asm
+C236A4A8 00000007 #External/Widescreen/Overwrite CObj Values.asm
+38600001 986DAFE0
+C03F0034 4800001D
+7C6802A6 C0430000
+C0630004 EC2100B2
+EC211824 48000010
+4E800021 43A00000
+435B0000 00000000
+044DDB58 3E4CCCCD #External/Widescreen/Adjust Offscreen Scissor/Adjust Bubble Zoom.asm
+04086B24 60000000 #External/Widescreen/Adjust Offscreen Scissor/Draw High Poly Models.asm
+04030C7C 38000064 #External/Widescreen/Adjust Offscreen Scissor/Left Camera Bound.asm
+04030C88 3800021C #External/Widescreen/Adjust Offscreen Scissor/Right Camera Bound.asm
+044DDB30 3F666666 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Adjust Corner Value 1.asm
+044DDB34 BF666666 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Adjust Corner Value 2.asm
+044DDB2C C3660000 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Extend Negative Vertical Bound.asm
+044DDB28 43660000 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Extend Positive Vertical Bound.asm
+044DDB4C 3D916873 #External/Widescreen/Adjust Offscreen Scissor/Fix Bubble Positions/Widen Bubble Region.asm
+C22FCFC4 00000004 #External/Widescreen/Nametag Fixes/Adjust Nametag Background X Scale.asm
+48000011 7C6802A6
+C0030000 4800000C
+4E800021 40DC7AE1
+60000000 00000000
+044DDB84 3E89FEFA #External/Widescreen/Nametag Fixes/Adjust Nametag Text X Scale.asm
+C2302784 0000001F #External/WidescreenShutters/Add Shutters.asm
+480000E0 4E800021
+42E40000 447A0000
+000000FF 7C0802A6
+90010004 9421FF20
+BE8100B0 3B800014
+3BA0FFE7 2C030000
+4182000C 3B800015
+3BA00231 4BFFFFC9
+7FE802A6 38600020
+3D808037 618CF1E4
+7D8903A6 4E800421
+7C681B78 7F83E378
+7FA4EB78 38A0FFE7
+38C00001 38E00001
+3D808030 618C2834
+7D8903A6 4E800421
+7C7E1B78 806DB77C
+7FC4F378 3D808030
+618C2810 7D8903A6
+4E800421 38600000
+987E0026 7FC3F378
+389F0008 3D808030
+618C2B90 7D8903A6
+4E800421 C03F0000
+D03E0008 C03F0004
+D03E000C BA8100B0
+800100E4 382100E0
+7C0803A6 4E800020
+93EDB77C 38600000
+4BFFFF2D 38600001
+4BFFFF25 00000000

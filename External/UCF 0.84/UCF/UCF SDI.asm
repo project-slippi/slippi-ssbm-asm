@@ -1,0 +1,61 @@
+################################################################################
+# Address: 8008E54C
+# Tags: [affects-gameplay]
+################################################################################
+
+.long 0x7C002800
+.long 0x418000DC
+.long 0x89230673
+.long 0x28090001
+.long 0x40810014
+.long 0x89230674
+.long 0x3D406000
+.long 0x28090001
+.long 0x418100BC
+.long 0xC183062C
+.long 0x3D406000
+.long 0xC0030628
+.long 0xED8C0332
+.long 0xEC00603A
+.long 0xC18404B0
+.long 0xED8C0332
+.long 0xFC0C0000
+.long 0x40810098
+.long 0x3D008007
+.long 0x89430618
+.long 0x3908AD10
+.long 0x85280750
+.long 0x55293032
+.long 0x7D293670
+.long 0x39290004
+.long 0x7D294214
+.long 0x1D0A000C
+.long 0x1D4A0006
+.long 0x7D094214
+.long 0x89080008
+.long 0x38E8FFFE
+.long 0x7D0A4214
+.long 0x54E707BE
+.long 0x5508083C
+.long 0x7D4A3A14
+.long 0x7CC94214
+.long 0x554A083C
+.long 0x7D0940AE
+.long 0x7CE95214
+.long 0x7D2950AE
+.long 0x7D080774
+.long 0x89470001
+.long 0x7D290774
+.long 0x7D294050
+.long 0x89060001
+.long 0x7D4A0774
+.long 0x7D2949D6
+.long 0x7D080774
+.long 0x7D4A4050
+.long 0x7D4A51D6
+.long 0x7D295214
+.long 0x3D406000
+.long 0x2C090F04
+.long 0x40810008
+.long 0x3D408000
+.long 0x7D580120

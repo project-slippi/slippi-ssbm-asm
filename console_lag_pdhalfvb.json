@@ -2,6 +2,9 @@
   "outputFiles": [
     {
       "file": "Output/Console/g_lag_pdhalfvb.bin"
+    },
+    {
+      "file": "Output/Console/g_lag_pdhalfvb.txt"
     }
   ],
   "codes": [

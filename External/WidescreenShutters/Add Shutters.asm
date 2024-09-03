@@ -21,7 +21,7 @@ blrl
 # r3: isLeft # True if this is the left shutter, False if right
 ################################################################################
 .set REG_DATA, 31
-.set REG_DevelopText, 30
+.set REG_DEVELOP_TEXT, 30
 .set REG_X_POS, 29
 .set REG_ID, 28
 
@@ -49,23 +49,23 @@ backup
   li  r6,1
   li  r7,1
   branchl r12, 0x80302834 # DevelopText_CreateDataTable
-  mr  REG_DevelopText,r3
+  mr  REG_DEVELOP_TEXT,r3
 #Activate Text
   lwz	r3, -0x4884 (r13)
-  mr  r4,REG_DevelopText
+  mr  r4,REG_DEVELOP_TEXT
   branchl r12, 0x80302810 # DevelopText_Activate
 #Hide blinking cursor
   li  r3,0
-  stb r3,0x26(REG_DevelopText)
+  stb r3,0x26(REG_DEVELOP_TEXT)
 #Change BG Color
-  mr  r3,REG_DevelopText
+  mr  r3,REG_DEVELOP_TEXT
   addi  r4,REG_DATA,DO_COLOR
   branchl r12, 0x80302b90 # DevelopText_StoreBGColor
 #Set Stretch
   lfs f1,DO_X_SCALE(REG_DATA)
-  stfs f1,0x8(REG_DevelopText)
+  stfs f1,0x8(REG_DEVELOP_TEXT)
   lfs f1,DO_Y_SCALE(REG_DATA)
-  stfs f1,0xC(REG_DevelopText)
+  stfs f1,0xC(REG_DEVELOP_TEXT)
 
 restore
 blr

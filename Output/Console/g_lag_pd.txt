@@ -1,0 +1,8 @@
+$Polling Drift Fix [Dan Salvato]
+*Removes polling drift phenomenon causing variable input lag
+C21A4DA0 00000003 #Polling Drift Fix [Dan Salvato]
+901C0000 3D808001
+618C95FC 7D8903A6
+4E800421 00000000
+041A4DB4 60000000
+04019860 4BFFFD9D
