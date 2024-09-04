@@ -1,3 +1,5 @@
+.ifndef HEADER_FFW_FUNCTION_MACROS
+
 .macro FunctionBody_ExecCameraTasks
 FN_ExecCameraTasks:
 backup
@@ -56,3 +58,6 @@ bne FNPGX_Loop
 restore
 blr
 .endm
+
+.endif
+.set HEADER_FFW_FUNCTION_MACROS, 1

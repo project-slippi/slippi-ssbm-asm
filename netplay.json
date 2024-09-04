@@ -521,38 +521,6 @@
           "isRecursive": true
         }
       ]
-    },
-    {
-      "name": "Optional: Allow Bot Input Overrides",
-      "authors": [
-        "Fizzi"
-      ],
-      "description": [
-        "Allows bots to override inputs"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "AI/OverwriteInputs",
-          "isRecursive": true
-        }
-      ]
-    },
-    {
-      "name": "Optional: FFW VS Mode",
-      "authors": [
-        "Fizzi"
-      ],
-      "description": [
-        "To be used by bots, simulates vs mode gameplay"
-      ],
-      "build": [
-        {
-          "type": "injectFolder",
-          "sourceFolder": "AI/LoopMainEngine",
-          "isRecursive": true
-        }
-      ]
     }
   ]
 }

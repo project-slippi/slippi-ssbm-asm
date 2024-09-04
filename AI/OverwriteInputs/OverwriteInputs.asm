@@ -8,6 +8,7 @@ b CODE_START
 STATIC_MEMORY_TABLE_BLRL:
 blrl
 .long 0x80000000 # Placeholder for allocated memory pointer
+.long 0xFFFFFFFF # Placeholder for last scene
 
 CODE_START:
 lfs	f29, -0x1430 (rtoc) # replaced code line
@@ -29,9 +30,14 @@ backup
 bl STATIC_MEMORY_TABLE_BLRL
 mflr REG_STATIC_MEM
 
-loadGlobalFrame r3
-cmpwi r3, 0
-bne SKIP_ALLOC
+# Allocate a new buffer on a scene change because the old one will have been cleaned up
+getMinorMajor r3
+lhz r4, 0x4(REG_STATIC_MEM)
+cmpw r3, r4
+beq SKIP_ALLOC
+
+# Write current scene to memory
+sth r3, 0x4(REG_STATIC_MEM)
 
 # Prepare buffer for EXI transfer
 li r3, RXB_SIZE
