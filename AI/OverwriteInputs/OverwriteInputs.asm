@@ -83,6 +83,14 @@ stw r3, 0(r8)
 lwz r3, RXPB_PAD_DATA+4(r9)
 stw r3, 4(r8)
 
+lbz r3, 0xA(r8) # Load status byte for pad
+extsb r3, r3
+cmpwi r3, 0
+beq LOOP_CONTINUE
+
+lwz r5, frameIndex(r13)
+logf LOG_LEVEL_NOTICE, "[Frame %d] Non 0 controller status byte: %d", "mr r6, 3"
+
 LOOP_CONTINUE:
 addi r10, r10, 1
 cmpwi r10, 4
