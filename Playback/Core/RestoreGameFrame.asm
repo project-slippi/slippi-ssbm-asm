@@ -162,6 +162,10 @@ SKIP_RESYNC:
   stb r3, 0x2(r20) #store raw x analog
   lbz r3, AnalogRawInputY(PlayerBackup)
   stb r3, 0x3(r20) #store raw y analog
+  lbz r3, CStickRawInputX(PlayerBackup)
+  stb r3, 0x4(r20) #store raw x cstick
+  lbz r3, CStickRawInputY(PlayerBackup)
+  stb r3, 0x5(r20) #store raw y cstick
 
 # If we do not have resync logic enabled, don't try to restore percentage
   lbz r3, PDB_SHOULD_RESYNC(REG_PDB_ADDR)

@@ -41,6 +41,7 @@
 .set MIN_DELAY_FRAMES, 1
 .set MAX_DELAY_FRAMES, 15
 .set ROLLBACK_MAX_FRAME_COUNT, 7
+.set LGL_LIMIT, 45 # Ledge grabs that exceed this number will result in a loss on timeout
 
 # I don't know exactly how long the local input buffer has to be but in very rare cases with a length
 # of ROLLBACK_MAX_FRAME_COUNT we could overflow into the negative indices:

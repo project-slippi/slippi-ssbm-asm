@@ -607,13 +607,26 @@ bne VSSceneDecide_SkipRankedHandler
 # If connection is not active, just go back to CSS
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_IDLE
-bne VSSceneDecide_ConnectionActive
+beq VSSceneDecide_Disconnected
+
+# I think I can access ODB values here since we are still in the VS scene
+# If last match ended in a disconnect, return to CSS
+lwz r4, OFST_R13_ODB_ADDR(r13) # ODB address
+lbz r3, ODB_IS_DISCONNECT_STATE_DISPLAYED(r4)
+cmpwi r3, 1
+beq VSSceneDecide_Disconnected
+
+b VSSceneDecide_ConnectionActive
+
+VSSceneDecide_Disconnected:
 # Report disconnect
 li r3, 1
 bl FN_ReportSetCompletion
-b VSSceneDecide_SkipRankedHandler
-VSSceneDecide_ConnectionActive:
+# We still trigger disconnection calls here because the previous game can end with disconnected message
+# while the connection is still technically active
+b VSSceneDecide_DisconnectAndReturnToCSS
 
+VSSceneDecide_ConnectionActive:
 bl GamePrepData_BLRL
 mflr REG_GPD
 
@@ -683,6 +696,7 @@ VSSceneDecide_RankedSetOver:
 li r3, 0
 bl FN_ReportSetCompletion
 
+VSSceneDecide_DisconnectAndReturnToCSS:
 # Disconnect from opponent
 # Prepare buffer for EXI transfer
 li r3, 1
@@ -1226,6 +1240,23 @@ beq SinglesDetermineWinner_HANDLE_COMPLETION
 b SinglesDetermineWinner_TIE
 
 SinglesDetermineWinner_HANDLE_TIMEOUT:
+# Handle ledge grab limit
+li r3, 0
+branchl r12, 0x80040af0 # PlayerBlock_GetCliffhangerStat
+mr REG_TEMP_VAR, r3
+li r3, 1
+branchl r12, 0x80040af0 # PlayerBlock_GetCliffhangerStat
+cmpwi REG_TEMP_VAR, LGL_LIMIT
+ble SinglesDetermineWinner_CHECK_LGL_LOSS
+cmpwi r3, LGL_LIMIT
+bgt SinglesDetermineWinner_LGL_EXIT # If we branch here both players have more than 45 so ignore LGL
+SinglesDetermineWinner_CHECK_LGL_LOSS:
+cmpwi REG_TEMP_VAR, LGL_LIMIT
+bgt SinglesDetermineWinner_P2_WIN # If P1 has more than 45 ledge grabs, P2 wins
+cmpwi r3, LGL_LIMIT
+bgt SinglesDetermineWinner_P1_WIN # If P2 has more than 45 ledge grabs, P1 wins
+SinglesDetermineWinner_LGL_EXIT:
+
 li r3, 0
 branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
 mr REG_TEMP_VAR, r3
@@ -1407,9 +1438,11 @@ beq GamePrepSceneDecide_ExecNormal
 
 # Here we have disconnected from opponent, go back to CSS
 
-# I commented the below because the game setup scene itself already sends the communication
-# li r3, 1
-# bl FN_ReportSetCompletion
+# In theory this should have already been sent by the game setup scene but there's
+# no harm in sending a duplicate and this covers our bases in the case of a poorly timed
+# disconnect, such as maybe right before the game tries to load
+li r3, 1
+bl FN_ReportSetCompletion
 
 # Go back to CSS
 load r4, 0x80479d30
