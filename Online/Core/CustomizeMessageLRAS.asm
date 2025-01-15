@@ -50,6 +50,9 @@ PLAY_SOUND:
 branchl r12, SFX_Menu_CommonSound
 SKIP_PLAY_SOUND:
 
+# 0: Time, 1: Sudden Death, 2: Success, 3: Ready, 4: GO!, 5: Game!, 6: Failure, 7: Complete, 8: Nothing, 9: Crash
+# branch r12, 0x802f70c0 # Time
+# branch r12, 0x802f70e8 # Complete
 # branch r12, 0x802f70fc # Failure
 # branch r12, 0x802f7110 # Game!
 branch r12, 0x802f7120 # Exit function, shows nothing and plays no sound
