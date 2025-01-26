@@ -19,6 +19,11 @@
   xor. r0, r0, r3
   beq Skip
 
+# check if VS Mode
+  branchl r12,FN_ShouldRecord
+  cmpwi r3,0x0
+  beq Skip
+
 #------------- INITIALIZE -------------
 # here we want to initalize some variables we plan on using throughout
 # get current offset in buffer

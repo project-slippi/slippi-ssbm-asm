@@ -19,6 +19,11 @@ STATIC_PREVIOUS_VALUE:
   .long 0x00000000
 
 Start:
+  # check if VS Mode
+  branchl r12,FN_ShouldRecord
+  cmpwi r3,0x0
+  beq Skip
+
   bl STATIC_PREVIOUS_VALUE
   mflr r3
   lwz r4, 0(r3)
