@@ -26,6 +26,17 @@ Start:
   
   bl STATIC_PREVIOUS_VALUE
   mflr r3
+
+  # on first frame, initialize previous value. this prevents a situation where if
+  # the previous game ended on a diff value, we wont get an event
+  # at the start of the next game
+  lwz r4, frameIndex(r13)
+  cmpwi r4, -39 # Is this when freeze frames end? Either way it's the first call to this function
+  bne ContinueCheck
+  li r4, 0x5
+  stw r4, 0(r3)
+
+ContinueCheck:
   lwz r4, 0(r3)
   lwz r5,0xdc(r31)
   cmpw r4, r5

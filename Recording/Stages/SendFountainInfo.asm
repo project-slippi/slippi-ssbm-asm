@@ -13,15 +13,14 @@
 .set REG_Buffer,11
 .set REG_BufferOffset,12
 
-# We skip to avoid the two initialization calls at game start
-  mflr r0
-  load r3, 0x801cc908
-  xor. r0, r0, r3
-  beq Skip
-
 # check if VS Mode
   branchl r12,FN_ShouldRecord
   cmpwi r3,0x0
+  beq Skip
+
+# check if this is called during initialization
+  lwz r3, frameIndex(r13)
+  cmpwi r3, CONST_FirstFrameIdx - 1
   beq Skip
 
 #------------- INITIALIZE -------------

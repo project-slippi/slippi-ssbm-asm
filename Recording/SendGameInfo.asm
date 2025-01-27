@@ -47,6 +47,10 @@ backup
   li  r3,0
   stw r3,bufferOffset(r13)
 
+# Initialize first frame idx for -124 (pre-game) so we can check if we are in an init function
+  li  r3,CONST_FirstFrameIdx-1
+  stw r3,frameIndex(r13)
+
 #------------- DETERMINE SIZE OF GECKO CODE SECTION -----------------
   loadwz r3, GeckoHeapPtr # Gecko code list start
   addi r3, r3, 8 # skip past d0c0de d0c0de

@@ -26,6 +26,17 @@ Start:
 
   bl STATIC_PREVIOUS_VALUE
   mflr r3
+
+  # on first frame, initialize previous value to no wind. this prevents a situation where if
+  # the previous game on DL ended with wind blowing, we wont get an event indicating no wind
+  # at the start of the next game
+  lwz r4, frameIndex(r13)
+  cmpwi r4, CONST_FirstFrameIdx
+  bne ContinueCheck
+  li r4, 0
+  stw r4, 0(r3)
+
+ContinueCheck:
   lwz r4, 0(r3)
   lwz r5,0xdc(r31)
   cmpw r4, r5
