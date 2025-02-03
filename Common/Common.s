@@ -521,6 +521,7 @@ add \reg, r3, r4
 .set CONST_ExiWrite, 1 # arg value to make an EXI write
 
 # For Slippi communication
+.set CONST_SlippiCmdSendMenuFrame, 0x3E
 .set CONST_SlippiCmdGetFrame, 0x76
 .set CONST_SlippiCmdCheckForReplay, 0x88
 .set CONST_SlippiCmdCheckForStockSteal,0x89
@@ -611,6 +612,14 @@ add \reg, r3, r4
 .set textStructDescriptorBuffer,-0x3D24
 .set isWidescreen,-0x5020
 .set OFST_R13_SB_ADDR,-0x503C # Scene buffer, persists throughout scenes
+
+################################################################################
+# CSS Screen Player Cursor State Offsets
+################################################################################
+.set CSS_CURSOR_STRUCT_PTR_P1, 0x804A0BC0
+.set CSS_CURSOR_STRUCT_PTR_P2, 0x804A0BC4
+.set CSS_CURSOR_STRUCT_PTR_P3, 0x804A0BC8
+.set CSS_CURSOR_STRUCT_PTR_P4, 0x804A0BCC
 
 ################################################################################
 # Log levels
