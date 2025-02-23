@@ -249,6 +249,15 @@ lbz r3, MSRB_IS_LOCAL_PLAYER_READY(r3)
 cmpwi r3, 0
 bne FN_SZThink_CHANGE_HANDLING_END # No changes when locked-in
 
+# Check if the Z button was pressed this frame
+load r4, 0x804c20bc
+lbz r3, -0x49B0(r13) # player index
+mulli r3, r3, 68
+add r3, r4, r3
+lwz r3, 0x8(r3) # get inputs
+rlwinm. r3, r3, 0, 27, 27 # check if z was pressed
+bne FN_SZThink_TOGGLE_CHARACTER
+
 # Determine if cursor is in bounds of unselected button
 loadwz r4, 0x804A0BC0 # This gets ptr to cursor position on CSS
 lfs f1, 0x10(r4) # Get y cursor pos
@@ -296,6 +305,7 @@ lwz r3, 0x8(r3) # get inputs
 rlwinm. r3, r3, 0, 23, 23 # check if a was pressed
 beq FN_SZThink_CHANGE_HANDLING_END
 
+FN_SZThink_TOGGLE_CHARACTER:
 # Toggle the selected character
 lbz r3, 0x70(REG_PORT_SELECTIONS_ADDR)
 cmpwi r3, 0x13 # Check if Sheik is selected
