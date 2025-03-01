@@ -1,4 +1,4 @@
-$Full tournament codes [Achilles, UnclePunch]
+$Full tournament codes [Achilles, UnclePunch, tauKhan]
 *Tournament mods to improve fair competition
 C216E510 00000098 #External/NeutralSpawn/NeutralSpawn.asm
 7C0802A6 90010004
@@ -170,6 +170,7 @@ C22FCCD8 0000000D #External/Hide Nametag When Invisible/Hide Nametag When Invisi
 04261B1C 60000000 #External/Closing CSS Door Preserves Nametag/On Window Close/Skip Nametag ID Reset.asm
 04261B30 60000000 #External/Closing CSS Door Preserves Nametag/On Window Close/Skip isUsingNametag Bool Reset.asm
 042605FC 38C00003 #External/Unplugging Closes CSS Door/Unplugging Closes CSS Door.asm
+041239A8 60000000 #External/FreezeGlitchFix/FreezeGlitchFix.asm
 044DC47C C0200000 #External/CSS Player Hands Default to HMN Button/Change Default Hand Position.asm
 C2261A6C 00000005 #External/CSS Player Hands Default to HMN Button/Fix A Button Buffer When Exiting Name Entry.asm
 88BF0005 2C050002
