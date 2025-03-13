@@ -305,6 +305,21 @@
           "annotation": "Lagless FoD"
         }
       ]
+    },
+    {
+      "name": "Optional: Controller Overlay",
+      "authors": [
+        "alphazeba"
+      ],
+      "description": [
+        "Draws controller overlay beneath player hud."
+      ],
+      "build": [
+        {
+          "type": "inject",
+          "sourceFile": "Common/Controller Overlay/main.asm"
+        }
+      ]
     }
   ]
 }
