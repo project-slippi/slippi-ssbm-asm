@@ -521,6 +521,23 @@
           "isRecursive": true
         }
       ]
+    },
+    {
+      "name": "Optional: Rollback Items",
+      "authors": [
+        "Fizzi",
+        "Krohnos"
+      ],
+      "description": [
+        "Rollback items"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/CustomOnlineSettings",
+          "isRecursive": true
+        }
+      ]
     }
   ]
 }

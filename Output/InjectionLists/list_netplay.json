@@ -2113,6 +2113,13 @@
    "Codetype": "Auto",
    "Annotation": "Online/Optional/ShowAllyIndicator/ShowAllyIndicator.asm",
    "Tags": ""
+  },
+  {
+   "InjectionAddress": "8000C160",
+   "Name": "Optional: Rollback Items",
+   "Codetype": "Auto",
+   "Annotation": "External/CustomOnlineSettings/MediumItems.asm",
+   "Tags": ""
   }
  ]
 }
