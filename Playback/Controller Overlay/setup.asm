@@ -55,17 +55,20 @@ blr
 # begin setup
 SETUP:
 backup
+getMinorMajor r3
+cmpwi r3, SCENE_PLAYBACK_IN_GAME
+bne SETUP_DONE
 # get data address
 bl DATA_LOC
 mflr REG_DATA_ADDR
 # buil COBJ
-load r3, 0x804d6d5c # idk what any of this does.
+load r3, 0x804d6d5c
 lwz r3, 0x0(r3)
 load r4, 0x803f94d0
 branchl r12, HSD_ArchiveGetPublicAddress
 lwz r3, 0x4(r3)
 lwz r3, 0x0(r3)
-branchl r12, 0x8036a590 # assumedly creates the cobj
+branchl r12, 0x8036a590
 mr REG_COBJ,r3
 # build GOBJ
 li r3, 19
@@ -75,7 +78,7 @@ branchl REG_SCRATCH, GObj_Create
 mr REG_GOBJ, r3
 # add object
 mr r3, REG_GOBJ
-lbz r4, -0x3E55(r13) # what is this offset?
+lbz r4, -0x3E55(r13)
 mr r5, REG_COBJ
 branchl REG_SCRATCH, GObj_AddToObj
 # Init camera
@@ -107,6 +110,8 @@ lhz r3, STATIC_BLOCK_PLAYER_TYPE_OFFSET(r3)
 cmpwi r3, PLAYER_TYPE_NONE
 bne PLAYER_IS_PRESENT
 # if player type is none set data to 0 to clean pointer
+# only needs to clean MAIN_STICK because it is the first
+# offset read in callback
 loadTextAddr r3, CV_MAIN_STICK_OFFSET
 li r4, 0
 stw r4, 0(r3)
@@ -200,5 +205,6 @@ addi REG_PLAYER_INDEX, REG_PLAYER_INDEX, 1
 cmpwi REG_PLAYER_INDEX, 4
 blt+ SETUP_PLAYER
 
+SETUP_DONE:
 restore
 b EXIT

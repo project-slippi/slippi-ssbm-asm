@@ -317,7 +317,7 @@
       "build": [
         {
           "type": "inject",
-          "sourceFile": "Common/Controller Overlay/main.asm"
+          "sourceFile": "Playback/Controller Overlay/main.asm"
         }
       ]
     }
