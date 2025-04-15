@@ -42,6 +42,12 @@
         },
         {
           "type": "injectFolder",
+          "sourceFolder": "External/FreezeGlitchFix",
+          "isRecursive": true,
+          "annotation": "Prevent freeze glitch [tauKhan]"
+        },
+        {
+          "type": "injectFolder",
           "sourceFolder": "External/CSS Player Hands Default to HMN Button",
           "annotation": "CSS Player Hands Default to HMN Button [Achilles1515]"
         },
