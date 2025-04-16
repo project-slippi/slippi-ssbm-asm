@@ -1,4 +1,4 @@
-$Full friendlies codes [Achilles, UnclePunch]
+$Full friendlies codes [Achilles, Dan Salvato, tauKhan, UnclePunch]
 *Friendlies mods to improve fair competition and speed up sessions
 C216E510 00000098 #External/NeutralSpawn/NeutralSpawn.asm
 7C0802A6 90010004

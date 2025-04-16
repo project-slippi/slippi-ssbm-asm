@@ -10,7 +10,7 @@
   "codes": [
     {
       "name": "Stealth tournament codes",
-      "authors": ["Achilles", "UnclePunch", "tauKhan"],
+      "authors": ["Achilles", "tauKhan", "UnclePunch"],
       "description": ["Tournament mods to improve fair competition"],
       "build": [
         {

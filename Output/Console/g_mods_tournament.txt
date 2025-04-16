@@ -1,4 +1,4 @@
-$Full tournament codes [Achilles, UnclePunch, tauKhan]
+$Full tournament codes [Achilles, Dan Salvato, tauKhan, UnclePunch]
 *Tournament mods to improve fair competition
 C216E510 00000098 #External/NeutralSpawn/NeutralSpawn.asm
 7C0802A6 90010004
