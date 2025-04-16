@@ -10,10 +10,7 @@
   "codes": [
     {
       "name": "Full friendlies codes",
-      "authors": [
-        "Achilles",
-        "UnclePunch"
-      ],
+      "authors": ["Achilles", "Dan Salvato", "tauKhan", "UnclePunch"],
       "description": [
         "Friendlies mods to improve fair competition and speed up sessions"
       ],
@@ -39,6 +36,12 @@
           "sourceFolder": "External/Unplugging Closes CSS Door",
           "isRecursive": true,
           "annotation": "Unplugging Closes CSS Door [UnclePunch]"
+        },
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/FreezeGlitchFix",
+          "isRecursive": true,
+          "annotation": "Prevent freeze glitch [tauKhan]"
         },
         {
           "type": "injectFolder",
