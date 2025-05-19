@@ -28,7 +28,7 @@ CODE_START:
   backup
   mr REG_NAME, r3
 
-# get our data which holds our buffer pointer
+# get our stage gobj data which holds our archive buffer and size
   li r3, 2
   branchl r12, Stage_GetGObj
   lwz REG_DATA, 0x2C(r3)
@@ -41,11 +41,11 @@ CODE_START:
   mr r3, REG_NAME
   lwz r4, OFST_BUF(REG_DATA)
   addi r5, REG_DATA, OFST_SIZE
-  branchl r12, File_Read
+  branchl r12, File_Read # File_Read wont return until the file is loaded
 
   li r3, 0
   li r4, SZ_ARCHIVE
-  branchl r12, HSD_MemAllocFromHeap
+  branchl r12, HSD_MemAllocFromHeap # allocate space for the archive
   mr REG_ARCHIVE, r3
 
   mr r3, REG_ARCHIVE
@@ -58,7 +58,7 @@ CODE_START:
   branchl r12, Archive_GetSymbol
   mr REG_MHEAD, r3
 
-  branchl r12, 0x801C62B4 # gets the correct offset from stage data?
+  branchl r12, 0x801C62B4 # gets the correct offset for storing to stage data?
   mr REG_MDATA, r3
 
   stw REG_ARCHIVE, OFST_BASE(REG_MDATA)
@@ -72,4 +72,4 @@ CODE_START:
 
 EXIT:
   restore
-  branch r12, 0x80016678
+  branch r12, 0x80016678 # skip the rest of the function
