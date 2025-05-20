@@ -66,6 +66,10 @@ CODE_START:
   li r3, 1
   stw r3, OFST_UNKX14(REG_MDATA)
 
+# store archive offset to gobj data
+  addi r3, REG_MDATA, OFST_BASE
+  stw r3, 0xD0(REG_DATA)
+
   addi r3, REG_MDATA, OFST_HEAD
   branchl r12, 0x801C6228 # ???
 
