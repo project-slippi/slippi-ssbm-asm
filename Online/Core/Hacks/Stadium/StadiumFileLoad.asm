@@ -1,7 +1,9 @@
 ################################################################################
 # Address: 0x800165ac
 ################################################################################
-
+# Replaces the async disk read with an EXI transfer instead
+# we have already preloaded the transformations to dolphins memory
+################################################################################
 .include "Common/Common.s"
 
 .set Stage_GetGObj, 0x801c2ba4
@@ -15,7 +17,7 @@
 .set REG_MDATA, 30
 .set REG_ARCHIVE, 29
 .set REG_DATA, 28
-.set REG_NAME, 27
+.set REG_PATH, 27
 
 .set OFST_BUF, 0xCC
 .set OFST_SIZE, 0xC8
@@ -26,7 +28,7 @@
 
 CODE_START:
   backup
-  mr REG_NAME, r3
+  mr REG_PATH, r3
 
 # get our stage gobj data which holds our archive buffer and size
   li r3, 2
@@ -34,18 +36,21 @@ CODE_START:
   lwz REG_DATA, 0x2C(r3)
 
 # init archive
-  mr r3, REG_NAME
+  mr r3, REG_PATH
   branchl r12, File_GetLength
   stw r3, OFST_SIZE(REG_DATA) # store to gobj data
 
-  mr r3, REG_NAME
+  mr r3, REG_PATH
   lwz r4, OFST_BUF(REG_DATA)
   addi r5, REG_DATA, OFST_SIZE
-  branchl r12, File_Read # File_Read wont return until the file is loaded
+  # maybe check if this actually runs the EXI read?
+  # shouldnt be possible because that would mean they skipped boot.asm
+  branchl r12, File_Read 
 
-  li r3, 0
+# allocate space for the archive, this gets free'd @ 801d46dc and 801d4f68?
+  li r3, 0 # hsd_heap
   li r4, SZ_ARCHIVE
-  branchl r12, HSD_MemAllocFromHeap # allocate space for the archive
+  branchl r12, HSD_MemAllocFromHeap 
   mr REG_ARCHIVE, r3
 
   mr r3, REG_ARCHIVE
@@ -58,7 +63,8 @@ CODE_START:
   branchl r12, Archive_GetSymbol
   mr REG_MHEAD, r3
 
-  branchl r12, 0x801C62B4 # gets the correct offset for storing to stage data?
+# gets the correct offset for storing to stage data?
+  branchl r12, 0x801C62B4
   mr REG_MDATA, r3
 
   stw REG_ARCHIVE, OFST_BASE(REG_MDATA)
