@@ -792,6 +792,27 @@
    "Tags": ""
   },
   {
+   "InjectionAddress": "801D4760",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "Online/Core/Hacks/Stadium/GrPsxIsValid.asm",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "801D14C4",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "Online/Core/Hacks/Stadium/SpeedUpTransformations.asm",
+   "Tags": ""
+  },
+  {
+   "InjectionAddress": "800165AC",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "Online/Core/Hacks/Stadium/StadiumFileLoad.asm",
+   "Tags": ""
+  },
+  {
    "InjectionAddress": "8038E910",
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",
