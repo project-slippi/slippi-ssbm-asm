@@ -106,12 +106,6 @@
         },
         {
           "type": "injectFolder",
-          "sourceFolder": "External/LRAStart From SSS Goes to CSS",
-          "isRecursive": true,
-          "annotation": "LRAStart From SSS Goes to CSS [UnclePunch]"
-        },
-        {
-          "type": "injectFolder",
           "sourceFolder": "External/Rumble Off",
           "isRecursive": true,
           "annotation": "Rumble Off [UnclePunch]"

@@ -190,13 +190,6 @@
    "Tags": ""
   },
   {
-   "InjectionAddress": "8025B8BC",
-   "Name": "General",
-   "Codetype": "Auto",
-   "Annotation": "External/LRAStart From SSS Goes to CSS/LRAStart From SSS Goes to CSS.asm",
-   "Tags": ""
-  },
-  {
    "InjectionAddress": "803D4A70",
    "Name": "General",
    "Codetype": "Auto",
