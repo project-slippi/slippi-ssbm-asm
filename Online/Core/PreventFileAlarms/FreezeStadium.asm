@@ -1,12 +1,29 @@
 ################################################################################
-# Address: 0x801d4578 # PokemonStadium_TransformationDecide
+# Address: 0x801d457c # PokemonStadium_TransformationDecide
 # Tags: [affects-gameplay]
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-fmr f31, f1 # Original code line
+.set REG_DATA, 31
 
-# Skip transformation logic
-# branch r12, 0x801d4fd8
+b CODE_START
+
+DATA_BLRL:
+blrl
+.set IS_FROZEN, 0
+.byte 0
+.align 2
+
+CODE_START:
+  backup
+
+  bl DATA_BLRL
+  mflr REG_DATA
+
+  # original code will either branch to the end of the function or resume as normal
+  lbz r3, IS_FROZEN(REG_DATA)
+
+EXIT:
+  restore
