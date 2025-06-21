@@ -1,12 +1,18 @@
 ################################################################################
-# Address: 0x801d4578 # PokemonStadium_TransformationDecide
+# Address: 0x801d457c # PokemonStadium_TransformationDecide
 # Tags: [affects-gameplay]
 ################################################################################
 
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-fmr f31, f1 # Original code line
+.set REG_DATA, 31
 
-# Skip transformation logic
-branch r12, 0x801d4fd8
+CODE_START:
+  backup
+
+  # original code will either branch to the end of the function or resume as normal
+  lbz r3, FSToggle(rtoc)
+
+EXIT:
+  restore

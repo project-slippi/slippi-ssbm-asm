@@ -340,7 +340,8 @@
 .set ERROR_MESSAGE_LEN, 241
 .set MSRB_GAME_INFO_BLOCK, MSRB_ERROR_MSG + ERROR_MESSAGE_LEN # MATCH_STRUCT_LEN
 .set MSRB_MATCH_ID, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN # char[51]
-.set MSRB_SIZE, MSRB_MATCH_ID + 51
+.set MSRB_ALT_STAGE_MODE, MSRB_MATCH_ID + 51 # u8
+.set MSRB_SIZE, MSRB_ALT_STAGE_MODE + 1
 
 ################################################################################
 # Player Selections Transfer Buffer
@@ -353,7 +354,8 @@
 .set PSTB_STAGE_ID, PSTB_CHAR_OPT + 1 # u16
 .set PSTB_STAGE_OPT, PSTB_STAGE_ID + 2 # u8, 0 = unset, 1 = merge, 2 = clear, 3 = random
 .set PSTB_ONLINE_MODE, PSTB_STAGE_OPT + 1 # u8
-.set PSTB_SIZE, PSTB_ONLINE_MODE + 1
+.set PSTB_ALT_STAGE_MODE, PSTB_ONLINE_MODE + 1 # u8
+.set PSTB_SIZE, PSTB_ALT_STAGE_MODE + 1
 
 ################################################################################
 # Chat Messages Transfer Buffer
