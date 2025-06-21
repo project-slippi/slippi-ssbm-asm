@@ -750,13 +750,6 @@
    "Tags": ""
   },
   {
-   "InjectionAddress": "801D1500",
-   "Name": "Required: Slippi Online",
-   "Codetype": "Auto",
-   "Annotation": "Online/Core/Hacks/Stadium/InitFrozenToggle.asm",
-   "Tags": ""
-  },
-  {
    "InjectionAddress": "801D14C4",
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",
