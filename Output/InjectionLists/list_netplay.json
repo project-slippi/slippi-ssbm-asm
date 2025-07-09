@@ -757,11 +757,11 @@
    "Tags": ""
   },
   {
-   "InjectionAddress": "801D14C4",
+   "InjectionAddress": "801D457C",
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",
-   "Annotation": "Online/Core/Hacks/Stadium/SpeedUpTransformations.asm",
-   "Tags": ""
+   "Annotation": "Online/Core/Hacks/Stadium/IngameCheckIfFrozen.asm",
+   "Tags": "[affects-gameplay]"
   },
   {
    "InjectionAddress": "800165AC",
@@ -790,13 +790,6 @@
    "Codetype": "Auto",
    "Annotation": "Online/Core/Music/VolumeChange.asm",
    "Tags": ""
-  },
-  {
-   "InjectionAddress": "801D457C",
-   "Name": "Required: Slippi Online",
-   "Codetype": "Auto",
-   "Annotation": "Online/Core/PreventFileAlarms/FreezeStadium.asm",
-   "Tags": "[affects-gameplay]"
   },
   {
    "InjectionAddress": "80023FFC",
