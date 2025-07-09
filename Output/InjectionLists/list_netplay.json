@@ -743,6 +743,13 @@
    "Tags": ""
   },
   {
+   "InjectionAddress": "801D2D38",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "Online/Core/Hacks/Stadium/ChangeJumbotronText.asm",
+   "Tags": ""
+  },
+  {
    "InjectionAddress": "801D4760",
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",

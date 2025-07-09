@@ -265,7 +265,7 @@ STAGE_NAME_SKIP:
 
 # Kill SFX
 #branchl r12,0x80023694
-
+STAGE_NAME_EXIT:
 restore
 b EXIT
 

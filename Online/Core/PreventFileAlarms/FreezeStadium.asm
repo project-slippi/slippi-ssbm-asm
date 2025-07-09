@@ -6,8 +6,6 @@
 .include "Common/Common.s"
 .include "Online/Online.s"
 
-.set REG_DATA, 31
-
 CODE_START:
   backup
 
