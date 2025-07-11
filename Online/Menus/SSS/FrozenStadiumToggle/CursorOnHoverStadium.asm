@@ -24,9 +24,7 @@ blrl
 
 CODE_START:
   backup
-# load frozen var
-  # load REG_DATA, SSS_CustomData
-  # lbz REG_FROZEN, 0(REG_DATA)
+
   bl DATA_BLRL
   mflr REG_DATA
 
