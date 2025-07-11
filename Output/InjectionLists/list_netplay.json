@@ -754,7 +754,7 @@
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",
    "Annotation": "Online/Core/Hacks/Stadium/GrPsxIsValid.asm",
-   "Tags": ""
+   "Tags": "[affects-gameplay]"
   },
   {
    "InjectionAddress": "801D457C",
@@ -768,7 +768,7 @@
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",
    "Annotation": "Online/Core/Hacks/Stadium/StadiumFileLoad.asm",
-   "Tags": ""
+   "Tags": "[affects-gameplay]"
   },
   {
    "InjectionAddress": "8038E910",

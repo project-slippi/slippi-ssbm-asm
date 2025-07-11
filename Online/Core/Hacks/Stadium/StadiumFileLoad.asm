@@ -1,5 +1,6 @@
 ################################################################################
 # Address: 0x800165ac
+# Tags: [affects-gameplay]
 ################################################################################
 # Replaces the async disk read with an EXI transfer instead
 # we have already preloaded the transformations to dolphins memory

@@ -1,5 +1,6 @@
 ################################################################################
 # Address: 0x801d4760
+# Tags: [affects-gameplay]
 ################################################################################
 # The original code returns a bool indicating whether or not the stage file
 # was loaded properly.
