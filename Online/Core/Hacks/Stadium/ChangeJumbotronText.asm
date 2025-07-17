@@ -27,7 +27,8 @@ blrl
 CODE_START:
   backup
 
-  lbz r3, FSToggle(rtoc)
+  computeBranchTargetAddress r3, INJ_FREEZE_STADIUM
+  lbz r3, 0x8(r3) # Load whether stadium is frozen
   cmpwi r3, 0
   beq EXIT
 

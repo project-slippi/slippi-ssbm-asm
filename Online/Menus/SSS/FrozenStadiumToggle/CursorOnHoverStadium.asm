@@ -38,7 +38,8 @@ CODE_START:
   lbz r4, 0(REG_DATA)
   xori r4, r4, 1
   stb r4, 0(REG_DATA)
-  stb r4, FSToggle(rtoc)
+  computeBranchTargetAddress r4, INJ_FREEZE_STADIUM
+  stb r4, 0x8(r4) # Store selection in the gecko code space
   PAD_CHECK_END:
 
 # get our jobj

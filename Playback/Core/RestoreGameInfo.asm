@@ -188,6 +188,10 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   cmpwi REG_LoopCount,4
   blt RESTORE_GAME_INFO_NAMETAG_LOOP
 
+# TODO: I dont think any of the following three toggles are necessary anymore
+# TODO: since we use dynamic gecko codes now. I'm don't even think the toggles
+# TODO: are referenced anywhere.
+
 #Restore PALToggle byte
   lbz r3,PALBool(BufferPointer)
   stb r3,PALToggle(rtoc)
@@ -197,7 +201,6 @@ RESTORE_GAME_INFO_NAMETAG_INC_LOOP:
   stb r3,PSPreloadToggle(rtoc)
 
 #Restore FrozenPS byte
-# TODO: This probably is no longer necessary with dynamic gecko codes
   lbz r3,FrozenPSBool(BufferPointer)
   stb r3,FSToggle(rtoc)
 

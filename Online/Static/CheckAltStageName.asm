@@ -25,7 +25,6 @@ CODE_START:
   bne EXIT
 
   # check if frozen
-  # lbz r0, FSToggle(rtoc)
   lbz r0, MSRB_ALT_STAGE_MODE(REG_MSRB_ADDR)
   cmpwi r0, 0
   beq EXIT

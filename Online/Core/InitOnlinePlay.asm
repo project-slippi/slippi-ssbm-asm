@@ -137,7 +137,8 @@ li r5, MATCH_STRUCT_LEN
 branchl r12, memcpy
 
 lbz r3, MSRB_ALT_STAGE_MODE(REG_MSRB_ADDR)
-stb r3, FSToggle(rtoc)
+computeBranchTargetAddress r3, INJ_FREEZE_STADIUM
+stb r3, 0x8(r3) # Store selection in the gecko code space
 # logf LOG_LEVEL_ERROR, "alt stage mode: %d"
 
 lbz r3, OFST_R13_ONLINE_MODE(r13)
