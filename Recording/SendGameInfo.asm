@@ -356,7 +356,18 @@ SEND_GAME_INFO_NAMETAG_INC_LOOP:
 .set FSToggleStart, (PALToggleStart+ PALToggleLength)
 .set FSToggleLength,0x1
 
-  lbz r3,FSToggle(rtoc)
+  load r3, 0x4bfb3ea1 # original instruction stored at INJ
+  load r4, INJ_FREEZE_STADIUM
+  lwz r4, 0x0(r4) # load the instruction currently at INJ
+  cmpw r3, r4 # If the instruction is the original, assume unfrozen stadium
+  li r3, 0
+  beq WRITE_FSToggle
+
+  # Fetch from code
+  computeBranchTargetAddress r3, INJ_FREEZE_STADIUM
+  lbz r3, 0x8(r3) # Load whether stadium is frozen
+
+WRITE_FSToggle:
   stb r3,FSToggleStart+0x0(REG_Buffer)
 
 #------------- SEND Major/Minor Scene ------------

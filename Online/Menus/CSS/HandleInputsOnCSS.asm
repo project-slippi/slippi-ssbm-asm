@@ -450,6 +450,14 @@ FN_TX_LOCK_IN_STAGE_SEND:
 sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
 stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
+# Write the alt stage mode
+computeBranchTargetAddress r3, 0x8025a530
+addi r3, r3, 0x8
+lbz r3, 0(r3)
+stb r3, PSTB_ALT_STAGE_MODE(REG_TXB_ADDR)
+# mr r5, r3
+# logf LOG_LEVEL_WARN, "TXB: Alt Stage Mode: %x"
+
 # Write the online mode we are in
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 stb r3, PSTB_ONLINE_MODE(REG_TXB_ADDR)

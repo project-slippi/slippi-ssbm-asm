@@ -580,6 +580,8 @@ add \reg, r3, r4
 .set CFOptionsAddress, RtocAddress - ControllerFixOptions
 .set GeckoHeapPtr, 0x80005600
 
+.set INJ_FREEZE_STADIUM, 0x801d457c
+
 # Internal scenes
 .set SCENE_TRAINING_CSS, 0x001C
 .set SCENE_TRAINING_SSS, 0x011C
