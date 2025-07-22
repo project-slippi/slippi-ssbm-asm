@@ -28,6 +28,9 @@ CODE_START:
   bl DATA_BLRL
   mflr REG_DATA
 
+# load branch target address early to use later. this macro clobbers r3
+  computeBranchTargetAddress r12, INJ_FREEZE_STADIUM
+
 # check if we pressed z
   load r3, HSD_PadMaster
   lwz r4, 0x8(r3) # instant buttons
@@ -38,8 +41,7 @@ CODE_START:
   lbz r4, 0(REG_DATA)
   xori r4, r4, 1
   stb r4, 0(REG_DATA)
-  computeBranchTargetAddress r4, INJ_FREEZE_STADIUM
-  stb r4, 0x8(r4) # Store selection in the gecko code space
+  stb r4, 0x8(r12) # Store selection in the gecko code space
   PAD_CHECK_END:
 
 # get our jobj

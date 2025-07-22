@@ -136,9 +136,9 @@ addi r4, REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK
 li r5, MATCH_STRUCT_LEN
 branchl r12, memcpy
 
+computeBranchTargetAddress r4, INJ_FREEZE_STADIUM
 lbz r3, MSRB_ALT_STAGE_MODE(REG_MSRB_ADDR)
-computeBranchTargetAddress r3, INJ_FREEZE_STADIUM
-stb r3, 0x8(r3) # Store selection in the gecko code space
+stb r3, 0x8(r4) # Store selection in the gecko code space
 # logf LOG_LEVEL_ERROR, "alt stage mode: %d"
 
 lbz r3, OFST_R13_ONLINE_MODE(r13)
