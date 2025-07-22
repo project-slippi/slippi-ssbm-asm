@@ -179,6 +179,7 @@ b SKIP_START_MATCH
 HANDLE_CONNECTED:
 
 # Handle disconnect when input is hold for X seconds
+lbz r3, -0x49B0(r13) # player index in control of CSS
 branchl r12, Inputs_GetPlayerHeldInputs
 rlwinm. r0, r4, 0, 0x10
 beq RESET_HOLD_TIMER # if button is no longer pressed, reset hold timer
