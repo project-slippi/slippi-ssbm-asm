@@ -408,6 +408,46 @@ stb r3, PSTB_CHAR_COLOR(REG_TXB_ADDR)
 li r3, 1 # merge character
 stb r3, PSTB_CHAR_OPT(REG_TXB_ADDR)
 
+# Check if this is ranked mode, if not don't send rank
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_Ranked
+beq SEND_RANK
+li r3, 0 # send empty rank by default
+stb r3, PSTB_RANK(REG_TXB_ADDR)
+b SKIP_SEND_RANK
+
+SEND_RANK:
+.set REG_RIRB_ADDR, 29
+
+# Prep the rank info response buffer
+li r3, RIRB_SIZE
+branchl r12, HSD_MemAlloc
+mr REG_RIRB_ADDR, r3
+li r4, RIRB_SIZE
+branchl r12, Zero_AreaLength
+
+# Use response buffer to send command byte
+li r3, CONST_SlippiCmdGetRank
+stb r3, 0(REG_RIRB_ADDR)
+
+# Request rank
+mr r3, REG_RIRB_ADDR # Use the receive buffer to send the command
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+
+# Get rank response
+mr r3, REG_RIRB_ADDR # Use the receive buffer to send the command
+li r4, RIRB_SIZE
+li r5, CONST_ExiRead
+branchl r12, FN_EXITransferBuffer
+
+lbz r3, RIRB_RANK(REG_RIRB_ADDR)
+stb r3, PSTB_RANK(REG_TXB_ADDR)
+
+mr r5, r3
+logf LOG_LEVEL_INFO, "rank: %d"
+SKIP_SEND_RANK:
 # Send a blank team ID if this isn't teams mode.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
