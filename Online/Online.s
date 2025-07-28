@@ -348,7 +348,8 @@
 ################################################################################
 # Rank Info Response Buffer
 ################################################################################
-.set RIRB_STATUS, 0 # u8
+.set RIRB_VISIBILITY, 0 # u8
+.set RIRB_STATUS, RIRB_VISIBILITY + 1 # u8
 .set RIRB_RANK, RIRB_STATUS + 1 # u8
 .set RIRB_RATING_ORDINAL, RIRB_RANK + 1 # float
 .set RIRB_GLOBAL_PLACING, RIRB_RATING_ORDINAL + 4 # u8
