@@ -445,8 +445,8 @@ branchl r12, FN_EXITransferBuffer
 lbz r3, RIRB_RANK(REG_RIRB_ADDR)
 stb r3, PSTB_RANK(REG_TXB_ADDR)
 
-mr r5, r3
-logf LOG_LEVEL_INFO, "rank: %d"
+# mr r5, r3
+# logf LOG_LEVEL_INFO, "rank: %d"
 SKIP_SEND_RANK:
 # Send a blank team ID if this isn't teams mode.
 lbz r3, OFST_R13_ONLINE_MODE(r13)
