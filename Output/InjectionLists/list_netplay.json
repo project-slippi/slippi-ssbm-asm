@@ -1992,8 +1992,8 @@
    "InjectionAddress": "8021AAE0",
    "Name": "Optional: Freeze Final Destination Background",
    "Codetype": "Auto",
-   "Annotation": "External/FrozenFdSlippi/FreezeFDSlippi.asm",
-   "Tags": "[affects-gameplay]"
+   "Annotation": "External/FreezeFDSlippi/FreezeFDSlippi.asm",
+   "Tags": ""
   },
   {
    "InjectionAddress": "803BB05C",

@@ -9,6 +9,11 @@
 
 .include "Common/Common.s"
 
+# After doing more research, it seems that this function runs after
+# PlayerThink_Interrupt but before PlayerThink_Physics. That means that most
+# RNG things we care about such as Peach's turnip pulls, GnW's hammer, etc
+# have already been computed and desync'ing RNG here might not actually matter
+
 # We can use r31 here because it's backed up and restored by the parent function. 
 # We just need to make sure we manage it intelligently because the parent function
 # needs it when we exit
