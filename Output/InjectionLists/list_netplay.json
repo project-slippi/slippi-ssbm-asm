@@ -197,13 +197,6 @@
    "Tags": ""
   },
   {
-   "InjectionAddress": "8021AAE4",
-   "Name": "Required: General Codes",
-   "Codetype": "04",
-   "Annotation": "",
-   "Tags": ""
-  },
-  {
    "InjectionAddress": "8025B8BC",
    "Name": "Required: General Codes",
    "Codetype": "04",
@@ -741,6 +734,13 @@
    "Codetype": "Auto",
    "Annotation": "Online/Core/Hacks/PreventPadAlarmDuringRollback.asm",
    "Tags": ""
+  },
+  {
+   "InjectionAddress": "8021AAE4",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "Online/Core/Hacks/FD/DesyncProofBGTransformations.asm",
+   "Tags": "[affects-gameplay]"
   },
   {
    "InjectionAddress": "801D2D38",
@@ -1987,6 +1987,13 @@
    "Codetype": "04",
    "Annotation": "",
    "Tags": ""
+  },
+  {
+   "InjectionAddress": "8021AAE0",
+   "Name": "Optional: Freeze Final Destination Background",
+   "Codetype": "Auto",
+   "Annotation": "External/FrozenFdSlippi/FreezeFDSlippi.asm",
+   "Tags": "[affects-gameplay]"
   },
   {
    "InjectionAddress": "803BB05C",
