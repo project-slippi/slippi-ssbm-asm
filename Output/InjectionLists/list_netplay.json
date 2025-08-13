@@ -750,6 +750,13 @@
    "Tags": ""
   },
   {
+   "InjectionAddress": "801C65C8",
+   "Name": "Required: Slippi Online",
+   "Codetype": "Auto",
+   "Annotation": "Online/Core/Hacks/Stadium/CustomZeroBuffer.asm",
+   "Tags": "[affects-gameplay]"
+  },
+  {
    "InjectionAddress": "801D4760",
    "Name": "Required: Slippi Online",
    "Codetype": "Auto",
