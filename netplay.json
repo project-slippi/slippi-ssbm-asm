@@ -143,11 +143,6 @@
         },
         {
           "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/DisableFdTransitions.bin",
-          "annotation": "Disable FD Background Transitions [Achilles, Dan Salvato]"
-        },
-        {
-          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/ResetToCssFromStageLoad.bin",
           "annotation": "L+R+A Returns to CSS during Stage Load [Jorgasms]"
         },
@@ -417,6 +412,23 @@
           "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/LaglessFod.bin",
           "annotation": "Lagless FoD"
+        }
+      ]
+    },
+    {
+      "name": "Optional: Freeze Final Destination Background",
+      "authors": [
+        "Fizzi"
+      ],
+      "description": [
+        "Prevents FD background from changing to improve performance"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/FreezeFDSlippi",
+          "isRecursive": true,
+          "annotation": "Disable FD Background Transitions"
         }
       ]
     },
