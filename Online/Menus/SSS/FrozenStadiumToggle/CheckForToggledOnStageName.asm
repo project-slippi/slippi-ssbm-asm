@@ -22,7 +22,7 @@ blrl
 CODE_START:
   backup
   # get our static toggle data
-  computeBranchTargetAddress REG_FROZEN, 0x8025a530
+  computeBranchTargetAddress REG_FROZEN, INJ_FREEZE_STADIUM
   addi REG_FROZEN, REG_FROZEN, 0x8
 
   bl DATA_BLRL

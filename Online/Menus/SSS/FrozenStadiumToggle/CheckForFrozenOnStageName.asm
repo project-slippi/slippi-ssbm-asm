@@ -19,7 +19,7 @@ CODE_START:
   bne EXIT
 
   # get our static toggle data
-  computeBranchTargetAddress REG_FROZEN, 0x8025a530
+  computeBranchTargetAddress REG_FROZEN, INJ_FREEZE_STADIUM
   addi REG_FROZEN, REG_FROZEN, 0x8
 
   lwz r3, 0x0(REG_FROZEN)

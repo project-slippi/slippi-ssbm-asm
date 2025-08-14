@@ -17,17 +17,8 @@
 
 b CODE_START
 
-DATA_BLRL:
-blrl
-.set FROZEN_TOGGLE, 0
-.byte 0
-.align 2
-
 CODE_START:
   backup
-
-  bl DATA_BLRL
-  mflr REG_DATA
 
 # load branch target address early to use later. this macro clobbers r3
   computeBranchTargetAddress r12, INJ_FREEZE_STADIUM
@@ -43,9 +34,8 @@ LOOP_TOGGLE:
   beq LOOP_TOGGLE_CHECK
   
 # weve pressed z, so toggle stadium and continue
-  lbz r4, 0(REG_DATA)
+  lbz r4, 0x8(r12)
   xori r4, r4, 1
-  stb r4, 0(REG_DATA)
   stb r4, 0x8(r12) # Store selection in the gecko code space
   b COLOR_START
 
