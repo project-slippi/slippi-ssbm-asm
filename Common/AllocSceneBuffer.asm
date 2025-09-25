@@ -26,6 +26,13 @@ CODE_START:
 # On Dolphin a buffer has been allocated from the heap created in Bootloader/main.asm.
 # We want to free that buffer the first time we execute this logic so that the
 # buffer always exists prior and after.
+
+# NOTE: There's some really weird stuff going on here that I don't understand.
+# The buffer we're freeing here was actually allocated on a different heap than
+# the main heap. By running Free like this we are freeing the memory on the main heap
+# despite the fact that it was allocated on a different heap. That said, if I try to free
+# it using its original heap ID, it does not fix the GFX issue when eating food. I have
+# no idea why free'ing it on a different heap fixes the GFX issues.
 bl DATA_BLRL
 mflr r4
 lbz r3, 0x0(r4)
