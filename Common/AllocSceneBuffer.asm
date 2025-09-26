@@ -1,0 +1,58 @@
+################################################################################
+# Address: 0x801a4cb4
+################################################################################
+
+.include "Common/Common.s"
+.include "Online/Online.s"
+
+# This file allocates a scene buffer. This buffer will persist throughout a scene
+# and should be guaranteed to exist. It is typically used to execute EXI commands
+# without allocating a new buffer. An argument could be made that we should just
+# allocate new buffers when they're needed but that would be kind of slow if
+# we need to do it often, say for example for logging. Though we shouldn't have
+# logs that are frequently hit in prod anyways so maybe we should consider getting
+# rid of this?
+
+# The buffer is cleaned up on scene exit, look at FreeSceneBuffer.asm
+
+b CODE_START
+
+DATA_BLRL:
+blrl
+.byte 0 # one shot bool
+.align 2
+
+CODE_START:
+# On Dolphin a buffer has been allocated from the heap created in Bootloader/main.asm.
+# We want to free that buffer the first time we execute this logic so that the
+# buffer always exists prior and after.
+
+# NOTE: There's some really weird stuff going on here that I don't understand.
+# The buffer we're freeing here was actually allocated on a different heap than
+# the main heap. By running Free like this we are freeing the memory on the main heap
+# despite the fact that it was allocated on a different heap. That said, if I try to free
+# it using its original heap ID, it does not fix the GFX issue when eating food. I have
+# no idea why free'ing it on a different heap fixes the GFX issues.
+bl DATA_BLRL
+mflr r4
+lbz r3, 0x0(r4)
+cmpwi r3, 0
+bne SKIP_FREE
+li r3, 1
+stb r3, 0x0(r4) # Set one shot to true
+lwz r3, OFST_R13_SB_ADDR(r13)
+cmpwi r3, 0
+beq SKIP_FREE
+branchl r12, HSD_Free
+SKIP_FREE:
+
+li r3, 128
+branchl r12, HSD_MemAlloc
+
+# Store to r13 offset since this is what the other codes reference. But in the
+# future if we want to transition off r13 offsets we could store the buffer
+# in data in this file and use computeBranchTargetAddress to fetch it.
+stw r3, OFST_R13_SB_ADDR(r13)
+
+# Original
+li r0, 0
