@@ -11,44 +11,22 @@
 # allocate new buffers when they're needed but that would be kind of slow if
 # we need to do it often, say for example for logging. Though we shouldn't have
 # logs that are frequently hit in prod anyways so maybe we should consider getting
-# rid of this?
-
-# The buffer is cleaned up on scene exit, look at FreeSceneBuffer.asm
-
-b CODE_START
-
-DATA_BLRL:
-blrl
-.byte 0 # one shot bool
-.align 2
+# rid of this.
 
 CODE_START:
 # On Dolphin a buffer has been allocated from the heap created in Bootloader/main.asm.
 # We want to free that buffer the first time we execute this logic so that the
 # buffer always exists prior and after.
+# If the heap creation order is ever changed, this will need to be updated.
 
-# NOTE: There's some really weird stuff going on here that I don't understand.
-# The buffer we're freeing here was actually allocated on a different heap than
-# the main heap. By running Free like this we are freeing the memory on the main heap
-# despite the fact that it was allocated on a different heap. That said, if I try to free
-# it using its original heap ID, it does not fix the GFX issue when eating food. I have
-# no idea why free'ing it on a different heap fixes the GFX issues.
-bl DATA_BLRL
-mflr r4
-lbz r3, 0x0(r4)
-cmpwi r3, 0
-bne SKIP_FREE
-li r3, 1
-stb r3, 0x0(r4) # Set one shot to true
-lwz r3, OFST_R13_SB_ADDR(r13)
-cmpwi r3, 0
-beq SKIP_FREE
-branchl r12, HSD_Free
-SKIP_FREE:
+li r3, 0 # Heap index 0 that was created in Bootloader/main.asm
+lwz r4, OFST_R13_SB_ADDR(r13)
+branchl r12, 0x80343fec # OSFreeToHeap
 
-li r3, 128
-branchl r12, HSD_MemAlloc
-
+# Realloc scene buffer
+li r3, 0
+li r4, 128
+branchl r12, 0x80343ef0 # OSAllocFromHeap
 # Store to r13 offset since this is what the other codes reference. But in the
 # future if we want to transition off r13 offsets we could store the buffer
 # in data in this file and use computeBranchTargetAddress to fetch it.
