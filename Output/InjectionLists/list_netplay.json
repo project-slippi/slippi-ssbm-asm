@@ -2134,6 +2134,13 @@
    "Codetype": "Auto",
    "Annotation": "Online/Optional/ShowAllyIndicator/ShowAllyIndicator.asm",
    "Tags": ""
+  },
+  {
+   "InjectionAddress": "801A4FA4",
+   "Name": "Optional: Extract Menu Info",
+   "Codetype": "Auto",
+   "Annotation": "Common/ExtractMenuInfo/SendMenuFrame.asm",
+   "Tags": ""
   }
  ]
 }
