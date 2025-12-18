@@ -32,6 +32,11 @@ backup
 # Manually backup the contents of r4. Without this, it breaks moving the cursor.
 mr r26, r4
 
+# Don't run any logic if in normal name entry
+lbz r12, OFST_R13_NAME_ENTRY_MODE(r13)
+cmpwi r12, 0
+beq EXIT
+
 # Load buffers into non-volatile registers
 bl STATIC_MEMORY_TABLE_BLRL
 mflr r3
