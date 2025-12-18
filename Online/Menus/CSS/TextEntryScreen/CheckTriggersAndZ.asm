@@ -8,6 +8,7 @@
 
 .set REG_ACB_ADDR, 31
 .set REG_ACXB_ADDR, 30
+.set REG_MENU_FLOW, 29
 
 b CODE_START
 STATIC_MEMORY_TABLE_BLRL:
@@ -27,10 +28,7 @@ branch r12, 0x8023ccac
 
 CHECK_Z:
 
-backup
-
-# Manually backup the contents of r4. Without this, it breaks moving the cursor.
-mr r26, r4
+backupall
 
 # Don't run any logic if in normal name entry
 lbz r12, OFST_R13_NAME_ENTRY_MODE(r13)
@@ -53,8 +51,6 @@ branchl	r12, Inputs_GetPlayerInstantInputs
 # Determine if Z was pressed.
 rlwinm.	r0, r4, 0, 27, 27
 beq EXIT
-
-mr r4, r26
 
 ################################################################################
 # Z Press Handler
@@ -89,8 +85,9 @@ SKIP_CURSOR_POS_ADJUST:
 stb r3, 0x58(r28) # store position
 
 # Move selector over the confirm button
+load REG_MENU_FLOW, Menu_FlowData
 li r3, 57
-sth r3, 0x2(r26) # Kind of awkward to use r26 here
+sth r3, MFD_HOVERED_OPTION(REG_MENU_FLOW)
 
 branchl r12, 0x8023CE4C # NameEntry_UpdateTypedName
 
@@ -98,8 +95,7 @@ Z_HANDLER_END:
 # Return to bottom of NameEntry_Think loop
 # Previously it would check inputs again but this would cause an infinite loop on z press
 # branchl r12, 0x8023cca4
-mr r4, r26
-restore
+restoreall
 branch r12, 0x8023ccfc
 
 ################################################################################
@@ -185,6 +181,6 @@ restore
 blr
 
 EXIT:
-mr r4, r26
-restore
+# mr r4, r26
+restoreall
 branch r12, 0x8023cd34 # B Press check

@@ -604,6 +604,20 @@ add \reg, r3, r4
 # Playback scene
 .set SCENE_PLAYBACK_IN_GAME, 0x010E
 
+# Menu Flow Data
+.set Menu_FlowData, 0x804a04f0
+# unpacked game struct
+.set MFD_CUR_MENU, 0 # u8
+.set MFD_PREV_MENU, MFD_CUR_MENU + 1 # u8
+.set MFD_HOVERED_OPTION, MFD_PREV_MENU + 1 # u16
+.set MFD_CONFIRMED_OPTION, MFD_HOVERED_OPTION + 2 # u8
+.set MFD_OFST_0x8, MFD_CONFIRMED_OPTION + 3 # u32
+.set MFD_BUTTONS, MFD_OFST_0x8 + 4 # u32
+.set MFD_OFST_0x10, MFD_BUTTONS + 4 # u8
+.set MFD_ENTERING_MENU, MFD_OFST_0x10 + 1 # bool
+.set MFD_LIGHT_LERP_FRAMES, MFD_ENTERING_MENU + 1 # u8
+.set MFD_LIGHT_COLOR, MFD_LIGHT_LERP_FRAMES + 2 # u32 - GXColor
+
 ################################################################################
 # Offsets from r13
 ################################################################################
