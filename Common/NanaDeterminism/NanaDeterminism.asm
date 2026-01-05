@@ -5,9 +5,14 @@
 
 mr r29, r3 # replaced code line
 
-# There is a scenario where r30 is undefined and is passed to a function at line 800ac754. This
-# value then gets used for a stb in the called function and impacts Nana's inputs. The value when
-# undefined often holds a memory address which doesn't make sense for stb. There is a fair chance
-# this is a bug with Melee which causes it to be undeterministic. By initializing the value, we
-# hopefully solve this problem
+# There seems to be a bug in the game where undefined values are used for X/Y stick values
+# under certain conditions when Nana is DI'ing a throw. This happens at lines 800ac74c and
+# 800ac75c where r5 can be unset, r30 can also be unset which is loaded into r5 for the second call.
+#
+# If the gecko code list for one player is different than another (for example if they enable
+# an option code), the undefined values can be different, causing a desync.
+#
+# By initializing r5 and r30 to 0, we ensure that the same values are used for both players.
+
+li r5, 0
 li r30, 0
