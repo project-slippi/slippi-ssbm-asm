@@ -527,6 +527,23 @@
           "isRecursive": true
         }
       ]
+    },
+    {
+      "name": "Optional: Extract Menu Info",
+      "authors": [
+        "altf4",
+        "Fizzi"
+      ],
+      "description": [
+        "Extracts menu info. Useful for bots."
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "Common/ExtractMenuInfo",
+          "isRecursive": true
+        }
+      ]
     }
   ]
 }
