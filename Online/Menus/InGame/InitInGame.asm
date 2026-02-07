@@ -162,8 +162,8 @@ load  r3, 1 << TEXT_GXLINK
 stw r3, 0x24 (REG_GOBJ)
 
 # Store frame since creation
-li r0, 0
-stw r0, 0x2C(REG_GOBJ)
+li r3, 0
+stw r3, 0x2C(REG_GOBJ)
 
 # Create canvas
 li  r3,2
