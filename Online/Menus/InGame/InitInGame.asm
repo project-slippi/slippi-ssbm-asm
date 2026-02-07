@@ -20,16 +20,14 @@ blrl
 .float 0
 .set DOFST_TEXT_BASE_CANVAS_SCALING, DOFST_TEXT_BASE_Z + 4
 .float 0.1
-.set DOFST_TEXT_BASE_CANVAS_SCALING_1, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 0.1
 
 # delay values
-.set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING_1 + 4
-.float 270
+.set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
+.float 9
 .set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float 207
+.float -230
 .set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 0.33
+.float 1.0
 
 # BG values
 .set DOFST_PLAYERBG_OPA, DOFST_TEXT_SIZE + 4
@@ -67,6 +65,9 @@ blrl
 .string "Delay: %df"
 .align 2
 
+# Time in frames where the Delay text will render
+.set  MAX_PERSISTANCE, 180
+
 #########################################
 COBJ_CB:
 blrl
@@ -88,6 +89,26 @@ lbz	r0, -0x4934 (r13)
 cmpwi r0,1
 beq COBJ_CB_Exit
 
+# Increment lifetime counter
+lwz r3, 0x2C(REG_GOBJ)
+addi r3, r3, 1
+stw r3, 0x2C(REG_GOBJ)
+
+# Check lifetime 
+cmpwi r3, MAX_PERSISTANCE
+bne still_visible
+
+# If lifetime ended
+lwz r3, OFST_R13_ODB_ADDR(r13)
+lwz r3, ODB_HUD_TEXT_STRUCT(r3)
+# Selecting Subtext with index 0 (Delay text)
+li r4, 0
+# Scale text to 0
+lfs f1, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
+lfs f2, DOFST_FLOAT_ZERO(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+still_visible:
 # Draw camera
 mr  r3, REG_GOBJ
 branchl r12,0x803910d8
@@ -140,6 +161,10 @@ branchl r12,0x8039075c
 load  r3, 1 << TEXT_GXLINK
 stw r3, 0x24 (REG_GOBJ)
 
+# Store frame since creation
+li r3, 0
+stw r3, 0x2C(REG_GOBJ)
+
 # Create canvas
 li  r3,2
 mr  r4,REG_GOBJ
@@ -171,6 +196,7 @@ li r3, 2
 mr r4, REG_Canvas # HUD canvas used for names and delay (does not stretch in widescreen)
 branchl r12, Text_CreateStruct
 mr REG_TEXT_STRUCT, r3
+stw REG_TEXT_STRUCT, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
 
 # Set text kerning to close
 li r4, 0x1
@@ -183,36 +209,7 @@ stb r4, 0x4A(REG_TEXT_STRUCT)
 lfs f1, DOFST_TEXT_BASE_Z(REG_DATA_ADDR) #Z offset
 stfs f1, 0x8(REG_TEXT_STRUCT)
 
-# Scale Canvas Down
-lfs f1, DOFST_TEXT_BASE_CANVAS_SCALING_1(REG_DATA_ADDR)
-stfs f1, 0x24(REG_TEXT_STRUCT)
-stfs f1, 0x28(REG_TEXT_STRUCT)
-
-stw REG_TEXT_STRUCT, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
-
-# Get player names
-li r3, 0
-branchl r12, FN_LoadMatchState
-mr REG_MSRB_ADDR, r3
-
-# Start prepping text struct
-li r3, 2
-mr  r4,REG_Canvas
-branchl r12, Text_CreateStruct
-mr REG_TEXT_STRUCT, r3
-
-# Set text kerning to close
-li r4, 0x1
-stb r4, 0x49(REG_TEXT_STRUCT)
-# Set text to align right
-li r4, 0x2
-stb r4, 0x4A(REG_TEXT_STRUCT)
-
-# Store Base Z Offset
-lfs f1, DOFST_TEXT_BASE_Z(REG_DATA_ADDR) #Z offset
-stfs f1, 0x8(REG_TEXT_STRUCT)
-
-# Scale Canvas Down
+# Scale Text Down
 lfs f1, DOFST_TEXT_BASE_CANVAS_SCALING(REG_DATA_ADDR)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
@@ -236,6 +233,11 @@ branchl r12, Text_UpdateSubtextSize
 ##########################
 ## Display Player Names ##
 ##########################
+
+# Get player names
+li r3, 0
+branchl r12, FN_LoadMatchState
+mr REG_MSRB_ADDR, r3
 
 # Display all player names
 .set REG_COUNT, 20

@@ -20,16 +20,18 @@ blrl
 
 # delay values
 .set DOFST_TEXT_X_POS, DOFST_TEXT_BASE_CANVAS_SCALING + 4
-.float 270
+.float 9
 .set DOFST_TEXT_Y_POS, DOFST_TEXT_X_POS + 4
-.float 207
+.float -230
 .set DOFST_TEXT_SIZE, DOFST_TEXT_Y_POS + 4
-.float 0.33
+.float 1.0
 
 # strings
 .set DOFST_TEXT_DELAYSTRING, DOFST_TEXT_SIZE + 4
 .string "Delay: %df"
 .align 2
+
+.set  MAX_PERSISTANCE, 180
 
 #########################################
 COBJ_CB:
@@ -52,6 +54,27 @@ lbz	r0, -0x4934 (r13)
 cmpwi r0,1
 beq COBJ_CB_Exit
 
+# Increment lifetime counter
+lwz r4, 0x2C(REG_GOBJ)
+lwz r3, 0x00(r4)
+addi r3, r3, 1
+stw r3, 0x00(r4)
+
+# Check lifetime 
+cmpwi r3, MAX_PERSISTANCE
+bne still_visible
+
+# If lifetime ended
+
+lwz r3, 0x04(r4)
+# Selecting Subtext with index 0 (Delay text)
+li r4, 0
+# Scale text to 0
+lfs f1, DOFST_TEXT_BASE_Z(REG_DATA_ADDR)
+lfs f2, DOFST_TEXT_BASE_Z(REG_DATA_ADDR)
+branchl r12, Text_UpdateSubtextSize
+
+still_visible:
 # Draw camera
 mr  r3, REG_GOBJ
 branchl r12,0x803910d8
@@ -189,6 +212,16 @@ branchl r12,0x8039075c
 load  r3, 1 << TEXT_GXLINK
 stw r3, 0x24 (REG_GOBJ)
 
+
+li r3, 8
+branchl r12, HSD_MemAlloc
+stw r3, 0x2C(REG_GOBJ)
+
+li r4, 0
+stw r4, 0x00(r3)
+stw r4, 0x04(r3)
+
+
 # Create canvas
 li  r3,2
 mr  r4,REG_GOBJ
@@ -212,12 +245,14 @@ li r3, 2
 mr  r4,REG_Canvas
 branchl r12, Text_CreateStruct
 mr REG_TEXT_STRUCT, r3
+lwz r4, 0x2C(REG_GOBJ)
+stw REG_TEXT_STRUCT, 0x04(r4)
 
 # Set text kerning to close
 li r4, 0x1
 stb r4, 0x49(REG_TEXT_STRUCT)
-# Set text to align right
-li r4, 0x2
+# Set text to align center
+li r4, 0x1
 stb r4, 0x4A(REG_TEXT_STRUCT)
 
 # Store Base Z Offset
