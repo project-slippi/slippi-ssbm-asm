@@ -416,6 +416,23 @@
       ]
     },
     {
+      "name": "Recommended: Audio Lag Reduction",
+      "authors": [
+        "Arte",
+        "Altafen"
+      ],
+      "description": [
+        "Reduces audio lag"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/ReorderAudioPipeline",
+          "isRecursive": true
+        }
+      ]
+    },
+    {
       "name": "Optional: Freeze Final Destination Background",
       "authors": [
         "Fizzi"
