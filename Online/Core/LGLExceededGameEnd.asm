@@ -68,6 +68,8 @@ bne EXIT
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_TEAMS
 beq EXIT
+cmpwi r3, ONLINE_MODE_PARTY
+beq EXIT
 
 # Check to see if this is an LGL victory
 

@@ -71,16 +71,18 @@
 .set ONLINE_MODE_UNRANKED, 1
 .set ONLINE_MODE_DIRECT, 2
 .set ONLINE_MODE_TEAMS, 3
+.set ONLINE_MODE_PARTY, 4
 
 .set OPTION_RANKED_IDX, 0
 .set OPTION_UNRANKED_IDX, 1
 .set OPTION_DIRECT_IDX, 2
 .set OPTION_TEAMS_IDX, 3
-.set OPTION_LOGIN_IDX, 4
-.set OPTION_LOGOUT_IDX, 5
-.set OPTION_UPDATE_IDX, 6
+.set OPTION_PARTY_IDX, 4
+.set OPTION_LOGIN_IDX, 5
+.set OPTION_LOGOUT_IDX, 6
+.set OPTION_UPDATE_IDX, 7
 
-.set ONLINE_SUBMENU_OPTION_COUNT, 7
+.set ONLINE_SUBMENU_OPTION_COUNT, 8
 
 ################################################################################
 # Online Scenes
