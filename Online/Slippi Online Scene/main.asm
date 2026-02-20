@@ -936,6 +936,9 @@ stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
 cmpwi r3, 0 # 0 = no teams
 beq SKIP_TEAMS_SETUP
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+beq PARTY_SETUP
 
 TEAMS_SETUP:
 .set REG_COUNT, 29
@@ -1044,6 +1047,65 @@ cmpwi REG_COUNT, 4
 blt TEAMS_SETUP_RIGHT_SIDE_LOOP
 
 # Set the player count for team 2
+stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
+b SKIP_TEAMS_SETUP
+
+PARTY_SETUP:
+.set REG_COUNT, 29
+.set REG_TEAM_PLAYER_COUNT, 28
+.set REG_LOCAL_PLAYER_IDX, 27
+
+# Configure splash as 1v3 for party mode.
+li r3, 0x2
+stb r3,0x2(r4)
+li r3, 1
+stb r3,-0x5(r4)
+stb r3,0x6(r4)
+stb r3,0x7(r4)
+stb r3,0x9(r4)
+stb r3,0xA(r4)
+stb r3,0xC(r4)
+stb r3,0xD(r4)
+stb r3,0xF(r4)
+stb r3,0x10(r4)
+
+# Left side: local player only
+lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+mulli r5, REG_LOCAL_PLAYER_IDX, 0x24
+addi r6, r5, 0x60
+lbzx r3, REG_VS_SSS_DATA, r6
+stb r3,0x5(r4)
+addi r6, r5, 0x63
+lbzx r3, REG_VS_SSS_DATA, r6
+stb r3,0xB(r4)
+li r3, 1
+stb r3, 0x3(r4)
+
+# Right side: all non-local players
+li REG_COUNT, 0
+li REG_TEAM_PLAYER_COUNT, 0
+PARTY_SETUP_RIGHT_SIDE_LOOP:
+cmpw REG_COUNT, REG_LOCAL_PLAYER_IDX
+beq PARTY_SETUP_RIGHT_SIDE_CONTINUE
+
+mulli r5, REG_COUNT, 0x24
+addi r6, r5, 0x60
+lbzx r3, REG_VS_SSS_DATA, r6
+addi r6, REG_TEAM_PLAYER_COUNT, 0x8
+stbx r3, r6, r4
+
+addi r6, r5, 0x63
+lbzx r3, REG_VS_SSS_DATA, r6
+addi r6, REG_TEAM_PLAYER_COUNT, 0xE
+stbx r3, r6, r4
+
+addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+
+PARTY_SETUP_RIGHT_SIDE_CONTINUE:
+addi REG_COUNT, REG_COUNT, 1
+cmpwi REG_COUNT, 4
+blt PARTY_SETUP_RIGHT_SIDE_LOOP
+
 stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
 
 SKIP_TEAMS_SETUP:

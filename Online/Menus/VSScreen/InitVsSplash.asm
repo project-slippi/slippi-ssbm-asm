@@ -10,7 +10,7 @@
 .set REG_MSRB_ADDR, 29
 
 # FN_GET_TEAM_PLAYERS
-.set REG_TEAM_ID, 28
+.set REG_LOCAL_PLAYER_IDX, 28
 .set REG_PLAYER_INDEX, 27
 .set REG_PLAYERS_COUNT, 26
 .set REG_PLAYER_1_NAME_STRING, 25
@@ -51,18 +51,22 @@ blrl
 .float 0.6
 
 # Color properties
-.set TPO_P1_LABEL_COLOR, TPO_PLAYER_NAME_SIZE + 4
-.long 0xF15959FF
-.set TPO_P2_LABEL_COLOR, TPO_P1_LABEL_COLOR + 4
-.long 0x6565FEFF
-.set TPO_COLOR_WHITE, TPO_P2_LABEL_COLOR + 4
+.set TPO_COLOR_RED, TPO_PLAYER_NAME_SIZE + 4
+.long 0xE54C4CFF
+.set TPO_COLOR_BLUE, TPO_COLOR_RED + 4
+.long 0x4B4CE5FF
+.set TPO_COLOR_YELLOW, TPO_COLOR_BLUE + 4
+.long 0xFFCB00FF
+.set TPO_COLOR_GREEN, TPO_COLOR_YELLOW + 4
+.long 0x00B200FF
+.set TPO_COLOR_WHITE, TPO_COLOR_GREEN + 4
 .long 0xFFFFFFFF
 
 # X Positions
 .set TPO_P1_X_POS, TPO_COLOR_WHITE + 4
 .float 60
 .set TPO_P2_X_POS, TPO_P1_X_POS + 4
-.float 400
+.float 340
 .set TPO_STAGE_X_POS, TPO_P2_X_POS + 4
 .float 238
 
@@ -85,9 +89,11 @@ blrl
 .float 22
 .set TPO_PLAYER_NAME_Y_OFST, TPO_PLAYER_NAME_X_OFST + 4
 .float 22
+.set TPO_PORT_NAME_X_OFST, TPO_PLAYER_NAME_Y_OFST + 4
+.float 30
 
 # String Properties
-.set TPO_TEAM_1_STRING, TPO_PLAYER_NAME_Y_OFST + 4
+.set TPO_TEAM_1_STRING, TPO_PORT_NAME_X_OFST + 4
 .string "Team 1"
 .set TPO_TEAM_2_STRING, TPO_TEAM_1_STRING + 7
 .string "Team 2"
@@ -95,13 +101,17 @@ blrl
 .string "P1"
 .set TPO_P2_STRING, TPO_P1_STRING + 3
 .string "P2"
+.set TPO_P3_STRING, TPO_P2_STRING + 3
+.string "P3"
+.set TPO_P4_STRING, TPO_P3_STRING + 3
+.string "P4"
 .align 2
 
 ################################################################################
 # Start Init Function
 ################################################################################
 LOAD_START:
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, 3
 
 ################################################################################
 # Load Stage Strings
@@ -147,12 +157,15 @@ stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
 lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
+lbz r4, OFST_R13_ONLINE_MODE(r13)
+cmpwi r4, ONLINE_MODE_PARTY
+beq INIT_PARTY_PLAYER_TEXT
 cmpwi r3, 1 # TEAMS
 beq INIT_TEAMS_PLAYER_TEXT
 
 INIT_1v1_PLAYER_TEXT:
 # Initialize Team 1 Text
-addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_RED
 addi r4, REG_TEXT_PROPERTIES, TPO_P1_STRING
 addi r5, REG_MSRB_ADDR, MSRB_P1_NAME
 li r6, 0
@@ -160,12 +173,91 @@ lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
 
 # Initialize Team 2 Text
-addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_BLUE
 addi r4, REG_TEXT_PROPERTIES, TPO_P2_STRING
 addi r5, REG_MSRB_ADDR, MSRB_P2_NAME
 li r6, 0
 lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
+b INIT_STAGE_TEXT
+
+INIT_PARTY_PLAYER_TEXT:
+# Left side: local player only
+lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+mulli r5, REG_LOCAL_PLAYER_IDX, 31
+addi r5, r5, MSRB_P1_NAME
+add r5, r5, REG_MSRB_ADDR
+
+mr r3, REG_LOCAL_PLAYER_IDX
+bl FN_GET_PORT_LABEL_AND_COLOR
+li r6, 1
+lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
+bl INIT_PLAYER_TEXT
+
+# Right side: all non-local players (3 total in party mode). Render each row
+# with its own colored port label and corresponding player name.
+lfs f31, TPO_PLAYER_Y_START(REG_TEXT_PROPERTIES)
+lfs f30, TPO_PLAYER_NAME_Y_OFST(REG_TEXT_PROPERTIES)
+li r3, 2
+branchl r12, FN_IntToFloat
+fmuls f0, f30, f1
+fsubs f31, f31, f0 # row label y for first opponent
+
+li REG_PLAYER_INDEX, 0
+li REG_PLAYERS_COUNT, 0
+INIT_PARTY_FIND_OPPONENTS_LOOP:
+cmpw REG_PLAYER_INDEX, REG_LOCAL_PLAYER_IDX
+beq INIT_PARTY_FIND_OPPONENTS_LOOP_CONTINUE
+
+# Load name pointer for this non-local player
+mulli r11, REG_PLAYER_INDEX, 31
+addi r11, r11, MSRB_P1_NAME
+add r11, r11, REG_MSRB_ADDR
+mr REG_PLAYER_1_NAME_STRING, r11
+
+# Draw colored port label
+mr r3, REG_PLAYER_INDEX
+bl FN_GET_PORT_LABEL_AND_COLOR
+mr r8, r3
+mr r7, r4
+
+# Keep the same staggered X offset pattern as the default name layout.
+mr r3, REG_PLAYERS_COUNT
+branchl r12, FN_IntToFloat
+lfs f0, TPO_PLAYER_NAME_X_OFST(REG_TEXT_PROPERTIES)
+fmuls f2, f0, f1
+lfs f0, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
+fadds f2, f0, f2
+fmr f29, f2
+
+mr r3, REG_TEXT_STRUCT
+mr r4, r8
+li r5, 0
+lfs f1, TPO_PORT_LABEL_SIZE(REG_TEXT_PROPERTIES)
+fmr f3, f31
+branchl r12, FG_CreateSubtext
+
+# Draw name to the right of the port label
+mr r3, REG_TEXT_STRUCT
+addi r4, REG_TEXT_PROPERTIES, TPO_COLOR_WHITE
+li r5, 0
+mr r7, REG_PLAYER_1_NAME_STRING
+lfs f1, TPO_PLAYER_NAME_SIZE(REG_TEXT_PROPERTIES)
+fmr f2, f29
+lfs f0, TPO_PORT_NAME_X_OFST(REG_TEXT_PROPERTIES)
+fadds f2, f2, f0
+fmr f3, f31
+branchl r12, FG_CreateSubtext
+
+# Move down one row for next player
+fadds f31, f31, f30
+addi REG_PLAYERS_COUNT, REG_PLAYERS_COUNT, 1
+
+INIT_PARTY_FIND_OPPONENTS_LOOP_CONTINUE:
+addi REG_PLAYER_INDEX, REG_PLAYER_INDEX, 1
+cmpwi REG_PLAYER_INDEX, 4
+blt INIT_PARTY_FIND_OPPONENTS_LOOP
+
 b INIT_STAGE_TEXT
 
 INIT_TEAMS_PLAYER_TEXT:
@@ -175,7 +267,7 @@ lwz r3, MSRB_VS_LEFT_PLAYERS(REG_MSRB_ADDR)
 bl FN_GET_TEAM_PLAYERS
 
 # Initialize Team 1 Text
-addi r3, REG_TEXT_PROPERTIES, TPO_P1_LABEL_COLOR
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_RED
 addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_1_STRING
 lfs f1, TPO_P1_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
@@ -185,7 +277,7 @@ lwz r3, MSRB_VS_RIGHT_PLAYERS(REG_MSRB_ADDR)
 bl FN_GET_TEAM_PLAYERS
 
 # Initialize Team 2 Text
-addi r3, REG_TEXT_PROPERTIES, TPO_P2_LABEL_COLOR
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_BLUE
 addi r4, REG_TEXT_PROPERTIES, TPO_TEAM_2_STRING
 lfs f1, TPO_P2_X_POS(REG_TEXT_PROPERTIES)
 bl INIT_PLAYER_TEXT
@@ -266,7 +358,7 @@ STAGE_NAME_SKIP:
 # Kill SFX
 #branchl r12,0x80023694
 STAGE_NAME_EXIT:
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, 3
 b EXIT
 
 ################################################################################
@@ -399,6 +491,35 @@ lwz r8, 0x8+(0x4*0)(sp)
 
 FN_GET_TEAM_PLAYERS_EXIT:
 restore
+blr
+
+# Input: r3 = port index (0-3)
+# Output: r3 = ptr to color, r4 = ptr to "P#" label
+FN_GET_PORT_LABEL_AND_COLOR:
+cmpwi r3, 1
+beq FN_GET_PORT_LABEL_AND_COLOR_P2
+cmpwi r3, 2
+beq FN_GET_PORT_LABEL_AND_COLOR_P3
+cmpwi r3, 3
+beq FN_GET_PORT_LABEL_AND_COLOR_P4
+
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_RED
+addi r4, REG_TEXT_PROPERTIES, TPO_P1_STRING
+blr
+
+FN_GET_PORT_LABEL_AND_COLOR_P2:
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_BLUE
+addi r4, REG_TEXT_PROPERTIES, TPO_P2_STRING
+blr
+
+FN_GET_PORT_LABEL_AND_COLOR_P3:
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_YELLOW
+addi r4, REG_TEXT_PROPERTIES, TPO_P3_STRING
+blr
+
+FN_GET_PORT_LABEL_AND_COLOR_P4:
+addi r3, REG_TEXT_PROPERTIES, TPO_COLOR_GREEN
+addi r4, REG_TEXT_PROPERTIES, TPO_P4_STRING
 blr
 
 EXIT:
