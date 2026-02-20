@@ -31,15 +31,10 @@ CODE_START:
 backup
 
 ################################################################################
-# Section 1: Initialize User display
+# Section 1: Skip User display init on the main menu
 ################################################################################
-bl DATA_USER_TEXT_BLRL
-mflr r3
-li r4, 1
-branchl r12, FG_UserDisplay
-mflr REG_FG_USER_DISPLAY
-li r5, 1 # indicate to init buffers
-blrl # FN_InitUserDisplay
+# Intentionally disabled so "User" + logged in name are not shown on title menu.
+# Other scenes (like CSS/ranked) initialize their own user display separately.
 
 ################################################################################
 # Section 2: Play MELEE on first boot
@@ -76,7 +71,7 @@ stb r3, DOFST_IS_FIRST_BOOT(REG_DATA_ADDR)
 SKIP_MELEE_ANOUNCER:
 
 ################################################################################
-# Section 2: Reset any connections if there were any
+# Section 3: Reset any connections if there were any
 ################################################################################
 # Prepare buffer for EXI transfer
 li r3, 1

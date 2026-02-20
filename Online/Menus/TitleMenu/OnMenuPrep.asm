@@ -485,20 +485,9 @@ FN_OnlineSubmenuThink_STICK_DOWN_HANDLER_END:
 FN_OnlineSubmenuThink_INPUT_HANDLERS_END:
 
 ################################################################################
-# Update user text
+# Skip title menu User text updates. This hides the "User" label and username
+# on main menu while preserving user display behavior in other scenes.
 ################################################################################
-branchl r12, FG_UserDisplay
-mflr REG_FG_USER_DISPLAY
-addi r3, REG_FG_USER_DISPLAY, 0x4 # FN_UserTextUpdate
-mtctr r3
-bctrl
-
-################################################################################
-# Handle menu change to hide User text if in different sub-menu
-################################################################################
-addi r3, REG_FG_USER_DISPLAY, 0x8 # FN_HandleMenuChange
-mtctr r3
-bctrl
 
 FN_OnlineSubmenuThink_EXIT:
 restore BKP_DEFAULT_FREE_SPACE_SIZE, NUM_FREG, NUM_GPREG
