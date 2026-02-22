@@ -933,12 +933,11 @@ li r3, 0
 stb r3,-0x1(r4) # match event mode
 stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 
-lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
-cmpwi r3, 0 # 0 = no teams
-beq SKIP_TEAMS_SETUP
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_PARTY
 beq PARTY_SETUP
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_TEAMS_SETUP
 
 TEAMS_SETUP:
 .set REG_COUNT, 29
@@ -1121,20 +1120,24 @@ stw r3, 0x1C (r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3, 0x20 (r4)
 
-lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
-cmpwi r3, 0 # 0 = no teams
-beq SKIP_TEAMS_PRELOAD
-
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x61 + (0x24*2)(REG_MSRB_ADDR) # Load p3 player type
+cmpwi r3, 3 # Check if P3 is set to NONE
+bge SKIP_P3_PRELOAD
 lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
 stw r3, 0x24 (r4)
 lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load char color
 stb r3, 0x28 (r4)
+SKIP_P3_PRELOAD:
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x61 + (0x24*3)(REG_MSRB_ADDR) # Load p4 player type
+cmpwi r3, 3 # Check if P4 is set to NONE
+bge SKIP_P4_PRELOAD
 lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
 stw r3, 0x2C (r4)
 lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load char color
 stb r3, 0x30 (r4)
+SKIP_P4_PRELOAD:
 
-SKIP_TEAMS_PRELOAD:
 # Preload the stage
 lhz r3, 0xE (REG_VS_SSS_DATA)
 stw r3, 0xC (r4)
