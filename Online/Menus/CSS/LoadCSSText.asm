@@ -190,12 +190,10 @@ stw r4, 0x0(r3)
 # Initialize user text
 ################################################################################
 lbz r4, OFST_R13_ONLINE_MODE(r13)
-li r4, 1
 cmpwi r4, ONLINE_MODE_DIRECT
-blt INIT_USER_TEXT
-cmpwi r4, ONLINE_MODE_PARTY
+li r4, 2 # Set to 2 to display connect code (for direct only)
 beq INIT_USER_TEXT
-li r4, 2
+li r4, 1 # Set to 1 to not display connect code
 
 INIT_USER_TEXT:
 bl DATA_USER_TEXT_BLRL
