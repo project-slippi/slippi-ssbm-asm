@@ -52,7 +52,7 @@ blrl
 .set TPO_LEFT_X_POS, TPO_COLOR_WHITE + 4
 .float 60
 .set TPO_RIGHT_X_POS, TPO_LEFT_X_POS + 4
-.float 380
+.float 420
 .set TPO_STAGE_X_POS, TPO_RIGHT_X_POS + 4
 .float 238
 

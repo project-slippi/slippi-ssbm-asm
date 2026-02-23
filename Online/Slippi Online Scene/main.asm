@@ -919,44 +919,26 @@ li  r5,0x10
 branchl r12,memcpy
 #Modify Splash Data
 load  r4,0x80490888
-lbz r3, 0x60(REG_VS_SSS_DATA) # load p1 char id
-stb r3,0x5(r4)
-lbz r3, 0x63(REG_VS_SSS_DATA) # load char color
-stb r3,0xB(r4)
-lbz r3, 0x60 + 0x24(REG_VS_SSS_DATA) # load p2 char id
-stb r3,0x8(r4)
-lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
-stb r3,0xE(r4)
 
 # Make sure to clear out any special stages setup
 li r3, 0
 stb r3,-0x1(r4) # match event mode
 stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_PARTY
-beq PARTY_SETUP
-cmpwi r3, ONLINE_MODE_TEAMS
-bne SKIP_TEAMS_SETUP
+.set REG_PLAYER_IDX, 29
+.set REG_LEFT_COUNT, 28
+.set REG_RIGHT_COUNT, 27
+.set REG_LOCAL_PLAYER_IDX, 26
+.set REG_LOCAL_PLAYER_TEAM, 25
+.set REG_IS_TEAMS, 24
 
-TEAMS_SETUP:
-.set REG_COUNT, 29
-.set REG_TEAM_PLAYER_COUNT, 28
-.set REG_TEAM_1_ID, 27
+lbz REG_IS_TEAMS, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR) # load teams flag
+cmpwi REG_IS_TEAMS, 0
+beq SKIP_TEAMS_ANNOUNCE_ADJUST
 
-# load local player's team id for team 1
-lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-mulli r3, r3, 0x24
-addi r3, r3, MSRB_GAME_INFO_BLOCK+0x69
-lbzx REG_TEAM_1_ID, REG_MSRB_ADDR, r3
-
-# make it 2vs2 by default
+# Configure splash as 1v3 for party mode.
 li r3, 0x2
 stb r3,0x2(r4)
-
-# Initialize bytes for extra players on each team in case of 1v3
-# The 1v3 case requires a char id/color to be set for 3 players on each team,
-# even if some are unused.
 li r3, 1
 stb r3,-0x5(r4) # make announcer say "teams" with value 1
 stb r3,0x6(r4)
@@ -967,147 +949,81 @@ stb r3,0xC(r4)
 stb r3,0xD(r4)
 stb r3,0xF(r4)
 stb r3,0x10(r4)
+SKIP_TEAMS_ANNOUNCE_ADJUST:
 
-# Set up left side team
-li REG_COUNT, 0
-li REG_TEAM_PLAYER_COUNT, 0
-
-TEAMS_SETUP_LEFT_SIDE_LOOP:
-# get team id
-mulli r3, REG_COUNT, 0x24
-addi r3, r3, 0x69
-lbzx r3, REG_VS_SSS_DATA, r3
-
-# If this player is on team 1, add their character to the left side display
-cmpw r3, REG_TEAM_1_ID
-bne CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP
-
-# Load char id
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x60
-lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0x5
-stbx r5, r6, r4
-
-# Load char color
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x63
-lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0xB
-stbx r5, r6, r4
-
-addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
-
-CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP:
-addi REG_COUNT, REG_COUNT, 1
-cmpwi REG_COUNT, 4
-blt TEAMS_SETUP_LEFT_SIDE_LOOP
-
-# Set the player count for team 1
-stb REG_TEAM_PLAYER_COUNT, 0x3(r4)
-
-# Set up right side team
-li REG_COUNT, 0
-li REG_TEAM_PLAYER_COUNT, 0
-
-TEAMS_SETUP_RIGHT_SIDE_LOOP:
-# get team id
-mulli r3, REG_COUNT, 0x24
-addi r3, r3, 0x69
-lbzx r3, REG_VS_SSS_DATA, r3
-
-# If this player isn't on team 1, add their character to the right side display
-cmpw r3, REG_TEAM_1_ID
-beq CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP
-
-# Load char id
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x60
-lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0x8
-stbx r5, r6, r4
-
-# Load char color
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x63
-lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0xE
-stbx r5, r6, r4
-
-addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
-
-CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP:
-addi REG_COUNT, REG_COUNT, 1
-cmpwi REG_COUNT, 4
-blt TEAMS_SETUP_RIGHT_SIDE_LOOP
-
-# Set the player count for team 2
-stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
-b SKIP_TEAMS_SETUP
-
-PARTY_SETUP:
-.set REG_COUNT, 29
-.set REG_TEAM_PLAYER_COUNT, 28
-.set REG_LOCAL_PLAYER_IDX, 27
-
-# Configure splash as 1v3 for party mode.
-li r3, 0x2
-stb r3,0x2(r4)
-li r3, 1
-stb r3,-0x5(r4)
-stb r3,0x6(r4)
-stb r3,0x7(r4)
-stb r3,0x9(r4)
-stb r3,0xA(r4)
-stb r3,0xC(r4)
-stb r3,0xD(r4)
-stb r3,0xF(r4)
-stb r3,0x10(r4)
-
-# Left side: local player only
+# Load local player idx + team ID
 lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-mulli r5, REG_LOCAL_PLAYER_IDX, 0x24
-addi r6, r5, 0x60
-lbzx r3, REG_VS_SSS_DATA, r6
-stb r3,0x5(r4)
-addi r6, r5, 0x63
-lbzx r3, REG_VS_SSS_DATA, r6
-stb r3,0xB(r4)
-li r3, 1
-stb r3, 0x3(r4)
+li REG_PLAYER_IDX, 0
+li REG_LEFT_COUNT, 0
+li REG_RIGHT_COUNT, 0
+mulli r3, REG_LOCAL_PLAYER_IDX, 0x24
+addi r3, r3, MSRB_GAME_INFO_BLOCK+0x69
+lbzx REG_LOCAL_PLAYER_TEAM, REG_MSRB_ADDR, r3
 
-# Right side: all non-local players
-li REG_COUNT, 0
-li REG_TEAM_PLAYER_COUNT, 0
-PARTY_SETUP_RIGHT_SIDE_LOOP:
-cmpw REG_COUNT, REG_LOCAL_PLAYER_IDX
-beq PARTY_SETUP_RIGHT_SIDE_CONTINUE
+VS_SPLASH_CHAR_LOOP:
+# Check if player type is set to none, if so skip them
+mulli r3, REG_PLAYER_IDX, 0x24
+addi r3, r3, 0x61
+lbzx r3, REG_VS_SSS_DATA, r3
+cmpwi r3, 3
+bge VS_SPLASH_CHAR_CONTINUE
 
-mulli r5, REG_COUNT, 0x24
-addi r6, r5, 0x60
-lbzx r3, REG_VS_SSS_DATA, r6
-addi r6, REG_TEAM_PLAYER_COUNT, 0x8
-stbx r3, r6, r4
+# Determine which side this player goes on.
+cmpw REG_PLAYER_IDX, REG_LOCAL_PLAYER_IDX
+beq VS_SPLASH_CHAR_GO_LEFT
+cmpwi REG_IS_TEAMS, 0
+bne VS_SPLASH_CHAR_TEAM_CHECK
+b VS_SPLASH_CHAR_GO_RIGHT
 
-addi r6, r5, 0x63
-lbzx r3, REG_VS_SSS_DATA, r6
-addi r6, REG_TEAM_PLAYER_COUNT, 0xE
-stbx r3, r6, r4
+VS_SPLASH_CHAR_TEAM_CHECK:
+mulli r3, REG_PLAYER_IDX, 0x24
+addi r3, r3, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3
+cmpw r3, REG_LOCAL_PLAYER_TEAM
+beq VS_SPLASH_CHAR_GO_LEFT
+b VS_SPLASH_CHAR_GO_RIGHT
 
-addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+VS_SPLASH_CHAR_GO_LEFT:
+# Load char id
+mulli r7, REG_PLAYER_IDX, 0x24
+addi r5, r7, 0x60
+lbzx r5, REG_VS_SSS_DATA, r5
+addi r6, REG_LEFT_COUNT, 0x5
+stbx r5, r6, r4
 
-PARTY_SETUP_RIGHT_SIDE_CONTINUE:
-addi REG_COUNT, REG_COUNT, 1
-cmpwi REG_COUNT, 4
-blt PARTY_SETUP_RIGHT_SIDE_LOOP
+# Load char color
+addi r5, r7, 0x63
+lbzx r5, REG_VS_SSS_DATA, r5
+addi r6, REG_LEFT_COUNT, 0xB
+stbx r5, r6, r4
 
-stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
+addi REG_LEFT_COUNT, REG_LEFT_COUNT, 1
+b VS_SPLASH_CHAR_CONTINUE
 
-SKIP_TEAMS_SETUP:
+VS_SPLASH_CHAR_GO_RIGHT:
+# Load char id
+mulli r7, REG_PLAYER_IDX, 0x24
+addi r5, r7, 0x60
+lbzx r5, REG_VS_SSS_DATA, r5
+addi r6, REG_RIGHT_COUNT, 0x8
+stbx r5, r6, r4
+
+# Load char color
+addi r5, r7, 0x63
+lbzx r5, REG_VS_SSS_DATA, r5
+addi r6, REG_RIGHT_COUNT, 0xE
+stbx r5, r6, r4
+
+addi REG_RIGHT_COUNT, REG_RIGHT_COUNT, 1
+
+VS_SPLASH_CHAR_CONTINUE:
+addi REG_PLAYER_IDX, REG_PLAYER_IDX, 1
+cmpwi REG_PLAYER_IDX, 4
+blt VS_SPLASH_CHAR_LOOP
+
+# Store side player counts
+stb REG_LEFT_COUNT, 0x3(r4)
+stb REG_RIGHT_COUNT, 0x4(r4)
 
 # Preload these fighters
 load r4,0x80432078
