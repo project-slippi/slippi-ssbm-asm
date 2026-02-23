@@ -72,6 +72,7 @@ branchl r12, 0x8021b2d8
 .set BKP_DEFAULT_FREE_SPACE_SIZE, 0xA8
 .set BKP_DEFAULT_FREG, 0
 .set BKP_DEFAULT_REG, 12
+.set BKP_MAX_REG, 18
 
 # backup is used to set up a stack frame in which LR and non-volatile registers will be stored.
 # It also sets up some free space on the stack for the function to use if needed.
