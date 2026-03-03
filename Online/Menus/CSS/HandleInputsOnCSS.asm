@@ -452,7 +452,7 @@ sth r3, PSTB_STAGE_ID(REG_TXB_ADDR)
 stb r4, PSTB_STAGE_OPT(REG_TXB_ADDR)
 
 # Write the alt stage mode
-computeBranchTargetAddress r3, 0x8025a530
+computeBranchTargetAddress r3, INJ_FREEZE_STADIUM
 addi r3, r3, 0x8
 lbz r3, 0(r3)
 stb r3, PSTB_ALT_STAGE_MODE(REG_TXB_ADDR)
