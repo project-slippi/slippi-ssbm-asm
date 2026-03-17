@@ -248,11 +248,11 @@ bl  VSSceneDecide          #SceneDecide, previously 0x801b15c8
 .byte 3                     #Minor Scene ID
 .byte 3                    #Amount of persistent heaps
 .align 2
-.long 0x00000000            #ScenePrep
-.long 0x00000000            #SceneDecide
+.long 0x801b16a8            #ScenePrep, use default
+.long 0x801b16c8          #SceneDecide, use default. Luckily goes back to scene 1 (CSS) which is what we want
 .byte 5                    #Common Minor ID (Results)
 .align 2
-.long 0x00000000            #Minor Data 1
+.long 0x8047c020            #Minor Data 1
 .long 0x00000000            #Minor Data 2
 #Splash
 .byte 4                     #Minor Scene ID
@@ -588,6 +588,7 @@ VSSceneDecide:
 .set REG_SHOULD_PICK_STAGE, 29
 .set REG_WINNER_IDX, 28
 .set REG_GPD, 27
+.set REG_NEXT_SCENE, 26
 
 backup
 
@@ -599,13 +600,23 @@ li r3, 0
 branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
+li REG_NEXT_SCENE, 1 # Default to going back to CSS
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq VSSceneDecide_Ranked
+cmpwi r3, ONLINE_MODE_PARTY
+beq VSSceneDecide_Party
+b VSSceneDecide_GoToNextScene
+
+VSSceneDecide_Party:
+li REG_NEXT_SCENE, 4 # Go to results screen for party mode
+b VSSceneDecide_DisconnectAndNextScene # Always disconnect after party mode
+
 ###########################################################################
 # VSSceneDecide: Handle Ranked Mode
 ###########################################################################
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_RANKED
-bne VSSceneDecide_SkipRankedHandler
-
+VSSceneDecide_Ranked:
 # If connection is not active, just go back to CSS
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_IDLE
@@ -626,7 +637,7 @@ li r3, 1
 bl FN_ReportSetCompletion
 # We still trigger disconnection calls here because the previous game can end with disconnected message
 # while the connection is still technically active
-b VSSceneDecide_DisconnectAndReturnToCSS
+b VSSceneDecide_DisconnectAndNextScene
 
 VSSceneDecide_ConnectionActive:
 bl GamePrepData_BLRL
@@ -698,7 +709,7 @@ VSSceneDecide_RankedSetOver:
 li r3, 0
 bl FN_ReportSetCompletion
 
-VSSceneDecide_DisconnectAndReturnToCSS:
+VSSceneDecide_DisconnectAndNextScene:
 # Disconnect from opponent
 # Prepare buffer for EXI transfer
 li r3, 1
@@ -720,10 +731,10 @@ branchl r12, HSD_Free
 
 # Allow to return to CSS since ranked set is over
 
-VSSceneDecide_SkipRankedHandler:
+VSSceneDecide_GoToNextScene:
 # Go back to CSS
 load r4, 0x80479d30
-li r3, 0x01
+mr r3, REG_NEXT_SCENE
 stb r3, 0x5(r4)
 
 VSSceneDecide_ModeHandlerEnd:
@@ -935,6 +946,9 @@ stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 lbz REG_IS_TEAMS, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR) # load teams flag
 cmpwi REG_IS_TEAMS, 0
 beq SKIP_TEAMS_ANNOUNCE_ADJUST
+
+# TODO: Figure out how to control what announcer says. I queued up for teams with everyone on red team
+# TODO: and the announcer said "Versus Team Marth" even though marth was on my team
 
 # Configure splash as 1v3 for party mode.
 li r3, 0x2
