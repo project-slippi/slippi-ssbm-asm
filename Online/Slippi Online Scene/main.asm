@@ -944,17 +944,11 @@ stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 .set REG_IS_TEAMS, 24
 
 lbz REG_IS_TEAMS, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR) # load teams flag
-cmpwi REG_IS_TEAMS, 0
-beq SKIP_TEAMS_ANNOUNCE_ADJUST
 
-# TODO: Figure out how to control what announcer says. I queued up for teams with everyone on red team
-# TODO: and the announcer said "Versus Team Marth" even though marth was on my team
-
-# Configure splash as 1v3 for party mode.
+# I think the following allows for the splash screen to display more than 2 characters
 li r3, 0x2
 stb r3,0x2(r4)
 li r3, 1
-stb r3,-0x5(r4) # make announcer say "teams" with value 1
 stb r3,0x6(r4)
 stb r3,0x7(r4)
 stb r3,0x9(r4)
@@ -963,7 +957,7 @@ stb r3,0xC(r4)
 stb r3,0xD(r4)
 stb r3,0xF(r4)
 stb r3,0x10(r4)
-SKIP_TEAMS_ANNOUNCE_ADJUST:
+stb REG_IS_TEAMS,-0x5(r4) # Conditionally make announcer say "Team..." before the character name
 
 # Load local player idx + team ID
 lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
