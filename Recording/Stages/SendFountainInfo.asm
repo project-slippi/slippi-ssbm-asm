@@ -45,7 +45,8 @@
   stb r3,0x5(REG_Buffer)
 
 # send height
-  stfs f31, 0x6(REG_Buffer)
+  lwz r3, 0xd0(r31)
+  stw r3, 0x6(REG_Buffer)
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
