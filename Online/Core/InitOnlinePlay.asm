@@ -130,12 +130,6 @@ stw r3, ODB_RNG_OFFSET(REG_ODB_ADDRESS)
 lis r4, 0x804D
 stw r3, 0x5F90(r4) # overwrite seed
 
-# Write port used for local player during the game so we can remap inputs on the
-# results screen. Currently only party mode uses results screen
-computeBranchTargetAddress r3, 0x80178088 # results screen remap port injection
-lbz r4, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR) # Get local player port from match state
-stb r4, 0x8(r3) # Store local player port to be used for remapping on results screen
-
 # Copy match struct
 mr r3, REG_GAME_INFO_START
 addi r4, REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK
