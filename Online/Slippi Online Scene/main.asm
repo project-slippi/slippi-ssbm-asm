@@ -789,6 +789,12 @@ li r3,0
 stb r3,OFST_R13_ISWINNER(r13)
 SELECTOR_OVERWRITE_END:
 
+# For party mode we have a results screen so we dont need gold text
+# and also the hack here breaks the results screen
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+beq HACK_GOLD_TEXT_END
+
 .set REG_MATCH_END_STRUCT, 20
 
 # Trick gold winner text into working by modifying the values used in calculation
