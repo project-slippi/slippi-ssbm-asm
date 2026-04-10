@@ -661,6 +661,46 @@ branchl r12, FN_CaptureSavestate
 CAPTURE_END:
 
 ################################################################################
+# Despawn any disconnected fighters
+# ------------------------------------------------------------------------------
+# Dolphin sets RXB_SHOULD_DESPAWN[i] = 1 for any remote player (indexed the same
+# as the other per-remote-player RXB fields) whose fighter should be despawned
+# because their client has disconnected. The flag is synchronized across clients
+# via a 30-frame boundary (see prepareOpponentInputs in EXI_DeviceSlippi.cpp).
+# We map the remote-player index to the actual port here by walking ports and
+# skipping the local player, matching LOOP_LOAD_OPPONENT_INPUTS in
+# TriggerSendInput.asm. For now we just call the despawn function every frame
+# that the flag is set, the actual despawn logic is only run once in there
+################################################################################
+.set REG_DESPAWN_REMOTE_IDX, REG_LOOP_IDX
+.set REG_DESPAWN_PORT, REG_LOOP_IDX_2
+li REG_DESPAWN_REMOTE_IDX, 0 # remote player index (0..2)
+li REG_DESPAWN_PORT, 0       # actual port index (0..3), skipping local player
+
+DESPAWN_FIGHTER_LOOP_START:
+# skip over the local player's port
+lbz r3, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS)
+cmpw REG_DESPAWN_PORT, r3
+bne DESPAWN_FIGHTER_SKIP_LOCAL
+addi REG_DESPAWN_PORT, REG_DESPAWN_PORT, 1
+DESPAWN_FIGHTER_SKIP_LOCAL:
+
+addi r3, REG_DESPAWN_REMOTE_IDX, RXB_SHOULD_DESPAWN
+lbzx r3, r3, REG_REMOTE_RXB
+cmpwi r3, 0
+beq DESPAWN_FIGHTER_LOOP_CONTINUE
+
+# logf LOG_LEVEL_NOTICE, "[SEL] [%d] Despawning fighter at port %d (remoteIdx %d)", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESPAWN_PORT", "mr r7, REG_DESPAWN_REMOTE_IDX"
+mr r3, REG_DESPAWN_PORT
+branchl r12, 0x8016EF98 # Removes a fighter from the game
+
+DESPAWN_FIGHTER_LOOP_CONTINUE:
+addi REG_DESPAWN_REMOTE_IDX, REG_DESPAWN_REMOTE_IDX, 1
+addi REG_DESPAWN_PORT, REG_DESPAWN_PORT, 1
+cmpwi REG_DESPAWN_REMOTE_IDX, 3
+blt DESPAWN_FIGHTER_LOOP_START
+
+################################################################################
 # Check if game has ended. We give a buffer of ROLLBACK_MAX_FRAME_COUNT
 ################################################################################
 lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)

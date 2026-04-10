@@ -298,7 +298,8 @@
 .set RXB_OPNT_FRAME_NUMS, RXB_OPNT_DESYNC_ENTRY + DDRE_SIZE*3 # s32[3]
 .set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
 .set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
-.set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
+.set RXB_SHOULD_DESPAWN, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # bool[3], one per remote player (indexed the same as RXB_OPNT_FRAME_NUMS etc)
+.set RXB_SIZE, RXB_SHOULD_DESPAWN + 3
 
 ################################################################################
 # Matchmaking States
