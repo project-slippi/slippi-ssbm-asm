@@ -91,11 +91,11 @@ lbz r3, SFXS_LOG_INDEX(r6)
 cmpw r8, r3
 blt FIND_SOUND_LOOP_START
 
-logf LOG_LEVEL_WARN, "SFX %x NOT found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "SFX %x NOT found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 b STORE_SOUND
 
 SOUND_ALREADY_PLAYED:
-logf LOG_LEVEL_ERROR, "SFX %x found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_ERROR, "SFX %x found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 lwz REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)
 li REG_IS_SOUND_ACTIVE, 1
 
@@ -131,8 +131,6 @@ beq RESTORE_AND_EXIT
 
 # Set r3 to sound instance ID? Function normally returns this
 mr r3, REG_SOUND_INSTANCE_ID
-
-logf LOG_LEVEL_NOTICE, "Skipped playing sound %x", "mr r5, REG_SOUND_ID"
 
 # Skip playing sound
 restore
