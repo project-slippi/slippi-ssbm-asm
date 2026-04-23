@@ -20,13 +20,20 @@ getMinorMajor r3
 cmpwi r3, SCENE_PLAYBACK_IN_GAME
 bne EXIT
 
+# Bypass dedup entirely for sound ID 540000. This is not a real sound, it's
+# a trigger to clean up some old sounds, notably the hammer item sound. Without
+# this the sound would get started up again on a rollback and never turn off
+load r3, 540000
+cmpw r23, r3
+beq EXIT
+
 backup
 
 lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 li REG_IS_SOUND_ACTIVE, 0
 li REG_SOUND_INSTANCE_ID, 0
-rlwinm REG_SOUND_ID, r23, 0, 0xFFFF # Extract half word from sound ID input
+mr REG_SOUND_ID, r23
 
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 loadGlobalFrame r3
@@ -62,7 +69,7 @@ addi r5, r6, SFXS_LOG_ENTRIES
 add r5, r5, r3
 
 # Load sound ID and check if it is equal to this one
-lhz r3, SFXS_ENTRY_SOUND_ID(r5)
+lwz r3, SFXS_ENTRY_SOUND_ID(r5)
 cmpw REG_SOUND_ID, r3
 beq SOUND_ALREADY_PLAYED
 
@@ -95,7 +102,7 @@ addi r5, r6, SFXS_LOG_ENTRIES
 add r5, r5, r3 # SFXS_ENTRY
 
 # Write sound to entry
-sth REG_SOUND_ID, SFXS_ENTRY_SOUND_ID(r5)
+stw REG_SOUND_ID, SFXS_ENTRY_SOUND_ID(r5)
 
 # Instance ID will be 0 here if new sound and set later in AssignSoundInstanceId
 stw REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)

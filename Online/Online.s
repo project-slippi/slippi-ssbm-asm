@@ -174,8 +174,8 @@
 .set MAX_SOUNDS_PER_FRAME, 0x10
 
 # The entry is the data needed to keep track of for a given sound every frame
-.set SFXS_ENTRY_SOUND_ID, 0 # u16, ID of the sound played
-.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 2 # u32
+.set SFXS_ENTRY_SOUND_ID, 0 # u32, ID of the sound played
+.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 4 # u32
 .set SFXS_ENTRY_SIZE, SFXS_ENTRY_INSTANCE_ID + 4
 
 # A log keeps tracks of sounds on a given frame, the index is effectively how

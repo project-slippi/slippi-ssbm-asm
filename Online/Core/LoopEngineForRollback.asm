@@ -92,12 +92,12 @@ PENDING_LOOP_START:
 # Get current stable sound ID
 mulli r3, REG_STABLE_CUR_IDX, SFXS_ENTRY_SIZE
 add r3, r5, r3
-lhz r3, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r3) # Current stable sound ID
+lwz r3, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r3) # Current stable sound ID
 
 # Get current pending sound ID
 mulli r4, r7, SFXS_ENTRY_SIZE
 add r4, r6, r4
-lhz r4, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r4) # Current pending sound ID
+lwz r4, SFXS_LOG_ENTRIES + SFXS_ENTRY_SOUND_ID(r4) # Current pending sound ID
 
 cmpw r3, r4
 beq STABLE_LOOP_CONTINUE # Stable sound has been found, move to next sound

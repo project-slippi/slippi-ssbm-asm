@@ -13,6 +13,13 @@ getMinorMajor r3
 cmpwi r3, SCENE_PLAYBACK_IN_GAME
 bne EXIT
 
+# Bypass dedup entirely for sound ID 540000. This is not a real sound, it's
+# a trigger to clean up some old sounds, notably the hammer item sound. Without
+# this the sound would get started up again on a rollback and never turn off
+load r3, 540000
+cmpw r23, r3
+beq EXIT
+
 .set REG_PDB_ADDRESS, 31
 .set REG_SFXDB_ADDRESS, 30
 .set REG_SME_ENTRY, 29 # from caller
