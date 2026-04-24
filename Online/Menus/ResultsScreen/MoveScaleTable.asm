@@ -8,6 +8,7 @@ b CODE_START
 
 RESULTS_SCALE_TABLE_BLRL:
 blrl
+# 26 entries
 .float 0.85
 .float 0.8
 .float 1.0
@@ -27,7 +28,13 @@ blrl
 .float 0.89999998
 .float 0.89999998
 .float 0.89999998
-
+.float 0.89999998
+.float 1.0
+.float 1.0
+.float 1.0
+.float 1.0
+.float 1.0
+.float 0.79 
 
 CODE_START:
 
