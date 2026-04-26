@@ -219,14 +219,9 @@ restore
 blr
 
 ################################################################################
-# End game if we are in ranked mode
+# End game
 ################################################################################
-FN_END_GAME_IF_RANKED:
-# Check if we should end game (ranked mode), could maybe check if pause is fully off instead
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_RANKED
-bne FN_END_GAME_IF_RANKED_EXIT
-
+FN_END_GAME:
 # ASM Notes. Match struct at 0x8046b6a0 has info about the game. The early values seem to be control
 # values. Here are notes on offsets:
 # 0x0 (u8): Control byte. 0 during game, 1 during GAME!, 3 to transition to next scene
@@ -243,10 +238,9 @@ lbz r4, ODB_ONLINE_PLAYER_INDEX(r12)
 stb r4, 0x1(r3) # Write "pauser" index
 li r4, 0x7
 stb r4, 0x8(r3) # Write that the game is exiting as an LRAS
-li r4, 0x37 # Default value for this is 0x6e
+li r4, 55 # Default value for this is 110
 stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it shorter
 
-FN_END_GAME_IF_RANKED_EXIT:
 blr
 
 CODE_START:
@@ -313,8 +307,8 @@ bl FN_CREATE_HUD_SUBTEXT
 li r3, 1
 stb r3, ODB_IS_DISCONNECT_STATE_DISPLAYED(REG_ODB_ADDRESS)
 
-# This will terminate the game if we're in ranked mode
-bl FN_END_GAME_IF_RANKED
+# This will terminate the game
+bl FN_END_GAME
 
 DISPLAY_DISCONNECT_END:
 
@@ -574,8 +568,8 @@ bl FN_CREATE_HUD_SUBTEXT
 li r3, 1
 stb r3, ODB_IS_DESYNC_STATE_DISPLAYED(REG_ODB_ADDRESS)
 
-# This will terminate the game if we're in ranked mode
-bl FN_END_GAME_IF_RANKED
+# This will terminate the game
+bl FN_END_GAME
 
 b DESYNC_CHECK_EXIT
 HARD_DESYNC_HANDLER_END:
