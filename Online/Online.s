@@ -526,6 +526,30 @@
 .endm
 
 ################################################################################
+# Define online static data (OSD) and include macro to create static data
+################################################################################
+.set OSD_LOCAL_PLAYER_INDEX, 0 # u8
+
+################################################################################
+# Create space for the defined offsets above
+################################################################################
+.macro createOnlineStaticDataBlock
+# OSD_LOCAL_PLAYER_INDEX stores local player index at the start of a game so
+# that it can be used on the results screen or any scene following the in game
+# vs scene
+.byte 0 # OSD_LOCAL_PLAYER_INDEX
+.align 2
+.endm
+
+################################################################################
+# Simple macro to fetch static data into a register
+################################################################################
+.macro fetchOnlineStaticDataPtr reg
+branchl \reg, FN_OnlineStaticDataBlrl
+mflr \reg
+.endm
+
+################################################################################
 # slpCSS Symbol Structure
 ################################################################################
 .set SLPCSS_CHATSELECT, 0x0

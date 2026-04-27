@@ -363,14 +363,13 @@ add \reg, r3, r4
 .set FN_CSSUpdateCSP,0x800056bc
 .set FN_RequestSSM,0x800056a8
 .set FN_GetCommonMinorID,0x8000561c
-# available addresses for static functions
-# 0x8000568C
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
 .set FN_LoadSavestate,0x8000560C
 .set FN_LoadMatchState,0x80005610
 .set FG_UserDisplay,0x80005618
+.set FN_OnlineStaticDataBlrl,0x8000568C
 
 # The rest of these are NTSC v1.02 functions
 ## HSD functions

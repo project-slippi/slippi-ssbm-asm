@@ -113,11 +113,16 @@ li r3, 0
 branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
+# Write port used for local player during the game so we can remap inputs on the
+# results screen. Currently only party mode uses results screen
+fetchOnlineStaticDataPtr r12
+
 # Prepare player indices
 lbz r3, -0x5108(r13) # Grab the 1p port in use
 stb r3, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS)
 lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
 stb r3, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS)
+stb r3, OSD_LOCAL_PLAYER_INDEX(r12)
 lbz r3, MSRB_REMOTE_PLAYER_INDEX(REG_MSRB_ADDR)
 stb r3, ODB_ONLINE_PLAYER_INDEX(REG_ODB_ADDRESS)
 
