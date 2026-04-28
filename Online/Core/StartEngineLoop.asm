@@ -238,7 +238,7 @@ lbz r4, ODB_ONLINE_PLAYER_INDEX(r12)
 stb r4, 0x1(r3) # Write "pauser" index
 li r4, 0x7
 stb r4, 0x8(r3) # Write that the game is exiting as an LRAS
-li r4, 55 # Default value for this is 110
+li r4, 90 # Default value for this is 110 which felt a bit long so I shortened it a bit
 stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it shorter
 
 blr
