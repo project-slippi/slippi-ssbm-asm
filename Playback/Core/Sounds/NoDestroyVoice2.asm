@@ -26,8 +26,6 @@ backup
 lwz REG_PDB_ADDRESS, playbackDataBuffer(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_PDB_ADDRESS, PDB_SFXDB_START
 
-rlwinm REG_SOUND_ID, REG_SOUND_ID, 0, 0xFFFF # extract half word ID
-
 lbz REG_WRITE_INDEX, SFXDB_WRITE_INDEX(REG_SFXDB_ADDRESS)
 loadGlobalFrame r3
 lwz r4, PDB_LATEST_FRAME(REG_PDB_ADDRESS)
@@ -62,7 +60,7 @@ addi r5, r6, SFXS_LOG_ENTRIES
 add r5, r5, r3
 
 # Load sound ID and check if it is equal to this one
-lhz r3, SFXS_ENTRY_SOUND_ID(r5)
+lwz r3, SFXS_ENTRY_SOUND_ID(r5)
 cmpw REG_SOUND_ID, r3
 beq SOUND_ALREADY_PLAYED
 

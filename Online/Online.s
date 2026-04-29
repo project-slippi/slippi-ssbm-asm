@@ -71,16 +71,18 @@
 .set ONLINE_MODE_UNRANKED, 1
 .set ONLINE_MODE_DIRECT, 2
 .set ONLINE_MODE_TEAMS, 3
+.set ONLINE_MODE_PARTY, 4
 
 .set OPTION_RANKED_IDX, 0
 .set OPTION_UNRANKED_IDX, 1
 .set OPTION_DIRECT_IDX, 2
 .set OPTION_TEAMS_IDX, 3
-.set OPTION_LOGIN_IDX, 4
-.set OPTION_LOGOUT_IDX, 5
-.set OPTION_UPDATE_IDX, 6
+.set OPTION_PARTY_IDX, 4
+.set OPTION_LOGIN_IDX, 5
+.set OPTION_LOGOUT_IDX, 6
+.set OPTION_UPDATE_IDX, 7
 
-.set ONLINE_SUBMENU_OPTION_COUNT, 7
+.set ONLINE_SUBMENU_OPTION_COUNT, 8
 
 ################################################################################
 # Online Scenes
@@ -88,6 +90,7 @@
 .set SCENE_ONLINE_CSS, 0x0008
 .set SCENE_ONLINE_SSS, 0x0108
 .set SCENE_ONLINE_IN_GAME, 0x0208
+.set SCENE_ONLINE_RESULTS, 0x0308
 .set SCENE_ONLINE_VS, 0x0408
 
 /*
@@ -171,8 +174,8 @@
 .set MAX_SOUNDS_PER_FRAME, 0x10
 
 # The entry is the data needed to keep track of for a given sound every frame
-.set SFXS_ENTRY_SOUND_ID, 0 # u16, ID of the sound played
-.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 2 # u32
+.set SFXS_ENTRY_SOUND_ID, 0 # u32, ID of the sound played
+.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 4 # u32
 .set SFXS_ENTRY_SIZE, SFXS_ENTRY_INSTANCE_ID + 4
 
 # A log keeps tracks of sounds on a given frame, the index is effectively how
@@ -295,7 +298,8 @@
 .set RXB_OPNT_FRAME_NUMS, RXB_OPNT_DESYNC_ENTRY + DDRE_SIZE*3 # s32[3]
 .set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
 .set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
-.set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
+.set RXB_SHOULD_DESPAWN, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # bool[3], one per remote player (indexed the same as RXB_OPNT_FRAME_NUMS etc)
+.set RXB_SIZE, RXB_SHOULD_DESPAWN + 3
 
 ################################################################################
 # Matchmaking States
@@ -322,9 +326,7 @@
 .set MSRB_CHATMSG_PLAYER_INDEX, MSRB_OPP_CHATMSG_ID + 1 # u8
 .set MSRB_USER_RANK, MSRB_CHATMSG_PLAYER_INDEX + 1 # u8
 .set MSRB_OPP_RANK, MSRB_USER_RANK + 1 # u8
-.set MSRB_VS_LEFT_PLAYERS, MSRB_OPP_RANK + 1 # u32 player ports 0xP1P2P3PN
-.set MSRB_VS_RIGHT_PLAYERS, MSRB_VS_LEFT_PLAYERS + 4 # u32 player ports 0xP1P2P3PN
-.set MSRB_LOCAL_NAME, MSRB_VS_RIGHT_PLAYERS + 4 # char[31]
+.set MSRB_LOCAL_NAME, MSRB_OPP_RANK + 1 # char[31]
 .set MSRB_P1_NAME, MSRB_LOCAL_NAME + 31 # char[31]
 .set MSRB_P2_NAME, MSRB_P1_NAME + 31 # char[31]
 .set MSRB_P3_NAME, MSRB_P2_NAME + 31 # char[31]
@@ -521,6 +523,30 @@
 .byte 0x0 # GPDO_LAST_GAME_END_MODE
 .long 0x0 # GPDO_FN_COMPUTE_RANKED_WINNER
 .align 2
+.endm
+
+################################################################################
+# Define online static data (OSD) and include macro to create static data
+################################################################################
+.set OSD_LOCAL_PLAYER_INDEX, 0 # u8
+
+################################################################################
+# Create space for the defined offsets above
+################################################################################
+.macro createOnlineStaticDataBlock
+# OSD_LOCAL_PLAYER_INDEX stores local player index at the start of a game so
+# that it can be used on the results screen or any scene following the in game
+# vs scene
+.byte 0 # OSD_LOCAL_PLAYER_INDEX
+.align 2
+.endm
+
+################################################################################
+# Simple macro to fetch static data into a register
+################################################################################
+.macro fetchOnlineStaticDataPtr reg
+branchl \reg, FN_OnlineStaticDataBlrl
+mflr \reg
 .endm
 
 ################################################################################

@@ -29,8 +29,8 @@
 .set MAX_SOUNDS_PER_FRAME, 0x10
 .set SOUND_STORAGE_FRAME_COUNT, 7
 
-.set SFXS_ENTRY_SOUND_ID, 0 # u16, ID of the sound played
-.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 2 # u32
+.set SFXS_ENTRY_SOUND_ID, 0 # u32, ID of the sound played
+.set SFXS_ENTRY_INSTANCE_ID, SFXS_ENTRY_SOUND_ID + 4 # u32
 .set SFXS_ENTRY_SIZE, SFXS_ENTRY_INSTANCE_ID + 4
 
 .set SFXS_LOG_INDEX, 0 # u8, Index where we are in the frame

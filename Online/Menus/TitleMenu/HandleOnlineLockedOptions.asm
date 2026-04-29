@@ -41,6 +41,8 @@ cmpwi r4, OPTION_DIRECT_IDX
 beq RETURN_LOCKED
 cmpwi r4, OPTION_TEAMS_IDX
 beq RETURN_LOCKED
+cmpwi r4, OPTION_PARTY_IDX
+beq RETURN_LOCKED
 cmpwi r4, OPTION_LOGOUT_IDX
 beq RETURN_LOCKED
 cmpwi r4, OPTION_UPDATE_IDX
@@ -51,6 +53,9 @@ LOGGED_IN_STATE:
 # cmpwi r4, OPTION_RANKED_IDX
 # beq RETURN_LOCKED
 cmpwi r4, OPTION_LOGIN_IDX
+beq RETURN_LOCKED
+# We no longer want to support log out from in game. We expect people to use the launcher instead
+cmpwi r4, OPTION_LOGOUT_IDX
 beq RETURN_LOCKED
 cmpwi r4, OPTION_UPDATE_IDX
 beq RETURN_LOCKED
@@ -64,6 +69,8 @@ beq RETURN_LOCKED
 cmpwi r4, OPTION_DIRECT_IDX
 beq RETURN_LOCKED
 cmpwi r4, OPTION_TEAMS_IDX
+beq RETURN_LOCKED
+cmpwi r4, OPTION_PARTY_IDX
 beq RETURN_LOCKED
 cmpwi r4, OPTION_LOGIN_IDX
 beq RETURN_LOCKED

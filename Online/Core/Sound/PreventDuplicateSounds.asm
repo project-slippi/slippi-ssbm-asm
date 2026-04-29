@@ -18,6 +18,13 @@ lwz r3, 0x0(r3) # 0x80479d64 - Believed to be some loading state
 cmpwi r3, 0 # Loading state should be zero when game starts
 bne EXIT
 
+# Bypass dedupe entirely for sound ID 540000. This is not a real sound, it's
+# a trigger to clean up some old sounds, notably the hammer item sound. Without
+# this the sound would get started up again on a rollback and never turn off
+load r3, 540000
+cmpw r23, r3
+beq EXIT
+
 ################################################################################
 # Body
 ################################################################################
@@ -34,7 +41,7 @@ lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 addi REG_SFXDB_ADDRESS, REG_ODB_ADDRESS, ODB_SFXDB_START
 li REG_IS_SOUND_ACTIVE, 0
 li REG_SOUND_INSTANCE_ID, 0
-rlwinm REG_SOUND_ID, r23, 0, 0xFFFF # Extract half word from sound ID input
+mr REG_SOUND_ID, r23
 
 #logf LOG_LEVEL_WARN, "Play SFX %x, Frame: %d, Rollback: %d", "mr r5, REG_SOUND_ID", "loadGlobalFrame r6", "lbz r7, ODB_STABLE_ROLLBACK_IS_ACTIVE(REG_ODB_ADDRESS)"
 
@@ -72,7 +79,7 @@ addi r5, r6, SFXS_LOG_ENTRIES
 add r5, r5, r3
 
 # Load sound ID and check if it is equal to this one
-lhz r3, SFXS_ENTRY_SOUND_ID(r5)
+lwz r3, SFXS_ENTRY_SOUND_ID(r5)
 cmpw REG_SOUND_ID, r3
 beq SOUND_ALREADY_PLAYED
 
@@ -84,11 +91,11 @@ lbz r3, SFXS_LOG_INDEX(r6)
 cmpw r8, r3
 blt FIND_SOUND_LOOP_START
 
-#logf LOG_LEVEL_ERROR, "SFX %x NOT found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_WARN, "SFX %x NOT found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 b STORE_SOUND
 
 SOUND_ALREADY_PLAYED:
-#logf LOG_LEVEL_WARN, "SFX %x found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
+# logf LOG_LEVEL_ERROR, "SFX %x found. End frame: %d", "mr r5, REG_SOUND_ID", "lwz r6, ODB_STABLE_ROLLBACK_END_FRAME(REG_ODB_ADDRESS)"
 lwz REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)
 li REG_IS_SOUND_ACTIVE, 1
 
@@ -107,7 +114,7 @@ addi r5, r6, SFXS_LOG_ENTRIES
 add r5, r5, r3 # SFXS_ENTRY
 
 # Write sound to entry
-sth REG_SOUND_ID, SFXS_ENTRY_SOUND_ID(r5)
+stw REG_SOUND_ID, SFXS_ENTRY_SOUND_ID(r5)
 
 # Instance ID will be 0 here if new sound and set later in AssignSoundInstanceId
 stw REG_SOUND_INSTANCE_ID, SFXS_ENTRY_INSTANCE_ID(r5)

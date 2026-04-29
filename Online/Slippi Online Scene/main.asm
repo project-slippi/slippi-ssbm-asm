@@ -248,11 +248,11 @@ bl  VSSceneDecide          #SceneDecide, previously 0x801b15c8
 .byte 3                     #Minor Scene ID
 .byte 3                    #Amount of persistent heaps
 .align 2
-.long 0x00000000            #ScenePrep
-.long 0x00000000            #SceneDecide
+.long 0x801b16a8            #ScenePrep, use default
+.long 0x801b16c8          #SceneDecide, use default. Luckily goes back to scene 1 (CSS) which is what we want
 .byte 5                    #Common Minor ID (Results)
 .align 2
-.long 0x00000000            #Minor Data 1
+.long 0x8047c020            #Minor Data 1
 .long 0x00000000            #Minor Data 2
 #Splash
 .byte 4                     #Minor Scene ID
@@ -400,6 +400,8 @@ lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_RANKED
 beq CSSSceneDecide_Adv_IsRanked
 cmpwi r3, ONLINE_MODE_UNRANKED
+beq CSSSceneDecide_Adv_IsUnranked
+cmpwi r3, ONLINE_MODE_PARTY
 beq CSSSceneDecide_Adv_IsUnranked
 cmpwi r3, ONLINE_MODE_DIRECT
 beq CSSSceneDecide_Adv_IsDirect
@@ -586,6 +588,7 @@ VSSceneDecide:
 .set REG_SHOULD_PICK_STAGE, 29
 .set REG_WINNER_IDX, 28
 .set REG_GPD, 27
+.set REG_NEXT_SCENE, 26
 
 backup
 
@@ -597,13 +600,23 @@ li r3, 0
 branchl r12, FN_LoadMatchState
 mr REG_MSRB_ADDR, r3
 
+li REG_NEXT_SCENE, 1 # Default to going back to CSS
+
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_RANKED
+beq VSSceneDecide_Ranked
+cmpwi r3, ONLINE_MODE_PARTY
+beq VSSceneDecide_Party
+b VSSceneDecide_GoToNextScene
+
+VSSceneDecide_Party:
+li REG_NEXT_SCENE, 4 # Go to results screen for party mode
+b VSSceneDecide_DisconnectAndNextScene # Always disconnect after party mode
+
 ###########################################################################
 # VSSceneDecide: Handle Ranked Mode
 ###########################################################################
-lbz r3, OFST_R13_ONLINE_MODE(r13)
-cmpwi r3, ONLINE_MODE_RANKED
-bne VSSceneDecide_SkipRankedHandler
-
+VSSceneDecide_Ranked:
 # If connection is not active, just go back to CSS
 lbz r3, MSRB_CONNECTION_STATE(REG_MSRB_ADDR)
 cmpwi r3, MM_STATE_IDLE
@@ -624,7 +637,7 @@ li r3, 1
 bl FN_ReportSetCompletion
 # We still trigger disconnection calls here because the previous game can end with disconnected message
 # while the connection is still technically active
-b VSSceneDecide_DisconnectAndReturnToCSS
+b VSSceneDecide_DisconnectAndNextScene
 
 VSSceneDecide_ConnectionActive:
 bl GamePrepData_BLRL
@@ -696,7 +709,7 @@ VSSceneDecide_RankedSetOver:
 li r3, 0
 bl FN_ReportSetCompletion
 
-VSSceneDecide_DisconnectAndReturnToCSS:
+VSSceneDecide_DisconnectAndNextScene:
 # Disconnect from opponent
 # Prepare buffer for EXI transfer
 li r3, 1
@@ -718,10 +731,10 @@ branchl r12, HSD_Free
 
 # Allow to return to CSS since ranked set is over
 
-VSSceneDecide_SkipRankedHandler:
+VSSceneDecide_GoToNextScene:
 # Go back to CSS
 load r4, 0x80479d30
-li r3, 0x01
+mr r3, REG_NEXT_SCENE
 stb r3, 0x5(r4)
 
 VSSceneDecide_ModeHandlerEnd:
@@ -775,6 +788,12 @@ beq SELECTOR_OVERWRITE_END # If only one winner, don't overwrite
 li r3,0
 stb r3,OFST_R13_ISWINNER(r13)
 SELECTOR_OVERWRITE_END:
+
+# For party mode we have a results screen so we dont need gold text
+# and also the hack here breaks the results screen
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+beq HACK_GOLD_TEXT_END
 
 .set REG_MATCH_END_STRUCT, 20
 
@@ -917,44 +936,25 @@ li  r5,0x10
 branchl r12,memcpy
 #Modify Splash Data
 load  r4,0x80490888
-lbz r3, 0x60(REG_VS_SSS_DATA) # load p1 char id
-stb r3,0x5(r4)
-lbz r3, 0x63(REG_VS_SSS_DATA) # load char color
-stb r3,0xB(r4)
-lbz r3, 0x60 + 0x24(REG_VS_SSS_DATA) # load p2 char id
-stb r3,0x8(r4)
-lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
-stb r3,0xE(r4)
 
 # Make sure to clear out any special stages setup
 li r3, 0
 stb r3,-0x1(r4) # match event mode
 stb r3,-0x5(r4) # match pvp type (singles, teams, giant, etc...)
 
-lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
-cmpwi r3, 0 # 0 = no teams
-beq SKIP_TEAMS_SETUP
+.set REG_PLAYER_IDX, 29
+.set REG_LEFT_COUNT, 28
+.set REG_RIGHT_COUNT, 27
+.set REG_LOCAL_PLAYER_IDX, 26
+.set REG_LOCAL_PLAYER_TEAM, 25
+.set REG_IS_TEAMS, 24
 
-TEAMS_SETUP:
-.set REG_COUNT, 29
-.set REG_TEAM_PLAYER_COUNT, 28
-.set REG_TEAM_1_ID, 27
+lbz REG_IS_TEAMS, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR) # load teams flag
 
-# load local player's team id for team 1
-lbz r3, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
-mulli r3, r3, 0x24
-addi r3, r3, MSRB_GAME_INFO_BLOCK+0x69
-lbzx REG_TEAM_1_ID, REG_MSRB_ADDR, r3
-
-# make it 2vs2 by default
+# I think the following allows for the splash screen to display more than 2 characters
 li r3, 0x2
 stb r3,0x2(r4)
-
-# Initialize bytes for extra players on each team in case of 1v3
-# The 1v3 case requires a char id/color to be set for 3 players on each team,
-# even if some are unused.
 li r3, 1
-stb r3,-0x5(r4) # make announcer say "teams" with value 1
 stb r3,0x6(r4)
 stb r3,0x7(r4)
 stb r3,0x9(r4)
@@ -963,88 +963,81 @@ stb r3,0xC(r4)
 stb r3,0xD(r4)
 stb r3,0xF(r4)
 stb r3,0x10(r4)
+stb REG_IS_TEAMS,-0x5(r4) # Conditionally make announcer say "Team..." before the character name
 
-# Set up left side team
-li REG_COUNT, 0
-li REG_TEAM_PLAYER_COUNT, 0
+# Load local player idx + team ID
+lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+li REG_PLAYER_IDX, 0
+li REG_LEFT_COUNT, 0
+li REG_RIGHT_COUNT, 0
+mulli r3, REG_LOCAL_PLAYER_IDX, 0x24
+addi r3, r3, MSRB_GAME_INFO_BLOCK+0x69
+lbzx REG_LOCAL_PLAYER_TEAM, REG_MSRB_ADDR, r3
 
-TEAMS_SETUP_LEFT_SIDE_LOOP:
-# get team id
-mulli r3, REG_COUNT, 0x24
+VS_SPLASH_CHAR_LOOP:
+# Check if player type is set to none, if so skip them
+mulli r3, REG_PLAYER_IDX, 0x24
+addi r3, r3, 0x61
+lbzx r3, REG_VS_SSS_DATA, r3
+cmpwi r3, 3
+bge VS_SPLASH_CHAR_CONTINUE
+
+# Determine which side this player goes on.
+cmpw REG_PLAYER_IDX, REG_LOCAL_PLAYER_IDX
+beq VS_SPLASH_CHAR_GO_LEFT
+cmpwi REG_IS_TEAMS, 0
+bne VS_SPLASH_CHAR_TEAM_CHECK
+b VS_SPLASH_CHAR_GO_RIGHT
+
+VS_SPLASH_CHAR_TEAM_CHECK:
+mulli r3, REG_PLAYER_IDX, 0x24
 addi r3, r3, 0x69
 lbzx r3, REG_VS_SSS_DATA, r3
+cmpw r3, REG_LOCAL_PLAYER_TEAM
+beq VS_SPLASH_CHAR_GO_LEFT
+b VS_SPLASH_CHAR_GO_RIGHT
 
-# If this player is on team 1, add their character to the left side display
-cmpw r3, REG_TEAM_1_ID
-bne CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP
-
+VS_SPLASH_CHAR_GO_LEFT:
 # Load char id
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x60
+mulli r7, REG_PLAYER_IDX, 0x24
+addi r5, r7, 0x60
 lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0x5
+addi r6, REG_LEFT_COUNT, 0x5
 stbx r5, r6, r4
 
 # Load char color
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x63
+addi r5, r7, 0x63
 lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0xB
+addi r6, REG_LEFT_COUNT, 0xB
 stbx r5, r6, r4
 
-addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+addi REG_LEFT_COUNT, REG_LEFT_COUNT, 1
+b VS_SPLASH_CHAR_CONTINUE
 
-CONTINUE_TEAMS_SETUP_LEFT_SIDE_LOOP:
-addi REG_COUNT, REG_COUNT, 1
-cmpwi REG_COUNT, 4
-blt TEAMS_SETUP_LEFT_SIDE_LOOP
-
-# Set the player count for team 1
-stb REG_TEAM_PLAYER_COUNT, 0x3(r4)
-
-# Set up right side team
-li REG_COUNT, 0
-li REG_TEAM_PLAYER_COUNT, 0
-
-TEAMS_SETUP_RIGHT_SIDE_LOOP:
-# get team id
-mulli r3, REG_COUNT, 0x24
-addi r3, r3, 0x69
-lbzx r3, REG_VS_SSS_DATA, r3
-
-# If this player isn't on team 1, add their character to the right side display
-cmpw r3, REG_TEAM_1_ID
-beq CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP
-
+VS_SPLASH_CHAR_GO_RIGHT:
 # Load char id
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x60
+mulli r7, REG_PLAYER_IDX, 0x24
+addi r5, r7, 0x60
 lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0x8
+addi r6, REG_RIGHT_COUNT, 0x8
 stbx r5, r6, r4
 
 # Load char color
-mulli r5, REG_COUNT, 0x24
-addi r5, r5, 0x63
+addi r5, r7, 0x63
 lbzx r5, REG_VS_SSS_DATA, r5
-
-addi r6, REG_TEAM_PLAYER_COUNT, 0xE
+addi r6, REG_RIGHT_COUNT, 0xE
 stbx r5, r6, r4
 
-addi REG_TEAM_PLAYER_COUNT, REG_TEAM_PLAYER_COUNT, 1
+addi REG_RIGHT_COUNT, REG_RIGHT_COUNT, 1
 
-CONTINUE_TEAMS_SETUP_RIGHT_SIDE_LOOP:
-addi REG_COUNT, REG_COUNT, 1
-cmpwi REG_COUNT, 4
-blt TEAMS_SETUP_RIGHT_SIDE_LOOP
+VS_SPLASH_CHAR_CONTINUE:
+addi REG_PLAYER_IDX, REG_PLAYER_IDX, 1
+cmpwi REG_PLAYER_IDX, 4
+blt VS_SPLASH_CHAR_LOOP
 
-# Set the player count for team 2
-stb REG_TEAM_PLAYER_COUNT, 0x4(r4)
-
-SKIP_TEAMS_SETUP:
+# Store side player counts
+stb REG_LEFT_COUNT, 0x3(r4)
+stb REG_RIGHT_COUNT, 0x4(r4)
 
 # Preload these fighters
 load r4,0x80432078
@@ -1057,20 +1050,24 @@ stw r3, 0x1C (r4)
 lbz r3, 0x63 + 0x24(REG_VS_SSS_DATA) # load char color
 stb r3, 0x20 (r4)
 
-lbz r3, MSRB_GAME_INFO_BLOCK + 0x8(REG_MSRB_ADDR)
-cmpwi r3, 0 # 0 = no teams
-beq SKIP_TEAMS_PRELOAD
-
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x61 + (0x24*2)(REG_MSRB_ADDR) # Load p3 player type
+cmpwi r3, 3 # Check if P3 is set to NONE
+bge SKIP_P3_PRELOAD
 lbz r3, 0x60 + 0x24*2(REG_VS_SSS_DATA) # load p3 char id
 stw r3, 0x24 (r4)
 lbz r3, 0x63 + 0x24*2(REG_VS_SSS_DATA) # load char color
 stb r3, 0x28 (r4)
+SKIP_P3_PRELOAD:
+
+lbz r3, MSRB_GAME_INFO_BLOCK + 0x61 + (0x24*3)(REG_MSRB_ADDR) # Load p4 player type
+cmpwi r3, 3 # Check if P4 is set to NONE
+bge SKIP_P4_PRELOAD
 lbz r3, 0x60 + 0x24*3(REG_VS_SSS_DATA) # load p4 char id
 stw r3, 0x2C (r4)
 lbz r3, 0x63 + 0x24*3(REG_VS_SSS_DATA) # load char color
 stb r3, 0x30 (r4)
+SKIP_P4_PRELOAD:
 
-SKIP_TEAMS_PRELOAD:
 # Preload the stage
 lhz r3, 0xE (REG_VS_SSS_DATA)
 stw r3, 0xC (r4)

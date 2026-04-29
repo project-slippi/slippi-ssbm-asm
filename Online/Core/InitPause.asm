@@ -10,9 +10,11 @@ getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_IN_GAME
 bne INJECTION_EXIT
 
-# Don't enable client pause in ranked
+# Don't enable client pause in ranked or party
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_RANKED
+beq INJECTION_EXIT
+cmpwi r3, ONLINE_MODE_PARTY
 beq INJECTION_EXIT
 
 ################################################################################

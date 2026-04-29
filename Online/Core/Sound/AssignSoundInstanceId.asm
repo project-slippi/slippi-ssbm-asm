@@ -21,6 +21,13 @@ lwz r3, 0x0(r3) # 0x80479d64 - Believed to be some loading state
 cmpwi r3, 0 # Loading state should be zero when game starts
 bne EXIT
 
+# Bypass dedupe entirely for sound ID 540000. This is not a real sound, it's
+# a trigger to clean up some old sounds, notably the hammer item sound. Without
+# this the sound would get started up again on a rollback and never turn off
+load r3, 540000
+cmpw r23, r3
+beq EXIT
+
 CODE_START:
 .set REG_ODB_ADDRESS, 31
 .set REG_SFXDB_ADDRESS, 30

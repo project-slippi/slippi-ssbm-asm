@@ -72,6 +72,7 @@ branchl r12, 0x8021b2d8
 .set BKP_DEFAULT_FREE_SPACE_SIZE, 0xA8
 .set BKP_DEFAULT_FREG, 0
 .set BKP_DEFAULT_REG, 12
+.set BKP_MAX_REG, 18
 
 # backup is used to set up a stack frame in which LR and non-volatile registers will be stored.
 # It also sets up some free space on the stack for the function to use if needed.
@@ -362,14 +363,13 @@ add \reg, r3, r4
 .set FN_CSSUpdateCSP,0x800056bc
 .set FN_RequestSSM,0x800056a8
 .set FN_GetCommonMinorID,0x8000561c
-# available addresses for static functions
-# 0x8000568C
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
 .set FN_LoadSavestate,0x8000560C
 .set FN_LoadMatchState,0x80005610
 .set FG_UserDisplay,0x80005618
+.set FN_OnlineStaticDataBlrl,0x8000568C
 
 # The rest of these are NTSC v1.02 functions
 ## HSD functions
