@@ -229,6 +229,9 @@ lfs f1, DOFST_TEXT_BASE_CANVAS_SCALING(REG_DATA_ADDR)
 stfs f1, 0x24(REG_TEXT_STRUCT)
 stfs f1, 0x28(REG_TEXT_STRUCT)
 
+li r4, 0x80
+stb r4, 0x8F(REG_TEXT_STRUCT)   # active_color alpha
+
 # Initialize header
 lfs f1, DOFST_TEXT_X_POS(REG_DATA_ADDR)
 lfs f2, DOFST_TEXT_Y_POS(REG_DATA_ADDR)
