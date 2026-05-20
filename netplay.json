@@ -454,6 +454,28 @@
       ]
     },
     {
+      "name": "Optional: Widescreen 16:10",
+      "authors": [
+        "sharlot",
+        "Dan Salvato",
+        "mirrorbender",
+        "Achilles1515",
+        "UnclePunch"
+      ],
+      "description": [
+        "Set Aspect Ratio to \"Force 16:10\" in Graphics for 16:10 monitors ---------------------- ",
+        "Will not cause desyncs when playing online"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "External/16.10 Widescreen",
+          "isRecursive": true,
+          "annotation": "Widescreen 16:10"
+        }
+      ]
+    },
+    {
       "name": "Optional: Disable Screen Shake",
       "authors": [
         "Achilles1515"
