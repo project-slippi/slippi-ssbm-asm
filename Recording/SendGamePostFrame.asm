@@ -15,6 +15,8 @@
 .set REG_Buffer,29
 .set REG_BufferOffset,28
 .set REG_PlayerSlot,27
+.set REG_SpentFlags,26
+.set REG_CharID,25
 
 backup
 
@@ -159,6 +161,164 @@ backup
   sth r3,0x51(REG_Buffer)
   lhz r3,0x2088(REG_PlayerData)
   sth r3,0x53(REG_Buffer)
+
+  # send stored state: what a character keeps from one move to the next
+  # (charges, lifts already used, Kirby's ability...). Each value is copied
+  # from the character-specific vars (0x222C on), so where it is read from
+  # depends on the internal char ID. Characters without one send 0. The lift
+  # and float flags are bools the game only ever sets to 0 or 1, so their
+  # low bit is moved into the spent bitflags as is.
+  li r3,0
+  stw r3,0x55(REG_Buffer)   # stored charge, spent bitflags, wall jumps, char byte
+  stw r3,0x59(REG_Buffer)   # char value
+
+  # send wall jumps used since last grounded
+  lbz r3,0x1969(REG_PlayerData)
+  stb r3,0x57(REG_Buffer)
+
+  # spent bitflags start with 0x10 = aerial tether used (0x02 of 0x2228)
+  lbz r3,0x2228(REG_PlayerData)
+  rlwinm REG_SpentFlags,r3,3,27,27
+
+  lwz REG_CharID,0x04(REG_PlayerData) #load internal char ID
+  cmpwi REG_CharID,0x00   # Mario
+  beq StoredState_Mario
+  cmpwi REG_CharID,0x15   # Dr. Mario
+  beq StoredState_Mario
+  cmpwi REG_CharID,0x03   # Donkey Kong
+  beq StoredState_ChargeAt222C
+  cmpwi REG_CharID,0x07   # Sheik
+  beq StoredState_ChargeAt222C
+  cmpwi REG_CharID,0x0D   # Samus
+  beq StoredState_Samus
+  cmpwi REG_CharID,0x10   # Mewtwo
+  beq StoredState_Mewtwo
+  cmpwi REG_CharID,0x11   # Luigi
+  beq StoredState_Luigi
+  cmpwi REG_CharID,0x12   # Marth
+  beq StoredState_Marth
+  cmpwi REG_CharID,0x1A   # Roy
+  beq StoredState_Marth
+  cmpwi REG_CharID,0x09   # Peach
+  beq StoredState_Peach
+  cmpwi REG_CharID,0x0A   # Popo
+  beq StoredState_IceClimber
+  cmpwi REG_CharID,0x0B   # Nana (her own event, her own flag)
+  beq StoredState_IceClimber
+  cmpwi REG_CharID,0x05   # Bowser
+  beq StoredState_Bowser
+  cmpwi REG_CharID,0x18   # Mr. Game & Watch
+  beq StoredState_GameAndWatch
+  cmpwi REG_CharID,0x04   # Kirby
+  bne StoredState_Send
+
+  # Kirby: the hammer lift is his own, everything else belongs to the copied ability
+  lwz r3,0x2290(REG_PlayerData)   # side special lift used (Hammer)
+  rlwimi REG_SpentFlags,r3,1,30,30
+  lwz REG_CharID,0x2238(REG_PlayerData)   # copied ability as an internal char ID, 4 = none
+  stb REG_CharID,0x58(REG_Buffer)
+  cmpwi REG_CharID,0x03   # Donkey Kong
+  beq StoredState_KirbyDK
+  cmpwi REG_CharID,0x0D   # Samus
+  beq StoredState_KirbySamus
+  cmpwi REG_CharID,0x10   # Mewtwo
+  beq StoredState_KirbyMewtwo
+  cmpwi REG_CharID,0x07   # Sheik
+  beq StoredState_KirbySheik
+  cmpwi REG_CharID,0x05   # Bowser
+  beq StoredState_KirbyBowser
+  cmpwi REG_CharID,0x09   # Peach
+  beq StoredState_KirbyPeach
+  cmpwi REG_CharID,0x0A   # Popo
+  beq StoredState_KirbyIceClimber
+  cmpwi REG_CharID,0x0B   # Nana
+  bne StoredState_Send
+StoredState_KirbyIceClimber:
+  lwz r3,0x22F0(REG_PlayerData)   # neutral special lift used (Ice Shot)
+  rlwimi REG_SpentFlags,r3,0,31,31
+  b StoredState_Send
+StoredState_KirbyPeach:
+  lwz r3,0x22F8(REG_PlayerData)   # neutral special lift used (Toad)
+  rlwimi REG_SpentFlags,r3,0,31,31
+  b StoredState_Send
+StoredState_KirbyBowser:
+  lwz r3,0x22B0(REG_PlayerData)   # Fire Breath fuel (float)
+  stw r3,0x59(REG_Buffer)
+  b StoredState_Send
+StoredState_KirbyDK:
+  lwz r3,0x22E8(REG_PlayerData)   # Giant Punch charge
+  stb r3,0x55(REG_Buffer)
+  b StoredState_Send
+StoredState_KirbySamus:
+  lwz r3,0x22D4(REG_PlayerData)   # Charge Shot charge
+  stb r3,0x55(REG_Buffer)
+  b StoredState_Send
+StoredState_KirbyMewtwo:
+  lwz r3,0x22C8(REG_PlayerData)   # Shadow Ball charge
+  stb r3,0x55(REG_Buffer)
+  b StoredState_Send
+StoredState_KirbySheik:
+  lwz r3,0x22E0(REG_PlayerData)   # needles held
+  stb r3,0x55(REG_Buffer)
+  b StoredState_Send
+
+StoredState_Mario:
+  lwz r3,0x2238(REG_PlayerData)   # side special lift used (Cape)
+  rlwimi REG_SpentFlags,r3,1,30,30
+  lwz r3,0x2234(REG_PlayerData)   # down special lift used (Tornado)
+  rlwimi REG_SpentFlags,r3,2,29,29
+  b StoredState_Send
+StoredState_ChargeAt222C:
+  lwz r3,0x222C(REG_PlayerData)   # DK: Giant Punch charge // Sheik: needles held
+  stb r3,0x55(REG_Buffer)
+  b StoredState_Send
+StoredState_Samus:
+  lwz r3,0x2230(REG_PlayerData)   # Charge Shot charge
+  stb r3,0x55(REG_Buffer)
+  b StoredState_Send
+StoredState_Mewtwo:
+  lwz r3,0x2234(REG_PlayerData)   # Shadow Ball charge
+  stb r3,0x55(REG_Buffer)
+  lwz r3,0x223C(REG_PlayerData)   # side special lift used (Confusion)
+  rlwimi REG_SpentFlags,r3,1,30,30
+  b StoredState_Send
+StoredState_Luigi:
+  lwz r3,0x222C(REG_PlayerData)   # down special lift used (Cyclone)
+  rlwimi REG_SpentFlags,r3,2,29,29
+  b StoredState_Send
+StoredState_Marth:
+  lwz r3,0x222C(REG_PlayerData)   # side special lift used (Dancing Blade / Double-Edge Dance)
+  rlwimi REG_SpentFlags,r3,1,30,30
+  b StoredState_Send
+StoredState_Peach:
+  lwz r3,0x2240(REG_PlayerData)   # neutral special lift used (Toad)
+  rlwimi REG_SpentFlags,r3,0,31,31
+  lwz r3,0x222C(REG_PlayerData)   # 1 = can float, so 0x08 = float used is its inverse
+  xori r3,r3,1
+  rlwimi REG_SpentFlags,r3,3,28,28
+  lwz r3,0x2230(REG_PlayerData)   # float frames left (float)
+  stw r3,0x59(REG_Buffer)
+  b StoredState_Send
+StoredState_IceClimber:
+  lwz r3,0x224C(REG_PlayerData)   # neutral special lift used (Ice Shot)
+  rlwimi REG_SpentFlags,r3,0,31,31
+  b StoredState_Send
+StoredState_Bowser:
+  lwz r3,0x222C(REG_PlayerData)   # Fire Breath fuel (float)
+  stw r3,0x59(REG_Buffer)
+  b StoredState_Send
+StoredState_GameAndWatch:
+  lwz r3,0x2238(REG_PlayerData)   # Oil Panic shots absorbed
+  stb r3,0x55(REG_Buffer)
+  lwz r3,0x222C(REG_PlayerData)   # last Judge number in the low nibble
+  lwz r4,0x2230(REG_PlayerData)   # the one before it in the high nibble
+  rlwimi r3,r4,4,24,27
+  stb r3,0x58(REG_Buffer)
+  lwz r3,0x223C(REG_PlayerData)   # Oil Panic absorbed damage (int)
+  stw r3,0x59(REG_Buffer)
+
+StoredState_Send:
+  stb REG_SpentFlags,0x56(REG_Buffer)
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
