@@ -614,6 +614,30 @@ ZERO_MATCH_ID_AND_GAME_INDEX:
 
 MATCH_ID_GAME_INDEX_END:
 
+  #------------- RANKED PLAYER INFO AND IS BOT -------------
+.set RankedPlayerInfoStart, (TiebreakIndexStart + TiebreakIndexLength)
+.set RankedPlayerInfoLength, RPI_SIZE * 4
+.set IsBotStart, (RankedPlayerInfoStart + RankedPlayerInfoLength)
+.set IsBotLength, 4
+
+# Recorded for every online mode. The MSRB is only loaded for online games, so local and console
+# games write zeroes. The MSRB stores these fields in the same order, so they are copied together
+  cmpwi REG_MSRB, 0
+  beq ZERO_RANKED_PLAYER_INFO_AND_IS_BOT
+
+  addi r3, REG_Buffer, RankedPlayerInfoStart
+  addi r4, REG_MSRB, MSRB_RANKED_PLAYER_INFO
+  li r5, RankedPlayerInfoLength + IsBotLength
+  branchl r12, memcpy
+  b RANKED_PLAYER_INFO_AND_IS_BOT_END
+
+ZERO_RANKED_PLAYER_INFO_AND_IS_BOT:
+  addi r3, REG_Buffer, RankedPlayerInfoStart
+  li r4, RankedPlayerInfoLength + IsBotLength
+  branchl r12, Zero_AreaLength
+
+RANKED_PLAYER_INFO_AND_IS_BOT_END:
+
 #------------- Free MSRB if it was created ------------
   cmpwi REG_MSRB, 0
   beq SKIP_MSRB_FREE

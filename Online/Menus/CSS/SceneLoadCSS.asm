@@ -23,10 +23,10 @@ blrl
 .set DO_USER_TEXT_INPUT, 0
 
 # File-related strings
-.string "slpCSS.dat"
+.string "SlippiCSS_gui.dat"
 .set DO_STRING_SLPCSS_FILENAME, DO_USER_TEXT_INPUT + 0x10
 .string "slpCSS"
-.set DO_STRING_SLPCSS_SYMBOLNAME, DO_STRING_SLPCSS_FILENAME + 11
+.set DO_STRING_SLPCSS_SYMBOLNAME, DO_STRING_SLPCSS_FILENAME + 18 # length of the file name plus its null
 .align 2
 
 CODE_START:

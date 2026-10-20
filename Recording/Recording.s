@@ -32,7 +32,7 @@
 # Payload lengths
 ################################################################################
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
-.set GAME_INFO_PAYLOAD_LENGTH, 760 # byte count
+.set GAME_INFO_PAYLOAD_LENGTH, 812 # byte count
 .set GAME_FRAME_START_PAYLOAD_LENGTH, 12 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 66 # byte count
 .set GAME_POST_FRAME_PAYLOAD_LENGTH, 84 # byte count
@@ -86,8 +86,8 @@
 
 # build version number. Each byte is one digit
 # any change in command data should result in a minor version change
-# current version: 3.19.1
-.set CURRENT_VERSION,0x03130100
+# current version: 3.20.0
+.set CURRENT_VERSION,0x03140000
 
 ################################################################################
 # Static Function Locations

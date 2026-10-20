@@ -312,6 +312,19 @@
 .set MM_STATE_ERROR_ENCOUNTERED, 5
 
 ################################################################################
+# Ranked Player Info
+# ------------------------------------------------------------------------------
+# The values used to determine a player's rank, as provided by the matchmaking
+# server when the match was found. This layout is copied as-is into the Game
+# Start replay event, so changing it changes the replay spec
+################################################################################
+.set RPI_RATING_ORDINAL, 0 # float
+.set RPI_RATING_UPDATE_COUNT, RPI_RATING_ORDINAL + 4 # u32
+.set RPI_GLOBAL_PLACEMENT, RPI_RATING_UPDATE_COUNT + 4 # u16, 0 = not placed
+.set RPI_REGIONAL_PLACEMENT, RPI_GLOBAL_PLACEMENT + 2 # u16, 0 = not placed
+.set RPI_SIZE, RPI_REGIONAL_PLACEMENT + 2
+
+################################################################################
 # Match State Response Buffer
 ################################################################################
 .set MSRB_CONNECTION_STATE, 0 # u8, matchmaking state defined above
@@ -345,7 +358,9 @@
 .set MSRB_GAME_INFO_BLOCK, MSRB_ERROR_MSG + ERROR_MESSAGE_LEN # MATCH_STRUCT_LEN
 .set MSRB_MATCH_ID, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN # char[51]
 .set MSRB_ALT_STAGE_MODE, MSRB_MATCH_ID + 51 # u8
-.set MSRB_SIZE, MSRB_ALT_STAGE_MODE + 1
+.set MSRB_RANKED_PLAYER_INFO, MSRB_ALT_STAGE_MODE + 1 # RPI_SIZE[4], indexed by port
+.set MSRB_IS_BOT, MSRB_RANKED_PLAYER_INFO + RPI_SIZE * 4 # bool[4], indexed by port
+.set MSRB_SIZE, MSRB_IS_BOT + 4
 
 ################################################################################
 # Rank Info Response Buffer
