@@ -179,6 +179,10 @@ backup
   # spent bitflags start with 0x10 = aerial tether used (0x02 of 0x2228)
   lbz r3,0x2228(REG_PlayerData)
   rlwinm REG_SpentFlags,r3,3,27,27
+  # and 0x20 = air item catch used (0x40 of 0x2224): Z in the air is an aerial
+  # until an action change on the ground
+  lbz r3,0x2224(REG_PlayerData)
+  rlwimi REG_SpentFlags,r3,31,26,26
 
   lwz REG_CharID,0x04(REG_PlayerData) #load internal char ID
   cmpwi REG_CharID,0x00   # Mario
@@ -209,6 +213,8 @@ backup
   beq StoredState_Bowser
   cmpwi REG_CharID,0x18   # Mr. Game & Watch
   beq StoredState_GameAndWatch
+  cmpwi REG_CharID,0x13   # Zelda
+  beq StoredState_Zelda
   cmpwi REG_CharID,0x04   # Kirby
   bne StoredState_Send
 
@@ -306,6 +312,27 @@ StoredState_IceClimber:
 StoredState_Bowser:
   lwz r3,0x222C(REG_PlayerData)   # Fire Breath fuel (float)
   stw r3,0x59(REG_Buffer)
+  b StoredState_Send
+StoredState_Zelda:
+  # the needles Sheik holds while Zelda is in play: Sheik is this port's other
+  # entity, asleep. Static player block (0x80453080 + 0xE90 per port):
+  # transformed[1] (0x0D) is the index of the entity not in play, the entity
+  # GObjs are at 0xB0 and 0xB4.
+  load r3,0x80453080
+  mulli r4,REG_PlayerSlot,0xE90
+  add r3,r3,r4
+  lbz r4,0x0D(r3)
+  slwi r4,r4,2
+  addi r4,r4,0xB0
+  lwzx r3,r3,r4           # the other entity's GObj
+  cmpwi r3,0
+  beq StoredState_Send
+  lwz r3,0x2C(r3)         # its character data
+  lwz r4,0x04(r3)
+  cmpwi r4,0x07           # Sheik
+  bne StoredState_Send
+  lwz r3,0x222C(r3)       # needles held
+  stb r3,0x55(REG_Buffer)
   b StoredState_Send
 StoredState_GameAndWatch:
   lwz r3,0x2238(REG_PlayerData)   # Oil Panic shots absorbed
