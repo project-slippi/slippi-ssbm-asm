@@ -11,7 +11,7 @@ This project is home to the series of ASM mods that are applied to Melee in orde
 2. All systems should support running `make` to build. Otherwise, on Windows you can run `build.bat` and on Linux/macOS you can run `build.sh`.
 
 ### Docker
-We also have a docker image that you can use to build by running `docker run --volume=${PWD}:/work --workdir=/work nikhilnarayana/devkitpro-slippi make`.
+We also have a docker image that you can use to build by running `docker run --volume=${PWD}:/work --workdir=/work nikhilnarayana/devkitpro-slippi:7 make`.
 
 ## Output
 ### Console
