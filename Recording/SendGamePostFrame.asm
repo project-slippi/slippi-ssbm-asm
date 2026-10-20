@@ -179,8 +179,8 @@ backup
   # spent bitflags start with 0x10 = aerial tether used (0x02 of 0x2228)
   lbz r3,0x2228(REG_PlayerData)
   rlwinm REG_SpentFlags,r3,3,27,27
-  # and 0x20 = air item catch used (0x40 of 0x2224): Z in the air is an aerial
-  # until an action change on the ground
+  # and 0x20 = air item catch used (0x40 of 0x2224): no item can be caught in
+  # the air until an action change on the ground
   lbz r3,0x2224(REG_PlayerData)
   rlwimi REG_SpentFlags,r3,31,26,26
 
