@@ -44,7 +44,7 @@ LoadTransformation:
   b	GetFileString
   Check6:
   cmpwi	r4, 6
-  bne-  Exit
+  bne-  Original
   li	r4, 3
   b	GetFileString
 

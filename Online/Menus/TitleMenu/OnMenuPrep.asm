@@ -200,7 +200,7 @@ lwz	r3, -0x3E84 (r13)
 branchl r12, 0x80390228
 lwz	r27, 0x08F8 (r30) # Load think function
 cmplwi	r27, 0
-beq- SKIP_TO_END_OF_PARENT
+beq- FN_SwitchToOnlineMenu_EXIT
 li	r3, 0
 li	r4, 1
 li	r5, 128
@@ -217,6 +217,7 @@ stb	r0, 0x000D (r3)
 li r3, 1
 stb r3, OFST_R13_FORCE_MENU_CLEAR(r13)
 
+FN_SwitchToOnlineMenu_EXIT:
 # Return this such that we can mimic a direct execution
 mr r3, r27
 
