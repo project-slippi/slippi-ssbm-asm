@@ -302,6 +302,8 @@ cmpwi r0, OPTION_TEAMS_IDX # Check if teams
 beq FN_OnlineSubmenuThink_HANDLE_TEAMS
 cmpwi r0, OPTION_PARTY_IDX # Check if party
 beq FN_OnlineSubmenuThink_HANDLE_PARTY
+cmpwi r0, OPTION_ROOMS_IDX # Check if rooms
+beq FN_OnlineSubmenuThink_HANDLE_ROOMS
 cmpwi r0, OPTION_LOGIN_IDX # Check if Log-in
 beq FN_OnlineSubmenuThink_HANDLE_LOGIN
 cmpwi r0, OPTION_LOGOUT_IDX # Check if Log-out
@@ -331,6 +333,10 @@ b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_PARTY:
 li r3, ONLINE_MODE_PARTY
+b FN_OnlineSubmenuThink_GO_TO_CSS
+
+FN_OnlineSubmenuThink_HANDLE_ROOMS:
+li r3, ONLINE_MODE_ROOMS
 b FN_OnlineSubmenuThink_GO_TO_CSS
 
 FN_OnlineSubmenuThink_HANDLE_LOGIN:
@@ -506,7 +512,7 @@ blrl
 .long 0x803eb57c # Ptr to preview animation frame values (stolen from reg match)
 .float 140 # Frame index pointing at the option text images
 .long 0x803eb684 # Ptr to description text. Will be overwritten
-.byte 0x08 # Number of options
+.byte 0x09 # Number of options
 .align 2
 
 Data_OnlineSubmenuDescriptions:
@@ -516,6 +522,7 @@ blrl
 .short 0x0647 # Direct
 .short 0x064B # Teams
 .short 0x064C # Party
+.short 0x064D # Rooms
 .short 0x0648 # Log-in
 .short 0x0649 # Log-out
 .short 0x064A # Update

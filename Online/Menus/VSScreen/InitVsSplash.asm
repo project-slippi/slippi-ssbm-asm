@@ -144,6 +144,17 @@ stfs f1, 0x28(REG_TEXT_STRUCT)
 ################################################################################
 lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
 
+# A room watcher isn't in the match, so it would put both players on the far side. It
+# stands in for port 0 for the splash only, since its real index decides which inputs come
+# off the network
+mulli r3, REG_LOCAL_PLAYER_IDX, 0x24
+addi r3, r3, MSRB_GAME_INFO_BLOCK + 0x61 # player type for the local port
+lbzx r3, REG_MSRB_ADDR, r3
+cmpwi r3, 3
+blt SPLASH_WATCH_IS_PLAYING
+li REG_LOCAL_PLAYER_IDX, 0
+SPLASH_WATCH_IS_PLAYING:
+
 # Load the team id for local player
 mulli r3, REG_LOCAL_PLAYER_IDX, 0x24
 addi r3, r3, MSRB_GAME_INFO_BLOCK + 0x69 # loc of this player index's team id

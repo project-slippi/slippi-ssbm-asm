@@ -148,6 +148,15 @@ MajorSceneLoad:
 blrl
 backup
 
+# Start Rooms on its own minor scene instead of the CSS
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_ROOMS
+bne MajorSceneLoad_NotRooms
+load r4, 0x80479d30
+li r3, MINOR_ROOMS
+stb r3, 0x3(r4)
+MajorSceneLoad_NotRooms:
+
 # Set the proper 1p port for CSS
 load r4, 0x8045abf0
 lbz r3, -0x5108(r13) # player index
@@ -274,6 +283,62 @@ bl GamePrepSceneDecide    #SceneDecide
 .align 2
 bl GamePrepData           #Minor Data 1
 bl GamePrepData           #Minor Data 2
+#Rooms
+.byte 6                     #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+bl RoomsScenePrep         #ScenePrep
+bl RoomsSceneDecide       #SceneDecide
+.byte 81                  #Common Minor ID (Rooms)
+.align 2
+bl RoomsData              #Minor Data 1
+bl RoomsData              #Minor Data 2
+#Room
+.byte 7                     #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+bl RoomScenePrep          #ScenePrep
+bl RoomSceneDecide        #SceneDecide
+.byte 82                  #Common Minor ID (Room)
+.align 2
+bl RoomsData              #Minor Data 1
+bl RoomsData              #Minor Data 2
+#Room Practice
+# Training in-game. MxScn.dat carries a copy of Melee's 0x04 as 0x53, so real
+# training mode keeps its own functions and only the room's version comes
+# through here. The minor data is training's own, since an in-game scene loads
+# the match its minor data describes
+.byte 8                     #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+bl PracticeScenePrep      #ScenePrep
+bl PracticeSceneDecide    #SceneDecide
+.byte 83                  #Common Minor ID (Training In-Game, no module)
+.align 2
+.long 0x8048e4c0          #Minor Data 1
+.long 0x8048e5f8          #Minor Data 2
+#Room Practice CSS
+# 0x54 rather than 0x08: the same screen, but 0x08 is where Slippi attaches
+# SlippiCSS.dat, which expects an online match and crashes over training
+.byte 9                     #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+bl PracticeCSSScenePrep   #ScenePrep
+bl PracticeCSSSceneDecide #SceneDecide
+.byte 84                  #Common Minor ID (CSS, no module)
+.align 2
+.long 0x8048e230          #Minor Data 1
+.long 0x8048e230          #Minor Data 2
+#Room Practice SSS
+.byte 10                    #Minor Scene ID
+.byte 3                    #Amount of persistent heaps
+.align 2
+.long ScenePrep_TrainingMode_SSS #ScenePrep
+bl PracticeSSSSceneDecide #SceneDecide
+.byte 9                   #Common Minor ID (SSS)
+.align 2
+.long 0x8048e378          #Minor Data 1
+.long 0x8048e378          #Minor Data 2
 #End
 .byte -1
 .align 2
@@ -343,6 +408,9 @@ GamePrepData_BLRL:
 blrl
 GamePrepData:
 createGamePrepStaticBlock
+
+RoomsData:
+createRoomsStaticBlock
 
 #region CSSScenePrep
 CSSScenePrep:
@@ -607,7 +675,14 @@ cmpwi r3, ONLINE_MODE_RANKED
 beq VSSceneDecide_Ranked
 cmpwi r3, ONLINE_MODE_PARTY
 beq VSSceneDecide_Party
+cmpwi r3, ONLINE_MODE_ROOMS
+beq VSSceneDecide_Rooms
 b VSSceneDecide_GoToNextScene
+
+VSSceneDecide_Rooms:
+bl RoomRestoreWatchPort # The room reads its inputs from the 1P port
+li REG_NEXT_SCENE, MINOR_ROOM + 1 # Go back to the room
+b VSSceneDecide_DisconnectAndNextScene # Always disconnect, the next match may be someone else
 
 VSSceneDecide_Party:
 li REG_NEXT_SCENE, 4 # Go to results screen for party mode
@@ -967,6 +1042,17 @@ stb REG_IS_TEAMS,-0x5(r4) # Conditionally make announcer say "Team..." before th
 
 # Load local player idx + team ID
 lbz REG_LOCAL_PLAYER_IDX, MSRB_LOCAL_PLAYER_INDEX(REG_MSRB_ADDR)
+
+# A room watcher isn't in the match, so it would put both players on the far side. It
+# stands in for port 0 for the splash only, since its real index decides which inputs come
+# off the network
+mulli r3, REG_LOCAL_PLAYER_IDX, 0x24
+addi r3, r3, MSRB_GAME_INFO_BLOCK + 0x61 # player type for the local port
+lbzx r3, REG_MSRB_ADDR, r3
+cmpwi r3, 3
+blt VS_SPLASH_LOCAL_IS_PLAYING
+li REG_LOCAL_PLAYER_IDX, 0
+VS_SPLASH_LOCAL_IS_PLAYING:
 li REG_PLAYER_IDX, 0
 li REG_LEFT_COUNT, 0
 li REG_RIGHT_COUNT, 0
@@ -1431,6 +1517,237 @@ li r3, 0x05
 stb r3, 0x5(r4)
 
 GamePrepSceneDecide_RestoreAndExit:
+restore
+blr
+
+RoomsScenePrep:
+blr
+
+RoomsSceneDecide:
+.set REG_RD, 31
+
+backup
+
+lwz REG_RD, 0x10(r3) # Grabs load data
+
+# Check if a room was created or joined
+lbz r3, RDO_ENTER_ROOM(REG_RD)
+cmpwi r3, 0
+beq RoomsSceneDecide_ExitToMenu
+
+# Set next scene as Room
+load r4, 0x80479d30
+li r3, MINOR_ROOM + 1
+stb r3, 0x5(r4)
+b RoomsSceneDecide_RestoreAndExit
+
+RoomsSceneDecide_ExitToMenu:
+# Go back to main menu
+li r3, 1
+branchl r12, 0x801a42e8 # Scene_SetNextMajor
+branchl r12, 0x801a42d4 # Scene_ExitMajor
+
+RoomsSceneDecide_RestoreAndExit:
+restore
+blr
+
+RoomScenePrep:
+backup
+
+# Invalidate the pre-load cache, the same as the game setup does. Players change
+# characters between a room's matches, and a cached character from the last match
+# crashes the next one's splash
+branchl r12, 0x800174bc
+
+restore
+blr
+
+RoomSceneDecide:
+.set REG_RD, 31
+
+backup
+
+lwz REG_RD, 0x10(r3) # Grabs load data
+
+bl RoomRestoreWatchPort
+
+# Practice starts at the character select, since training needs a character
+lbz r3, RDO_START_PRACTICE(REG_RD)
+cmpwi r3, 0
+beq RoomSceneDecide_CheckMatch
+li r3, 0
+stb r3, RDO_START_PRACTICE(REG_RD)
+load r4, 0x80479d30
+li r3, MINOR_PRACTICE_CSS + 1
+stb r3, 0x5(r4)
+b RoomSceneDecide_RestoreAndExit
+
+RoomSceneDecide_CheckMatch:
+# A watcher goes straight to the match. Dolphin has already filled the match in from the
+# players, so only the splash's own init is owed. The 1P port decides where the game's
+# inputs come from, and it has to name a port that isn't in the match, or Melee reads a
+# neutral controller for a player who is actually being fed
+lbz r3, RDO_START_WATCH(REG_RD)
+cmpwi r3, 0
+beq RoomSceneDecide_CheckStart
+li r3, 0
+stb r3, RDO_START_WATCH(REG_RD)
+
+fetchOnlineStaticDataPtr r4
+lbz r5, -0x5108(r13)
+stb r5, OSD_WATCH_SAVED_PORT(r4)
+li r5, 1
+stb r5, OSD_WATCH_PORT_BORROWED(r4)
+li r3, ROOM_WATCHER_PORT
+stb r3, -0x5108(r13)
+
+bl SplashSceneInit
+
+load r4, 0x80479d30
+li r3, MINOR_SPLASH + 1
+stb r3, 0x5(r4)
+b RoomSceneDecide_RestoreAndExit
+
+RoomSceneDecide_CheckStart:
+# Check if the room's match is ready to start
+lbz r3, RDO_START_MATCH(REG_RD)
+cmpwi r3, 0
+beq RoomSceneDecide_BackToRooms
+
+bl SplashSceneInit
+
+# Set next scene as Splash
+load r4, 0x80479d30
+li r3, MINOR_SPLASH + 1
+stb r3, 0x5(r4)
+b RoomSceneDecide_RestoreAndExit
+
+RoomSceneDecide_BackToRooms:
+# Set next scene as Rooms
+load r4, 0x80479d30
+li r3, MINOR_ROOMS + 1
+stb r3, 0x5(r4)
+
+RoomSceneDecide_RestoreAndExit:
+restore
+blr
+
+# Gives the 1P port back if a watch borrowed it. The character select's A press normally
+# sets it, and the room's way to a game doesn't go through the character select, so without
+# this a watcher's controller would do nothing in the room or in their own next match
+RoomRestoreWatchPort:
+mflr r6 # Fetching the static data goes through the link register
+fetchOnlineStaticDataPtr r4
+mtlr r6
+lbz r5, OSD_WATCH_PORT_BORROWED(r4)
+cmpwi r5, 0
+beqlr
+lbz r5, OSD_WATCH_SAVED_PORT(r4)
+stb r5, -0x5108(r13)
+li r5, 0
+stb r5, OSD_WATCH_PORT_BORROWED(r4)
+blr
+
+################################################################################
+# Room practice: Melee's training scenes. Every way out of them leads back to
+# the room, which is where the queue is
+################################################################################
+PracticeScenePrep:
+backup
+branchl r12, ScenePrep_TrainingMode_InGame
+restore
+blr
+
+PracticeSceneDecide:
+backup
+load r4, 0x80479d30
+li r3, MINOR_ROOM + 1
+stb r3, 0x5(r4)
+restore
+blr
+
+# The prep reads what the training major setup writes
+PracticeCSSScenePrep:
+backup
+mr r31, r3
+branchl r12, MajorSetup_TrainingMode
+mr r3, r31
+branchl r12, ScenePrep_TrainingMode_CSS
+restore
+blr
+
+# On to the stage select, or back to the room when backed out of or called up.
+# Melee's own decide only runs on the way forward: for a back-out it leaves
+# training mode entirely, and that teardown walks lights the room already freed
+# and asserts in lobj.c. Going straight back to the room is how leaving training
+# already works
+PracticeCSSSceneDecide:
+backup
+mr r31, r3
+bl PracticeIsOver
+cmpwi r3, 0
+bne PracticeCSSSceneDecide_Room
+mr r3, r31
+branchl r12, GetMinorSceneData2
+lbz r0, 0x3(r3)
+cmpwi r0, TRAIN_CSS_BACKED_OUT
+beq PracticeCSSSceneDecide_Room
+mr r3, r31
+branchl r12, SceneDecide_TrainingMode_CSS
+li r3, MINOR_PRACTICE_SSS + 1
+b PracticeCSSSceneDecide_Set
+PracticeCSSSceneDecide_Room:
+li r3, MINOR_ROOM + 1
+PracticeCSSSceneDecide_Set:
+load r4, 0x80479d30
+stb r3, 0x5(r4)
+restore
+blr
+
+# On to training once a stage is picked, back to the character select if not,
+# and back to the room when called up
+PracticeSSSSceneDecide:
+backup
+mr r31, r3
+bl PracticeIsOver
+cmpwi r3, 0
+beq PracticeSSSSceneDecide_Picked
+li r3, MINOR_ROOM + 1
+b PracticeSSSSceneDecide_Set
+PracticeSSSSceneDecide_Picked:
+mr r3, r31
+branchl r12, SceneDecide_TrainingMode_SSS
+mr r3, r31
+branchl r12, GetMinorSceneData2
+lbz r0, 0x4(r3)
+cmpwi r0, 0
+beq PracticeSSSSceneDecide_Back
+li r3, MINOR_PRACTICE + 1
+b PracticeSSSSceneDecide_Set
+PracticeSSSSceneDecide_Back:
+li r3, MINOR_PRACTICE_CSS + 1
+PracticeSSSSceneDecide_Set:
+load r4, 0x80479d30
+stb r3, 0x5(r4)
+restore
+blr
+
+# Whether the room has called the practicing player up, or is gone
+PracticeIsOver:
+backup
+addi r31, sp, BKP_FREE_SPACE_OFFSET + 31
+rlwinm r31, r31, 0, 0, 26 # 32-byte aligned for EXI
+li r3, CONST_SlippiCmdRoomPracticeOver
+stb r3, 0x0(r31)
+mr r3, r31
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+mr r3, r31
+li r4, 1
+li r5, CONST_ExiRead
+branchl r12, FN_EXITransferBuffer
+lbz r3, 0x0(r31)
 restore
 blr
 

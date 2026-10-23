@@ -24,6 +24,39 @@
 backup
 
 ################################################################################
+# Room practice ends itself once the room calls the player up for a set, from
+# the character and stage selects as well as training itself
+################################################################################
+getMinorMajor r3
+cmpwi r3, SCENE_ONLINE_PRACTICE
+beq PRACTICE_CHECK
+cmpwi r3, SCENE_ONLINE_PRACTICE_CSS
+beq PRACTICE_CHECK
+cmpwi r3, SCENE_ONLINE_PRACTICE_SSS
+bne PRACTICE_CHECK_DONE
+
+PRACTICE_CHECK:
+
+addi r31, sp, BKP_FREE_SPACE_OFFSET + 31
+rlwinm r31, r31, 0, 0, 26 # 32-byte aligned for EXI
+li r3, CONST_SlippiCmdRoomPracticeOver
+stb r3, 0x0(r31)
+mr r3, r31
+li r4, 1
+li r5, CONST_ExiWrite
+branchl r12, FN_EXITransferBuffer
+mr r3, r31
+li r4, 1
+li r5, CONST_ExiRead
+branchl r12, FN_EXITransferBuffer
+lbz r3, 0x0(r31)
+cmpwi r3, 0
+beq PRACTICE_CHECK_DONE
+branchl r12, MenuController_ChangeScreenMinor
+
+PRACTICE_CHECK_DONE:
+
+################################################################################
 # Short Circuit Conditions
 ################################################################################
 
