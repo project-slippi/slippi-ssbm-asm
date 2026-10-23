@@ -17,7 +17,6 @@
 .set REG_PlayerSlot,27
 .set REG_SpentFlags,26
 .set REG_CharID,25
-.set REG_StoredStateData,24
 
 # where a stored state value goes. The lifts are their bit number in the
 # spent bitflags
@@ -216,8 +215,9 @@ backup
 
   # send stored state: what a character keeps from one move to the next
   # (charges, lifts already used, Kirby's ability...). Characters without one
-  # send 0. The lift and float flags are bools the game only ever sets to 0 or
-  # 1, so only their low bit is moved into the spent bitflags.
+  # send 0, and so does Zelda even when her sleeping Sheik still holds needles.
+  # The lift and float flags are bools the game only ever sets to 0 or 1, so
+  # only their low bit is moved into the spent bitflags.
   li r3,0
   stw r3,0x55(REG_Buffer)   # stored charge, spent bitflags, wall jumps, char byte
   stw r3,0x59(REG_Buffer)   # char value
@@ -236,7 +236,6 @@ backup
 
   # copy every table entry for this character
   lwz REG_CharID,0x04(REG_PlayerData) #load internal char ID
-  mr REG_StoredStateData,REG_PlayerData
 StoredState_Lookup:
   bl STORED_STATE_TABLE_BLRL
   mflr r4
@@ -249,10 +248,11 @@ StoredState_NextEntry:
   addi r4,r4,4
   cmpw r5,REG_CharID
   bne StoredState_NextEntry
-  lwzx r3,REG_StoredStateData,r7
+  lwzx r3,REG_PlayerData,r7
   cmpwi r6,STORED_CHARGE
   blt StoredState_Lift
   beq StoredState_Charge
+StoredState_CharValue:
   stw r3,0x59(REG_Buffer)
   b StoredState_NextEntry
 StoredState_Charge:
@@ -270,11 +270,10 @@ StoredState_CheckSpecial:
   beq StoredState_Kirby
   cmpwi REG_CharID,0x09   # Peach
   beq StoredState_Peach
-  cmpwi REG_CharID,0x13   # Zelda
-  beq StoredState_Zelda
   cmpwi REG_CharID,0x18   # Mr. Game & Watch
   bne StoredState_Send
 
+StoredState_GameWatch:
   lwz r3,0x222C(REG_PlayerData)   # last Judge number in the low nibble
   lwz r4,0x2230(REG_PlayerData)   # the one before it in the high nibble
   rlwimi r3,r4,4,24,27
@@ -290,25 +289,6 @@ StoredState_Peach:
   lwz r3,0x222C(REG_PlayerData)   # 1 = can float, so 0x08 = float used is its inverse
   xori r3,r3,1
   rlwimi REG_SpentFlags,r3,3,28,28
-  b StoredState_Send
-StoredState_Zelda:
-  # the needles Sheik holds while Zelda is in play: Sheik is this port's other
-  # entity, asleep, so her own entries are looked up in her character data.
-  # Static player block (0x80453080 + 0xE90 per port): transformed[1] (0x0D)
-  # is the index of the entity not in play, the entity GObjs are at 0xB0 and 0xB4.
-  load r3,0x80453080
-  mulli r4,REG_PlayerSlot,0xE90
-  add r3,r3,r4
-  lbz r4,0x0D(r3)
-  slwi r4,r4,2
-  addi r4,r4,0xB0
-  lwzx r3,r3,r4           # the other entity's GObj
-  cmpwi r3,0
-  beq StoredState_Send
-  lwz REG_StoredStateData,0x2C(r3)          # its character data
-  lwz REG_CharID,0x04(REG_StoredStateData)
-  cmpwi REG_CharID,0x07   # Sheik
-  beq StoredState_Lookup
 
 StoredState_Send:
   stb REG_SpentFlags,0x56(REG_Buffer)
