@@ -4,11 +4,11 @@ source ./build-netplay.sh
 source ./build-playback.sh
 
 echo Building console_core.json for Port A...
-gecko build -c console_core.json -defsym "STG_EXIIndex=0" -o "Output/Console/g_core_porta.bin"
+gecko build -c console_core.json -defsym "STG_EXIIndex=0" -o "Output/Console/g_core_porta.bin" -cache
 echo ""
 
 echo Building console_core.json...
-gecko build -c console_core.json -defsym "STG_EXIIndex=1" -o "Output/Console/g_core.bin"
+gecko build -c console_core.json -defsym "STG_EXIIndex=1" -o "Output/Console/g_core.bin" -cache
 echo ""
 
 list=(
@@ -35,7 +35,7 @@ list=(
 for file in "${list[@]}"
 do
   echo "Building $file..."
-  gecko build -c "$file"
+  gecko build -c "$file" -cache
   echo ""
 done
 

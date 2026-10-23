@@ -314,15 +314,17 @@
 ################################################################################
 # Ranked Player Info
 # ------------------------------------------------------------------------------
-# The values used to determine a player's rank, as provided by the matchmaking
-# server when the match was found. This layout is copied as-is into the Game
-# Start replay event, so changing it changes the replay spec
+# The values used to determine a player's rank, plus their ranked MMR, as
+# provided by the matchmaking server when the match was found. This layout is
+# copied as-is into the Game Start replay event, so changing it changes the
+# replay spec
 ################################################################################
 .set RPI_RATING_ORDINAL, 0 # float
 .set RPI_RATING_UPDATE_COUNT, RPI_RATING_ORDINAL + 4 # u32
 .set RPI_GLOBAL_PLACEMENT, RPI_RATING_UPDATE_COUNT + 4 # u16, 0 = not placed
 .set RPI_REGIONAL_PLACEMENT, RPI_GLOBAL_PLACEMENT + 2 # u16, 0 = not placed
-.set RPI_SIZE, RPI_REGIONAL_PLACEMENT + 2
+.set RPI_MMR, RPI_REGIONAL_PLACEMENT + 2 # float
+.set RPI_SIZE, RPI_MMR + 4
 
 ################################################################################
 # Match State Response Buffer
