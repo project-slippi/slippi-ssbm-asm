@@ -17,7 +17,59 @@
 .set REG_PlayerSlot,27
 .set REG_SpentFlags,26
 .set REG_CharID,25
+.set REG_StoredStateData,24
 
+# where a stored state value goes. The lifts are their bit number in the
+# spent bitflags
+.set STORED_NEUTRAL_LIFT,0
+.set STORED_SIDE_LIFT,1
+.set STORED_DOWN_LIFT,2
+.set STORED_CHARGE,3      # stored charge byte
+.set STORED_CHAR_VALUE,4  # char value word
+
+.macro storedState charID, kind, offset
+  .byte \charID, \kind
+  .short \offset
+.endm
+
+b CODE_START
+
+STORED_STATE_TABLE_BLRL:
+  blrl
+  # every value a character keeps from one move to the next, read as a word
+  # from its character-specific vars (0x222C on). Kirby's copy of an ability
+  # is keyed by 0x80 | the ability's internal char ID
+  storedState 0x00, STORED_SIDE_LIFT, 0x2238      # Mario: Cape
+  storedState 0x00, STORED_DOWN_LIFT, 0x2234      # Mario: Tornado
+  storedState 0x15, STORED_SIDE_LIFT, 0x2238      # Dr. Mario: Cape
+  storedState 0x15, STORED_DOWN_LIFT, 0x2234      # Dr. Mario: Tornado
+  storedState 0x03, STORED_CHARGE, 0x222C         # Donkey Kong: Giant Punch charge
+  storedState 0x07, STORED_CHARGE, 0x222C         # Sheik: needles held
+  storedState 0x0D, STORED_CHARGE, 0x2230         # Samus: Charge Shot charge
+  storedState 0x10, STORED_CHARGE, 0x2234         # Mewtwo: Shadow Ball charge
+  storedState 0x10, STORED_SIDE_LIFT, 0x223C      # Mewtwo: Confusion
+  storedState 0x11, STORED_DOWN_LIFT, 0x222C      # Luigi: Cyclone
+  storedState 0x12, STORED_SIDE_LIFT, 0x222C      # Marth: Dancing Blade
+  storedState 0x1A, STORED_SIDE_LIFT, 0x222C      # Roy: Double-Edge Dance
+  storedState 0x09, STORED_NEUTRAL_LIFT, 0x2240   # Peach: Toad
+  storedState 0x09, STORED_CHAR_VALUE, 0x2230     # Peach: float frames left (float)
+  storedState 0x0A, STORED_NEUTRAL_LIFT, 0x224C   # Popo: Ice Shot
+  storedState 0x0B, STORED_NEUTRAL_LIFT, 0x224C   # Nana: Ice Shot (her own event, her own flag)
+  storedState 0x05, STORED_CHAR_VALUE, 0x222C     # Bowser: Fire Breath fuel (float)
+  storedState 0x18, STORED_CHARGE, 0x2238         # Mr. Game & Watch: Oil Panic shots absorbed
+  storedState 0x18, STORED_CHAR_VALUE, 0x223C     # Mr. Game & Watch: Oil Panic absorbed damage (int)
+  storedState 0x04, STORED_SIDE_LIFT, 0x2290      # Kirby: Hammer
+  storedState 0x83, STORED_CHARGE, 0x22E8         # Kirby as Donkey Kong: Giant Punch charge
+  storedState 0x87, STORED_CHARGE, 0x22E0         # Kirby as Sheik: needles held
+  storedState 0x8D, STORED_CHARGE, 0x22D4         # Kirby as Samus: Charge Shot charge
+  storedState 0x90, STORED_CHARGE, 0x22C8         # Kirby as Mewtwo: Shadow Ball charge
+  storedState 0x89, STORED_NEUTRAL_LIFT, 0x22F8   # Kirby as Peach: Toad
+  storedState 0x8A, STORED_NEUTRAL_LIFT, 0x22F0   # Kirby as Popo: Ice Shot
+  storedState 0x8B, STORED_NEUTRAL_LIFT, 0x22F0   # Kirby as Nana: Ice Shot
+  storedState 0x85, STORED_CHAR_VALUE, 0x22B0     # Kirby as Bowser: Fire Breath fuel (float)
+  storedState 0xFF, 0, 0                          # end of table
+
+CODE_START:
 backup
 
 # Check if VS Mode
@@ -163,11 +215,9 @@ backup
   sth r3,0x53(REG_Buffer)
 
   # send stored state: what a character keeps from one move to the next
-  # (charges, lifts already used, Kirby's ability...). Each value is copied
-  # from the character-specific vars (0x222C on), so where it is read from
-  # depends on the internal char ID. Characters without one send 0. The lift
-  # and float flags are bools the game only ever sets to 0 or 1, so their
-  # low bit is moved into the spent bitflags as is.
+  # (charges, lifts already used, Kirby's ability...). Characters without one
+  # send 0. The lift and float flags are bools the game only ever sets to 0 or
+  # 1, so only their low bit is moved into the spent bitflags.
   li r3,0
   stw r3,0x55(REG_Buffer)   # stored charge, spent bitflags, wall jumps, char byte
   stw r3,0x59(REG_Buffer)   # char value
@@ -184,140 +234,68 @@ backup
   lbz r3,0x2224(REG_PlayerData)
   rlwimi REG_SpentFlags,r3,31,26,26
 
+  # copy every table entry for this character
   lwz REG_CharID,0x04(REG_PlayerData) #load internal char ID
-  cmpwi REG_CharID,0x00   # Mario
-  beq StoredState_Mario
-  cmpwi REG_CharID,0x15   # Dr. Mario
-  beq StoredState_Mario
-  cmpwi REG_CharID,0x03   # Donkey Kong
-  beq StoredState_ChargeAt222C
-  cmpwi REG_CharID,0x07   # Sheik
-  beq StoredState_ChargeAt222C
-  cmpwi REG_CharID,0x0D   # Samus
-  beq StoredState_Samus
-  cmpwi REG_CharID,0x10   # Mewtwo
-  beq StoredState_Mewtwo
-  cmpwi REG_CharID,0x11   # Luigi
-  beq StoredState_Luigi
-  cmpwi REG_CharID,0x12   # Marth
-  beq StoredState_Marth
-  cmpwi REG_CharID,0x1A   # Roy
-  beq StoredState_Marth
+  mr REG_StoredStateData,REG_PlayerData
+StoredState_Lookup:
+  bl STORED_STATE_TABLE_BLRL
+  mflr r4
+StoredState_NextEntry:
+  lbz r5,0x0(r4)    # char ID
+  cmpwi r5,0xFF
+  beq StoredState_CheckSpecial
+  lbz r6,0x1(r4)    # where it goes
+  lhz r7,0x2(r4)    # where it is read from
+  addi r4,r4,4
+  cmpw r5,REG_CharID
+  bne StoredState_NextEntry
+  lwzx r3,REG_StoredStateData,r7
+  cmpwi r6,STORED_CHARGE
+  blt StoredState_Lift
+  beq StoredState_Charge
+  stw r3,0x59(REG_Buffer)
+  b StoredState_NextEntry
+StoredState_Charge:
+  stb r3,0x55(REG_Buffer)
+  b StoredState_NextEntry
+StoredState_Lift:
+  clrlwi r3,r3,31
+  slw r3,r3,r6
+  or REG_SpentFlags,REG_SpentFlags,r3
+  b StoredState_NextEntry
+
+  # then what the table can't hold
+StoredState_CheckSpecial:
+  cmpwi REG_CharID,0x04   # Kirby
+  beq StoredState_Kirby
   cmpwi REG_CharID,0x09   # Peach
   beq StoredState_Peach
-  cmpwi REG_CharID,0x0A   # Popo
-  beq StoredState_IceClimber
-  cmpwi REG_CharID,0x0B   # Nana (her own event, her own flag)
-  beq StoredState_IceClimber
-  cmpwi REG_CharID,0x05   # Bowser
-  beq StoredState_Bowser
-  cmpwi REG_CharID,0x18   # Mr. Game & Watch
-  beq StoredState_GameAndWatch
   cmpwi REG_CharID,0x13   # Zelda
   beq StoredState_Zelda
-  cmpwi REG_CharID,0x04   # Kirby
+  cmpwi REG_CharID,0x18   # Mr. Game & Watch
   bne StoredState_Send
 
-  # Kirby: the hammer lift is his own, everything else belongs to the copied ability
-  lwz r3,0x2290(REG_PlayerData)   # side special lift used (Hammer)
-  rlwimi REG_SpentFlags,r3,1,30,30
+  lwz r3,0x222C(REG_PlayerData)   # last Judge number in the low nibble
+  lwz r4,0x2230(REG_PlayerData)   # the one before it in the high nibble
+  rlwimi r3,r4,4,24,27
+  stb r3,0x58(REG_Buffer)
+  b StoredState_Send
+StoredState_Kirby:
+  # the hammer is his own, everything else belongs to the copied ability
   lwz REG_CharID,0x2238(REG_PlayerData)   # copied ability as an internal char ID, 4 = none
   stb REG_CharID,0x58(REG_Buffer)
-  cmpwi REG_CharID,0x03   # Donkey Kong
-  beq StoredState_KirbyDK
-  cmpwi REG_CharID,0x0D   # Samus
-  beq StoredState_KirbySamus
-  cmpwi REG_CharID,0x10   # Mewtwo
-  beq StoredState_KirbyMewtwo
-  cmpwi REG_CharID,0x07   # Sheik
-  beq StoredState_KirbySheik
-  cmpwi REG_CharID,0x05   # Bowser
-  beq StoredState_KirbyBowser
-  cmpwi REG_CharID,0x09   # Peach
-  beq StoredState_KirbyPeach
-  cmpwi REG_CharID,0x0A   # Popo
-  beq StoredState_KirbyIceClimber
-  cmpwi REG_CharID,0x0B   # Nana
-  bne StoredState_Send
-StoredState_KirbyIceClimber:
-  lwz r3,0x22F0(REG_PlayerData)   # neutral special lift used (Ice Shot)
-  rlwimi REG_SpentFlags,r3,0,31,31
-  b StoredState_Send
-StoredState_KirbyPeach:
-  lwz r3,0x22F8(REG_PlayerData)   # neutral special lift used (Toad)
-  rlwimi REG_SpentFlags,r3,0,31,31
-  b StoredState_Send
-StoredState_KirbyBowser:
-  lwz r3,0x22B0(REG_PlayerData)   # Fire Breath fuel (float)
-  stw r3,0x59(REG_Buffer)
-  b StoredState_Send
-StoredState_KirbyDK:
-  lwz r3,0x22E8(REG_PlayerData)   # Giant Punch charge
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-StoredState_KirbySamus:
-  lwz r3,0x22D4(REG_PlayerData)   # Charge Shot charge
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-StoredState_KirbyMewtwo:
-  lwz r3,0x22C8(REG_PlayerData)   # Shadow Ball charge
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-StoredState_KirbySheik:
-  lwz r3,0x22E0(REG_PlayerData)   # needles held
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-
-StoredState_Mario:
-  lwz r3,0x2238(REG_PlayerData)   # side special lift used (Cape)
-  rlwimi REG_SpentFlags,r3,1,30,30
-  lwz r3,0x2234(REG_PlayerData)   # down special lift used (Tornado)
-  rlwimi REG_SpentFlags,r3,2,29,29
-  b StoredState_Send
-StoredState_ChargeAt222C:
-  lwz r3,0x222C(REG_PlayerData)   # DK: Giant Punch charge // Sheik: needles held
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-StoredState_Samus:
-  lwz r3,0x2230(REG_PlayerData)   # Charge Shot charge
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-StoredState_Mewtwo:
-  lwz r3,0x2234(REG_PlayerData)   # Shadow Ball charge
-  stb r3,0x55(REG_Buffer)
-  lwz r3,0x223C(REG_PlayerData)   # side special lift used (Confusion)
-  rlwimi REG_SpentFlags,r3,1,30,30
-  b StoredState_Send
-StoredState_Luigi:
-  lwz r3,0x222C(REG_PlayerData)   # down special lift used (Cyclone)
-  rlwimi REG_SpentFlags,r3,2,29,29
-  b StoredState_Send
-StoredState_Marth:
-  lwz r3,0x222C(REG_PlayerData)   # side special lift used (Dancing Blade / Double-Edge Dance)
-  rlwimi REG_SpentFlags,r3,1,30,30
-  b StoredState_Send
+  ori REG_CharID,REG_CharID,0x80
+  b StoredState_Lookup
 StoredState_Peach:
-  lwz r3,0x2240(REG_PlayerData)   # neutral special lift used (Toad)
-  rlwimi REG_SpentFlags,r3,0,31,31
   lwz r3,0x222C(REG_PlayerData)   # 1 = can float, so 0x08 = float used is its inverse
   xori r3,r3,1
   rlwimi REG_SpentFlags,r3,3,28,28
-  lwz r3,0x2230(REG_PlayerData)   # float frames left (float)
-  stw r3,0x59(REG_Buffer)
-  b StoredState_Send
-StoredState_IceClimber:
-  lwz r3,0x224C(REG_PlayerData)   # neutral special lift used (Ice Shot)
-  rlwimi REG_SpentFlags,r3,0,31,31
-  b StoredState_Send
-StoredState_Bowser:
-  lwz r3,0x222C(REG_PlayerData)   # Fire Breath fuel (float)
-  stw r3,0x59(REG_Buffer)
   b StoredState_Send
 StoredState_Zelda:
   # the needles Sheik holds while Zelda is in play: Sheik is this port's other
-  # entity, asleep. Static player block (0x80453080 + 0xE90 per port):
-  # transformed[1] (0x0D) is the index of the entity not in play, the entity
-  # GObjs are at 0xB0 and 0xB4.
+  # entity, asleep, so her own entries are looked up in her character data.
+  # Static player block (0x80453080 + 0xE90 per port): transformed[1] (0x0D)
+  # is the index of the entity not in play, the entity GObjs are at 0xB0 and 0xB4.
   load r3,0x80453080
   mulli r4,REG_PlayerSlot,0xE90
   add r3,r3,r4
@@ -327,22 +305,10 @@ StoredState_Zelda:
   lwzx r3,r3,r4           # the other entity's GObj
   cmpwi r3,0
   beq StoredState_Send
-  lwz r3,0x2C(r3)         # its character data
-  lwz r4,0x04(r3)
-  cmpwi r4,0x07           # Sheik
-  bne StoredState_Send
-  lwz r3,0x222C(r3)       # needles held
-  stb r3,0x55(REG_Buffer)
-  b StoredState_Send
-StoredState_GameAndWatch:
-  lwz r3,0x2238(REG_PlayerData)   # Oil Panic shots absorbed
-  stb r3,0x55(REG_Buffer)
-  lwz r3,0x222C(REG_PlayerData)   # last Judge number in the low nibble
-  lwz r4,0x2230(REG_PlayerData)   # the one before it in the high nibble
-  rlwimi r3,r4,4,24,27
-  stb r3,0x58(REG_Buffer)
-  lwz r3,0x223C(REG_PlayerData)   # Oil Panic absorbed damage (int)
-  stw r3,0x59(REG_Buffer)
+  lwz REG_StoredStateData,0x2C(r3)          # its character data
+  lwz REG_CharID,0x04(REG_StoredStateData)
+  cmpwi REG_CharID,0x07   # Sheik
+  beq StoredState_Lookup
 
 StoredState_Send:
   stb REG_SpentFlags,0x56(REG_Buffer)
