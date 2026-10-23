@@ -18,13 +18,23 @@
 .set REG_SpentFlags,26
 .set REG_CharID,25
 
-# where a stored state value goes. The lifts are their bit number in the
-# spent bitflags
-.set STORED_NEUTRAL_LIFT,0
-.set STORED_SIDE_LIFT,1
-.set STORED_DOWN_LIFT,2
-.set STORED_CHARGE,3      # stored charge byte
-.set STORED_CHAR_VALUE,4  # char value word
+# spent bitflags: what a character can only do once until the game resets it,
+# usually on landing
+#   0x01 air neutral-B    0x08 Peach's float
+#   0x02 air side-B       0x10 aerial tether
+#   0x04 air down-B       0x20 air item catch
+# The air specials are the ones that only help once in the air: Mario's Cape
+# stall, Luigi's Cyclone rise, Peach's Toad... No character has two of them on
+# the same special, so one bit per special covers everyone. Tornado and
+# Cyclone only count once B is mashed into a rise.
+
+# where a table entry's value goes. The air specials are their bit number in
+# the spent bitflags
+.set TO_SPENT_AIR_NEUTRAL_B,0
+.set TO_SPENT_AIR_SIDE_B,1
+.set TO_SPENT_AIR_DOWN_B,2
+.set TO_STORED_CHARGE,3   # stored charge byte
+.set TO_CHAR_VALUE,4      # char value word
 
 .macro storedState charID, kind, offset
   .byte \charID, \kind
@@ -38,35 +48,35 @@ STORED_STATE_TABLE_BLRL:
   # every value a character keeps from one move to the next, read as a word
   # from its character-specific vars (0x222C on). Kirby's copy of an ability
   # is keyed by 0x80 | the ability's internal char ID
-  storedState 0x00, STORED_SIDE_LIFT, 0x2238      # Mario: Cape
-  storedState 0x00, STORED_DOWN_LIFT, 0x2234      # Mario: Tornado
-  storedState 0x15, STORED_SIDE_LIFT, 0x2238      # Dr. Mario: Cape
-  storedState 0x15, STORED_DOWN_LIFT, 0x2234      # Dr. Mario: Tornado
-  storedState 0x03, STORED_CHARGE, 0x222C         # Donkey Kong: Giant Punch charge
-  storedState 0x07, STORED_CHARGE, 0x222C         # Sheik: needles held
-  storedState 0x0D, STORED_CHARGE, 0x2230         # Samus: Charge Shot charge
-  storedState 0x10, STORED_CHARGE, 0x2234         # Mewtwo: Shadow Ball charge
-  storedState 0x10, STORED_SIDE_LIFT, 0x223C      # Mewtwo: Confusion
-  storedState 0x11, STORED_DOWN_LIFT, 0x222C      # Luigi: Cyclone
-  storedState 0x12, STORED_SIDE_LIFT, 0x222C      # Marth: Dancing Blade
-  storedState 0x1A, STORED_SIDE_LIFT, 0x222C      # Roy: Double-Edge Dance
-  storedState 0x09, STORED_NEUTRAL_LIFT, 0x2240   # Peach: Toad
-  storedState 0x09, STORED_CHAR_VALUE, 0x2230     # Peach: float frames left (float)
-  storedState 0x0A, STORED_NEUTRAL_LIFT, 0x224C   # Popo: Ice Shot
-  storedState 0x0B, STORED_NEUTRAL_LIFT, 0x224C   # Nana: Ice Shot (her own event, her own flag)
-  storedState 0x05, STORED_CHAR_VALUE, 0x222C     # Bowser: Fire Breath fuel (float)
-  storedState 0x18, STORED_CHARGE, 0x2238         # Mr. Game & Watch: Oil Panic shots absorbed
-  storedState 0x18, STORED_CHAR_VALUE, 0x223C     # Mr. Game & Watch: Oil Panic absorbed damage (int)
-  storedState 0x04, STORED_SIDE_LIFT, 0x2290      # Kirby: Hammer
-  storedState 0x83, STORED_CHARGE, 0x22E8         # Kirby as Donkey Kong: Giant Punch charge
-  storedState 0x87, STORED_CHARGE, 0x22E0         # Kirby as Sheik: needles held
-  storedState 0x8D, STORED_CHARGE, 0x22D4         # Kirby as Samus: Charge Shot charge
-  storedState 0x90, STORED_CHARGE, 0x22C8         # Kirby as Mewtwo: Shadow Ball charge
-  storedState 0x89, STORED_NEUTRAL_LIFT, 0x22F8   # Kirby as Peach: Toad
-  storedState 0x8A, STORED_NEUTRAL_LIFT, 0x22F0   # Kirby as Popo: Ice Shot
-  storedState 0x8B, STORED_NEUTRAL_LIFT, 0x22F0   # Kirby as Nana: Ice Shot
-  storedState 0x85, STORED_CHAR_VALUE, 0x22B0     # Kirby as Bowser: Fire Breath fuel (float)
-  storedState 0xFF, 0, 0                          # end of table
+  storedState 0x00, TO_SPENT_AIR_SIDE_B, 0x2238     # Mario: Cape
+  storedState 0x00, TO_SPENT_AIR_DOWN_B, 0x2234     # Mario: Tornado
+  storedState 0x15, TO_SPENT_AIR_SIDE_B, 0x2238     # Dr. Mario: Cape
+  storedState 0x15, TO_SPENT_AIR_DOWN_B, 0x2234     # Dr. Mario: Tornado
+  storedState 0x03, TO_STORED_CHARGE, 0x222C        # Donkey Kong: Giant Punch charge
+  storedState 0x07, TO_STORED_CHARGE, 0x222C        # Sheik: needles held
+  storedState 0x0D, TO_STORED_CHARGE, 0x2230        # Samus: Charge Shot charge
+  storedState 0x10, TO_STORED_CHARGE, 0x2234        # Mewtwo: Shadow Ball charge
+  storedState 0x10, TO_SPENT_AIR_SIDE_B, 0x223C     # Mewtwo: Confusion
+  storedState 0x11, TO_SPENT_AIR_DOWN_B, 0x222C     # Luigi: Cyclone (landing doesn't reset it, a grounded Cyclone does)
+  storedState 0x12, TO_SPENT_AIR_SIDE_B, 0x222C     # Marth: Dancing Blade
+  storedState 0x1A, TO_SPENT_AIR_SIDE_B, 0x222C     # Roy: Double-Edge Dance
+  storedState 0x09, TO_SPENT_AIR_NEUTRAL_B, 0x2240  # Peach: Toad
+  storedState 0x09, TO_CHAR_VALUE, 0x2230           # Peach: float frames left (float)
+  storedState 0x0A, TO_SPENT_AIR_NEUTRAL_B, 0x224C  # Popo: Ice Shot
+  storedState 0x0B, TO_SPENT_AIR_NEUTRAL_B, 0x224C  # Nana: Ice Shot (her own event, her own flag)
+  storedState 0x05, TO_CHAR_VALUE, 0x222C           # Bowser: Fire Breath fuel (float)
+  storedState 0x18, TO_STORED_CHARGE, 0x2238        # Mr. Game & Watch: Oil Panic shots absorbed
+  storedState 0x18, TO_CHAR_VALUE, 0x223C           # Mr. Game & Watch: Oil Panic absorbed damage (int)
+  storedState 0x04, TO_SPENT_AIR_SIDE_B, 0x2290     # Kirby: Hammer
+  storedState 0x83, TO_STORED_CHARGE, 0x22E8        # Kirby as Donkey Kong: Giant Punch charge
+  storedState 0x87, TO_STORED_CHARGE, 0x22E0        # Kirby as Sheik: needles held
+  storedState 0x8D, TO_STORED_CHARGE, 0x22D4        # Kirby as Samus: Charge Shot charge
+  storedState 0x90, TO_STORED_CHARGE, 0x22C8        # Kirby as Mewtwo: Shadow Ball charge
+  storedState 0x89, TO_SPENT_AIR_NEUTRAL_B, 0x22F8  # Kirby as Peach: Toad
+  storedState 0x8A, TO_SPENT_AIR_NEUTRAL_B, 0x22F0  # Kirby as Popo: Ice Shot
+  storedState 0x8B, TO_SPENT_AIR_NEUTRAL_B, 0x22F0  # Kirby as Nana: Ice Shot
+  storedState 0x85, TO_CHAR_VALUE, 0x22B0           # Kirby as Bowser: Fire Breath fuel (float)
+  storedState 0xFF, 0, 0                            # end of table
 
 CODE_START:
 backup
@@ -214,10 +224,10 @@ backup
   sth r3,0x53(REG_Buffer)
 
   # send stored state: what a character keeps from one move to the next
-  # (charges, lifts already used, Kirby's ability...). Characters without one
-  # send 0, and so does Zelda even when her sleeping Sheik still holds needles.
-  # The lift and float flags are bools the game only ever sets to 0 or 1, so
-  # only their low bit is moved into the spent bitflags.
+  # (charges, air specials already spent, Kirby's ability...). Characters
+  # without one send 0, and so does Zelda even when her sleeping Sheik still
+  # holds needles. The air special and float flags are bools the game only ever
+  # sets to 0 or 1, so only their low bit is moved into the spent bitflags.
   li r3,0
   stw r3,0x55(REG_Buffer)   # stored charge, spent bitflags, wall jumps, char byte
   stw r3,0x59(REG_Buffer)   # char value
@@ -249,8 +259,8 @@ StoredState_NextEntry:
   cmpw r5,REG_CharID
   bne StoredState_NextEntry
   lwzx r3,REG_PlayerData,r7
-  cmpwi r6,STORED_CHARGE
-  blt StoredState_Lift
+  cmpwi r6,TO_STORED_CHARGE
+  blt StoredState_SpentBit
   beq StoredState_Charge
 StoredState_CharValue:
   stw r3,0x59(REG_Buffer)
@@ -258,7 +268,7 @@ StoredState_CharValue:
 StoredState_Charge:
   stb r3,0x55(REG_Buffer)
   b StoredState_NextEntry
-StoredState_Lift:
+StoredState_SpentBit:
   clrlwi r3,r3,31
   slw r3,r3,r6
   or REG_SpentFlags,REG_SpentFlags,r3
