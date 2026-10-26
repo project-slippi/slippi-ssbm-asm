@@ -19,9 +19,10 @@
 .set REG_VARIOUS_1, 22
 .set REG_VARIOUS_2, 21
 .set REG_COUNT, 20
+.set REG_PREDICTION_SOURCE, 19
 
 #backup registers and sp
-backup
+backup BKP_DEFAULT_FREE_SPACE_SIZE, BKP_DEFAULT_FREG, BKP_MAX_REG
 
 ################################################################################
 # Short Circuit Conditions
@@ -210,6 +211,11 @@ FIND_CHECKSUM_LOOP_EXIT:
 lbz r3, ODB_DELAY_FRAMES(REG_ODB_ADDRESS)
 stb r3, TXB_DELAY(REG_TXB_ADDRESS)
 
+# Transfer the controller port the local inputs come from, so Dolphin can tell which adapter
+# port to watch for input suggestions
+lbz r3, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS)
+stb r3, TXB_INPUT_SOURCE_INDEX(REG_TXB_ADDRESS)
+
 # Move local pad data into transfer buffer
 addi r3, REG_TXB_ADDRESS, TXB_PAD # destination
 mr r4, REG_LOCAL_SOURCE_INPUT # source
@@ -276,7 +282,7 @@ beq RESP_RES_CONTINUE
 # If we get here that means we are skipping this input. Skipping an input
 # will cause the global frame timer to not increment, allowing for the numbers
 # to sync up between players
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, BKP_DEFAULT_FREG, BKP_MAX_REG
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
 
 HANDLE_ADVANCE:
@@ -598,7 +604,7 @@ stw REG_FRAME_INDEX, ODB_FRAME(REG_ODB_ADDRESS)
 # We are going to exit the parent function here. We have initiated a rollback
 # which will cause the engine to loop without rendering frames, our rollback
 # logic will kick in properly the next time this function is called
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, BKP_DEFAULT_FREG, BKP_MAX_REG
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
 
 CONTINUE_ROLLBACK_CHECK_LOOP:
@@ -787,6 +793,28 @@ li REG_HAS_INPUTS_FROM_ALL, 0
 
 .set REG_PREDICTED_WRITE_IDX, REG_VARIOUS_1
 
+# Pick the input to predict with. Dolphin provides one for each frame after this player's latest
+# frame: the latest received input, or a newer input suggestion from that player. The input backed up
+# here for the comparison in section 9 must be the same one loaded into the game below, otherwise a
+# wrong prediction could go unnoticed and desync the game.
+mulli r6, REG_COUNT, 4
+addi r6, r6, RXB_OPNT_FRAME_NUMS
+lwzx r3, r6, REG_RXB_ADDRESS # latest frame received from this player
+sub r3, REG_FRAME_INDEX, r3
+subi r3, r3, 1 # index of this frame among the frames after the latest
+mulli r6, REG_COUNT, RXB_INPUTS_COUNT * PAD_REPORT_SIZE # offset for this remote player
+cmplwi r3, RXB_INPUTS_COUNT
+bge PREDICTION_SOURCE_LATEST # also catches a negative index
+mulli r3, r3, PAD_REPORT_SIZE
+add r3, r3, r6
+addi r3, r3, RXB_OPNT_PREDICTED_INPUTS
+add REG_PREDICTION_SOURCE, REG_RXB_ADDRESS, r3
+b PREDICTION_SOURCE_END
+PREDICTION_SOURCE_LATEST:
+addi r6, r6, RXB_OPNT_INPUTS
+add REG_PREDICTION_SOURCE, REG_RXB_ADDRESS, r6
+PREDICTION_SOURCE_END:
+
 # get offset from sp of online player's pad data
 addi r6, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS # compute offset of write idx for this player
 lbzx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS
@@ -797,10 +825,8 @@ add r3, r3, r5
 
 # copy predicted pad data to predicted input buffer for later comparison
 # in order to decide whether to roll back
-mulli r6, REG_COUNT, RXB_INPUTS_COUNT * PAD_REPORT_SIZE
-addi r6, r6, RXB_OPNT_INPUTS
 add r3, REG_ODB_ADDRESS, r3 # destination
-add r4, REG_RXB_ADDRESS, r6 # source
+mr r4, REG_PREDICTION_SOURCE # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
 
@@ -825,7 +851,7 @@ lbzx r4, r6, REG_ODB_ADDRESS
 addi r6, REG_COUNT, ODB_PLAYER_SAVESTATE_IS_PREDICTING # compute offset of savestate flag for this player
 lbzx r3, r6, REG_ODB_ADDRESS
 cmpwi r3, 1
-beq LOAD_STALE_INPUTS
+beq LOAD_PREDICTED_INPUTS
 
 # Store the current frame in this player's savestate frame counter
 mulli r6, REG_COUNT, 4
@@ -847,7 +873,7 @@ stbx REG_PREDICTED_WRITE_IDX, r6, REG_ODB_ADDRESS
 # savestate because of another player's missing inputs, don't touch the global savestate frame counter
 lbz r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 cmpwi r3, 1
-beq LOAD_STALE_INPUTS
+beq LOAD_PREDICTED_INPUTS
 
 # Store the rollback frame in the global savestate frame counter
 stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
@@ -857,6 +883,10 @@ stw REG_FRAME_INDEX, ODB_SAVESTATE_FRAME(REG_ODB_ADDRESS)
 li r3, 1
 stb r3, ODB_SAVESTATE_IS_PREDICTING(REG_ODB_ADDRESS)
 #logf LOG_LEVEL_WARN, "Setting global savestate flag to 1"
+
+LOAD_PREDICTED_INPUTS:
+mr r4, REG_PREDICTION_SOURCE # source, the input backed up above
+b COPY_OPNT_PAD
 
 LOAD_STALE_INPUTS:
 li r3, 0 # use input at index zero (the most recent received)
@@ -868,14 +898,15 @@ mulli r3, r3, PAD_REPORT_SIZE # offset for index of input frame to look at
 addi r5, r3, RXB_OPNT_INPUTS # offset from start of RXB
 mulli r6, REG_COUNT, RXB_INPUTS_COUNT * PAD_REPORT_SIZE # offset for index of remote player
 add r5, r5, r6
+add r4, REG_RXB_ADDRESS, r5 # source
 
+COPY_OPNT_PAD:
 # get offset from sp of online player's pad data
 mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
 addi r3, r3, P1_PAD_OFFSET # offset from sp where opponent pad report is
 
 # copy opponent pad data to stack
 add r3, REG_PARENT_STACK_FRAME, r3 # destination
-add r4, REG_RXB_ADDRESS, r5 # source
 li r5, PAD_REPORT_SIZE
 
 .if DEBUG_INPUTS==1
@@ -915,7 +946,7 @@ cmpw REG_FRAME_INDEX, r3
 ble COPY_LOCAL_INPUTS
 
 # Do nothing...
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, BKP_DEFAULT_FREG, BKP_MAX_REG
 branch r12, 0x80376cec # branch to restore of parent function to skip handling input
 
 COPY_LOCAL_INPUTS:
@@ -975,5 +1006,5 @@ stw REG_FRAME_INDEX, ODB_FRAME(REG_ODB_ADDRESS)
 
 EXIT:
 #restore registers and sp
-restore
+restore BKP_DEFAULT_FREE_SPACE_SIZE, BKP_DEFAULT_FREG, BKP_MAX_REG
 cmpwi r30, 0 # restore replaced instruction

@@ -290,7 +290,8 @@
 .set TXB_FINALIZED_FRAME_CHECKSUM, TXB_FINALIZED_FRAME + 4 # u32
 .set TXB_DELAY, TXB_FINALIZED_FRAME_CHECKSUM + 4 # u8 TODO: Delay should be part of some init message or something at start of game
 .set TXB_PAD, TXB_DELAY + 1 # PAD_REPORT_SIZE
-.set TXB_SIZE, TXB_PAD + PAD_REPORT_SIZE
+.set TXB_INPUT_SOURCE_INDEX, TXB_PAD + PAD_REPORT_SIZE # u8, controller port the local inputs are read from
+.set TXB_SIZE, TXB_INPUT_SOURCE_INDEX + 1
 
 .set RXB_RESULT, 0 # u8
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
@@ -299,7 +300,11 @@
 .set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
 .set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
 .set RXB_SHOULD_DESPAWN, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # bool[3], one per remote player (indexed the same as RXB_OPNT_FRAME_NUMS etc)
-.set RXB_SIZE, RXB_SHOULD_DESPAWN + 3
+# Inputs to use when predicting each of the RXB_INPUTS_COUNT frames after a remote player's latest frame
+# (index 0 is latest + 1). Dolphin fills these with the latest received input unless it has a newer input
+# suggestion from that player. PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
+.set RXB_OPNT_PREDICTED_INPUTS, RXB_SHOULD_DESPAWN + 3
+.set RXB_SIZE, RXB_OPNT_PREDICTED_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
 
 ################################################################################
 # Matchmaking States
