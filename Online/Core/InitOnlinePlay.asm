@@ -286,14 +286,37 @@ b GECKO_EXIT
 FN_SyncRNG:
 blrl
 
-loadGlobalFrame r3
-rlwinm r4, r3, 16, 0xFFFFFFFF # Rotate left 16 bits for better RNG differences?
+loadGlobalFrame r6
+rlwinm r4, r6, 16, 0xFFFFFFFF # Rotate left 16 bits for better RNG differences?
 
 # Add RNG offset such that games are not always the same. Without this, for
 # example, Pokemon would always go to the same transformation
-lwz r3, OFST_R13_ODB_ADDR(r13) # ODB address
-lwz r3, ODB_RNG_OFFSET(r3)
+lwz r5, OFST_R13_ODB_ADDR(r13) # ODB address
+lwz r3, ODB_RNG_OFFSET(r5)
 add r4, r4, r3
+
+# Hash the seed (murmur3 finalizer). Melee's RNG turns a seed that steps by a fixed amount each frame
+# into rolls that also step by a fixed amount, this makes each frame's rolls unrelated to the last's
+srwi r3, r4, 16
+xor r4, r4, r3
+load r3, 0x85EBCA6B
+mullw r4, r4, r3
+srwi r3, r4, 13
+xor r4, r4, r3
+load r3, 0xC2B2AE35
+mullw r4, r4, r3
+srwi r3, r4, 16
+xor r4, r4, r3
+
+# Apply the RNG bits TriggerSendInput prepared for this frame, they are zero on most frames. The global
+# frame and TriggerSendInput's frame are the same number while the engine processes a frame. This has to
+# be the top of the seed and after the hash: the top bits of each roll then land evenly spaced for the
+# 256 possible values, so nobody can find a frame where most of the values give the roll they want
+rlwinm r3, r6, 0, RNG_HISTORY_COUNT - 1
+addi r3, r3, ODB_RNG_SEED_BITS_HISTORY
+lbzx r3, r3, r5
+slwi r3, r3, 24
+xor r4, r4, r3
 
 lis r3, 0x804D
 stw r4, 0x5F90(r3) # overwrite random seed
