@@ -20,6 +20,12 @@
 .set REG_VARIOUS_2, 21
 .set REG_COUNT, 20
 .set REG_PREDICTION_SOURCE, 19
+.set REG_PREDICTED_PLAYERS, 18
+.set REG_ROLLING_PLAYERS, 17
+
+.set EXTERNAL_ID_GAME_AND_WATCH, 0x3
+.set EXTERNAL_ID_LUIGI, 0x7
+.set EXTERNAL_ID_PEACH, 0xC
 
 #backup registers and sp
 backup BKP_DEFAULT_FREE_SPACE_SIZE, BKP_DEFAULT_FREG, BKP_MAX_REG
@@ -215,6 +221,11 @@ stb r3, TXB_DELAY(REG_TXB_ADDRESS)
 # port to watch for input suggestions
 lbz r3, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS)
 stb r3, TXB_INPUT_SOURCE_INDEX(REG_TXB_ADDRESS)
+
+# Add the random bits Dolphin gave us to the pad we're about to send. They get removed again in section
+# 11 before the game sees them.
+lbz r3, RXB_NEXT_PAD_RNG_BITS(REG_RXB_ADDRESS)
+stb r3, PAD_RNG_BITS(REG_LOCAL_SOURCE_INPUT)
 
 # Move local pad data into transfer buffer
 addi r3, REG_TXB_ADDRESS, TXB_PAD # destination
@@ -492,6 +503,12 @@ add r7, REG_ODB_ADDRESS, r4 # contains predicted input
 # lwzx r3, r3, REG_ODB_ADDRESS
 # logf LOG_LEVEL_NOTICE, "Comparing inputs to predicted for frame: %d", "mr r5, 3"
 
+# Section 11 marks a prediction when that frame's RNG used this player's bits before we had them. In
+# that case we have to redo the frame now that we have them, even if the inputs match
+lbz r3, PAD_RNG_ROLLBACK_MARKER(r7)
+cmpwi r3, 0
+bne INDICATE_ROLLBACK_REQUIRED
+
 # Check to see if inputs have changed. Start with buttons
 # ---SYXBA
 lbz r3, 0(r6)
@@ -746,6 +763,7 @@ LOAD_OPPONENT_INPUTS:
 li REG_COUNT, 0
 li REG_REMOTE_PLAYER_IDX, 0 # port index of the current remote player
 li REG_HAS_INPUTS_FROM_ALL, 1 # will get reset if we are predicting for any players
+li REG_PREDICTED_PLAYERS, 0 # mask of remote player indices we back up a prediction for this frame
 
 LOOP_LOAD_OPPONENT_INPUTS:
 # skip over the local player's port for inputs
@@ -824,11 +842,16 @@ mulli r5, REG_COUNT, PREDICTED_INPUTS_COUNT * PAD_REPORT_SIZE # Add offset based
 add r3, r3, r5
 
 # copy predicted pad data to predicted input buffer for later comparison
-# in order to decide whether to roll back
+# in order to decide whether to roll back. This also clears PAD_RNG_ROLLBACK_MARKER since that byte
+# of a remote pad is always zero
 add r3, REG_ODB_ADDRESS, r3 # destination
 mr r4, REG_PREDICTION_SOURCE # source
 li r5, PAD_REPORT_SIZE
 branchl r12, memcpy
+
+li r3, 1
+slw r3, r3, REG_COUNT
+or REG_PREDICTED_PLAYERS, REG_PREDICTED_PLAYERS, r3
 
 # increment write index
 addi r3, REG_PREDICTED_WRITE_IDX, 1
@@ -918,6 +941,17 @@ SKIP_OPP_LOG:
 
 branchl r12, memcpy
 
+# A slot with no player has no pad to load, and on the oldest frame of the longest rollback the index
+# above runs past its inputs in the RXB. Section 11 reads every slot's RNG bits, so keep these at zero.
+lbz r3, RXB_OPNT_COUNT(REG_RXB_ADDRESS)
+cmpw REG_COUNT, r3
+blt SKIP_CLEAR_UNUSED_SLOT_RNG_BITS
+mulli r3, REG_REMOTE_PLAYER_IDX, PAD_REPORT_SIZE
+add r3, r3, REG_PARENT_STACK_FRAME
+li r4, 0
+stb r4, P1_PAD_OFFSET + PAD_RNG_BITS(r3)
+SKIP_CLEAR_UNUSED_SLOT_RNG_BITS:
+
 addi REG_COUNT, REG_COUNT, 1
 addi REG_REMOTE_PLAYER_IDX, REG_REMOTE_PLAYER_IDX, 1
 cmpwi REG_COUNT, 3
@@ -929,6 +963,177 @@ beq SKIP_FINALIZED_FRAME_ADJUST
 stw REG_FRAME_INDEX, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)
 # logf LOG_LEVEL_NOTICE, "[TSI] [%d] New volatile finalized: %d", "mr r5, REG_FRAME_INDEX", "lwz r6, ODB_FINALIZED_FRAME(REG_ODB_ADDRESS)"
 SKIP_FINALIZED_FRAME_ADJUST:
+
+################################################################################
+# Section 11: Prepare this frame's RNG bits and remove the pad bits from the inputs
+################################################################################
+
+# A player can hold an input until a known good seed comes up to choose the result of a random special
+# (turnip, hammer, misfire). To prevent that, the frame a player presses B with the stick in the direction
+# of one of those specials adds random bits to the seed that were sent with the other players' inputs for
+# that frame. The player doesn't have those bits yet when they commit to the press. If several players
+# do this on the same frame, everyone's bits are used.
+#
+# This runs for every frame given to the game, including during a rollback, and stores the result by
+# frame, so FN_SyncRNG always gets the bits for the frame it's processing.
+
+.set REG_PAD_ADDRESS, REG_VARIOUS_1
+.set REG_PREV_B_HELD, REG_VARIOUS_2
+.set REG_B_HELD, REG_VARIOUS_3
+.set REG_PAD_RNG_BITS, REG_PREDICTION_SOURCE # 8 bits per port, port 1 at the bottom
+.set SIDE_B_MIN_STICK_X, 48
+.set DOWN_B_MAX_STICK_Y, -44
+
+subi r3, REG_FRAME_INDEX, 1
+rlwinm r3, r3, 0, RNG_HISTORY_COUNT - 1
+addi r3, r3, ODB_B_HELD_HISTORY
+lbzx REG_PREV_B_HELD, r3, REG_ODB_ADDRESS
+
+li REG_B_HELD, 0
+li REG_ROLLING_PLAYERS, 0
+li REG_PAD_RNG_BITS, 0
+li REG_COUNT, 0
+addi REG_PAD_ADDRESS, REG_PARENT_STACK_FRAME, P1_PAD_OFFSET
+
+LOOP_READ_PAD_RNG_BITS:
+lhz r3, 0(REG_PAD_ADDRESS)
+
+# Move the bits from the pad to REG_PAD_RNG_BITS
+lbz r4, PAD_RNG_BITS(REG_PAD_ADDRESS)
+slwi r5, REG_COUNT, 3
+slw r4, r4, r5
+or REG_PAD_RNG_BITS, REG_PAD_RNG_BITS, r4
+li r4, 0
+stb r4, PAD_RNG_BITS(REG_PAD_ADDRESS)
+
+# Check for a fresh B press
+andi. r4, r3, 0x200
+beq CONTINUE_READ_PAD_RNG_BITS
+li r4, 1
+slw r4, r4, REG_COUNT
+or REG_B_HELD, REG_B_HELD, r4
+and. r4, r4, REG_PREV_B_HELD
+bne CONTINUE_READ_PAD_RNG_BITS
+
+# Check if this character can roll something with B and the stick selects the special that rolls. The
+# game accepts side-B at |x| >= 0.6 and down-B at y <= -0.55 after dividing by 80. These are raw values
+# and the game's clamp can only shrink them, so a press that passes might not roll but one that fails
+# never does
+mr r3, REG_COUNT
+branchl r12, PlayerBlock_LoadExternalCharID
+cmpwi r3, EXTERNAL_ID_PEACH
+beq CHECK_DOWN_B_STICK
+cmpwi r3, EXTERNAL_ID_GAME_AND_WATCH
+beq CHECK_SIDE_B_STICK
+cmpwi r3, EXTERNAL_ID_LUIGI
+bne CONTINUE_READ_PAD_RNG_BITS
+
+CHECK_SIDE_B_STICK:
+lbz r3, 0x2(REG_PAD_ADDRESS)
+extsb r3, r3
+srawi r4, r3, 31
+xor r3, r3, r4
+sub r3, r3, r4
+cmpwi r3, SIDE_B_MIN_STICK_X
+blt CONTINUE_READ_PAD_RNG_BITS
+b INDICATE_PLAYER_ROLLING
+
+CHECK_DOWN_B_STICK:
+lbz r3, 0x3(REG_PAD_ADDRESS)
+extsb r3, r3
+cmpwi r3, DOWN_B_MAX_STICK_Y
+bgt CONTINUE_READ_PAD_RNG_BITS
+
+INDICATE_PLAYER_ROLLING:
+li r4, 1
+slw r4, r4, REG_COUNT
+or REG_ROLLING_PLAYERS, REG_ROLLING_PLAYERS, r4
+
+CONTINUE_READ_PAD_RNG_BITS:
+addi REG_COUNT, REG_COUNT, 1
+addi REG_PAD_ADDRESS, REG_PAD_ADDRESS, PAD_REPORT_SIZE
+cmpwi REG_COUNT, 4
+blt LOOP_READ_PAD_RNG_BITS
+
+rlwinm r3, REG_FRAME_INDEX, 0, RNG_HISTORY_COUNT - 1
+addi r3, r3, ODB_B_HELD_HISTORY
+stbx REG_B_HELD, r3, REG_ODB_ADDRESS
+
+.set REGV_PORTS_USED, 5
+.set REGV_SEED_BITS, 6
+
+li REGV_SEED_BITS, 0
+cmpwi REG_ROLLING_PLAYERS, 0
+beq STORE_SEED_BITS
+
+# Use the bits of everyone other than the player rolling, or everyone if several players are rolling.
+# With one player rolling, that player's opponent always has the bits this needs even when predicting
+# a press from an input suggestion, so a correctly predicted press doesn't need a rollback.
+li REGV_PORTS_USED, 0xF
+subi r3, REG_ROLLING_PLAYERS, 1
+and. r3, r3, REG_ROLLING_PLAYERS
+bne COMBINE_SEED_BITS
+andc REGV_PORTS_USED, REGV_PORTS_USED, REG_ROLLING_PLAYERS
+COMBINE_SEED_BITS:
+
+mr r3, REGV_PORTS_USED
+mr r4, REG_PAD_RNG_BITS
+li r7, 4
+mtctr r7
+LOOP_COMBINE_SEED_BITS:
+andi. r7, r3, 1
+beq CONTINUE_COMBINE_SEED_BITS
+xor REGV_SEED_BITS, REGV_SEED_BITS, r4
+CONTINUE_COMBINE_SEED_BITS:
+srwi r3, r3, 1
+srwi r4, r4, 8
+bdnz LOOP_COMBINE_SEED_BITS
+rlwinm REGV_SEED_BITS, REGV_SEED_BITS, 0, 0xFF
+
+# If we predicted any player whose bits we just used, their bits for this frame were not real and the
+# comparison in section 9 only looks at inputs. Mark the prediction such that it forces a rollback.
+lbz r8, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS)
+li REG_COUNT, 0
+LOOP_MARK_PREDICTIONS:
+li r3, 1
+slw r4, r3, REG_COUNT
+and. r4, r4, REG_PREDICTED_PLAYERS
+beq CONTINUE_MARK_PREDICTIONS
+
+# Convert remote player index to port
+mr r4, REG_COUNT
+cmpw REG_COUNT, r8
+blt SKIP_MARK_PORT_INCREMENT
+addi r4, r4, 1
+SKIP_MARK_PORT_INCREMENT:
+slw r4, r3, r4
+and. r4, r4, REGV_PORTS_USED
+beq CONTINUE_MARK_PREDICTIONS
+
+# The write index is one past the prediction we backed up for this frame
+addi r3, REG_COUNT, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS
+lbzx r3, r3, REG_ODB_ADDRESS
+subic. r3, r3, 1
+bge SKIP_MARK_INDEX_WRAP
+addi r3, r3, PREDICTED_INPUTS_COUNT
+SKIP_MARK_INDEX_WRAP:
+mulli r3, r3, PAD_REPORT_SIZE
+mulli r4, REG_COUNT, PREDICTED_INPUTS_COUNT * PAD_REPORT_SIZE
+add r3, r3, r4
+addi r3, r3, ODB_ROLLBACK_PREDICTED_INPUTS + PAD_RNG_ROLLBACK_MARKER
+li r4, 1
+stbx r4, r3, REG_ODB_ADDRESS
+
+CONTINUE_MARK_PREDICTIONS:
+addi REG_COUNT, REG_COUNT, 1
+cmpwi REG_COUNT, 3
+blt LOOP_MARK_PREDICTIONS
+
+# Store the seed bits for FN_SyncRNG to read when the engine processes this frame
+STORE_SEED_BITS:
+rlwinm r3, REG_FRAME_INDEX, 0, RNG_HISTORY_COUNT - 1
+addi r3, r3, ODB_RNG_SEED_BITS_HISTORY
+stbx REGV_SEED_BITS, r3, REG_ODB_ADDRESS
 
 b INCREMENT_AND_EXIT
 

@@ -55,6 +55,14 @@
 # This one should be fine, Dolphin caps how many inputs it sends to the rollback limit
 .set RXB_INPUTS_COUNT, ROLLBACK_MAX_FRAME_COUNT
 
+# Has to be a power of 2 and reach further back than the longest rollback
+.set RNG_HISTORY_COUNT, 16
+
+# Offsets in a pad report. Byte 8 is sent over the network with the inputs, the game never sees it. The
+# marker byte is only used in ODB_ROLLBACK_PREDICTED_INPUTS
+.set PAD_RNG_BITS, 0x8
+.set PAD_RNG_ROLLBACK_MARKER, 0xB
+
 .set UNFREEZE_INPUTS_FRAME, 84
 
 # Inputs before freeze time are important because if they get zero'd out, inputs on the first
@@ -282,7 +290,9 @@
 .set ODB_LOCAL_DESYNC_ARR, ODB_LOCAL_DESYNC_WRITE_IDX + 1  # DDLE_SIZE * DESYNC_ENTRY_COUNT
 .set ODB_DESYNC_RECOVERY_TIMER, ODB_LOCAL_DESYNC_ARR + DDLE_SIZE * DESYNC_ENTRY_COUNT # u32
 .set ODB_DESYNC_RECOVERY_FIGHTER_ARR, ODB_DESYNC_RECOVERY_TIMER + 4 # DFRE_SIZE * 4
-.set ODB_SIZE, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4
+.set ODB_B_HELD_HISTORY, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4 # u8[RNG_HISTORY_COUNT], mask of ports holding B on each frame
+.set ODB_RNG_SEED_BITS_HISTORY, ODB_B_HELD_HISTORY + RNG_HISTORY_COUNT # u8[RNG_HISTORY_COUNT], bits to XOR into the seed on each frame
+.set ODB_SIZE, ODB_RNG_SEED_BITS_HISTORY + RNG_HISTORY_COUNT
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
@@ -304,7 +314,8 @@
 # (index 0 is latest + 1). Dolphin fills these with the latest received input unless it has a newer input
 # suggestion from that player. PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
 .set RXB_OPNT_PREDICTED_INPUTS, RXB_SHOULD_DESPAWN + 3
-.set RXB_SIZE, RXB_OPNT_PREDICTED_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
+.set RXB_NEXT_PAD_RNG_BITS, RXB_OPNT_PREDICTED_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # u8, random bits to send with the next pad
+.set RXB_SIZE, RXB_NEXT_PAD_RNG_BITS + 1
 
 ################################################################################
 # Matchmaking States
