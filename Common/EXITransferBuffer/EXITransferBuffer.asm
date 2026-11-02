@@ -1,5 +1,7 @@
 ################################################################################
-# Address: FN_EXITransferBuffer # 0x800055f0 from Common.s
+# Address: 800055f0
+# This is FN_EXITransferBuffer from Common.s. It has to be a plain address, using the symbol makes
+# gecko list assemble this file, which fails because STG_EXIIndex is only set during a build
 ################################################################################
 
 ################################################################################

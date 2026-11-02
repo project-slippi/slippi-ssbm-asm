@@ -610,7 +610,12 @@ beq VSSceneDecide_Party
 b VSSceneDecide_GoToNextScene
 
 VSSceneDecide_Party:
-li REG_NEXT_SCENE, 4 # Go to results screen for party mode
+# Someone who chose to leave goes straight back to CSS, otherwise go to results screen for party mode
+lwz r4, OFST_R13_ODB_ADDR(r13) # ODB address
+lbz r3, ODB_IS_LEAVING(r4)
+cmpwi r3, 0
+bne VSSceneDecide_DisconnectAndNextScene
+li REG_NEXT_SCENE, 4
 b VSSceneDecide_DisconnectAndNextScene # Always disconnect after party mode
 
 ###########################################################################

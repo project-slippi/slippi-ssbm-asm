@@ -293,7 +293,11 @@ lbz r3, ODB_IS_GAME_OVER(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne DISPLAY_DISCONNECT_END
 
-# We are disconnected, display text and play sound
+# We are disconnected, display text and play sound. No need if the local player chose to leave
+lbz r3, ODB_IS_LEAVING(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne SKIP_DISCONNECT_MESSAGE
+
 li r3, 3
 branchl r12, SFX_Menu_CommonSound
 
@@ -302,6 +306,8 @@ lwz r3, ODB_HUD_TEXT_STRUCT(REG_ODB_ADDRESS)
 li r4, DOFST_DISCONNECT_TEXT_ENTRY
 bl FN_CREATE_HUD_SUBTEXT
 
+SKIP_DISCONNECT_MESSAGE:
+
 # Indicate we have displayed disconnect message. Dont worry, we can't rollback
 # if disconnected so we dont have to worry about things getting reset
 li r3, 1
@@ -309,6 +315,14 @@ stb r3, ODB_IS_DISCONNECT_STATE_DISPLAYED(REG_ODB_ADDRESS)
 
 # This will terminate the game
 bl FN_END_GAME
+
+# Don't keep someone who chose to leave around for as long
+lbz r3, ODB_IS_LEAVING(REG_ODB_ADDRESS)
+cmpwi r3, 0
+beq DISPLAY_DISCONNECT_END
+load r3, 0x8046b6a0 # Some static match state struct
+li r4, 0x1E # Default value for this is 0x6e
+stb r4, 0x24D5(r3) # Overwrite the GAME! think max time to make it shorter
 
 DISPLAY_DISCONNECT_END:
 
@@ -657,14 +671,16 @@ CAPTURE_END:
 ################################################################################
 # Despawn any disconnected fighters
 # ------------------------------------------------------------------------------
-# Dolphin sets RXB_SHOULD_DESPAWN[i] = 1 for any remote player (indexed the same
-# as the other per-remote-player RXB fields) whose fighter should be despawned
-# because their client has disconnected. The flag is synchronized across clients
-# via a 30-frame boundary (see prepareOpponentInputs in EXI_DeviceSlippi.cpp).
-# We map the remote-player index to the actual port here by walking ports and
-# skipping the local player, matching LOOP_LOAD_OPPONENT_INPUTS in
+# Dolphin sets RXB_DESPAWN_FRAMES[i] for any remote player (indexed the same as
+# the other per-remote-player RXB fields) whose fighter should be despawned
+# because their client has disconnected. Dolphin waits for the other players' reports
+# before setting it, which should give everyone the same frame before they get to it. This has
+# to compare against the frame being processed instead of just taking Dolphin's
+# word for it because the RXB isn't updated during a rollback, and these frames can
+# get replayed. We map the remote-player index to the actual port here by walking
+# ports and skipping the local player, matching LOOP_LOAD_OPPONENT_INPUTS in
 # TriggerSendInput.asm. For now we just call the despawn function every frame
-# that the flag is set, the actual despawn logic is only run once in there
+# past that one, the actual despawn logic is only run once in there
 ################################################################################
 .set REG_DESPAWN_REMOTE_IDX, REG_LOOP_IDX
 .set REG_DESPAWN_PORT, REG_LOOP_IDX_2
@@ -679,11 +695,27 @@ bne DESPAWN_FIGHTER_SKIP_LOCAL
 addi REG_DESPAWN_PORT, REG_DESPAWN_PORT, 1
 DESPAWN_FIGHTER_SKIP_LOCAL:
 
-addi r3, REG_DESPAWN_REMOTE_IDX, RXB_SHOULD_DESPAWN
-lbzx r3, r3, REG_REMOTE_RXB
+mulli r3, REG_DESPAWN_REMOTE_IDX, 4
+addi r3, r3, RXB_DESPAWN_FRAMES
+lwzx r3, r3, REG_REMOTE_RXB
+cmpwi r3, 0
+beq DESPAWN_FIGHTER_LOOP_CONTINUE
+cmpw REG_FRAME_INDEX, r3
+blt DESPAWN_FIGHTER_LOOP_CONTINUE
+
+# In party mode someone who is already eliminated stays in the game so they still show up on the
+# results screen. They have no fighter to remove and can't come back since there are no teams to
+# steal a stock from. Everyone reaches this frame with the same inputs so they all decide the same
+# thing, and a rollback that replays it does too.
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+bne DESPAWN_FIGHTER_REMOVE
+mr r3, REG_DESPAWN_PORT
+branchl r12, 0x80033bd8 # PlayerBlock_LoadStocksLeft
 cmpwi r3, 0
 beq DESPAWN_FIGHTER_LOOP_CONTINUE
 
+DESPAWN_FIGHTER_REMOVE:
 # logf LOG_LEVEL_NOTICE, "[SEL] [%d] Despawning fighter at port %d (remoteIdx %d)", "mr r5, REG_FRAME_INDEX", "mr r6, REG_DESPAWN_PORT", "mr r7, REG_DESPAWN_REMOTE_IDX"
 mr r3, REG_DESPAWN_PORT
 branchl r12, 0x8016EF98 # Removes a fighter from the game
