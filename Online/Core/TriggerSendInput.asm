@@ -222,6 +222,10 @@ stb r3, TXB_DELAY(REG_TXB_ADDRESS)
 lbz r3, ODB_INPUT_SOURCE_INDEX(REG_ODB_ADDRESS)
 stb r3, TXB_INPUT_SOURCE_INDEX(REG_TXB_ADDRESS)
 
+# Let Dolphin know if the local player chose to leave, it will disconnect from everyone
+lbz r3, ODB_IS_LEAVING(REG_ODB_ADDRESS)
+stb r3, TXB_IS_LEAVING(REG_TXB_ADDRESS)
+
 # Add the random bits Dolphin gave us to the pad we're about to send. They get removed again in section
 # 11 before the game sees them.
 lbz r3, RXB_NEXT_PAD_RNG_BITS(REG_RXB_ADDRESS)

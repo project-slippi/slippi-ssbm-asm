@@ -292,7 +292,8 @@
 .set ODB_DESYNC_RECOVERY_FIGHTER_ARR, ODB_DESYNC_RECOVERY_TIMER + 4 # DFRE_SIZE * 4
 .set ODB_B_HELD_HISTORY, ODB_DESYNC_RECOVERY_FIGHTER_ARR + DFRE_SIZE * 4 # u8[RNG_HISTORY_COUNT], mask of ports holding B on each frame
 .set ODB_RNG_SEED_BITS_HISTORY, ODB_B_HELD_HISTORY + RNG_HISTORY_COUNT # u8[RNG_HISTORY_COUNT], bits to XOR into the seed on each frame
-.set ODB_SIZE, ODB_RNG_SEED_BITS_HISTORY + RNG_HISTORY_COUNT
+.set ODB_IS_LEAVING, ODB_RNG_SEED_BITS_HISTORY + RNG_HISTORY_COUNT # bool, the local player chose to leave the game
+.set ODB_SIZE, ODB_IS_LEAVING + 1
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
@@ -301,7 +302,8 @@
 .set TXB_DELAY, TXB_FINALIZED_FRAME_CHECKSUM + 4 # u8 TODO: Delay should be part of some init message or something at start of game
 .set TXB_PAD, TXB_DELAY + 1 # PAD_REPORT_SIZE
 .set TXB_INPUT_SOURCE_INDEX, TXB_PAD + PAD_REPORT_SIZE # u8, controller port the local inputs are read from
-.set TXB_SIZE, TXB_INPUT_SOURCE_INDEX + 1
+.set TXB_IS_LEAVING, TXB_INPUT_SOURCE_INDEX + 1 # bool, the local player chose to leave the game
+.set TXB_SIZE, TXB_IS_LEAVING + 1
 
 .set RXB_RESULT, 0 # u8
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
@@ -309,11 +311,11 @@
 .set RXB_OPNT_FRAME_NUMS, RXB_OPNT_DESYNC_ENTRY + DDRE_SIZE*3 # s32[3]
 .set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
 .set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
-.set RXB_SHOULD_DESPAWN, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # bool[3], one per remote player (indexed the same as RXB_OPNT_FRAME_NUMS etc)
+.set RXB_DESPAWN_FRAMES, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # s32[3], frame each remote player's fighter despawns on or 0 if it doesn't (indexed the same as RXB_OPNT_FRAME_NUMS etc)
 # Inputs to use when predicting each of the RXB_INPUTS_COUNT frames after a remote player's latest frame
 # (index 0 is latest + 1). Dolphin fills these with the latest received input unless it has a newer input
 # suggestion from that player. PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
-.set RXB_OPNT_PREDICTED_INPUTS, RXB_SHOULD_DESPAWN + 3
+.set RXB_OPNT_PREDICTED_INPUTS, RXB_DESPAWN_FRAMES + 4*3
 .set RXB_NEXT_PAD_RNG_BITS, RXB_OPNT_PREDICTED_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3 # u8, random bits to send with the next pad
 .set RXB_SIZE, RXB_NEXT_PAD_RNG_BITS + 1
 

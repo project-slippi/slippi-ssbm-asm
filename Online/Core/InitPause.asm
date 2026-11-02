@@ -10,11 +10,9 @@ getMinorMajor r3
 cmpwi r3, SCENE_ONLINE_IN_GAME
 bne INJECTION_EXIT
 
-# Don't enable client pause in ranked or party
+# Don't enable client pause in ranked
 lbz r3, OFST_R13_ONLINE_MODE(r13)
 cmpwi r3, ONLINE_MODE_RANKED
-beq INJECTION_EXIT
-cmpwi r3, ONLINE_MODE_PARTY
 beq INJECTION_EXIT
 
 ################################################################################
@@ -62,6 +60,42 @@ backup
 
 lwz REG_ODB_ADDRESS, OFST_R13_ODB_ADDR(r13) # data buffer address
 
+# In party mode, exiting only takes the local player out and the others keep playing. They can do it
+# without any stocks too, so that someone who got eliminated doesn't have to wait for the others.
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+bne ClientPause_ExitLoopInit
+
+lbz r3, ODB_IS_LEAVING(REG_ODB_ADDRESS)
+cmpwi r3, 0
+bne ClientPause_Exit
+
+# Check if player LRAS'd
+lbz REG_PORT, ODB_LOCAL_PLAYER_INDEX(REG_ODB_ADDRESS)
+load r4,0x804c1fac
+mulli r3,REG_PORT,68
+lwzx r3, r3, r4
+rlwinm. r0,r3,0,0x40
+beq ClientPause_PrepLocalInputs
+rlwinm. r0,r3,0,0x20
+beq ClientPause_PrepLocalInputs
+rlwinm. r0,r3,0,0x100
+beq ClientPause_PrepLocalInputs
+rlwinm. r0,r3,0,0x1000
+beq ClientPause_PrepLocalInputs
+
+# Disconnects the next time inputs are sent. That then ends the game like any other disconnect would
+# and we can't rollback past it. ODB values are preserved through rollbacks so this only happens once
+li r3, 1
+stb r3, ODB_IS_LEAVING(REG_ODB_ADDRESS)
+
+# Hide HUD and pause textures for the time left until the game ends
+branchl r12, 0x802f3394 # Pause_HideHUD
+mr r3, REG_PORT
+branchl r12, 0x801a10fc # Pause_HidePauseTextures
+b ClientPause_Exit
+
+ClientPause_ExitLoopInit:
 # Check to see if someone with stocks wants to exit the game
 li REG_PORT, 0
 ClientPause_ExitLoopStart:
@@ -123,6 +157,11 @@ ClientPause_Paused_CheckUnpause:
 lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne ClientPause_Paused_SkipStockCheck
+
+# Players without stocks can pause in party mode, the pause screen shows how to leave
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+beq ClientPause_Paused_SkipStockCheck
 
 # Check if no stocks, if so unpause
 mr r3, REG_PORT
@@ -193,6 +232,11 @@ ClientPause_Unpaused:
 lbz r3, ODB_IS_DISCONNECTED(REG_ODB_ADDRESS)
 cmpwi r3, 0
 bne ClientPause_Unpaused_SkipStockCheck
+
+# Players without stocks can pause in party mode, the pause screen shows how to leave
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_PARTY
+beq ClientPause_Unpaused_SkipStockCheck
 
 # Check if no stocks, if so don't allow pause
 mr r3, REG_PORT
